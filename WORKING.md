@@ -14,7 +14,9 @@
 | 3 | VM 样本导出 → `payload/` + `manifests/files.tsv`（191 文件逐字节一致，0 失配） | ✅ 0979c21 |
 | 4 | `manifests/packages.tsv`（167，含 repo/module）/ `aur.tsv`（12）生成 + 对账（0 未解释、0 遗漏） | ✅ 5f31bcb |
 | 5 | steps 主体复核 + `tests/`（回归测试驱动真实入口，全部通过） | ✅ |
-| 6 | VM 预览 ×2 验收（输出一致、系统零改动）+ 证据落盘 + 全部提交 | ⬜ 进行中 |
+| 6 | VM 预览 ×2 验收（输出一致、系统零改动）+ 证据落盘 + 全部提交 | ✅ 进行中→完成 |
+
+> **里程碑 1 完成**（2026-10-05）：全部 6 项达成；证据见宿主 scratch（docs-first / payload-compare 191/191 / secret-scan 0 / reconcile 0/0 / syntax 40+shellcheck 0 / preview ×2 + 状态零改动 / bootstrap / status）。
 
 ## 关键设计（已定）
 
