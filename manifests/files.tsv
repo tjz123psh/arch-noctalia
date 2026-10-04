@@ -75,7 +75,6 @@ payload/home/.config/user-dirs.dirs	/home/pang/.config/user-dirs.dirs	600	45c968
 payload/home/.config/user-dirs.locale	/home/pang/.config/user-dirs.locale	644	0d61f8370cad1d412f80b84d143e1257
 payload/home/.config/zellij/config.kdl	/home/pang/.config/zellij/config.kdl	644	c1bf1f71354532303f2fc9c7783a81c0
 payload/home/.gitconfig	/home/pang/.gitconfig	644	6a08e646af723158277fe4d52dec4bfd
-payload/home/.gitkeep	/home/pang/.gitkeep	644	d41d8cd98f00b204e9800998ecf8427e
 payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	c2347472f206801bf83c093770b76953
 payload/home/Pictures/wallpapers/【哲风壁纸】Fate-saber.png	/home/pang/Pictures/wallpapers/【哲风壁纸】Fate-saber.png	644	f76dbf3abbe4321dddf0a4397e5f9d0c
 payload/home/Pictures/wallpapers/【哲风壁纸】SNAFFUR-动漫少女.png	/home/pang/Pictures/wallpapers/【哲风壁纸】SNAFFUR-动漫少女.png	644	19fa1a7e7a4c21485574e1d46692e9b8
@@ -172,7 +171,6 @@ payload/home/scripts/maintenance/term-menu	/home/pang/scripts/maintenance/term-m
 payload/home/scripts/maintenance/terminal-tools	/home/pang/scripts/maintenance/terminal-tools	755	11e6f47ea88deb23cdf8ca6e1a338f07
 payload/home/scripts/maintenance/tests/DESTRUCTIVE-VM.md	/home/pang/scripts/maintenance/tests/DESTRUCTIVE-VM.md	644	eb29c8ddf9f234250eb05f479312ce52
 payload/home/scripts/maintenance/tests/run	/home/pang/scripts/maintenance/tests/run	755	1f0b4aa3a2c6d024ca54bb2b254afe9b
-payload/system/.gitkeep	/.gitkeep	644	d41d8cd98f00b204e9800998ecf8427e
 payload/system/etc/greetd/config.toml	/etc/greetd/config.toml	644	1812fea641f1c31f43936e83e4cdde83
 payload/system/etc/nwg-hello/background.png	/etc/nwg-hello/background.png	664	f76dbf3abbe4321dddf0a4397e5f9d0c
 payload/system/etc/nwg-hello/niri.kdl	/etc/nwg-hello/niri.kdl	644	09b9519d13dde1088eeb1fd9d5085548

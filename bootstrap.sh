@@ -50,7 +50,10 @@ if [[ -d "$DEST/.git" ]]; then
   git -C "$DEST" pull --ff-only || echo "[warn] pull failed; using the existing checkout as-is"
 else
   echo "[info] cloning $SRC -> $DEST"
-  git clone --depth=1 "$SRC" "$DEST"
+  case "$SRC" in
+    http://*|https://*|git@*|ssh://*) git clone --depth=1 "$SRC" "$DEST" ;;
+    *) git clone "$SRC" "$DEST" ;;
+  esac
 fi
 
 echo "[info] handing over to install.sh"

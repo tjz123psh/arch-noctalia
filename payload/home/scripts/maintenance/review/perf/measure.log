@@ -1,0 +1,148 @@
+
+########## 0. environment ##########
+date=2026-09-10T18:47:38+08:00 kernel=7.2.4-zen2-1-zen
+bash=GNU bash，版本 5.3.15(1)-release (x86_64-pc-linux-gnu) jq=jq-1.8.2 fzf= strace=strace -- version 7.0
+repo HEAD=10a0cdb
+repo dirty files=1
+
+########## 1. term-menu cold start, fake fzf cancels immediately (FZF_SHIM_RC=130) ##########
+term-menu cancel-to-exit: median=67 min=61 max=69 n=5
+successful execve per cancel-to-exit: 24
+          4 /usr/bin/awk
+          3 /usr/bin/date
+          3 /usr/bin/bash
+          2 /usr/bin/dirname
+          1 /usr/bin/tr
+          1 /usr/bin/tail
+          1 /usr/bin/readlink
+          1 /usr/bin/niri
+          1 /usr/bin/ls
+          1 /usr/bin/ip
+          1 /usr/bin/grep
+          1 /usr/bin/df
+          1 /usr/bin/clear
+          1 /tmp/maintenance-review/perf/stub/systemctl
+          1 /tmp/maintenance-review/perf/bin/fzf
+          1 /home/pang/scripts/maintenance/term-menu
+ui_status_line (bash -c, sources lib/ui.sh): median=19 min=16 max=21 n=10
+term-menu --preview __update_menu: median=25 min=21 max=26 n=10
+term-menu --preview clean: median=22 min=21 max=23 n=10
+
+########## 2. term-menu view-snapshots drive, stub snapper (2 configs) ##########
+per-snapper-latency 0s -> 333 ms (snapper calls=3)
+per-snapper-latency 0.1s -> 657 ms (snapper calls=3)
+per-snapper-latency 0.3s -> 1264 ms (snapper calls=3)
+per-snapper-latency 0.6s -> 2166 ms (snapper calls=3)
+snapshots/config 10 -> 364 ms (snapper calls=3)
+snapshots/config 200 -> 3155 ms (snapper calls=3)
+snapshots/config 500 -> 7454 ms (snapper calls=3)
+strace summary 200 snaps/config (clone/execve/wait4):
+    % time     seconds  usecs/call     calls    errors syscall
+     79.87    2.969612         506      5867      2925 wait4
+      8.91    0.331419         112      2942           clone
+      0.38    0.014096         105       133        52 execve
+system time in that run: 100.00    3.718060          19    187858      4888 total
+
+########## 3. lib/ui.sh helper costs ##########
+bash -c exit: median=3 min=2 max=4 n=20
+bash -c ". lib/ui.sh": median=4 min=4 max=6 n=20
+bash -c ". lib/ui.sh; ui_status_line": median=17 min=16 max=24 n=20
+ui_pad x1 standalone process: median=4 min=4 max=5 n=20
+
+########## 4. checkallupdates --refresh with stubs ##########
+all sources 1.0s  (parallel=>1000 sequential=>3000): 1069 ms (source stub calls=3)
+    1789037283.137295708 START flatpak 852583
+    1789037283.137447042 START checkupdates 852582
+    1789037283.137965057 START paru 852584
+    1789037284.140295208 END   flatpak 852583
+    1789037284.140363336 END   checkupdates 852582
+    1789037284.140652179 END   paru 852584
+pacman 3s aur 1s flatpak 1s (parallel=>3000 sequential=>5000): 3072 ms (source stub calls=3)
+all sources 0s (pure bookkeeping): 71 ms (source stub calls=3)
+successful execve per --refresh (warm, 0s stubs): 59
+         10 /usr/bin/mktemp
+          6 /usr/bin/find
+          6 /usr/bin/date
+          4 /usr/bin/touch
+          4 /usr/bin/mv
+          4 /usr/bin/bash
+          3 /usr/bin/tr
+          3 /usr/bin/timeout
+          3 /usr/bin/basename
+          3 /usr/bin/awk
+          2 /usr/bin/mkdir
+          2 /usr/bin/flock
+          1 /usr/bin/rm
+          1 /usr/bin/readlink
+          1 /usr/bin/dirname
+          1 /usr/bin/cat
+          1 /tmp/maintenance-review/perf/stub/paru
+          1 /tmp/maintenance-review/perf/stub/flatpak
+          1 /tmp/maintenance-review/perf/stub/checkupdates
+          1 /tmp/maintenance-review/perf/bin/bash
+          1 /home/pang/scripts/maintenance/checkallupdates
+--refresh-stale, everything fresh: 75 ms (source stub calls=0)
+/tmp/maintenance-review/perf/measure.sh: 行 96: refresh_stale: 未找到命令
+--refresh-stale, only AUR stale: 
+--load-actions (fzf load event, fired per render): median=16 min=15 max=17 n=5
+
+########## 5. checkallupdates interactive open (fake fzf, CHECKALLUPDATES_ALLOW_NONINTERACTIVE_UI=1) ##########
+cold cache open: median=48 min=46 max=49 n=5 (fzf calls=5)
+successful execve, cold interactive open: 18
+          3 /usr/bin/awk
+          2 /usr/bin/rm
+          2 /usr/bin/date
+          2 /usr/bin/bash
+          1 /usr/bin/tr
+          1 /usr/bin/tail
+          1 /usr/bin/readlink
+          1 /usr/bin/mkdir
+          1 /usr/bin/ip
+          1 /usr/bin/dirname
+          1 /usr/bin/df
+          1 /tmp/maintenance-review/perf/bin/fzf
+          1 /home/pang/scripts/maintenance/checkallupdates
+warm cache open: median=48 min=47 max=50 n=5
+
+########## 6. quickload list paths (stub snapper) ##########
+--list (2 serial snapper calls @0.3s): 673 ms, snapper_calls=2
+--list-all (3 serial snapper calls @0.3s): 1015 ms, snapper_calls=3
+--list-all zero-latency snapper, 300 snaps/config: median=1183 min=1163 max=1266 n=3
+
+########## 7. storage-health ##########
+REAL (this machine, read-only): median=525 min=426 max=556 n=3
+STUBBED 3 disks + 3 btrfs mounts: median=474 min=395 max=478 n=3
+successful execve (stubbed): 126
+         38 /usr/bin/jq
+         20 /usr/bin/tput
+         15 /usr/bin/bash
+         12 /usr/bin/date
+          7 /usr/bin/awk
+          6 /usr/bin/grep
+          6 /tmp/maintenance-review/perf/stub/btrfs
+          3 /usr/bin/wc
+          3 /usr/bin/systemd-escape
+          3 /usr/bin/cat
+          3 /tmp/maintenance-review/perf/stub/systemctl
+          3 /tmp/maintenance-review/perf/stub/smartctl
+          1 /usr/bin/sudo
+          1 /usr/bin/readlink
+          1 /usr/bin/dirname
+          1 /usr/bin/df
+          1 /tmp/maintenance-review/perf/stub/lsblk
+          1 /tmp/maintenance-review/perf/stub/findmnt
+          1 /home/pang/scripts/maintenance/storage-health
+
+########## 8. micro-benchmarks (in-process loop, EPOCHREALTIME) ##########
+
+########## 8. micro-benchmarks (in-process loop, EPOCHREALTIME) ##########
+plain function ui_pad abc 8 (no subshell)         0.084 ms/iter (n=3000)
+subshell $(ui_pad abc 8)                          0.832 ms/iter (n=3000)
+subshell $(ui_dwidth abc)                         0.854 ms/iter (n=3000)
+_snap_row-equiv: 1+5 subshells                    5.118 ms/iter (n=1000)
+
+########## 9. show_snapshots row replication (term-menu:890-959) ##########
+current impl, short desc                   5.89 ms/row (n=300)
+current impl, LONG desc                    30.33 ms/row (n=300)
+fork-free impl, short desc                 0.09 ms/row (n=300)
+fork-free impl, LONG desc                  0.14 ms/row (n=300)

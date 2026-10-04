@@ -2,6 +2,8 @@
 # tools/capture-from-vm.sh — 从测试 VM 导出"已验证样本"到本仓库 payload/，并生成清单。
 # 仅在开发宿主机（导出方）使用；目标机安装时不需要本工具。
 # 只读 VM：仅 rsync 拉取，不在 VM 上做任何写操作。
+# 注意：payload 内会包含样本自带的 .gitignore（如 ~/scripts/maintenance/.gitignore）——
+#   被它们命中的文件不会自动进 git，提交时需 `git add -f`；tools/selfcheck.sh 会检查这类遗漏。
 # 幂等：可重复运行（重跑会刷新 payload、files.tsv、bin-links.tsv）。
 set -Eeuo pipefail
 
@@ -126,7 +128,7 @@ info "generating ${FILES_TSV#"$ROOT_DIR"/} ..."
   echo "# schema=1"
   echo "# repo_path<TAB>target_path<TAB>mode<TAB>md5"
   echo "# repo_path：本仓库相对路径；target_path：目标机绝对路径；mode：八进制权限（git 只保留可执行位，部署以本表为准）；md5：payload 文件 md5（=VM 原件，经 tools/verify-payload.sh 复核）"
-  (cd "$DEST" && find home system -type f) | LC_ALL=C sort | while read -r f; do
+  (cd "$DEST" && find home system -type f ! -name '.gitkeep') | LC_ALL=C sort | while read -r f; do
     repo_path="payload/$f"
     case "$f" in
       home/*) target="${HOME_BASE}/${f#home/}" ;;

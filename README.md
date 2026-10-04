@@ -28,6 +28,8 @@ curl -fsSL <bootstrap-raw-url> | bash
 
 未推送前用本地路径：`git clone /home/pang/Projects/arch-noctalia ~/arch-noctalia`。
 
+> `./install.sh` 的默认动作是**只读预览**（见下节）；实装用 `./install.sh --run`（可加 `--yes` 免确认）。
+
 ## 预览模式（不落盘）
 
 ```bash

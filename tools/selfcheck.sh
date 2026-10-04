@@ -17,20 +17,25 @@ fail=0
 bad() { printf '[FAIL]  %s\n' "$*"; fail=1; }
 
 # ---------- 1) 语法 ----------
-syntax_count=0
+# bash -n：全部 *.sh（项目代码 + payload 样本脚本）——0 错误为通过。
+all_count=0
 while IFS= read -r f; do
   bash -n "$f" || bad "bash -n: ${f#"$ROOT_DIR"/}"
-  syntax_count=$((syntax_count + 1))
+  all_count=$((all_count + 1))
 done < <(find "$ROOT_DIR" -name '*.sh' -type f -not -path '*/.git/*' | LC_ALL=C sort)
-info "syntax: ${syntax_count} scripts checked with bash -n"
+info "syntax: ${all_count} scripts checked with bash -n (project + payload)"
 
+# 风格检查只跑项目自有代码；payload/ 是原样入仓的样本（用户脚本，不改不评风格）。
+# 批量传入（含 lib/*.sh）可避免逐一执行时对相对 source 的 SC1091 误报。
+our_files=()
+while IFS= read -r f; do
+  our_files+=("$f")
+done < <(find "$ROOT_DIR" -name '*.sh' -type f -not -path '*/.git/*' -not -path "${ROOT_DIR}/payload/*" | LC_ALL=C sort)
 if have shellcheck; then
-  sc_count=0
-  while IFS= read -r f; do
-    shellcheck "$f" || bad "shellcheck: ${f#"$ROOT_DIR"/}"
-    sc_count=$((sc_count + 1))
-  done < <(find "$ROOT_DIR" -name '*.sh' -type f -not -path '*/.git/*' | LC_ALL=C sort)
-  info "syntax: ${sc_count} scripts checked with shellcheck"
+  if (( ${#our_files[@]} > 0 )); then
+    shellcheck "${our_files[@]}" || bad "shellcheck: project scripts (see output above)"
+  fi
+  info "syntax: shellcheck over ${#our_files[@]} project scripts (payload excluded by design)"
 else
   warn "shellcheck not available — skipped"
 fi
@@ -70,6 +75,22 @@ if [[ -f "$LINKS" ]]; then
   done < <(manifest_rows "$LINKS")
 fi
 info "mapping: ${links} bin links checked"
+
+# payload 必须全部进 git：注意 payload 内自带 .gitignore（样本原样），
+# 被其命中的文件要 `git add -f`，否则"磁盘上有、提交里没有"。
+ignored="$(git -C "$ROOT_DIR" ls-files --others --ignored --exclude-standard payload/ || true)"
+untracked="$(git -C "$ROOT_DIR" ls-files --others --exclude-standard payload/ || true)"
+if [[ -n "$ignored" ]]; then
+  while IFS= read -r f; do bad "ignored payload file not committed (needs git add -f): $f"; done <<< "$ignored"
+fi
+if [[ -n "$untracked" ]]; then
+  while IFS= read -r f; do bad "untracked payload file: $f"; done <<< "$untracked"
+fi
+tracked_payload="$(git -C "$ROOT_DIR" ls-files payload/ | grep -cv '\.gitkeep$' || true)"
+if [[ "$tracked_payload" -ne "$rows" ]]; then
+  bad "tracked payload files ($tracked_payload) != files.tsv rows ($rows)"
+fi
+info "mapping: tracked payload files = ${tracked_payload}"
 
 # ---------- 3) 密钥卫生 ----------
 cred_re='(^|/)(proxy-env|age-env|anyrouter-env)\.fish$|(^|/)hosts\.yml$|(^|/)cookie$|(^|/)id_(rsa|ed25519)$|\.pem$'
