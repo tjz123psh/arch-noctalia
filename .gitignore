@@ -1,0 +1,4 @@
+# arch-noctalia — ignore rules
+.state/
+*.tmp
+*.swp
