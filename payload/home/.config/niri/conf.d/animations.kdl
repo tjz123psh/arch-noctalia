@@ -1,0 +1,112 @@
+// —— 动画 ——
+
+// ══════════════════════════════════════════════════════════════
+//  动效：弹簧曲线 + 自定义着色器（不照搬默认）
+//  · 工作区/视线移动 → 弹簧（跟手、收尾柔和）
+//  · 窗口开关 → 轻微缩放 + 淡入，用 custom-shader 手写
+// ══════════════════════════════════════════════════════════════
+animations {
+    // ══════════════════════════════════════════════════════════════
+    //  动效总纲：
+    //   · 直接操作类（工作区/视线/窗口移动、缩放）→ 弹簧，跟手、不拖沓
+    //   · 出现类（开窗/截图 UI）→ 短时长 + 过冲曲线，先看得清再稳住
+    //   · 消失类（关窗）→ 更短、收缩幅度更小，像化掉而不是缩没
+    //   · 大场景（概览）→ 软一点的弹簧，收尾有一点回弹，显得有生命
+    // ══════════════════════════════════════════════════════════════
+
+    // 工作区上下切换：略带一点回弹（0.95），像有惯性
+    workspace-switch {
+        spring damping-ratio=0.95 stiffness=900 epsilon=0.0001
+    }
+
+    // 窗口打开：340ms，MD3 standard 曲线（缓起 → 快中段 → 长收尾）
+    // 着色器做两件事：0.90 倍放大 + 从下往上浮 16px，淡入按 1.7 倍速先跑完。
+    // 这样是"浮上来"，不是"啪一下出现"。
+    window-open {
+        duration-ms 340
+        curve "cubic-bezier" 0.2 0.0 0.0 1.0
+        custom-shader r"
+            vec4 open_color(vec3 coords_geo, vec3 size_geo) {
+                float p = niri_progress;
+                float e = clamp(p, 0.0, 1.4);
+
+                float scale = mix(0.90, 1.0, e);
+                float rise = (1.0 - e) * 16.0 / max(size_geo.y, 1.0);
+
+                vec2 c = (coords_geo.xy - vec2(0.5)) / scale + vec2(0.5);
+                c.y -= rise;
+                coords_geo = vec3(c, 1.0);
+
+                vec3 coords_tex = niri_geo_to_tex * coords_geo;
+
+                vec4 color = vec4(0.0);
+                if (0.0 <= coords_geo.x && coords_geo.x <= 1.0
+                        && 0.0 <= coords_geo.y && coords_geo.y <= 1.0) {
+                    color = texture2D(niri_tex, coords_tex.xy);
+                }
+
+                float a = clamp(niri_clamped_progress * 1.7, 0.0, 1.0);
+                color *= a * a * (3.0 - 2.0 * a);
+                return color;
+            }
+        "
+    }
+
+    // 窗口关闭：收缩幅度只有 3.5%，主要是淡出，用 smoothstep 让首尾都不生硬
+    // ⚠ 实测：close 的着色器里**不能**写 0..1 边界判断（官方默认也没有），
+    //   写了会让整扇窗直接透明 —— 看起来像"关窗动画没跑"。open 里则必须写。
+    window-close {
+        duration-ms 200
+        curve "cubic-bezier" 0.4 0.0 0.2 1.0
+        custom-shader r"
+            vec4 close_color(vec3 coords_geo, vec3 size_geo) {
+                float p = niri_clamped_progress;
+                float scale = mix(1.0, 0.965, p);
+                coords_geo = vec3((coords_geo.xy - vec2(0.5)) / scale + vec2(0.5), 1.0);
+                vec3 coords_tex = niri_geo_to_tex * coords_geo;
+                vec4 color = texture2D(niri_tex, coords_tex.xy);
+                float a = 1.0 - p;
+                color *= a * a * (3.0 - 2.0 * a);
+                return color;
+            }
+        "
+    }
+
+    // 视线横移 / 窗口移动 / 窗口缩放：三者参数保持一致，niri 官方建议
+    // （同步动画时它会互相借用参数，不一致会出现两种手感）
+    horizontal-view-movement {
+        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
+    }
+
+    window-movement {
+        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
+    }
+
+    window-resize {
+        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
+    }
+
+    // 概览开关：软弹簧 + 轻微回弹，像镜头推拉
+    overview-open-close {
+        spring damping-ratio=0.9 stiffness=560 epsilon=0.0001
+    }
+
+    // 配置提示 / 退出确认：小东西，弹一点更活泼
+    config-notification-open-close {
+        spring damping-ratio=0.72 stiffness=950 epsilon=0.001
+    }
+
+    exit-confirmation-open-close {
+        spring damping-ratio=0.72 stiffness=520 epsilon=0.01
+    }
+
+    // 截图 UI：淡入要快，不能挡着人框选
+    screenshot-ui-open {
+        duration-ms 190
+        curve "cubic-bezier" 0.2 0.9 0.3 1.0
+    }
+
+    recent-windows-close {
+        spring damping-ratio=1.0 stiffness=850 epsilon=0.001
+    }
+}

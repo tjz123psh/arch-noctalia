@@ -1,0 +1,88 @@
+/* nwg-hello 登录界面主题（riced 2026-10-03）：
+   深色半透明胶囊卡片 + Google Sans Flex 圆体，与 Noctalia 桌面风格一致 */
+
+window {
+	background-image: url("/etc/nwg-hello/background.png");
+	background-size: auto 100%;
+	background-color: #0b0b10;
+	color: #f2f2f5;
+}
+
+window, label, entry, button {
+	font-family: "Google Sans Flex", "Resource Han Rounded CN", "Noto Sans CJK SC", sans-serif;
+}
+
+#form-wrapper {
+	background-color: rgba(10, 12, 18, 0.55);
+	border: 1px solid rgba(255, 255, 255, 0.10);
+	border-radius: 24px;
+	padding: 22px;
+}
+
+entry {
+	background-color: rgba(255, 255, 255, 0.07);
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	border-radius: 12px;
+	padding: 10px 14px;
+}
+
+entry:focus {
+	background-color: rgba(255, 255, 255, 0.11);
+	border-color: rgba(255, 255, 255, 0.45);
+}
+
+button {
+	background: rgba(255, 255, 255, 0.07) none;
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	border-radius: 12px;
+	padding: 10px 14px;
+}
+
+button:hover {
+	background-color: rgba(255, 255, 255, 0.14);
+}
+
+button:active {
+	background-color: rgba(255, 255, 255, 0.22);
+}
+
+#power-button {
+	border-radius: 18px;
+	background: none;
+	border: none;
+}
+
+#power-button:hover {
+	background-color: rgba(255, 255, 255, 0.10);
+}
+
+#power-button:active {
+	background-color: rgba(255, 255, 255, 0.20);
+}
+
+#welcome-label {
+	font-size: 44px;
+	font-weight: 500;
+}
+
+#clock-label {
+	font-size: 30px;
+	font-weight: 500;
+}
+
+#date-label {
+	font-size: 17px;
+	color: rgba(255, 255, 255, 0.78);
+}
+
+#form-label {
+	color: rgba(255, 255, 255, 0.85);
+}
+
+#login-button {
+	background: rgba(255, 255, 255, 0.12) none;
+}
+
+#login-button:hover {
+	background-color: rgba(255, 255, 255, 0.18);
+}

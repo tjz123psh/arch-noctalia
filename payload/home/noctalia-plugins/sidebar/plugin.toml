@@ -1,0 +1,18 @@
+id = "pang/sidebar"
+name = "Sidebar（搜索/媒体/窗口/计时/系统/最近/笔记）"
+version = "1.0.0"
+plugin_api = 27
+author = "pang"
+license = "MIT"
+description = "左侧全高面板：搜索框、媒体卡、窗口列表、计时器、系统一览、最近文件、临时笔记；卡片可折叠、拖拽排序。"
+icon = "layout-sidebar-left"
+tags = ["custom", "utility", "panel"]
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 380
+height = "fill"
+placement = "floating"
+position = "center_left"
+keyboard_focus = "exclusive"

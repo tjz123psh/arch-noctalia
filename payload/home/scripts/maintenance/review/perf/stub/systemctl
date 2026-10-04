@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+printf '%s CALL systemctl %s\n' "$(date +%s.%N)" "$*" >> "${SMART_LOG:-/tmp/maintenance-review/perf/logs/smart.log}"
+printf 'enabled\n'

@@ -1,0 +1,491 @@
+config_version = 14
+
+[backdrop]
+enabled = true
+
+[bar]
+order = [ "default" ]
+
+    [bar.default]
+    auto_hide = false
+    background_opacity = 0.0
+    border = "primary"
+    border_width = 1.0
+    capsule = true
+    capsule_border_width = 1.5
+    capsule_fill = "on_secondary"
+    capsule_opacity = 0.36999999172985554
+    capsule_padding = 7.0
+    capsule_thickness = 0.71999998763203621
+    center = [ "datetime", "weather", "media", "audio_visualizer" ]
+    concave_edge_corners = true
+    contact_shadow = false
+    enabled = true
+    end = [ "group:sys", "group:status", "group:tools", "session" ]
+    font_family = "Noto Serif Tibetan"
+    font_scale = 1.0
+    font_weight = 500
+    hover_highlight = true
+    layer = "top"
+    margin_edge = 8
+    margin_ends = 16
+    margin_opposite_edge = 0
+    padding = 12
+    panel_overlap = 1
+    radius = 24
+    radius_bottom_left = 24
+    radius_bottom_right = 24
+    radius_top_left = 24
+    radius_top_right = 24
+    reserve_space = true
+    scale = 1.0
+    shadow = true
+    show_on_workspace_switch = true
+    smart_auto_hide = false
+    start = [ "launcher", "workspaces", "active_window" ]
+    thickness = 36
+    widget_spacing = 12
+
+        [bar.default.dead_zone]
+
+        [[bar.default.capsule_group]]
+        fill = "on_secondary"
+        id = "sys"
+        members = [ "cpu", "ram", "disk" ]
+        opacity = 0.36999999172985554
+        padding = 8.0
+        widget_spacing = 6
+
+        [[bar.default.capsule_group]]
+        fill = "on_secondary"
+        id = "status"
+        members = [ "tray", "network", "volume", "battery" ]
+        opacity = 0.36999999172985554
+        padding = 8.0
+        widget_spacing = 8
+
+        [[bar.default.capsule_group]]
+        fill = "on_secondary"
+        id = "tools"
+        members = [
+            "privacy",
+            "notifications",
+            "clipboard",
+            "screenshot",
+            "screenrec",
+            "color-picker",
+            "nightlight",
+            "control-center"
+        ]
+        opacity = 0.36999999172985554
+        padding = 8.0
+        widget_spacing = 8
+
+[control_center]
+width = 660
+
+[desktop_widgets]
+enabled = true
+schema_version = 2
+widget_order = [ "net-down", "net-up" ]
+
+    [desktop_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = false
+
+    [desktop_widgets.widget.net-down]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1566.0
+    cy = 217.01171875
+    output = "Virtual-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "sysmon"
+
+        [desktop_widgets.widget.net-down.settings]
+        background_color = "on_secondary"
+        background_opacity = 0.41999999999999998
+        background_padding = 12.0
+        label_min_width = 64.0
+        network_speed_compact = true
+        stat = "net_rx"
+
+    [desktop_widgets.widget.net-up]
+    box_height = 0.0
+    box_width = 0.0
+    cx = 1790.95703125
+    cy = 218.00390625
+    output = "Virtual-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "sysmon"
+
+        [desktop_widgets.widget.net-up.settings]
+        background_color = "on_secondary"
+        background_opacity = 0.41999999999999998
+        background_padding = 12.0
+        label_min_width = 64.0
+        network_speed_compact = true
+        stat = "net_tx"
+
+[dock]
+active_opacity = 1.0
+active_scale = 1.0
+auto_hide = true
+background_opacity = 0.75
+border = "primary"
+border_width = 1.0
+concave_edge_corners = false
+cross_axis_padding = 8
+enabled = true
+icon_size = 30
+inactive_opacity = 0.90000000000000002
+inactive_scale = 0.90000000000000002
+item_spacing = 6
+launcher_position = "none"
+layer = "top"
+magnification = true
+magnification_scale = 1.3500000000000001
+main_axis_padding = 14
+margin_edge = 12
+margin_ends = 16
+pinned = [ "firefox", "kitty", "obsidian", "org.gnome.Nautilus", "wps-office-prometheus", "transmission-gtk" ]
+position = "right"
+radius = 18
+reserve_space = false
+shadow = true
+show_dots = false
+show_instance_count = false
+show_running = true
+smart_auto_hide = false
+
+[location]
+auto_locate = true
+
+[lockscreen]
+blur_intensity = 0.65000000000000002
+blurred_desktop = false
+edge_smoothness = 0.29999999999999999
+enabled = true
+lock_before_suspend = true
+tint_intensity = 0.29999999999999999
+transition = [ "fade", "zoom", "disc" ]
+transition_duration = 950.0
+wallpaper = ""
+
+[lockscreen_widgets]
+enabled = true
+schema_version = 2
+widget_order = [ "lockscreen-clock@Virtual-1", "lockscreen-login-box@Virtual-1" ]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-clock@Virtual-1"]
+    box_height = 220.0
+    box_width = 600.0
+    cx = 960.0
+    cy = 300.0
+    output = "Virtual-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "clock"
+
+        [lockscreen_widgets.widget."lockscreen-clock@Virtual-1".settings]
+        background_opacity = 0.34999999999999998
+        background_radius = 24.0
+        clock_style = "digital"
+        color = "on_surface"
+        format = "{:%H:%M}"
+
+    [lockscreen_widgets.widget."lockscreen-login-box@Virtual-1"]
+    box_height = 196.0
+    box_width = 720.0
+    cx = 960.0
+    cy = 800.0
+    output = "Virtual-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@Virtual-1".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.78000000000000003
+        background_radius = 20.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 12.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+[notification]
+background_opacity = 0.45000000000000001
+history_retention_hours = 72
+keep_dismissed_in_history = true
+max_visible = 4
+
+[osd]
+background_opacity = 0.5
+offset_y = 56
+
+[plugins]
+enabled = [ "noctalia/screen_recorder", "oldirtty/color_picker", "pang/sidebar", "pang/magnifier" ]
+
+    [[plugins.source]]
+    kind = "git"
+    location = "https://github.com/noctalia-dev/official-plugins"
+    name = "official"
+
+    [[plugins.source]]
+    kind = "git"
+    location = "https://github.com/noctalia-dev/community-plugins"
+    name = "community"
+
+    [[plugins.source]]
+    kind = "path"
+    location = "/home/pang/noctalia-plugins"
+    name = "pang-dev"
+
+[shell]
+button_borders = true
+card_borders = true
+corner_radius_scale = 1.1499999999999999
+input_borders = true
+lang = "zh_CN"
+panel_anchor_bar = "default"
+polkit_agent = true
+popup_borders = true
+popup_shadows = true
+
+    [shell.animation]
+    enabled = true
+    speed = 0.80000000000000004
+
+    [shell.panel]
+    borders = true
+    clipboard_placement = "floating"
+    clipboard_position = "auto"
+    control_center_placement = "floating"
+    control_center_position = "auto"
+    floating_offset = 10
+    launcher_placement = "floating"
+    launcher_position = "auto"
+    open_near_click_clipboard = true
+    open_near_click_control_center = true
+    open_near_click_launcher = true
+    open_near_click_session = true
+    open_near_click_wallpaper = true
+    session_placement = "floating"
+    shadow = true
+    transparency_mode = "glass"
+    wallpaper_placement = "floating"
+
+    [shell.screenshot]
+    annotate = false
+    close_on_copy = true
+    close_on_save = true
+    confirm_region = true
+    copy_to_clipboard = true
+    directory = "/home/pang/Pictures/Screenshots"
+    freeze_screen = true
+    remember_last_region = true
+    save_to_file = true
+    show_cursor = false
+
+[theme]
+builtin = "Noctalia"
+community_palette = "Oxocarbon"
+mode = "dark"
+pure_black_dark = false
+shell_mode = "follow"
+source = "wallpaper"
+wallpaper_scheme = "m3-tonal-spot"
+
+    [theme.templates]
+    builtin_ids = [ "kitty", "starship", "gtk3", "gtk4", "qt", "kcolorscheme" ]
+    community_ids = [ "fuzzel", "fcitx5", "fastfetch", "papirus-icons" ]
+    enable_community_templates = true
+
+[wallpaper]
+directory = "/home/pang/Pictures/wallpapers"
+enabled = true
+transition = [ "fade", "zoom" ]
+transition_duration = 1100.0
+
+    [wallpaper.automation]
+    enabled = true
+
+    [wallpaper.default]
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】Fate-saber.png"
+
+    [wallpaper.last]
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】Fate-saber.png"
+
+    [wallpaper.monitors.Virtual-1]
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】Fate-saber.png"
+
+[widget.active_window]
+color = "#f0dedecc"
+font_scale = 1.0
+max_length = 210
+min_length = 70
+type = "active_window"
+
+[widget.audio_visualizer]
+bands = 20
+color_1 = "primary"
+color_2 = "secondary"
+type = "audio_visualizer"
+width = 72
+
+[widget.battery]
+capsule = false
+color = "#f0dedecc"
+show_label = false
+type = "battery"
+
+[widget.clipboard]
+capsule = false
+color = "#f0dedecc"
+type = "clipboard"
+
+[widget.color-picker]
+color = "#f0dedecc"
+glyph = "palette"
+type = "oldirtty/color_picker:widget"
+
+[widget.control-center]
+capsule = false
+color = "#f0dedecc"
+type = "control-center"
+
+[widget.cpu]
+capsule = false
+color = "#f0dedecc"
+font_scale = 1.0
+label_min_width = 36
+show_glyph = true
+show_value = true
+stat = "cpu_usage"
+type = "sysmon"
+visualization = "gauge"
+
+[widget.datedisp]
+color = "#f0dede94"
+font_scale = 0.94999999999999996
+font_weight = 500
+format = "{:%m/%d %A}"
+type = "clock"
+
+[widget.datetime]
+font_scale = 1.0
+font_weight = 500
+format = "{:%H:%M}   {:%m/%d %A}"
+type = "clock"
+
+[widget.disk]
+capsule = false
+color = "#f0dedecc"
+font_scale = 1.0
+label_min_width = 36
+show_glyph = true
+show_value = true
+stat = "disk_used_pct"
+type = "sysmon"
+visualization = "gauge"
+
+[widget.launcher]
+capsule = false
+type = "launcher"
+
+[widget.media]
+color = "#f0dedecc"
+font_scale = 1.0
+hide_when_no_media = true
+max_length = 170
+min_length = 60
+type = "media"
+
+[widget.network]
+capsule = false
+color = "#f0dedecc"
+show_label = false
+type = "network"
+
+[widget.nightlight]
+type = "nightlight"
+
+[widget.notifications]
+capsule = false
+color = "#f0dedecc"
+type = "notifications"
+
+[widget.privacy]
+active_color = "error"
+hide_inactive = true
+icon_spacing = 6
+inactive_color = "#f0dedecc"
+type = "privacy"
+
+[widget.ram]
+capsule = false
+color = "#f0dedecc"
+font_scale = 1.0
+label_min_width = 36
+show_glyph = true
+show_value = true
+stat = "ram_pct"
+type = "sysmon"
+visualization = "gauge"
+
+[widget.screenrec]
+color = "#f0dedecc"
+type = "noctalia/screen_recorder:recorder"
+
+[widget.screenshot]
+color = "#f0dedecc"
+glyph = "screenshot"
+type = "screenshot"
+
+[widget.session]
+capsule = false
+color = "#f0dedecc"
+type = "session"
+
+[widget.tray]
+capsule = false
+font_scale = 1.0
+type = "tray"
+
+[widget.volume]
+capsule = false
+color = "#f0dedecc"
+device = "output"
+show_label = false
+type = "volume"
+
+[widget.weather]
+color = "#209fb5"
+font_scale = 1.0
+max_length = 180
+show_condition = true
+show_temperature = true
+type = "weather"
+
+[widget.workspaces]
+capsule = false
+type = "workspaces"

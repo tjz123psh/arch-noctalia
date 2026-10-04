@@ -1,0 +1,14 @@
+// —— 窗口概览样式 ——
+
+// ── 概览：壁纸铺满 backdrop，不再是一块灰底 ──────────────────
+overview {
+    zoom 0.5
+    backdrop-color "#1b1c22"
+
+    workspace-shadow {
+        softness 30
+        spread 8
+        offset x=0 y=8
+        color "#00000060"
+    }
+}

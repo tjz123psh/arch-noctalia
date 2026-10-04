@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+printf '%s CALL smartctl %s\n' "$(date +%s.%N)" "$*" >> "${SMART_LOG:-/tmp/maintenance-review/perf/logs/smart.log}"
+[[ -n ${STUB_DELAY_SMARTCTL:-} && ${STUB_DELAY_SMARTCTL:-0} != 0 ]] && sleep "$STUB_DELAY_SMARTCTL"
+cat /tmp/maintenance-review/perf/smartctl.json

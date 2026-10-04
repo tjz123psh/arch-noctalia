@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+case "$*" in
+  *FSTYPE*) printf 'btrfs\n' ;;
+  *) printf '/ /dev/sda1[/@]\n/home /dev/sdb1[/@home]\n/mnt/data /dev/sdc1[/@data]\n' ;;
+esac

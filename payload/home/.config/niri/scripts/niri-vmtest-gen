@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# niri-vmtest-gen — 重新生成测试配置（~/.config/niri/config.kdl.vmtest）
+# VM 版：适配 conf.d 结构（主机版在宿主机 ~/scripts/desktop/niri-vmtest-gen）。
+# 用途：改过 ~/.config/niri/config.kdl / conf.d 后运行一次，刷新测试配置副本。
+# 测试配置 = config.kdl 的副本，但：全部快捷键被禁用，只保留开关键 Win+Shift+D。
+#
+# 安全网：找不到 binds include 或 `niri validate` 不通过就中止，并保留原测试配置。
+set -euo pipefail
+
+CONFIG_DIR="${NIRI_VMTEST_CONFIG_DIR:-$HOME/.config/niri}"
+NORMAL="$CONFIG_DIR/config.kdl"
+TEST="$CONFIG_DIR/config.kdl.vmtest"
+
+if [[ ! -f "$NORMAL" ]]; then
+  printf '错误: 找不到正常配置 %s\n' "$NORMAL" >&2
+  exit 1
+fi
+
+# 先写临时文件（同目录，include 相对路径才能解析），通过全部检查后再原子替换。
+TMP="$TEST.tmp.$$"
+trap 'rm -f "$TMP"' EXIT
+
+python3 - "$NORMAL" "$TMP" <<'PY'
+import re, sys
+
+src, dst = sys.argv[1], sys.argv[2]
+s = open(src, encoding='utf-8').read()
+problems = []
+
+# 注释掉 binds include（全部快捷键失效）
+s, n_include = re.subn(r'include "conf\.d/binds\.kdl"',
+                       '// 测试模式：快捷键已禁用（原 include 被注释）', s)
+if n_include != 1:
+    problems.append('未找到 include "conf.d/binds.kdl"（找到 %d 处）' % n_include)
+
+if problems:
+    for p in problems:
+        print('错误: ' + p, file=sys.stderr)
+    print('错误: %s 结构与预期不符，已中止生成（原测试配置未改动）' % src, file=sys.stderr)
+    sys.exit(1)
+
+# 追加唯一保留的开关键（指向正常配置，绝对路径）
+s += '\n// 测试模式唯一保留键：Win+Shift+D 切回正常模式\nbinds {\n    Mod+Shift+D { spawn "niri" "msg" "action" "load-config-file" "--path" "%s"; }\n}\n' % src
+
+open(dst, 'w', encoding='utf-8').write(s)
+
+# 事后自检：不得残留生效的 include，且必须含返回键
+leftover = [l for l in s.splitlines()
+            if 'include "conf.d/binds.kdl"' in l and not l.lstrip().startswith('//')]
+if leftover or 'load-config-file' not in s:
+    print('错误: 生成结果自检未通过（残留快捷键加载或缺少返回键）', file=sys.stderr)
+    sys.exit(1)
+PY
+
+if command -v niri >/dev/null 2>&1; then
+  if ! niri validate -c "$TMP" >/dev/null 2>&1; then
+    printf '错误: 生成的测试配置校验未通过，已保留原配置 %s\n' "$TEST" >&2
+    niri validate -c "$TMP" 2>&1 | tail -3 >&2
+    exit 1
+  fi
+fi
+
+mv -f "$TMP" "$TEST"
+trap - EXIT
+printf '已生成: %s\n' "$TEST"
+if command -v niri >/dev/null 2>&1; then
+  printf '配置校验: %s OK\n' "$TEST"
+fi

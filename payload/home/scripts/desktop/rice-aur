@@ -1,0 +1,36 @@
+#!/bin/bash
+# rice-aur — 从 AUR 安装 / 更新包（不依赖任何 AUR 助手）
+#
+#   rice-aur wps-office-cn          安装或更新
+#   rice-aur -s 关键词               搜索 AUR
+#
+# 说明：本机 pacman 是 7.x（libalpm.so.16），预编译的 paru-bin/yay-bin 都是给
+# pacman 6 编译的、直接不可用；从源码构建 paru/yay 又要拉 cargo/go 一整套编译链。
+# 这个脚本用 git + makepkg 就够了，零额外依赖。
+set -euo pipefail
+
+AUR=https://aur.archlinux.org
+WORK="$HOME/build/aur"
+
+if [ "${1:-}" = "-s" ]; then
+    shift
+    curl -s "$AUR/rpc/v5/search/$(printf '%s' "$*" | tr ' ' '+')?by=name" \
+      | python3 -c 'import sys,json
+d=json.load(sys.stdin)
+for r in d.get("results",[])[:25]:
+    print("%-30s %-16s votes=%-4s %s" % (r["Name"], r["Version"], r["NumVotes"], (r.get("Description") or "")[:52]))'
+    exit 0
+fi
+
+[ $# -ge 1 ] || { sed -n '2,8p' "$0"; exit 1; }
+
+mkdir -p "$WORK"
+for pkg in "$@"; do
+    echo "==> $pkg"
+    if [ -d "$WORK/$pkg/.git" ]; then
+        git -C "$WORK/$pkg" pull --ff-only
+    else
+        git clone "$AUR/$pkg.git" "$WORK/$pkg"
+    fi
+    ( cd "$WORK/$pkg" && makepkg -si --noconfirm )
+done

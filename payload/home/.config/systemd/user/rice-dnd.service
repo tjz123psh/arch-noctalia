@@ -1,0 +1,6 @@
+[Unit]
+Description=夜间免打扰：按时间切换 Noctalia DND
+
+[Service]
+Type=oneshot
+ExecStart=%h/bin/rice-dnd-auto

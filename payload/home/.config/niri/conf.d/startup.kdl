@@ -1,0 +1,19 @@
+// —— 开机自启（spawn-at-startup / spawn-sh-at-startup） ——
+
+// 桌面壳（自带壁纸与取色，故不再需要 swaybg）
+// 晚 4 秒起 Noctalia：太早的话它的 polkit 认证代理注册会失败（polkitd 还没就绪），
+// 而它不会重试 —— 结果是图形授权弹不出来。
+spawn-sh-at-startup "sleep 4; exec noctalia -d"
+spawn-at-startup "fcitx5" "-d"
+
+// U 盘自动挂载托盘（与物理机一致）
+spawn-at-startup "udiskie" "-t"
+
+// 截图快门音效服务（截图键先 arm 上膛，剪贴板出现图片即响）
+spawn-at-startup "/home/pang/scripts/desktop/screenshot-sound"
+
+// 会话环境导入 systemd 用户管理器：portal 后端（D-Bus 按需拉起）需要 WAYLAND_DISPLAY
+spawn-sh-at-startup "systemctl --user import-environment WAYLAND_DISPLAY"
+
+// 登录后按时间应用一次免打扰（定时器在会话就绪前触发的那些次会被脚本跳过）
+spawn-sh-at-startup "/home/pang/bin/rice-dnd-auto"

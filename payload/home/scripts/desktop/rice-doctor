@@ -1,0 +1,35 @@
+#!/bin/bash
+# rice-doctor — 桌面健康自检
+export XDG_RUNTIME_DIR=/run/user/1000
+sock=$(ls /run/user/1000/wayland-[0-9]* 2>/dev/null | grep -v '\.lock$' | head -1 || true)
+[ -n "$sock" ] && export WAYLAND_DISPLAY=$(basename "$sock")
+nsock=$(ls /run/user/1000/niri.wayland-*.sock 2>/dev/null | head -1 || true)
+[ -n "$nsock" ] && export NIRI_SOCKET="$nsock"
+export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+
+ok(){ printf '  ✅ %s\n' "$1"; }
+bad(){ printf '  ❌ %s\n' "$1"; }
+
+echo "== 进程 =="
+pgrep -x niri >/dev/null && ok "niri" || bad "niri 没在跑"
+pgrep -x noctalia >/dev/null && ok "noctalia" || bad "noctalia 没在跑"
+pgrep -x fcitx5 >/dev/null && ok "fcitx5（中文输入法）" || bad "fcitx5 没在跑"
+
+echo "== 用户服务 =="
+for u in pipewire wireplumber; do
+  systemctl --user is-active -q "$u" && ok "$u" || bad "$u"
+done
+
+echo "== 桌面配置 =="
+noctalia config validate ~/.local/state/noctalia/settings.toml 2>&1 | head -1 | sed 's/^/  /'
+printf '  取色源: %s\n' "$(noctalia msg color-scheme-get 2>/dev/null)"
+printf '  模式:   %s\n' "$(noctalia msg theme-mode-get 2>/dev/null)"
+printf '  壁纸:   %s\n' "$(basename "$(noctalia msg wallpaper-get 2>/dev/null)")"
+printf '  输入法: %s\n' "$(fcitx5-remote -n 2>/dev/null || echo '?')"
+
+echo "== niri =="
+niri validate -c ~/.config/niri/config.kdl 2>&1 | grep -q 'config is valid' && ok "KDL 配置有效" || bad "KDL 配置有问题"
+printf '  输出: %s\n' "$(niri msg outputs 2>/dev/null | grep 'Current mode' | head -1 | sed 's/^ *//')"
+
+echo "== 图层 =="
+niri msg layers 2>/dev/null | grep 'Namespace' | sed 's/^/  /'
