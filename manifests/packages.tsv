@@ -1,0 +1,170 @@
+# schema=1
+# package<TAB>repo<TAB>module<TAB>purpose
+# 由 tools/reconcile.sh 按 VM 现况生成；module 归类见该脚本 classify()
+7zip	extra		
+alsa-firmware	extra	audio	
+amd-ucode	core	drivers	
+archlinuxcn-keyring	archlinuxcn		
+ark	extra		
+asusctl	extra	drivers	
+baobab	extra		
+base	core		
+base-devel	core		
+bat	extra		
+bluez	extra		
+bluez-utils	extra		
+brightnessctl	extra		
+btop	extra		
+btrfs-assistant	extra		
+btrfs-progs	core		
+capitaine-cursors	extra		
+cargo-audit	extra		
+dkms	extra	drivers	
+docker	extra		
+docker-compose	extra		
+efibootmgr	core		
+evtest	extra		
+exfatprogs	extra		
+eza	extra		
+fastfetch	extra		
+fcitx5	extra	desktop	
+fcitx5-chinese-addons	extra	desktop	
+fcitx5-configtool	extra	desktop	
+fcitx5-gtk	extra	desktop	
+fcitx5-pinyin-moegirl	archlinuxcn	desktop	
+fcitx5-pinyin-zhwiki	extra	desktop	
+fcitx5-qt	extra	desktop	
+fd	extra		
+ffmpegthumbnailer	extra		
+file-roller	extra		
+firefox	extra		
+fish	extra		
+flatpak	extra		
+flclash	archlinuxcn		
+fuzzel	extra	desktop	
+fwupd	extra		
+fwupd-efi	extra		
+fzf	extra		
+git	extra		
+git-delta	extra		
+github-cli	extra		
+gnome-keyring	extra		
+gpu-screen-recorder	extra		
+greetd	extra	desktop	
+grim	extra		
+grok-build-git	archlinuxcn		
+grub	core		
+grub-btrfs	extra		
+gst-plugin-pipewire	extra		
+gvfs-dnssd	extra		
+gvfs-gphoto2	extra		
+gvfs-mtp	extra		
+gvfs-nfs	extra		
+gvfs-smb	extra		
+hyprpicker	extra		
+imagemagick	extra		
+inotify-tools	extra		
+jdk21-openjdk	extra		
+jdk8-openjdk	extra		
+jq	extra		
+keepassxc	extra		
+kitty	extra	desktop	
+lazygit	extra		
+lib32-mesa	multilib	drivers	
+lib32-nvidia-utils	multilib	drivers	
+libnotify	extra		
+libva-nvidia-driver	extra	drivers	
+libva-utils	extra		
+linux-firmware	core	drivers	
+linux-lts	core		
+linux-zen	extra		
+linux-zen-headers	extra		
+mesa	extra	drivers	
+mesa-utils	extra	drivers	
+mkinitcpio	core		
+mpv	extra		
+mpv-mpris	extra		
+nautilus-image-converter	extra		
+nautilus-python	extra		
+neovide	extra		
+neovim	extra		
+networkmanager	extra		
+niri	extra	desktop	
+noctalia	extra	desktop	
+nodejs	extra		
+nomacs	archlinuxcn		
+noto-fonts	extra		
+noto-fonts-cjk	extra		
+noto-fonts-emoji	extra		
+npm	extra		
+nvidia-open-dkms	extra	drivers	
+nvidia-prime	extra	drivers	
+nvidia-settings	extra	drivers	
+nvidia-utils	extra	drivers	
+nwg-hello	extra	desktop	
+nwg-look	extra		
+open-vm-tools	extra	vmware-guest	
+opencv	extra		
+openssh	core		
+os-prober	extra		
+pacman-contrib	extra		
+papirus-icon-theme	extra		
+paru	archlinuxcn		
+pipewire	extra		
+pipewire-alsa	extra		
+pipewire-jack	extra		
+pipewire-pulse	extra		
+playerctl	extra		
+poppler	extra		
+power-profiles-daemon	extra		
+powertop	extra		
+qt6ct	extra		
+quazip-qt6	extra		
+rclone	extra		
+reflector	extra		
+resources	extra		
+ripgrep	extra		
+rog-control-center	extra	drivers	
+rsync	extra		
+rustup	extra		
+seatd	extra		
+shellcheck	extra		
+slurp	extra		
+smartmontools	extra		
+snap-pac	extra		
+snapper	extra		
+sof-firmware	extra	audio	
+starship	extra		
+sudo	core		
+supergfxctl	archlinuxcn	drivers	
+sushi	extra		
+tmux	extra		
+transmission-gtk	extra		
+ttf-cascadia-code-nerd	extra		
+ttf-material-symbols-variable	extra		
+ttf-nunito	extra		
+udiskie	extra		
+uefitool	archlinuxcn		
+upower	extra		
+vulkan-mesa-implicit-layers	extra		
+vulkan-mesa-layers	extra		
+vulkan-radeon	extra	drivers	
+vulkan-tools	extra	drivers	
+wayland-protocols	extra		
+wayland-utils	extra		
+wf-recorder	extra		
+wireplumber	extra		
+wl-clipboard	extra		
+wpa_supplicant	core		
+wtype	extra		
+xdg-desktop-portal	extra	desktop	
+xdg-desktop-portal-gnome	extra	desktop	
+xdg-desktop-portal-gtk	extra	desktop	
+xdg-terminal-exec	extra		
+xorg-mkfontscale	extra		
+xwayland-satellite	extra	desktop	
+yazi	extra		
+yt-dlp	extra		
+zellij	extra		
+zoxide	extra		
+zram-generator	extra		
