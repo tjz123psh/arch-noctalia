@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+name="$(basename "$0")"
+delay_var="STUB_DELAY_$(echo "$name" | tr 'a-z-' 'A-Z_')"
+delay="${!delay_var:-}"
+log="${STUB_LOG:-/tmp/maintenance-review/perf/logs/stub.log}"
+printf '%s START %s %s\n' "$(date +%s.%N)" "$name" "$$" >> "$log"
+[[ -n "$delay" && "$delay" != "0" ]] && sleep "$delay"
+printf '%s END   %s %s\n' "$(date +%s.%N)" "$name" "$$" >> "$log"

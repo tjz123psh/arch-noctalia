@@ -1,0 +1,7 @@
+// —— 鼠标指针 ——
+
+// 指针主题（2026-10-03 统一：capitaine，与 GTK/登录界面一致）
+cursor {
+    xcursor-theme "capitaine-cursors"
+    xcursor-size 24
+}

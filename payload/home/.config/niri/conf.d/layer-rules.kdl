@@ -1,0 +1,105 @@
+// —— 图层规则（Noctalia 面板/背景模糊等） ——
+
+// ══════════════════════════════════════════════════════════════
+//  layer-rule：给桌面壳的图层单独开毛玻璃
+//  namespace 来自 `niri msg layers`（实测 26.04 下的真实值）：
+//    noctalia-bar-default       顶栏            (top)
+//    noctalia-panel             面板/控制中心    (overlay)
+//    noctalia-panel-click-shield 点击拦截层（故意不模糊）
+//    noctalia-wallpaper         壁纸层（不模糊）
+// ══════════════════════════════════════════════════════════════
+
+// 顶栏：半透明圆角卡片 + 毛玻璃 + 柔和阴影
+layer-rule {
+    match namespace="^noctalia-bar-default$"
+
+    background-effect {
+        xray true
+        blur true
+        noise 0.02
+        saturation 1.15
+    }
+}
+
+// 面板 / 控制中心 / 启动器：更厚的毛玻璃 + 更大圆角
+// ⚠ 面板的真实 namespace 是 noctalia-attached-panel（attached 模式）。
+//   不能写成 ^noctalia-panel —— 那会连 "noctalia-panel-click-shield" 一起匹配，
+//   而那是全屏点击拦截层，被模糊+加阴影后，一点顶栏部件整屏（含顶栏）就发糊发暗。
+layer-rule {
+    match namespace="^noctalia-attached-panel"
+
+    // ⚠ 这里不要加 shadow / geometry-corner-radius。
+    //   面板的 layer surface 比可见内容大（含不可见留白），niri 只能按整块 surface 画阴影，
+    //   于是内容之外会浮出一个大圆角描边 —— 就是"打开菜单有两层"的原因。
+    //   Noctalia 自己会给面板画阴影（[shell.panel] shadow），不需要 niri 再画一层。
+    background-effect {
+        xray true
+        blur true
+        noise 0.025
+        saturation 1.2
+    }
+}
+
+// 浮动模式下的面板（万一以后把 *_placement 改成 floating）
+layer-rule {
+    match namespace="^noctalia-panel$"
+    background-effect {
+        xray true
+        blur true
+        noise 0.025
+        saturation 1.2
+    }
+
+}
+
+// 点击拦截层：全屏透明层，明确禁止模糊 —— 保证点顶栏部件时顶栏依旧清晰
+layer-rule {
+    match namespace="^noctalia-panel-click-shield$"
+
+    background-effect {
+        blur false
+    }
+}
+
+// fuzzel 启动器（Mod+D）：毛玻璃。实测 namespace = "launcher"，overlay 层。
+layer-rule {
+    match namespace="^launcher$"
+
+    background-effect {
+        xray true
+        blur true
+        noise 0.02
+        saturation 1.15
+    }
+}
+
+// dock：⚠ 不加任何 background-effect。
+// dock 自动隐藏时表面仍映射，niri 的 blur（xray 开/关都一样）会在隐藏后残留
+// 一块"模糊圆角矩形"鬼影（用户两次反馈）；dock 自身 0.75 不透明度 + 阴影已够用。
+layer-rule {
+    match namespace="^noctalia-dock$"
+
+    background-effect {
+        blur false
+    }
+}
+
+// 桌面部件（时钟/天气等，bottom 层；namespace 形如 noctalia-desktop-widget-*）
+layer-rule {
+    match namespace="^noctalia-desktop-widget-"
+
+    background-effect {
+        xray true
+        blur true
+        noise 0.02
+        saturation 1.1
+    }
+}
+
+// 概览背景：把 Noctalia 的 backdrop 层（壁纸的模糊+着色副本）放进 backdrop
+// 这样概览里看到的是一整张壁纸，而不是 niri 默认的纯灰底
+layer-rule {
+    match namespace="^noctalia-backdrop"
+
+    place-within-backdrop true
+}

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+printf '%s CALL btrfs %s\n' "$(date +%s.%N)" "$*" >> "${SMART_LOG:-/tmp/maintenance-review/perf/logs/smart.log}"
+[[ -n ${STUB_DELAY_BTRFS:-} && ${STUB_DELAY_BTRFS:-0} != 0 ]] && sleep "$STUB_DELAY_BTRFS"
+case "$*" in
+  *"device stats"*) printf '[/dev/sda].write_io_errs    0\n[/dev/sda].read_io_errs     0\n[/dev/sda].flush_io_errs    0\n[/dev/sda].corruption_errs  0\n[/dev/sda].generation_errs  0\n' ;;
+  *"scrub status"*) printf 'scrub status for a1b2c3d4\n\tscrub started on 2026-08-01\n\tno errors found\n' ;;
+esac

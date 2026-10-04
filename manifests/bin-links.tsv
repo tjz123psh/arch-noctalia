@@ -1,0 +1,18 @@
+# schema=1
+# link_name<TAB>target（target 为相对 $HOME 的路径）
+fuzzel-askpass	scripts/desktop/fuzzel-askpass
+gsudo	scripts/desktop/gsudo
+niri-force-kill-window	.config/niri/scripts/niri-force-kill-window
+niri-quit	.config/niri/scripts/niri-quit
+niri-touchpad-toggle	.config/niri/scripts/niri-touchpad-toggle
+niri-vmtest-gen	.config/niri/scripts/niri-vmtest-gen
+rice-aur	scripts/desktop/rice-aur
+rice-dnd-auto	scripts/desktop/rice-dnd-auto
+rice-doctor	scripts/desktop/rice-doctor
+rice-fix-wallpaper	scripts/desktop/rice-fix-wallpaper
+rice-login-bg	scripts/desktop/rice-login-bg
+rice-record	scripts/desktop/rice-record
+rice-wallpaper	scripts/desktop/rice-wallpaper
+screenshot-clipboard	scripts/desktop/screenshot-clipboard
+screenshot-sound	scripts/desktop/screenshot-sound
+wlrun	scripts/desktop/wlrun

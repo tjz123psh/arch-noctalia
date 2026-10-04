@@ -1,0 +1,19 @@
+id = "pang/magnifier"
+name = "Magnifier（屏幕放大镜）"
+version = "1.0.0"
+plugin_api = 32
+author = "pang"
+license = "MIT"
+description = "屏幕放大镜：面板开在鼠标处、画面跟随鼠标实时移动；± 缩放、方向键平移、定格/跟随，点击或 Esc 退出。"
+icon = "zoom-in"
+tags = ["custom", "utility", "panel"]
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 660
+height = 500
+placement = "floating"
+position = "top_right"
+keyboard_focus = "exclusive"
+capture_keys = ["Escape", "equal", "plus", "minus", "0", "r", "l", "space", "p", "Up", "Down", "Left", "Right", "Shift+equal", "KP_Add", "KP_Subtract"]

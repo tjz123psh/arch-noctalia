@@ -1,0 +1,25 @@
+# schema=1
+# kind<TAB>item<TAB>reason
+# kind：package | file | dir | pattern
+# 说明：本清单 = 声明的排除项（样本采集与包对账共用）。任何"未解释"的差异都应该在这里被解释。
+file	/home/pang/.config/fish/conf.d/proxy-env.fish	凭据：代理环境变量文件（不入公开仓库）
+file	/home/pang/.config/pulse/cookie	安全：PulseAudio cookie
+dir	/home/pang/.config/keepassxc	安全：密码库配置
+dir	/home/pang/.config/rclone	安全：云同步凭据目录
+dir	/home/pang/.config/gh	安全：GitHub token（hosts.yml）
+dir	/home/pang/.ssh	安全：SSH 私钥
+dir	/home/pang/.gnupg	安全：GnuPG 密钥环
+dir	/home/pang/.pki	安全：证书库
+dir	/home/pang/.config/mozilla	应用数据（重装后自行登录生成）
+dir	/home/pang/.config/obsidian	应用数据（笔记库在 ~/obsidian + 云同步）
+dir	/home/pang/.config/dconf	二进制 dconf 数据库（后续以 dconf load 方式另行处理）
+dir	/home/pang/.config/transmission	应用数据（torrent 状态；首用配置即可）
+dir	/home/pang/.config/ibus	未使用（现役输入法为 fcitx5）
+dir	/home/pang/.config/fcitx	旧版 fcitx4 残留
+file	/home/pang/.config/niri/config.kdl.vmtest	生成物（niri-vmtest-gen 产出）
+file	/home/pang/.config/fcitx5/conf/cached_layouts	生成缓存（fcitx5 自建）
+pattern	*.bak-* / *.bak / *.orig	历史备份（不入仓）
+pattern	*.vmtest	生成物
+pattern	build/（插件 tools 下）	构建产物（由 09 步重建）
+pattern	__pycache__/、*.pyc	缓存
+pattern	/home/pang/.local/state/noctalia/plugins/**	插件运行数据（materialized/data；由插件系统重建）

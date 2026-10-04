@@ -1,0 +1,16 @@
+# schema=1
+# package<TAB>channel<TAB>role<TAB>purpose
+# channel: 同步库名（如 archlinuxcn）=有二进制、优先 pacman 装；aur=需 AUR 构建（paru）
+# role: explicit | dependency
+dbx-bin	aur	explicit	
+linuxqq-nt-bwrap	aur	explicit	
+obsidian-bin	aur	explicit	
+opencode-bin	aur	explicit	
+snapd-xdg-open-git	aur	dependency	
+ttf-wps-fonts	aur	explicit	
+vmware-keymaps	aur	explicit	
+vmware-workstation	aur	explicit	
+wechat-universal-bwrap	aur	explicit	
+wps-office-cn	aur	explicit	
+wps-office-mime-cn	aur	explicit	
+wps-office-mui-zh-cn	aur	explicit	

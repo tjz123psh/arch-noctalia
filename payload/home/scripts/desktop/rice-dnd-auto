@@ -1,0 +1,30 @@
+#!/bin/bash
+# rice-dnd-auto — 夜间自动免打扰：23:30 之后到次日 07:00 之间开 DND，其余时间关
+set -u
+
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+# noctalia msg 需要 WAYLAND_DISPLAY，systemd 用户服务里可能没有，这里自己找
+if [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    sock=$(ls "$XDG_RUNTIME_DIR"/wayland-[0-9]* 2>/dev/null | grep -v '\.lock$' | head -1)
+    [ -n "$sock" ] && export WAYLAND_DISPLAY=$(basename "$sock")
+fi
+
+# 等 Noctalia 起来（最多约 30 秒）：开机补偿执行 / 会话刚启动时它可能还没就绪
+for _ in 1 2 3 4 5 6; do
+    pgrep -x noctalia >/dev/null 2>&1 && break
+    sleep 5
+done
+
+if ! pgrep -x noctalia >/dev/null 2>&1; then
+    # Noctalia 不在（例如开机补偿先于会话启动）：不报错，会话启动时会补设一次
+    logger -t rice-dnd-auto "noctalia not running; skip this run"
+    exit 0
+fi
+
+hour=$(date +%H)
+if [ "$hour" -ge 23 ] || [ "$hour" -lt 7 ]; then
+    noctalia msg notification-dnd-set on
+else
+    noctalia msg notification-dnd-set off
+fi

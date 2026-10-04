@@ -1,0 +1,24 @@
+
+[Default Applications]
+inode/directory=org.gnome.Nautilus.desktop
+image/png=org.nomacs.ImageLounge.desktop
+image/jpeg=org.nomacs.ImageLounge.desktop
+image/gif=org.nomacs.ImageLounge.desktop
+image/webp=org.nomacs.ImageLounge.desktop
+application/pdf=wps-office-pdf.desktop
+application/zip=org.kde.ark.desktop
+application/x-7z-compressed=org.kde.ark.desktop
+application/x-tar=org.kde.ark.desktop
+application/x-rar=org.kde.ark.desktop
+application/x-compressed-tar=org.kde.ark.desktop
+text/plain=nvim.desktop
+text/markdown=nvim.desktop
+audio/mpeg=mpv.desktop
+audio/flac=mpv.desktop
+audio/ogg=mpv.desktop
+audio/x-wav=mpv.desktop
+audio/mp4=mpv.desktop
+image/bmp=org.nomacs.ImageLounge.desktop
+image/tiff=org.nomacs.ImageLounge.desktop
+image/svg+xml=org.nomacs.ImageLounge.desktop
+application/x-zerosize=nvim.desktop

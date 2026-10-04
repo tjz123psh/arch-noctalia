@@ -1,0 +1,288 @@
+// —— 快捷键（2026-10-03 移植自宿主机 DMS 方案；文末注释=待脚本项） ——
+
+binds {
+    // ═══ 快捷键方案：移植自宿主机 DMS 版（2026-10-03）；脚本类条目见文末「待脚本移植」═══
+
+    // ===== 系统工具 =====
+
+    // Ctrl+Alt+Delete: 打开任务管理器（btop）
+    Ctrl+Alt+Delete hotkey-overlay-title="任务管理器" { spawn "kitty" "--class" "btop" "-e" "btop"; }
+
+    // --- 应用启动器 ---
+    // Ctrl+M: 打开 fuzzel 应用启动器（美化版，两会话通用）
+    Ctrl+M hotkey-overlay-title="fuzzel 启动器" { spawn "fuzzel"; }
+    // Super+O: 打开或关闭 Noctalia 应用启动器（类似 Spotlight，搜索程序/文件）
+    Mod+O hotkey-overlay-title="应用启动器" { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+
+    // --- Noctalia 工具（使用 Super 键） ---
+    // Super+Alt+L: 锁定屏幕
+    Mod+Alt+L hotkey-overlay-title="锁定屏幕" { spawn "noctalia" "msg" "session" "lock"; }
+    // Super+,: 打开 Noctalia 设置
+    Mod+Comma hotkey-overlay-title="系统设置" { spawn "noctalia" "msg" "settings-toggle"; }
+    // Super+M: 打开任务管理器（btop）
+    Mod+M hotkey-overlay-title="任务管理器" { spawn "kitty" "--class" "btop" "-e" "btop"; }
+    // Super+N: 打开/关闭通知中心
+    Mod+N hotkey-overlay-title="通知中心" { spawn "noctalia" "msg" "panel-toggle" "control-center" "notifications"; }
+    // Super+Shift+N: 打开/关闭记事本
+    Mod+Shift+N hotkey-overlay-title="侧栏面板（便签）" { spawn "noctalia" "msg" "panel-toggle" "pang/sidebar:panel"; }
+    // Super+V: 打开/关闭剪贴板管理器
+    Mod+V hotkey-overlay-title="剪贴板" { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
+    // Super+Y: 浏览/更换壁纸
+    Mod+Y hotkey-overlay-title="更换壁纸" { spawn "noctalia" "msg" "panel-toggle" "wallpaper"; }
+    // Super+X: 打开电源菜单（关机/重启/休眠等）
+    Super+X hotkey-overlay-title="电源菜单" { spawn "noctalia" "msg" "panel-toggle" "session"; }
+    // Super+E: 打开文件管理器（nautilus）
+    Mod+E hotkey-overlay-title="文件管理器" { spawn "nautilus"; }
+    // Super+Shift+C: 打开维护终端菜单
+
+    // ===== 音频（媒体键，即使锁屏也可用） =====
+
+    // 调低音量 3%
+    XF86AudioLowerVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-down"; }
+    // 麦克风静音切换
+    XF86AudioMicMute allow-when-locked=true { spawn "noctalia" "msg" "mic-mute"; }
+    // 静音切换
+    XF86AudioMute allow-when-locked=true { spawn "noctalia" "msg" "volume-mute"; }
+    // 下一曲
+    XF86AudioNext allow-when-locked=true { spawn "noctalia" "msg" "media" "next"; }
+    // 暂停/播放
+    XF86AudioPause allow-when-locked=true { spawn "noctalia" "msg" "media" "toggle"; }
+    // 播放（同暂停）
+    XF86AudioPlay allow-when-locked=true { spawn "noctalia" "msg" "media" "toggle"; }
+    // 上一曲
+    XF86AudioPrev allow-when-locked=true { spawn "noctalia" "msg" "media" "previous"; }
+    // 调高音量 3%
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-up"; }
+
+    // 触摸板开关（Fn+F10 / XF86TouchpadToggle；改写 touchpad-state.kdl 的 off 行后重载配置）
+    XF86TouchpadToggle allow-when-locked=true hotkey-overlay-title="开关触摸板" { spawn "/home/pang/.config/niri/scripts/niri-touchpad-toggle"; }
+
+    // ===== 工作区切换（使用 Alt 键） =====
+    // 原为 Super+1~9，已改为 Alt+1~9
+
+    // Alt+1~9: 切换到工作区 1~9
+    Alt+1 { focus-workspace 1; }
+    Alt+2 { focus-workspace 2; }
+    Alt+3 { focus-workspace 3; }
+    Alt+4 { focus-workspace 4; }
+    Alt+5 { focus-workspace 5; }
+    Alt+6 { focus-workspace 6; }
+    Alt+7 { focus-workspace 7; }
+    Alt+8 { focus-workspace 8; }
+    Alt+9 { focus-workspace 9; }
+
+    // --- 移动窗口到工作区 ---
+    // 原为 Super+Shift+1~9，已改为 Alt+Shift+1~9
+    // 将当前窗口/列移动到指定工作区
+
+    Alt+Shift+1 { move-column-to-workspace 1; }
+    Alt+Shift+2 { move-column-to-workspace 2; }
+    Alt+Shift+3 { move-column-to-workspace 3; }
+    Alt+Shift+4 { move-column-to-workspace 4; }
+    Alt+Shift+5 { move-column-to-workspace 5; }
+    Alt+Shift+6 { move-column-to-workspace 6; }
+    Alt+Shift+7 { move-column-to-workspace 7; }
+    Alt+Shift+8 { move-column-to-workspace 8; }
+    Alt+Shift+9 { move-column-to-workspace 9; }
+
+    // ===== 工作区导航（保持使用 Super 键） =====
+    // 这些用于在当前工作区之间上下切换
+
+    // Super+Ctrl+I/U: 将当前列移到上方/下方工作区
+    Mod+Ctrl+I hotkey-overlay-title="将当前列移到上方工作区" { move-column-to-workspace-up; }
+    Mod+Ctrl+U hotkey-overlay-title="将当前列移到下方工作区" { move-column-to-workspace-down; }
+    // Super+Ctrl+滚轮: 将当前列移到下方/上方工作区（滚轮版）
+    Mod+Ctrl+WheelScrollDown cooldown-ms=150 hotkey-overlay-title="将当前列移到下方工作区" { move-column-to-workspace-down; }
+    Mod+Ctrl+WheelScrollUp cooldown-ms=150 hotkey-overlay-title="将当前列移到上方工作区" { move-column-to-workspace-up; }
+    // Super+I: 切换到上方工作区
+    Mod+I hotkey-overlay-title="切换到上方工作区" { focus-workspace-up; }
+    // Super+U: 切换到下方工作区
+    Mod+U hotkey-overlay-title="切换到下方工作区" { focus-workspace-down; }
+    // Super+Shift+I/U: 上下移动整个工作区（重新排序）
+    Mod+Shift+I hotkey-overlay-title="上下移动整个工作区" { move-workspace-up; }
+    Mod+Shift+U hotkey-overlay-title="上下移动整个工作区" { move-workspace-down; }
+    // Super+Shift+滚轮: 上下切换工作区（在滚轮导航段定义）
+
+    // ===== 截图 =====（Mod+Print 系列 vellum 待脚本移植）
+
+    // Alt+Print: 截取当前窗口
+    Alt+Print hotkey-overlay-title="截取窗口" { spawn-sh "/home/pang/scripts/desktop/screenshot-sound arm; /home/pang/scripts/desktop/screenshot-clipboard window"; }
+    // Ctrl+Print: 截取整个屏幕
+    Ctrl+Print hotkey-overlay-title="截取屏幕" { spawn-sh "/home/pang/scripts/desktop/screenshot-sound arm; noctalia msg screenshot-fullscreen"; }
+    // Print: 截图（可框选区域，打开截图 UI）
+    Print hotkey-overlay-title="截图" { spawn-sh "/home/pang/scripts/desktop/screenshot-sound arm; noctalia msg screenshot-region"; }
+
+    // ===== 窗口操作 =====
+
+    // --- 关闭窗口 ---
+    // Alt+Q: 关闭当前窗口（原为 Super+Q）
+    Alt+Q repeat=false hotkey-overlay-title="关闭当前窗口" { close-window; }
+    // Alt+F4 / Alt+Shift+F4: 强杀窗口 / 连进程树（鼠标点击目标）
+    Alt+F4 hotkey-overlay-title="强杀窗口" repeat=false { spawn "/home/pang/.config/niri/scripts/niri-force-kill-window"; }
+    Alt+Shift+F4 hotkey-overlay-title="强杀进程树" repeat=false { spawn "/home/pang/.config/niri/scripts/niri-force-kill-window" "-f"; }
+
+    // --- 最大化/全屏 ---
+    // Alt+F: 最大化当前列（宽度占满屏幕，原为 Super+F）
+    Alt+F hotkey-overlay-title="最大化当前列" { maximize-column; }
+    // Super+Shift+F: 全屏显示当前窗口（隐藏所有边框）
+    Mod+Shift+F hotkey-overlay-title="全屏显示当前窗口" { fullscreen-window; }
+
+    // --- 收/放窗口 ---
+    // Alt+[: 当前窗口向左并列 / 或向左弹出
+    Alt+BracketLeft hotkey-overlay-title="当前窗口向左并排 / 或向左弹出" { consume-or-expel-window-left; }
+    // Alt+]: 当前窗口向右并列 / 或向右弹出
+    Alt+BracketRight hotkey-overlay-title="当前窗口向右并排 / 或向右弹出" { consume-or-expel-window-right; }
+
+    // --- 终端 ---
+    // Alt+Enter: 打开终端（kitty，原为 Super+Enter）
+    Alt+Return hotkey-overlay-title="打开终端" { spawn "kitty" "-e" "fish"; }
+    // Alt+Slash: 临时浮动终端（独立实例，不干扰当前工作区布局）
+    Alt+Slash hotkey-overlay-title="浮动终端" { spawn "kitty" "--single-instance" "--class" "quickterminal"; }
+
+    // --- 居中/展开列 ---
+    // Super+C: 居中当前列
+    Mod+C hotkey-overlay-title="居中当前列" { center-column; }
+    // Super+Ctrl+C: 居中所有可见列
+    Mod+Ctrl+C hotkey-overlay-title="居中所有可见列" { center-visible-columns; }
+    // Super+Ctrl+F: 将当前列展开到屏幕可用宽度
+    Mod+Ctrl+F hotkey-overlay-title="将当前列展开到屏幕可用宽度" { expand-column-to-available-width; }
+
+    // --- 跳到首/末列 ---
+    // Super+Home: 跳到第一列
+    Mod+Home hotkey-overlay-title="跳到第一列" { focus-column-first; }
+    // Super+End: 跳到最后一列
+    Mod+End hotkey-overlay-title="跳到最后一列" { focus-column-last; }
+    // Super+Ctrl+Home: 将当前列移到最左边
+    Mod+Ctrl+Home hotkey-overlay-title="将当前列移到最左边" { move-column-to-first; }
+    // Super+Ctrl+End: 将当前列移到最右边
+    Mod+Ctrl+End hotkey-overlay-title="将当前列移到最右边" { move-column-to-last; }
+
+    // --- 标签和浮动 ---
+    // Super+W: 切换当前列的标签页显示模式（窗口变标签）
+    Mod+W hotkey-overlay-title="切换当前列的标签页显示模式" { toggle-column-tabbed-display; }
+    // Super+Shift+T: 切换当前窗口是否浮动（浮动窗口可自由拖动）
+    Mod+Shift+T hotkey-overlay-title="切换当前窗口是否浮动" { toggle-window-floating; }
+    // Super+Shift+V: 切换焦点到浮动/平铺窗口
+    Mod+Shift+V hotkey-overlay-title="切换焦点到浮动/平铺窗口" { switch-focus-between-floating-and-tiling; }
+
+    // --- 列宽与高度预设 ---
+    // Super+R: 循环切换列宽预设（1/3, 1/2, 2/3）
+    Mod+R hotkey-overlay-title="循环切换列宽预设" { switch-preset-column-width; }
+    // Super+Shift+R: 循环切换窗口高度预设
+    Mod+Shift+R hotkey-overlay-title="循环切换窗口高度预设" { switch-preset-window-height; }
+    // Super+Ctrl+R: 重置窗口高度（恢复默认）
+    Mod+Ctrl+R hotkey-overlay-title="重置窗口高度" { reset-window-height; }
+
+    // --- 弹出窗口 ---
+    // Super+.: 将当前窗口弹出一列（取消合并）
+    Mod+Period hotkey-overlay-title="将当前窗口弹出一列" { expel-window-from-column; }
+
+    // --- 显示器待机 ---
+    // Super+Shift+P: 关闭显示器（进入待机）
+    Mod+Shift+P hotkey-overlay-title="关闭显示器" { power-off-monitors; }
+
+    // ===== 焦点移动（使用 Alt 键，Vim 风格） =====
+    // 原为 Super+H/J/K/L 和 Super+方向键，已改为 Alt 版
+    // 用于在窗口/列之间移动焦点
+
+    // Alt+H: 焦点移到左边一列
+    Alt+H hotkey-overlay-title="焦点移到左边一列" { focus-column-left; }
+    // Alt+J: 焦点移到同一列的下一个窗口
+    Alt+J hotkey-overlay-title="焦点移到同一列的下一个窗口" { focus-window-down; }
+    // Alt+K: 焦点移到同一列的上一个窗口
+    Alt+K hotkey-overlay-title="焦点移到同一列的上一个窗口" { focus-window-up; }
+    // Alt+L: 焦点移到右边一列
+    Alt+L hotkey-overlay-title="焦点移到右边一列" { focus-column-right; }
+
+    // ===== 移动窗口/列（Alt+Shift + Vim 键） =====
+    // 原为 Super+Shift+H/J/K/L 和方向键，已改为 Alt+Shift 版
+    // 用于移动窗口/列的位置（重新排列）
+
+    // Alt+Shift+H: 将当前列向左移动
+    Alt+Shift+H hotkey-overlay-title="将当前列向左移动" { move-column-left; }
+    // Alt+Shift+J: 将当前窗口向下移动
+    Alt+Shift+J hotkey-overlay-title="将当前窗口向下移动" { move-window-down; }
+    // Alt+Shift+K: 将当前窗口向上移动
+    Alt+Shift+K hotkey-overlay-title="将当前窗口向上移动" { move-window-up; }
+    // Alt+Shift+L: 将当前列向右移动
+    Alt+Shift+L hotkey-overlay-title="将当前列向右移动" { move-column-right; }
+
+    // ===== 调整窗口大小（使用 Super 键） =====
+
+    // Super+-: 列宽减少 10%
+    Mod+Minus hotkey-overlay-title="列宽减少 10%" { set-column-width "-10%"; }
+    // Super+=: 列宽增加 10%
+    Mod+Equal hotkey-overlay-title="列宽增加 10%" { set-column-width "+10%"; }
+    // Super+Shift+-: 窗口高度减少 10%
+    Mod+Shift+Minus hotkey-overlay-title="窗口高度减少 10%" { set-window-height "-10%"; }
+    // Super+Shift+=: 窗口高度增加 10%
+    Mod+Shift+Equal hotkey-overlay-title="窗口高度增加 10%" { set-window-height "+10%"; }
+
+    // ===== 显示器切换（使用 Super+Ctrl 键） =====
+
+    // 焦点移到另一台显示器上的列/窗口
+    // Super+Ctrl+H: 左侧显示器
+    Mod+Ctrl+H { focus-monitor-left; }
+    // Super+Ctrl+J: 下方显示器
+    Mod+Ctrl+J { focus-monitor-down; }
+    // Super+Ctrl+K: 上方显示器
+    Mod+Ctrl+K { focus-monitor-up; }
+    // Super+Ctrl+L: 右侧显示器
+    Mod+Ctrl+L { focus-monitor-right; }
+
+    // 将当前列移到另一台显示器
+    // Super+Shift+Ctrl+H/J/K/L: 移到方向对应的显示器
+    Mod+Shift+Ctrl+H { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+J { move-column-to-monitor-down; }
+    Mod+Shift+Ctrl+K { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+L { move-column-to-monitor-right; }
+
+    // ===== 鼠标滚轮导航（使用 Super 键） =====
+
+    // Super+滚轮左右: 左右切换列焦点
+    Mod+WheelScrollLeft hotkey-overlay-title="左右切换列焦点" { focus-column-left; }
+    Mod+WheelScrollRight hotkey-overlay-title="左右切换列焦点" { focus-column-right; }
+    // Super+滚轮上下: 左右切换列焦点
+    Mod+WheelScrollDown cooldown-ms=150 hotkey-overlay-title="左右切换列焦点" { focus-column-right; }
+    Mod+WheelScrollUp cooldown-ms=150 hotkey-overlay-title="左右切换列焦点" { focus-column-left; }
+    // Super+Shift+滚轮上下: 上下切换工作区
+    Mod+Shift+WheelScrollDown cooldown-ms=150 hotkey-overlay-title="上下切换工作区" { focus-workspace-down; }
+    Mod+Shift+WheelScrollUp cooldown-ms=150 hotkey-overlay-title="上下切换工作区" { focus-workspace-up; }
+    // Super+Ctrl+Shift+滚轮上下: 移动列到左/右
+    Mod+Ctrl+Shift+WheelScrollDown hotkey-overlay-title="移动列到左/右" { move-column-right; }
+    Mod+Ctrl+Shift+WheelScrollUp hotkey-overlay-title="移动列到左/右" { move-column-left; }
+    // Super+Ctrl+滚轮左右: 移动列到左/右
+    Mod+Ctrl+WheelScrollLeft hotkey-overlay-title="移动列到左/右" { move-column-left; }
+    Mod+Ctrl+WheelScrollRight hotkey-overlay-title="移动列到左/右" { move-column-right; }
+
+    // ===== 系统 =====
+
+    // Super+Shift+E: 退出确认菜单（niri-quit，默认选中“取消”）
+    Mod+Shift+E hotkey-overlay-title="退出 Niri 会话" { spawn-sh "$HOME/.config/niri/scripts/niri-quit"; }
+    // Super+Shift+D: 测试模式开关（加载快捷键全禁的测试配置，再按一次返回）
+    Mod+Shift+D hotkey-overlay-title="测试模式（禁全部快捷键）" { spawn "niri" "msg" "action" "load-config-file" "--path" "/home/pang/.config/niri/config.kdl.vmtest"; }
+    // Super+D: 打开/关闭窗口概览（所有窗口一览）
+    Mod+D repeat=false hotkey-overlay-title="打开/关闭窗口概览" { toggle-overview; }
+    // Super+Esc: 切换快捷键抑制模式（临时禁用 niri 快捷键，方便在虚拟机/游戏中使用）
+    Mod+Escape allow-inhibiting=false hotkey-overlay-title="切换快捷键抑制模式" { toggle-keyboard-shortcuts-inhibit; }
+    // Super+Shift+/: 快捷键速查（kitty + fzf：可搜索、分组着色；原版浮层已弃用）
+    Mod+Shift+Slash hotkey-overlay-title="快捷键速查" { spawn-sh "exec ~/.local/bin/niri-keys"; }
+    // Super+Tab: 打开/关闭窗口概览（同 Super+D）
+    Mod+Tab repeat=false hotkey-overlay-title="打开/关闭窗口概览" { toggle-overview; }
+
+    // ===== 录屏与取色 =====
+    Alt+Shift+D hotkey-overlay-title="录屏开关（gpu-screen-recorder）" { spawn "/home/pang/bin/rice-record"; }
+    Alt+Shift+C hotkey-overlay-title="取色器（屏幕拾色）" { spawn "noctalia" "msg" "plugin" "oldirtty/color_picker:service" "all" "pick"; }
+
+    // ===== 待脚本移植（对照主机，暂未绑定） =====
+    // Ctrl+Shift+R  重命名工作区（niri 有 set-workspace-name，待 fuzzel 提示脚本）
+    // Mod+Shift+W   创建窗口规则（DMS 图形编辑器；niri 侧手写规则）
+    // Super+Shift+C: 打开维护终端菜单
+    Mod+Shift+C hotkey-overlay-title="维护菜单" { spawn-sh "kitty --class=term-menu --override initial_window_width=1600 --override initial_window_height=1000 -e $HOME/scripts/maintenance/term-menu"; }
+    // Alt+B  B站播放（b23 脚本）
+    Alt+A hotkey-overlay-title="放大镜" { spawn-sh "noctalia msg panel-toggle pang/magnifier:panel"; }
+    // Alt+F5 录屏菜单（shorin-screenrec-menu 脚本）
+    // Mod+Print / Mod+Shift+Print / Mod+Ctrl+Print  vellum 框选 / 长截图 / 钉图（vellumctl）
+    // Ctrl+XF86AudioLowerVolume / Ctrl+XF86AudioRaiseVolume  媒体音量微调（需 playerctl 小脚本）
+}
+

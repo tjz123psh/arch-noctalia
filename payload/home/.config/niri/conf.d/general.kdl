@@ -1,0 +1,6 @@
+// —— 全局选项（prefer-no-csd / screenshot-path） ——
+
+prefer-no-csd
+
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+

@@ -1,0 +1,66 @@
+// —— 窗口规则（圆角/毛玻璃/浮动等） ——
+
+// ── 全局窗口规则：20–28px 圆角 + 毛玻璃 ──────────────────────
+window-rule {
+    geometry-corner-radius 24
+    clip-to-geometry true
+
+    background-effect {
+        xray true
+        blur true
+        noise 0.02
+        saturation 1.15
+    }
+}
+
+// 终端：更透一点，文字更锐
+window-rule {
+    match app-id=r#"^(foot|Alacritty|kitty|quickterminal|btop|org\.wezfurlong\.wezterm)$"#
+    geometry-corner-radius 24
+    clip-to-geometry true
+    background-effect {
+        xray true
+        blur true
+        noise 0.015
+        saturation 1.25
+    }
+}
+
+// 浮动终端（Alt+/ 呼出；与主机 quickterminal 规则一致）
+window-rule {
+    match app-id="quickterminal"
+    open-floating true
+    default-column-width { fixed 800; }
+}
+
+// 任务管理器（Super+M / Ctrl+Alt+Del；btop 顶替 DMS processlist）
+window-rule {
+    match app-id="btop"
+    open-floating true
+    default-column-width { fixed 1100; }
+    default-window-height { fixed 680; }
+}
+
+// 快捷键速查浮层（Super+/ 呼出；kitty + fzf）
+window-rule {
+    match app-id="niri-keys"
+    open-floating true
+}
+
+// 退出确认菜单（Super+Shift+E 呼出；kitty + fzf）
+window-rule {
+    match app-id="niri-quit"
+    open-floating true
+    open-focused true
+    default-column-width { fixed 820; }
+    default-window-height { fixed 500; }
+    draw-border-with-background false
+}
+
+// 维护菜单（Super+Shift+C 呼出；kitty + term-menu）
+window-rule {
+    match app-id="term-menu"
+    open-floating true
+    default-column-width { fixed 1600; }
+    default-window-height { fixed 1000; }
+}

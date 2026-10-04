@@ -1,0 +1,13 @@
+// —— 环境变量 ——
+
+// ── 会话环境变量 ──────────────────────────────────────────────
+// XDG_CURRENT_DESKTOP 必须带 gnome：否则 xdg-desktop-portal-gnome 的
+// ScreenCast / Screenshot 接口不会注册（录屏、共享屏幕就废了）。
+// niri 的 environment{} 会作用于 niri 自身和它启动的所有子进程。
+environment {
+    XDG_CURRENT_DESKTOP "niri:GNOME"
+    // 与物理机一致：N 卡双显卡下 GTK 应用启动慢的修复（VM 里无害，搬物理机直接生效）
+    GSK_RENDERER "gl"
+    // 与物理机一致：opencode 内置 websearch（Exa，免 key）
+    OPENCODE_ENABLE_EXA "1"
+}

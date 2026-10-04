@@ -1,0 +1,21 @@
+#!/bin/bash
+# rice-fix-wallpaper — 壁纸渲染坏了时的一键修复
+#
+# 症状：壁纸变成「半尺寸平铺的瓦片」铺满屏幕，而不是铺满整屏。
+#
+# 实测结论（2026-10-02）：
+#   ❌ noctalia msg wallpaper-set <同一张>     救不回来
+#   ❌ 切到别的壁纸再切回来                     救不回来
+#   ❌ noctalia msg config-reload              救不回来
+#   ❌ 重启 noctalia 进程                       救不回来
+#   ❌ dpms-off / dpms-on                      救不回来
+#   ✅ sudo systemctl restart getty@tty1       唯一可靠（约 25 秒后桌面自动恢复）
+#
+# 触发条件不完全明确：实测「鼠标指针停在顶栏上」时会立刻出现、指针移开又自愈；
+# 但也会在其它操作序列后持续出现。单次 config-reload 不会触发。
+
+set -euo pipefail
+echo "壁纸渲染修复：重启图形会话（约 25 秒）…"
+echo "（你的所有配置在磁盘上，不会丢）"
+sudo systemctl restart getty@tty1
+echo "已发出重启。约 25 秒后 tty1 会自动登录并拉起 niri + noctalia。"

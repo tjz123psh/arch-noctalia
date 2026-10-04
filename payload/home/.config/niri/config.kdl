@@ -1,0 +1,37 @@
+// ══════════════════════════════════════════════════════════════
+//  niri 26.04 — 二次元精致桌面
+//  分层：壁纸 → 模糊面板 → 卡片 → 文字图标
+//  本文件是“目录”：实际配置按主题在 conf.d/ 下分文件维护（改完保存即热重载）
+// ══════════════════════════════════════════════════════════════
+//  conf.d/startup.kdl        开机自启（spawn-at-startup / spawn-sh-at-startup）
+//  conf.d/general.kdl        全局选项（prefer-no-csd / screenshot-path）
+//  conf.d/input.kdl          输入设备（键盘/触摸板/鼠标）
+//  conf.d/outputs.kdl        显示器输出
+//  conf.d/layout.kdl         布局：间距/列宽/描边/阴影
+//  conf.d/environment.kdl    环境变量
+//  conf.d/overview.kdl       窗口概览样式
+//  conf.d/hotkey-overlay.kdl 快捷键浮层样式
+//  conf.d/animations.kdl     动画
+//  conf.d/window-rules.kdl   窗口规则（圆角/毛玻璃/浮动等）
+//  conf.d/layer-rules.kdl    图层规则（Noctalia 面板/背景模糊等）
+//  conf.d/binds.kdl          快捷键（2026-10-03 移植自宿主机 DMS 方案；文末注释=待脚本项）
+//  conf.d/cursor.kdl         鼠标指针
+//  conf.d/recent-windows.kdl 窗口切换器（Alt+Tab 家族）
+
+include "conf.d/startup.kdl"
+include "conf.d/general.kdl"
+include "conf.d/input.kdl"
+include "conf.d/outputs.kdl"
+include "conf.d/layout.kdl"
+include "conf.d/environment.kdl"
+include "conf.d/overview.kdl"
+include "conf.d/hotkey-overlay.kdl"
+include "conf.d/animations.kdl"
+include "conf.d/window-rules.kdl"
+include "conf.d/layer-rules.kdl"
+include "conf.d/binds.kdl"
+include "conf.d/cursor.kdl"
+include "conf.d/recent-windows.kdl"
+// 触摸板开关状态（由 ~/.local/bin/niri-touchpad-toggle 改写，勿手改）
+include "touchpad-state.kdl"
+

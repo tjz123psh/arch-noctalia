@@ -1,0 +1,16 @@
+// nwg-hello greeter session (2026-10-03)
+spawn-at-startup "sh" "-c" "nwg-hello; niri msg action quit --skip-confirmation"
+hotkey-overlay { skip-at-startup; }
+gestures { hot-corners { off; }; }
+layout { background-color "#0b0b12"; }
+output "Virtual-1" {
+    mode "1920x1080"
+}
+
+include optional=true "/etc/nwg-hello/niri_overrides.kdl"
+
+// 指针主题（2026-10-03，与用户会话一致）
+cursor {
+    xcursor-theme "capitaine-cursors"
+    xcursor-size 24
+}

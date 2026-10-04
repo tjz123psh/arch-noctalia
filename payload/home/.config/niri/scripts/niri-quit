@@ -1,0 +1,270 @@
+#!/usr/bin/env bash
+# niri-quit — 退出 Niri 会话确认界面（自包含常驻脚本）
+#
+# 归属：随 niri 配置常驻（~/.config/niri/scripts/），由 Super+Shift+E 呼出。
+# 设计：界面完全在本脚本内实现，不依赖任何外部 UI 库——
+#   · 菜单：fzf，双线红框（危险语义）+ 冷色标题；选项自带语义色（绿=取消，红=退出）
+#   · 预览：右侧说明卡（--preview 子命令渲染，含会话时长与窗口数）
+#   · 页脚：会话状态（已运行时长 · 窗口数 · 当前时间）
+#   · 兜底：无终端时自动用 kitty 打开（--class=niri-quit，配合窗口浮动规则 820x500）
+#
+# 用法:
+#   niri-quit              打开退出确认菜单（Super+Shift+E）
+#   niri-quit -h|--help    显示帮助
+#   niri-quit --preview X  渲染预览文本（供 fzf 内部调用；X = cancel|quit）
+
+set -euo pipefail
+
+SELF="$(readlink -f "$0")"
+
+usage() {
+  cat <<'EOF'
+用法: niri-quit [选项]
+
+打开 Niri 退出确认菜单：默认选中「取消」，
+必须主动选择「退出 Niri 会话」再按 Enter 才会结束会话。
+
+选项:
+  -h, --help    显示帮助并退出
+  --preview X   仅供菜单内部调用（X = cancel|quit）
+EOF
+}
+
+# ── 配色（沿用桌面 Catppuccin Mocha 色板；fzf 预览经 NIRI_QUIT_FORCE_COLOR=1 上色） ──
+if [[ -n "${NO_COLOR:-}" ]]; then
+  _color=0
+elif [[ -t 1 || "${NIRI_QUIT_FORCE_COLOR:-0}" == "1" ]]; then
+  _color=1
+else
+  _color=0
+fi
+ICO_POWER=$'\uf011'   # Nerd Font 电源图标
+ICO_CANCEL=$'\u2715'  # ✕
+if ((_color)); then
+  R=$'\033[0m'; B=$'\033[1m'; D=$'\033[2m'
+  C_TEXT=$'\033[38;2;205;214;244m'   # 正文 #cdd6f4
+  C_SUB=$'\033[38;2;166;173;200m'    # 次要 #a6adc8
+  C_FADE=$'\033[38;2;108;112;134m'   # 淡化 #6c7086
+  C_RED=$'\033[38;2;243;139;168m'    # 危险 #f38ba8
+  C_YEL=$'\033[38;2;249;226;175m'    # 强调 #f9e2af
+  C_PEACH=$'\033[38;2;250;179;135m'  # 警示 #fab387
+  C_MAUVE=$'\033[38;2;203;166;247m'  # 紫 #cba6f7
+  C_SKY=$'\033[38;2;137;220;235m'    # 青 #89dceb
+  C_GREEN=$'\033[38;2;166;227;161m'  # 安全 #a6e3a1
+else
+  R=''; B=''; D=''
+  C_TEXT=''; C_SUB=''; C_FADE=''; C_RED=''; C_YEL=''
+  C_PEACH=''; C_MAUVE=''; C_SKY=''; C_GREEN=''
+fi
+
+err() { printf '%s[错误]%s %s\n' "$C_RED" "$R" "$*" >&2; }
+
+wait_key() { # 失败时停留，等一个按键再关窗口
+  [[ -t 0 ]] || return 0
+  printf '\n%s%s%s\n' "$C_FADE" "${1:-按任意键关闭}" "$R"
+  read -rsn1 || true
+}
+
+window_count() { # 当前窗口数（不含退出菜单自己）
+  local count=""
+  if command -v jq >/dev/null 2>&1; then
+    count="$(niri msg --json windows 2>/dev/null |
+      jq -r '[.[] | select(.app_id != "niri-quit")] | length' 2>/dev/null || true)"
+  fi
+  if [[ ! "${count:-}" =~ ^[0-9]+$ ]]; then
+    count="$(niri msg windows 2>/dev/null | grep -c '^Window ID' || true)"
+  fi
+  [[ "${count:-}" =~ ^[0-9]+$ ]] && printf '%s' "$count" || printf '?'
+}
+
+session_uptime() { # niri 进程已运行时长 → 人类可读
+  local pid start_ticks hz now_ticks secs
+  pid="$(pgrep -x niri 2>/dev/null | head -1)" || true
+  [[ -n "${pid:-}" ]] || { printf '?'; return 0; }
+  start_ticks="$(awk '{print $22}' "/proc/$pid/stat" 2>/dev/null || true)"
+  [[ "${start_ticks:-}" =~ ^[0-9]+$ ]] || { printf '?'; return 0; }
+  hz="$(getconf CLK_TCK 2>/dev/null || printf 100)"
+  now_ticks="$(awk '{printf "%d", $1 * '"$hz"'}' /proc/uptime 2>/dev/null || true)"
+  [[ "${now_ticks:-}" =~ ^[0-9]+$ ]] || { printf '?'; return 0; }
+  secs=$(( (now_ticks - start_ticks) / hz ))
+  (( secs < 0 )) && secs=0
+  if (( secs >= 3600 )); then
+    printf '%d 小时 %02d 分' "$((secs / 3600))" "$(((secs % 3600) / 60))"
+  elif (( secs >= 60 )); then
+    printf '%d 分钟' "$((secs / 60))"
+  else
+    printf '%d 秒' "$secs"
+  fi
+}
+
+status_footer() {
+  printf '会话 %s · 窗口 %s · %s' \
+    "$(session_uptime)" "$(window_count)" "$(date +%H:%M)"
+}
+
+# ── 预览卡（fzf 右侧） ──
+print_preview() {
+  local action="${1:-cancel}" n up
+  n="$(window_count)"
+  up="$(session_uptime)"
+  case "$action" in
+    quit)
+      printf '%s%s%s  %s退出 Niri 会话%s\n' "$B" "$C_RED" "$ICO_POWER" "$C_TEXT" "$R"
+      printf '%s────────────────────────────────%s\n' "$C_FADE" "$R"
+      printf '\n%s这是确定操作：%s\n' "$C_PEACH" "$R"
+      printf '%s整个桌面会话会立即结束。%s\n' "$C_TEXT" "$R"
+      printf ' %s· 所有窗口都会被关闭%s\n' "$C_TEXT" "$R"
+      printf ' %s· 未保存的内容会丢失%s\n' "$C_TEXT" "$R"
+      printf '\n%s当前会话%s  %s%s%s\n' "$C_SUB" "$R" "$C_SKY" "$up" "$R"
+      printf '%s打开窗口%s  %s%s 个%s\n' "$C_SUB" "$R" "$C_SKY" "$n" "$R"
+      printf '\n%s确认无误后，在左侧按 Enter 执行。%s\n' "$C_YEL" "$R"
+      ;;
+    cancel|*)
+      printf '%s%s%s  %s取消%s\n' "$B" "$C_GREEN" "$ICO_CANCEL" "$C_TEXT" "$R"
+      printf '%s────────────────────────────────%s\n' "$C_FADE" "$R"
+      printf '\n%s什么都不做，回到桌面。%s\n' "$C_TEXT" "$R"
+      printf '%sEsc/回车都会关窗，不影响会话。%s\n' "$C_FADE" "$R"
+      ;;
+  esac
+}
+
+# ── 退出执行（选中「退出」之后） ──
+confirm_and_quit() {
+  local w=52 line="" i n up
+  for ((i = 0; i < w; i++)); do line+='━'; done
+  n="$(window_count)"
+  up="$(session_uptime)"
+
+  clear 2>/dev/null || true
+  printf '\n%s%s%s%s\n' "$C_RED" "$B" "$line" "$R"
+  printf '  %s%s %s退出 Niri 会话%s   %s窗口 %s 个 · 已运行 %s%s\n' \
+    "$C_RED" "$ICO_POWER" "$B$C_TEXT" "$R" "$C_FADE" "$n" "$up" "$R"
+  printf '%s%s%s%s\n\n' "$C_RED" "$B" "$line" "$R"
+
+  if niri msg action quit --skip-confirmation 2>/dev/null; then
+    return 0
+  fi
+  err "退出 Niri 失败，请检查 niri IPC 状态。"
+  wait_key
+  return 1
+}
+
+# ── 菜单 ──
+run_menu() {
+  command -v fzf >/dev/null 2>&1 || { err "未找到 fzf，无法打开退出菜单。"; wait_key; return 127; }
+  command -v niri >/dev/null 2>&1 || { err "未找到 niri（需要 niri IPC 才能退出会话）。"; wait_key; return 127; }
+
+  local items footer selected status action
+  # 字段：1=动作（preview 用） 2=显示名 3=说明；取消放第一项 = 初始焦点即安全动作
+  items="$(printf '%s\t%s\t%s\n%s\t%s\t%s' \
+    "cancel" "${C_GREEN}${ICO_CANCEL}  取消${R}" "${C_FADE}保持会话不变${R}" \
+    "quit" "${C_RED}${ICO_POWER}  退出 Niri 会话${R}" "${C_FADE}关闭并登出${R}")"
+  footer="$(status_footer)"
+
+  local fzf_colors
+  fzf_colors='fg:#cdd6f4,bg:-1,gutter:-1,'
+  fzf_colors+='hl:#f9e2af,fg+:#cdd6f4,bg+:#313244,hl+:#f9e2af,'
+  fzf_colors+='prompt:#f9e2af,pointer:#f38ba8,marker:#a6e3a1,spinner:#cba6f7,info:#6c7086,'
+  fzf_colors+='border:#f38ba8,label:#f9e2af,'
+  fzf_colors+='preview-fg:#cdd6f4,preview-border:#cba6f7,preview-label:#cba6f7,'
+  fzf_colors+='list-border:#89b4fa,list-label:#89b4fa,'
+  fzf_colors+='input-border:#89dceb,input-label:#89dceb,'
+  fzf_colors+='header:#a6adc8,header-border:#fab387,header-label:#fab387,'
+  fzf_colors+='footer:#a6adc8,footer-border:#94e2d5,footer-label:#94e2d5'
+
+  set +e
+  selected="$(
+    printf '%s\n' "$items" |
+      fzf --ansi \
+        --delimiter=$'\t' \
+        --with-nth=2,3 \
+        --height=100% \
+        --min-height=16 \
+        --layout=reverse \
+        --style=full \
+        --border=double \
+        --border-label=" ${ICO_POWER}  退出 Niri 会话 " \
+        --border-label-pos=3 \
+        --list-border=double \
+        --list-label=' 操作 ' \
+        --list-label-pos=3 \
+        --input-border=double \
+        --input-label=' 筛选 ' \
+        --input-label-pos=3 \
+        --header-border=double \
+        --header-label=' 提示 ' \
+        --header-first \
+        --footer-border=double \
+        --footer-label=' 会话状态 ' \
+        --footer="$footer" \
+        --prompt=' ❯ ' \
+        --pointer='▶' \
+        --marker='✓' \
+        --highlight-line \
+        --cycle \
+        --scroll-off=2 \
+        --info=inline-right \
+        --bind='home:first,end:last,ctrl-p:up,ctrl-n:down' \
+        --header='  Enter 执行 · ↑↓ 移动 · Esc 取消' \
+        --preview-window='right,50%,border-double,wrap' \
+        --preview-label=' 说明 ' \
+        --preview="NIRI_QUIT_FORCE_COLOR=1 bash '$SELF' --preview {1}" \
+        --color="$fzf_colors"
+  )"
+  status=$?
+  set -e
+  (( status == 0 )) || return 0
+
+  IFS=$'\t' read -r action _ _ <<< "$selected"
+  case "${action:-cancel}" in
+    cancel|"")
+      return 0
+      ;;
+    quit)
+      confirm_and_quit
+      ;;
+    *)
+      return 0
+      ;;
+  esac
+}
+
+# ── 入口 ──
+case "${1:-}" in
+  --preview)
+    print_preview "${2:-cancel}"
+    exit 0
+    ;;
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  "")
+    ;;
+  *)
+    err "未知参数: $1"
+    usage >&2
+    exit 2
+    ;;
+esac
+
+# 快捷键从 niri 直接 spawn 时没有终端；沿用 niri-keys 模式自动打开 kitty。
+if [[ "${NIRI_QUIT_KITTY:-0}" != "1" ]]; then
+  if ! command -v kitty >/dev/null 2>&1; then
+    notify-send "Niri 退出" "未找到 kitty，无法打开退出菜单。" 2>/dev/null || true
+    exit 127
+  fi
+  exec env NIRI_QUIT_KITTY=1 kitty \
+    --class=niri-quit \
+    --title="退出 Niri 会话" \
+    --override initial_window_width=820 \
+    --override initial_window_height=500 \
+    "$SELF"
+fi
+
+# 同一时间只保留一个退出菜单，避免重复按快捷键打开多个确认窗口。
+RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}"
+exec 9>"$RUNTIME_DIR/niri-quit.lock"
+flock -n 9 2>/dev/null || exit 0
+
+run_menu

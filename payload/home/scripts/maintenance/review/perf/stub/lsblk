@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+printf '{"blockdevices":[{"path":"/dev/sda","type":"disk","model":"Samsung SSD 870","size":1000204886016},{"path":"/dev/sdb","type":"disk","model":"WD SN850X","size":2000398934016},{"path":"/dev/sdc","type":"disk","model":"Seagate HDD","size":4000787030016},{"path":"/dev/zram0","type":"disk","model":"zram","size":8589934592}]}'

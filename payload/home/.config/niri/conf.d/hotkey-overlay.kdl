@@ -1,0 +1,5 @@
+// —— 快捷键浮层样式 ——
+
+hotkey-overlay {
+    skip-at-startup
+}

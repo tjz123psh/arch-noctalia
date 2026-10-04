@@ -1,0 +1,142 @@
+@import url("noctalia.css");
+
+/* Noctalia palette -> plain Adwaita (GTK3) bridge.
+ * Noctalia emits libadwaita colour names and expects adw-gtk3 (not in Arch
+ * repos); stock Adwaita hardcodes its colours, so we re-point its surfaces.
+ * Only GTK3-valid node names may appear here: an unknown node aborts the
+ * whole GTK3 stylesheet parse. */
+
+window,
+window.background { background-color: @window_bg_color; background-image: none; color: @window_fg_color; }
+
+.view,
+treeview.view,
+iconview,
+textview text,
+list,
+flowbox,
+flowboxchild { background-color: @view_bg_color; color: @view_fg_color; }
+
+headerbar,
+.titlebar { background-color: @headerbar_bg_color; background-image: none; color: @headerbar_fg_color; }
+headerbar:backdrop,
+.titlebar:backdrop { background-color: @headerbar_bg_color; color: @headerbar_fg_color; }
+
+.sidebar,
+stacksidebar.sidebar,
+placessidebar,
+placessidebar list,
+.navigation-sidebar { background-color: @sidebar_bg_color; color: @sidebar_fg_color; }
+
+popover.background,
+popover.background > contents,
+menu,
+.context-menu { background-color: @popover_bg_color; color: @popover_fg_color; }
+tooltip.background { background-color: @popover_bg_color; color: @popover_fg_color; }
+
+entry,
+spinbutton { background-color: @view_bg_color; background-image: none; color: @view_fg_color; }
+
+.view:selected,
+treeview.view:selected,
+row:selected,
+flowboxchild:selected { background-color: @accent_bg_color; color: @accent_fg_color; }
+
+progressbar progress { background-color: @accent_bg_color; background-image: none; }
+scale highlight { background-color: @accent_bg_color; background-image: none; }
+scale slider { background-color: @accent_bg_color; background-image: none; }
+levelbar block.filled { background-color: @accent_bg_color; background-image: none; }
+switch:checked { background-color: @accent_bg_color; background-image: none; }
+switch:checked > slider { background-color: @accent_fg_color; background-image: none; }
+checkbutton check:checked,
+radiobutton radio:checked { background-color: @accent_bg_color; background-image: none; color: @accent_fg_color; }
+*:link { color: @accent_color; }
+
+separator { background-color: @headerbar_bg_color; }
+
+/* --- links (button.link outranks *:link in Adwaita) --- */
+button.link,
+*:link,
+link { color: @accent_color; }
+
+/* --- check / radio: Adwaita paints these with a gradient image --- */
+checkbutton check:checked,
+checkbutton check:indeterminate,
+check:checked,
+check:indeterminate { background-color: @accent_bg_color; background-image: none; border-color: @accent_bg_color; color: @accent_fg_color; }
+radiobutton radio:checked,
+radio:checked { background-color: @accent_bg_color; background-image: none; border-color: @accent_bg_color; color: @accent_fg_color; }
+
+/* --- focus rings --- */
+entry:focus,
+entry:focus-within,
+button:focus { border-color: @accent_bg_color; }
+
+/* --- notebook tab underline --- */
+notebook > header tab:checked { box-shadow: inset 0 -2px @accent_bg_color; }
+notebook > header tab:checked label { color: @accent_color; }
+
+/* --- residual Adwaita blue: radio + link label --- */
+radio,
+radiobutton radio { background-image: none; }
+radio:checked,
+radiobutton radio:checked { background-color: @accent_bg_color; background-image: none; border-color: @accent_bg_color; box-shadow: none; color: @accent_fg_color; }
+button.link label,
+button.link,
+*:link,
+link { color: @accent_color; }
+
+notebook > header tab:checked { box-shadow: inset 0 -2px @accent_bg_color; }
+
+/* ══════════════════════════════════════════════════════════════
+   Adwaita 把强调色编译成了字面量（#3584e4 等），@define-color 改不到，
+   所以下面这些控件必须逐个点名覆盖，否则会漏出 Adwaita 蓝/红。
+   ══════════════════════════════════════════════════════════════ */
+
+button.suggested-action,
+button.suggested-action:hover,
+button.suggested-action:active,
+button.suggested-action:checked {
+    background-color: @accent_bg_color;
+    background-image: none;
+    color: @accent_fg_color;
+    border-color: @accent_bg_color;
+}
+
+button.destructive-action,
+button.destructive-action:hover,
+button.destructive-action:active,
+button.destructive-action:checked {
+    background-color: @destructive_bg_color;
+    background-image: none;
+    color: @destructive_fg_color;
+    border-color: @destructive_bg_color;
+}
+
+infobar.info,
+infobar.info > revealer > box,
+.info { background-color: @accent_bg_color; color: @accent_fg_color; }
+
+infobar.error,
+infobar.error > revealer > box,
+.error { background-color: @error_bg_color; color: @error_fg_color; }
+
+selection,
+entry selection,
+textview selection,
+label selection { background-color: @accent_bg_color; color: @accent_fg_color; }
+
+calendar:selected { background-color: @accent_bg_color; color: @accent_fg_color; }
+calendar:indeterminate { color: alpha(@accent_bg_color, 0.55); }
+
+menuitem:hover,
+modelbutton:hover { background-color: alpha(@accent_bg_color, 0.18); }
+
+popover modelbutton:hover,
+popover menuitem:hover { background-color: alpha(@accent_bg_color, 0.18); }
+
+stacksidebar row:selected,
+placessidebar row:selected { background-color: alpha(@accent_bg_color, 0.22); color: @accent_color; }
+
+spinbutton:focus,
+combobox:focus { border-color: @accent_bg_color; }

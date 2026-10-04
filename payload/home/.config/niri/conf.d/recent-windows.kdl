@@ -1,0 +1,14 @@
+// —— 窗口切换器：Alt+Tab 家族（与物理机一致，niri 26.04 特性） ——
+// 按输出范围切换最近窗口；grave 版按应用过滤。
+
+recent-windows {
+    binds {
+        Alt+Tab         { next-window scope="output"; }
+        Alt+Shift+Tab   { previous-window scope="output"; }
+        Alt+grave       { next-window filter="app-id"; }
+        Alt+Shift+grave { previous-window filter="app-id"; }
+    }
+    highlight {
+        corner-radius 12
+    }
+}

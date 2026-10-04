@@ -1,0 +1,36 @@
+#!/bin/bash
+# rice-wallpaper — 换壁纸
+# 换完 Noctalia 会自动按新壁纸重算 Material You 配色（终端、GTK、Qt 一起变）。
+#
+#   rice-wallpaper          下一张
+#   rice-wallpaper 3        第 3 张
+#   rice-wallpaper 樱花      按名字模糊匹配
+#   rice-wallpaper -l       列出全部
+set -euo pipefail
+
+DIR="$HOME/Pictures/wallpapers"
+mapfile -t WPS < <(find "$DIR" -maxdepth 1 -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' \) | sort)
+[ "${#WPS[@]}" -gt 0 ] || { echo "没有找到壁纸：$DIR" >&2; exit 1; }
+
+if [ "${1:-}" = "-l" ]; then
+    i=1
+    for w in "${WPS[@]}"; do printf '%2d) %s\n' "$i" "$(basename "$w")"; i=$((i+1)); done
+    exit 0
+fi
+
+idx=0
+if [ -n "${1:-}" ]; then
+    case "$1" in
+        *[!0-9]*) for i in "${!WPS[@]}"; do case "$(basename "${WPS[$i]}")" in *"$1"*) idx=$i; break;; esac; done ;;
+        *) idx=$(( $1 - 1 )) ;;
+    esac
+else
+    cur="$(noctalia msg wallpaper-get 2>/dev/null || true)"
+    for i in "${!WPS[@]}"; do [ "${WPS[$i]}" = "$cur" ] && idx=$(( i + 1 )); done
+fi
+idx=$(( idx % ${#WPS[@]} ))
+target="${WPS[$idx]}"
+
+noctalia msg wallpaper-set "$target" >/dev/null
+ln -sfn "$target" "$DIR/current.png"
+echo "已换成：$(basename "$target")"

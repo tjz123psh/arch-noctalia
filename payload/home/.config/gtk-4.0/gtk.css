@@ -1,0 +1,108 @@
+@import url("noctalia.css");
+
+/* Noctalia palette -> plain Adwaita (GTK4) bridge. See gtk-3.0/gtk.css. */
+
+window,
+window.background { background-color: @window_bg_color; background-image: none; color: @window_fg_color; }
+
+.view,
+listview,
+columnview,
+gridview,
+textview > text { background-color: @view_bg_color; color: @view_fg_color; }
+
+headerbar { background-color: @headerbar_bg_color; background-image: none; color: @headerbar_fg_color; }
+
+.sidebar,
+navigation-sidebar { background-color: @sidebar_bg_color; color: @sidebar_fg_color; }
+
+popover > contents { background-color: @popover_bg_color; color: @popover_fg_color; }
+tooltip > box { background-color: @popover_bg_color; color: @popover_fg_color; }
+
+entry,
+spinbutton { background-color: @view_bg_color; background-image: none; color: @view_fg_color; }
+
+row:selected,
+.view:selected,
+listview > row:selected { background-color: @accent_bg_color; color: @accent_fg_color; }
+
+progressbar > trough > progress { background-color: @accent_bg_color; background-image: none; }
+scale > trough > highlight { background-color: @accent_bg_color; background-image: none; }
+scale > trough > slider { background-color: @accent_bg_color; background-image: none; }
+levelbar > trough > block.filled { background-color: @accent_bg_color; background-image: none; }
+switch:checked { background-color: @accent_bg_color; background-image: none; }
+switch:checked > slider { background-color: @accent_fg_color; background-image: none; }
+checkbutton > check:checked,
+radiobutton > radio:checked { background-color: @accent_bg_color; background-image: none; color: @accent_fg_color; }
+link { color: @accent_color; }
+
+separator { background-color: @headerbar_bg_color; }
+
+button.link,
+link { color: @accent_color; }
+
+checkbutton > check:checked,
+checkbutton > check:indeterminate { background-color: @accent_bg_color; background-image: none; border-color: @accent_bg_color; color: @accent_fg_color; }
+radiobutton > radio:checked { background-color: @accent_bg_color; background-image: none; border-color: @accent_bg_color; color: @accent_fg_color; }
+
+entry:focus,
+button:focus { border-color: @accent_bg_color; }
+
+/* --- residual Adwaita blue: radio + link label --- */
+radio,
+radiobutton radio { background-image: none; }
+radio:checked,
+radiobutton radio:checked { background-color: @accent_bg_color; background-image: none; border-color: @accent_bg_color; box-shadow: none; color: @accent_fg_color; }
+button.link label,
+button.link,
+*:link,
+link { color: @accent_color; }
+
+notebook > header tab:checked { box-shadow: inset 0 -2px @accent_bg_color; }
+
+/* ══════════════════════════════════════════════════════════════
+   libadwaita 同样把强调色编译进了部分规则（.suggested-action 等），
+   必须点名覆盖，否则会漏出 Adwaita 蓝 / 红。
+   ══════════════════════════════════════════════════════════════ */
+
+button.suggested-action,
+button.suggested-action:hover,
+button.suggested-action:active,
+button.suggested-action:checked {
+    background-color: @accent_bg_color;
+    background-image: none;
+    color: @accent_fg_color;
+    border-color: @accent_bg_color;
+}
+
+button.destructive-action,
+button.destructive-action:hover,
+button.destructive-action:active,
+button.destructive-action:checked {
+    background-color: @destructive_bg_color;
+    background-image: none;
+    color: @destructive_fg_color;
+    border-color: @destructive_bg_color;
+}
+
+infobar.info > revealer > box,
+infobar.info { background-color: @accent_bg_color; color: @accent_fg_color; }
+
+infobar.error > revealer > box,
+infobar.error { background-color: @error_bg_color; color: @error_fg_color; }
+
+selection,
+entry > text > selection,
+textview > text > selection,
+label > selection { background-color: @accent_bg_color; color: @accent_fg_color; }
+
+calendar:selected { background-color: @accent_bg_color; color: @accent_fg_color; }
+calendar:indeterminate { color: alpha(@accent_bg_color, 0.55); }
+
+/* 窗口底：确保不是透明 */
+window,
+window.background,
+window > .background { background-color: @window_bg_color; background-image: none; color: @window_fg_color; }
+
+headerbar,
+headerbar > windowhandle { background-color: @headerbar_bg_color; background-image: none; color: @headerbar_fg_color; }

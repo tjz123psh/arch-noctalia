@@ -1,0 +1,9 @@
+#!/bin/bash
+# wlrun — 从 SSH 会话里操作 niri/Wayland 会话
+# 用法: wlrun <command> [args...]
+export XDG_RUNTIME_DIR=/run/user/1000
+sock=$(ls /run/user/1000/wayland-[0-9]* 2>/dev/null | grep -v '\.lock$' | head -1)
+[ -n "$sock" ] && export WAYLAND_DISPLAY=$(basename "$sock")
+nsock=$(ls /run/user/1000/niri.wayland-*.sock 2>/dev/null | head -1)
+[ -n "$nsock" ] && export NIRI_SOCKET="$nsock"
+exec "$@"

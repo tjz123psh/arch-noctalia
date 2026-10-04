@@ -1,0 +1,21 @@
+#!/bin/bash
+# rice-login-bg — 把当前壁纸同步为登录界面背景（Noctalia [hooks] wallpaper_changed 调用）
+# 依赖：/etc/nwg-hello/background.png 已通过 ACL 允许本用户写入（见 rice-log §41）
+# 也可手动运行；没有 hook 环境变量时回退到 noctalia msg wallpaper-get
+set -euo pipefail
+
+export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/1000}"
+
+dest=/etc/nwg-hello/background.png
+src="${NOCTALIA_WALLPAPER_PATH:-}"
+if [ -z "$src" ]; then
+	src="$(noctalia msg wallpaper-get 2>/dev/null || true)"
+fi
+if [ -z "$src" ] || [ ! -f "$src" ]; then
+	echo "rice-login-bg: 没有可用的壁纸路径，跳过" >&2
+	exit 0
+fi
+
+cp -f -- "$src" "$dest"
+echo "rice-login-bg: 登录背景已同步 <- $(basename "$src")"

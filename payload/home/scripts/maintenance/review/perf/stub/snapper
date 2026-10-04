@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+printf '%s CALL snapper %s\n' "$(date +%s.%N)" "$*" >> "${SNAPPER_LOG:-/tmp/maintenance-review/perf/logs/snapper.log}"
+[[ -n ${STUB_DELAY_SNAPPER:-} && ${STUB_DELAY_SNAPPER:-0} != 0 ]] && sleep "$STUB_DELAY_SNAPPER"
+sep=$'\037'
+case "$*" in
+  *list-configs*)
+    printf 'config%ssubvolume\nroot%s/\nhome%s/home\n' "$sep" "$sep" "$sep" ;;
+  *list*)
+    printf 'number%sdate%suser%scleanup%sdescription\n' "$sep" "$sep" "$sep" "$sep"
+    printf '0%s%s%sroot%stime%s%s%scurrent\n' "$sep" "$sep" "$sep" "$sep" "$sep" "$sep" "$sep"
+    i=1
+    while [[ $i -le ${STUB_SNAP_COUNT:-10} ]]; do
+      printf '%s%s2026-08-0%s 10:%02d:00%sroot%stime%smanual%squicksave-%s\n' "$i" "$sep" "$((i % 9 + 1))" "$i" "$sep" "$sep" "$sep" "$sep" "$i"
+      i=$((i + 1))
+    done ;;
+esac
+exit 0
