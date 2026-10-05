@@ -9,7 +9,6 @@ opencode-bin	aur	explicit
 snapd-xdg-open-git	aur	dependency	
 ttf-wps-fonts	aur	explicit	
 vmware-keymaps	aur	explicit	
-vmware-workstation	aur	explicit	
 wechat-universal-bwrap	aur	explicit	
 wps-office-cn	aur	explicit	
 wps-office-mime-cn	aur	explicit	

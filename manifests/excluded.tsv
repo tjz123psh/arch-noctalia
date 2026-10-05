@@ -24,3 +24,4 @@ pattern	build/（插件 tools 下）	构建产物（由 09 步重建）
 pattern	__pycache__/、*.pyc	缓存
 pattern	/home/pang/.local/state/noctalia/plugins/**	插件运行数据（materialized/data；由插件系统重建）
 package	gnome-keyring	主动排除：无任何依赖方；登录时会弹密钥环建环框（2026-10-05 用户决定不装）
+package	vmware-workstation	主动排除：体积太大（350MB 包体、1GB+ 安装）、内核模块随滚动内核易碎（2026-10-05 用户决定不装）
