@@ -75,3 +75,33 @@ cn_rewrite_conf() {
     printf '%s\n' "$line"
   done < "$conf"
 }
+
+# 整段替换：$1 = conf 路径；stdin = 新块（含段头行）。[archlinuxcn] 段（段头到下一个 [ 之前）
+# 整体替换为新块；无该段则追加到文件尾。用于安装器写入标准块（用户 2026-10-05 确认可覆盖）。
+# 区别：cn_rewrite_conf 只改 Server 行、保留其它行（用于按实测重排）；本函数连其它行一起换掉。
+cn_replace_section() {
+  local conf="$1" line found=0 in_cn=0
+  local -a block=()
+  while IFS= read -r line; do
+    block+=("$line")
+  done
+  while IFS= read -r line; do
+    if (( in_cn == 0 )) && [[ "$line" =~ ^[[:space:]]*\[archlinuxcn\][[:space:]]*$ ]]; then
+      in_cn=1
+      found=1
+      printf '%s\n' "${block[@]}"
+      continue
+    fi
+    if (( in_cn == 1 )); then
+      if [[ "$line" =~ ^[[:space:]]*\[ ]]; then
+        in_cn=0
+      else
+        continue
+      fi
+    fi
+    printf '%s\n' "$line"
+  done < "$conf"
+  if (( found == 0 )); then
+    printf '\n%s\n' "${block[@]}"
+  fi
+}

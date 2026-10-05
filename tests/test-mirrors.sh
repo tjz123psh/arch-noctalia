@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # test-mirrors.sh — lib/mirrors.sh 的离线回归：
 #   解析 [archlinuxcn] 段 → 并行实探（mock curl）→ 降级排序（快→慢→不通沉底）
-#   → 就地改写（仅动 Server 行；SigLevel 与其它段原样保留；行数不变）。
+#   → 就地改写（cn_rewrite_conf：仅动 Server 行，SigLevel 等保留）
+#   → 整段替换/追加（cn_replace_section：覆盖段内一切，其它段保留）。
 # 注：本文件刻意的字面 "…$arch"（pacman 镜像 URL 原样）会触发 SC2016，属预期。
 # shellcheck disable=SC2016
 set -Eeuo pipefail
@@ -74,4 +75,41 @@ done
 [[ "${after[3]}" == *dead* ]] || { echo "dead not last after rewrite"; exit 1; }
 [ "$(wc -l < "$conf")" -eq "$(wc -l < "$work/out.conf")" ] || { echo "line count changed"; exit 1; }
 
-echo "ok: mirrors parse/probe/order/rewrite all good"
+# 4) 整段替换（已有段）：段内一切（含 SigLevel/旧 Server）被新块替换；其它段保留
+conf2="$work/pacman2.conf"
+cat > "$conf2" <<'CONF2'
+[options]
+Color
+
+[archlinuxcn]
+SigLevel = Optional TrustAll
+Server = https://old1.example/archlinuxcn/$arch
+Server = https://old2.example/archlinuxcn/$arch
+
+[extra]
+Include = /etc/pacman.d/mirrorlist
+CONF2
+cn_replace_section "$conf2" > "$work/out2.conf" <<'BLK'
+[archlinuxcn]
+Server = https://new1.example/archlinuxcn/$arch
+Server = https://new2.example/archlinuxcn/$arch
+BLK
+if grep -q 'old1\.example\|SigLevel' "$work/out2.conf"; then echo "replace left old content behind"; exit 1; fi
+grep -q '^\[options\]$' "$work/out2.conf" || { echo "[options] lost in replace"; exit 1; }
+grep -q 'Include = /etc/pacman.d/mirrorlist' "$work/out2.conf" || { echo "[extra] Include lost in replace"; exit 1; }
+mapfile -t rep < <(cn_servers_in_conf "$work/out2.conf")
+{ [ "${#rep[@]}" -eq 2 ] && [[ "${rep[0]}" == *new1.example* ]] && [[ "${rep[1]}" == *new2.example* ]]; } || { echo "replace result wrong"; exit 1; }
+
+# 5) 整段替换（原本没有该段）：追加到文件尾，原内容不动
+conf3="$work/pacman3.conf"
+printf '# minimal\n[options]\nColor\n' > "$conf3"
+cn_replace_section "$conf3" > "$work/out3.conf" <<'BLK'
+[archlinuxcn]
+Server = https://only.example/archlinuxcn/$arch
+BLK
+grep -q '^\[archlinuxcn\]$' "$work/out3.conf" || { echo "append failed"; exit 1; }
+grep -q '^\[options\]$' "$work/out3.conf" || { echo "append clobbered file"; exit 1; }
+mapfile -t rep3 < <(cn_servers_in_conf "$work/out3.conf")
+{ [ "${#rep3[@]}" -eq 1 ] && [[ "${rep3[0]}" == *only.example* ]]; } || { echo "append content wrong"; exit 1; }
+
+echo "ok: mirrors parse/probe/order/rewrite/replace all good"

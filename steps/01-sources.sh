@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # steps/01-sources.sh — Stage 01: sources
 # 目的：把"源"相关的一切准备好（2026-10-05 起 §9.1 的配置部分由本步代做）：
-#   1) archlinuxcn 仓库：缺失则自动补齐（先备份 pacman.conf；写法照物理机）
+#   1) archlinuxcn 仓库：一律写入安装器标准块（缺失追加／已有整段覆盖，先备份；用户 2026-10-05 确认可覆盖）
 #   1b) 镜像"降级链"：并行实探，快的排前、不通的沉底（pacman 逐文件取用，前不行后顶上）
 #   2) [multilib] 已启用（lib32 包需要；§9.5 的兜底）
 #   3) 刷新数据库（pacman -Sy）+ 确保 archlinuxcn-keyring 已装
@@ -30,17 +30,16 @@ if ! have curl; then
 fi
 ok "tool: curl present"
 
-# 1) archlinuxcn：缺失则自动补齐（2026-10-05 用户要求：不再手填镜像地址；写法照物理机 pacman.conf）。
+# 1) archlinuxcn：一律写成安装器标准块——缺失则追加、已有则整段覆盖
+#    （2026-10-05 用户确认"覆盖即可"：重装时不会再手配源）。覆盖前自动备份；随后 1b 按实测重排。
 if grep -qE '^[[:space:]]*\[archlinuxcn\]' "$PACMAN_CONF"; then
-  ok "archlinuxcn repo: present"
+  info "archlinuxcn repo present — overwriting it with the installer's mirror list"
 else
-  info "archlinuxcn repo missing in ${PACMAN_CONF} — adding it (backup first)"
-  confirm "Add the [archlinuxcn] repo section to ${PACMAN_CONF}?" || die "archlinuxcn repo is required (stages 03-05 use it)."
-  as_root cp -a "$PACMAN_CONF" "${PACMAN_CONF}.pre-arch-noctalia"
-  # 顺序 = 2026-10-05 宿主同链路实测（持续速度）：tuna/lzu/huawei ≈20MB/s，ustc ≈10，
-  # aliyun 持续仅 ≈2MB/s（大文件会触发 pacman "operation too slow"），tencent 抖动，zju 常超时（留作最后兜底）。
-  as_root tee -a "$PACMAN_CONF" >/dev/null <<'EOF'
-
+  info "archlinuxcn repo missing in ${PACMAN_CONF} — adding the installer's mirror list"
+fi
+confirm "Write the installer's [archlinuxcn] block to ${PACMAN_CONF}?" || die "archlinuxcn repo is required (stages 03-05 use it)."
+tmp_conf="$(mktemp)"
+cn_replace_section "$PACMAN_CONF" > "$tmp_conf" <<'EOF'
 [archlinuxcn]
 Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/$arch
 Server = https://mirrors.lzu.edu.cn/archlinuxcn/$arch
@@ -50,8 +49,15 @@ Server = https://mirrors.aliyun.com/archlinuxcn/$arch
 Server = https://mirrors.cloud.tencent.com/archlinuxcn/$arch
 Server = https://mirrors.zju.edu.cn/archlinuxcn/$arch
 EOF
-  grep -qE '^[[:space:]]*\[archlinuxcn\]' "$PACMAN_CONF" || die "failed to add [archlinuxcn] — please edit ${PACMAN_CONF} manually."
-  ok "archlinuxcn repo: added (backup: ${PACMAN_CONF}.pre-arch-noctalia)"
+if cmp -s "$tmp_conf" "$PACMAN_CONF"; then
+  ok "archlinuxcn repo: already the installer's block"
+  rm -f "$tmp_conf"
+else
+  [[ -e "${PACMAN_CONF}.pre-arch-noctalia" ]] || as_root cp -a "$PACMAN_CONF" "${PACMAN_CONF}.pre-arch-noctalia"
+  as_root tee "$PACMAN_CONF" >/dev/null < "$tmp_conf"
+  rm -f "$tmp_conf"
+  grep -qE '^[[:space:]]*\[archlinuxcn\]' "$PACMAN_CONF" || die "failed to write [archlinuxcn] — please edit ${PACMAN_CONF} manually."
+  ok "archlinuxcn repo: installer's block written (backup: ${PACMAN_CONF}.pre-arch-noctalia)"
 fi
 
 # 1b) 镜像"降级链"：并行实探 [archlinuxcn] 各镜像，快的排前、不通的沉底；顺序变了才改写。
