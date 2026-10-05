@@ -70,3 +70,4 @@ dir	/home/pang/.config/nautilus	空目录残留
 dir	/home/pang/.config/opencode	空目录残留
 dir	/home/pang/.config/celluloid	空目录残留（celluloid 已删）
 dir	/home/pang/.config/cef_user_data	空目录残留（WPS cef）
+package	linuxqq-nt-bwrap	替换为 linuxqq-wayland-fix（2026-10-05 用户决定：更稳定、Wayland 修复更多）
