@@ -2,6 +2,8 @@
 # test-bootstrap.sh — bootstrap 冒烟：
 #   1) 本地路径源 → git clone → 显式参数透传（install.sh --preview）
 #   2) 不带 install 参数 → 默认以 --run --yes 交接（stub 仓库验证，不跑真安装）
+#   2b) --no-aur（修饰参数）→ 默认补全为 --run --yes --no-aur 交接
+#   2c) 裸 --preview → 原样转交（不补 --run）
 #   3) 脚本从管道喂入（等效 `curl | bash`）→ 必须不挂起且交接正确
 # 说明：clone 取的是 git HEAD（未提交的工作树改动不在克隆内）——干净工作树上最有意义。
 set -Eeuo pipefail
@@ -42,6 +44,24 @@ printf '%s\n' "$out2"
 [ "$rc2" -eq 0 ] || { echo "bootstrap(default) rc=${rc2}"; exit 1; }
 printf '%s\n' "$out2" | grep -q 'stub-install got: --run --yes' || { echo "default handover is not '--run --yes'"; exit 1; }
 
+# 场景 2b：--no-aur（无需 -- 分隔）→ 仍按一键实装补全：--run --yes --no-aur
+set +e
+out2b="$(bash "$ROOT/bootstrap.sh" --src "$stub" --dest "$dest/repo2b" --no-aur 2>&1)"
+rc2b=$?
+set -e
+printf '%s\n' "$out2b"
+[ "$rc2b" -eq 0 ] || { echo "bootstrap(--no-aur) rc=${rc2b}"; exit 1; }
+printf '%s\n' "$out2b" | grep -q 'stub-install got: --run --yes --no-aur' || { echo "no-aur handover is not '--run --yes --no-aur'"; exit 1; }
+
+# 场景 2c：裸 --preview → 原样转交（不补 --run）
+set +e
+out2c="$(bash "$ROOT/bootstrap.sh" --src "$stub" --dest "$dest/repo2c" --preview 2>&1)"
+rc2c=$?
+set -e
+printf '%s\n' "$out2c"
+[ "$rc2c" -eq 0 ] || { echo "bootstrap(bare --preview) rc=${rc2c}"; exit 1; }
+printf '%s\n' "$out2c" | grep -q 'stub-install got: --preview$' || { echo "bare --preview handover is not '--preview'"; exit 1; }
+
 # 场景 3：脚本从管道喂入（等效 curl | bash），必须不挂起。
 # 回归背景（2026-10-05 实测事故）：bootstrap 曾在中途 `exec </dev/tty`，把 bash 自己的
 # 脚本流截断——bash 读完缓冲后转去从终端读“下一行脚本”，等不到输入 → 静默挂死。
@@ -59,4 +79,4 @@ printf '%s\n' "$out3"
 [ "$rc3" -eq 0 ] || { echo "stdin-script scenario rc=${rc3} (hang?)"; exit 1; }
 printf '%s\n' "$out3" | grep -q 'stub-install got: --run --yes' || { echo "stdin-script handover wrong"; exit 1; }
 
-echo "ok: bootstrap (1) preview passthrough OK, (2) default handover = --run --yes OK, (3) stdin-script no-hang OK"
+echo "ok: bootstrap (1) preview passthrough OK, (2) default handover = --run --yes OK, (2b) --no-aur handover = '--run --yes --no-aur' OK, (2c) bare --preview passthrough OK, (3) stdin-script no-hang OK"

@@ -49,10 +49,10 @@ stage_desc() { # $1=id
   return 1
 }
 
-# 渲染完整计划。（$1=mode preview|run；$2=machine；$3=virt；$4=user）
+# 渲染完整计划。（$1=mode preview|run；$2=machine；$3=virt；$4=user；$5=skip_aur）
 # 注意：只读操作——不得创建/修改任何文件（预览的验收要求）。
 render_plan() {
-  local mode="$1" machine="$2" virt="$3" user="$4"
+  local mode="$1" machine="$2" virt="$3" user="$4" skip_aur="${5:-0}"
   local id name desc payload_count
 
   printf '== arch-noctalia installer ==\n'
@@ -64,6 +64,9 @@ render_plan() {
   for id in $(stage_ids); do
     name="$(stage_name "$id")"
     desc="$(stage_desc "$id")"
+    if [[ "$id" == "05" && "$skip_aur" == "1" ]]; then
+      desc="${desc}  [skipped: --no-aur]"
+    fi
     printf '  [%s] %-9s %s\n' "$id" "$name" "$desc"
   done
 

@@ -17,6 +17,7 @@ MODE="preview"
 AN_ASSUME_YES="${AN_ASSUME_YES:-0}"
 MACHINE_OVERRIDE=""
 FROM_STAGE=""
+SKIP_AUR=0
 
 usage() {
   cat <<'EOF'
@@ -31,6 +32,7 @@ Options:
   --preview         read-only: render the full stage plan, change nothing (default)
   --machine M       force machine type (physical|vm) instead of auto-detection
   --from NN         start from stage NN (resume helper; earlier stages skipped)
+  --no-aur          skip stage 05 (AUR packages); finish it later: ./install.sh --run
   --yes, -y         non-interactive: auto-confirm prompts
   -h, --help        this help
 EOF
@@ -43,6 +45,7 @@ while [[ $# -gt 0 ]]; do
     --yes|-y) AN_ASSUME_YES=1; shift ;;
     --machine) MACHINE_OVERRIDE="${2:?--machine needs a value}"; shift 2 ;;
     --from) FROM_STAGE="${2:?--from needs a value}"; shift 2 ;;
+    --no-aur) SKIP_AUR=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) die "unknown option: $1 (see --help)" ;;
   esac
@@ -53,7 +56,7 @@ virt="$(detect_virt)"
 machine="${MACHINE_OVERRIDE:-$(detect_machine)}"
 
 if [[ "$MODE" == "preview" ]]; then
-  render_plan "preview" "$machine" "$virt" "$user"
+  render_plan "preview" "$machine" "$virt" "$user" "$SKIP_AUR"
   exit 0
 fi
 
@@ -68,7 +71,7 @@ if ! sudo -n true 2>/dev/null; then
   sudo -v || die "sudo authentication failed."
 fi
 
-render_plan "run" "$machine" "$virt" "$user"
+render_plan "run" "$machine" "$virt" "$user" "$SKIP_AUR"
 printf '\n'
 if [[ "${AN_ASSUME_YES}" != "1" ]]; then
   confirm "Proceed with the installation?" || die "aborted by user."
@@ -96,6 +99,10 @@ for id in $(stage_ids); do
     info "stage ${id} ${name}: already done (resume)"
     continue
   fi
+  if [[ "$SKIP_AUR" == "1" && "$id" == "05" ]]; then
+    info "stage ${id} ${name}: skipped (--no-aur) — finish it later: ${AN_ROOT_DIR}/install.sh --run --yes"
+    continue
+  fi
   step_file=""
   for f in "${AN_ROOT_DIR}/steps/${id}-"*.sh; do
     [[ -e "$f" ]] && step_file="$f" && break
@@ -109,5 +116,10 @@ for id in $(stage_ids); do
   ok "stage ${id} ${name}: done"
 done
 
-ok "all stages complete."
+if [[ "$SKIP_AUR" == "1" ]]; then
+  ok "all stages complete except AUR (--no-aur: deferred by design)."
+  info "after login, finish the AUR packages with: ${AN_ROOT_DIR}/install.sh --run --yes"
+else
+  ok "all stages complete."
+fi
 info "next: reboot / re-login. The desktop (niri + Noctalia) is ready; see README for post-install notes."

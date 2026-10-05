@@ -4,11 +4,12 @@
 #
 # 用法：
 #   curl -fsSL <raw-url> | bash                    # 一键：clone + 直接实装（--run --yes）
+#   curl -fsSL <raw-url> | bash -s -- --no-aur     # 一键实装但跳过 AUR 阶段（进桌面后再补）
 #   curl -fsSL <raw-url> | bash -s -- --preview    # 只预览：clone + 渲染计划，不动系统
-#   bash bootstrap.sh [--src <git-url|path>] [--dest <dir>] [-- <install.sh 参数...>]
+#   bash bootstrap.sh [--src <git-url|path>] [--dest <dir>] [install.sh 参数...]
 #
 # 例：
-#   bash bootstrap.sh --src /home/pang/Projects/arch-noctalia --dest ~/arch-noctalia-test -- --preview
+#   bash bootstrap.sh --src /home/pang/Projects/arch-noctalia --dest ~/arch-noctalia-test --preview
 set -Eeuo pipefail
 
 DEFAULT_SRC="${ARCH_NOCTALIA_SRC:-https://github.com/tjz123psh/arch-noctalia.git}"
@@ -21,16 +22,20 @@ usage() {
 arch-noctalia bootstrap
 
 Usage:
-  bash bootstrap.sh [--src <git-url|path>] [--dest <dir>] [-- <install.sh args...>]
+  bash bootstrap.sh [--src <git-url|path>] [--dest <dir>] [install.sh args...]
 
 Options:
   --src SRC   git source (URL or local path). Default: https://github.com/tjz123psh/arch-noctalia.git
   --dest DIR  where to clone. Default: ~/arch-noctalia
-  --          everything after is passed to install.sh (e.g. -- --preview)
   -h, --help  this help
 
+All other arguments are passed straight to install.sh (e.g. --no-aur, --preview, --machine vm).
 With no install.sh args, the full install runs right away (= install.sh --run --yes).
-Dry run: bash bootstrap.sh -- --preview
+
+Examples:
+  curl ... | bash                  full install
+  curl ... | bash -s -- --no-aur   full install, skip AUR (finish later from the desktop)
+  curl ... | bash -s -- --preview  dry run
 EOF
 }
 
@@ -38,16 +43,27 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --src) SRC="${2:?--src needs a value}"; shift 2 ;;
     --dest) DEST="${2:?--dest needs a value}"; shift 2 ;;
-    --) shift; PASSTHROUGH=("$@"); break ;;
+    --) shift; PASSTHROUGH+=("$@"); break ;;
     -h|--help) usage; exit 0 ;;
-    *) echo "[error] unknown option: $1 (pass install.sh args after --)" >&2; exit 2 ;;
+    *) PASSTHROUGH+=("$1"); shift ;;  # 其余参数原样转交 install.sh（由它做严格校验）
   esac
 done
 
-# 默认 = 一键实装；只想预览时走 `-- --preview`。
+# 默认 = 一键实装：没给参数、或只给了修饰参数（如 --no-aur）且未显式 --run/--preview 时，补 --run --yes。
 if [[ ${#PASSTHROUGH[@]} -eq 0 ]]; then
   PASSTHROUGH=(--run --yes)
   echo "[info] no install args -> one-click install (--run --yes); dry run: bash -s -- --preview"
+else
+  has_mode=0
+  for a in "${PASSTHROUGH[@]}"; do
+    if [[ "$a" == "--run" || "$a" == "--preview" ]]; then
+      has_mode=1
+    fi
+  done
+  if [[ "$has_mode" == "0" ]]; then
+    PASSTHROUGH=(--run --yes "${PASSTHROUGH[@]}")
+    echo "[info] no run/preview mode given -> one-click install (--run --yes)"
+  fi
 fi
 
 if ! command -v git >/dev/null 2>&1; then
