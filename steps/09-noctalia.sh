@@ -66,7 +66,10 @@ if (( need_build == 1 )); then
   have pkg-config || die "pkg-config not found (pkgconf package)"
   [[ -f /usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml ]] || die "wayland-protocols (xdg-shell.xml) not found"
   info "building cursor-track (gcc + wayland-scanner)"
-  ( cd "$SRC_DIR" && bash build.sh install )
+  if ! ( cd "$SRC_DIR" && bash build.sh install ); then
+    rm -rf "${SRC_DIR}/build"
+    die "cursor-track build failed — removed the build/ cache; re-run ./install.sh --run"
+  fi
   [[ -x "$BIN" ]] || die "cursor-track build failed (no binary at ${BIN})"
   ok "cursor-track: built and installed"
 else

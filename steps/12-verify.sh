@@ -54,6 +54,7 @@ while IFS=$'\t' read -r pkg _repo module _purpose; do
     continue
   fi
   case "${module:-}" in
+    drivers) [[ "$machine" == "physical" ]] || continue ;;   # 与 04 一致：驱动包仅物理机
     vmware-guest) [[ "$machine" == "vm" ]] || continue ;;
     physical-only) [[ "$machine" == "physical" ]] || continue ;;
   esac

@@ -4,6 +4,7 @@
 #   snapper-timeline.timer / snapper-cleanup.timer / grub-btrfsd.service / btrfs-scrub@-.timer 启用；
 #   另把当前用户加入 docker 组（下次登录生效）。
 # 用户级：rice-dnd.timer（单元文件由 07 部署；无用户总线时退化为手工 enable 软链）。
+# 缺失（应由 03/06 的包提供）的单元/包在结尾汇总为失败；grub-btrfsd 为显式可选。
 # 注：greetd 的启用归 11；本步骤不碰 tty1。
 # 幂等：已启用/已配置/已在组内 → 跳过；重复运行安全。
 set -Eeuo pipefail
@@ -13,10 +14,13 @@ source "${AN_ROOT_DIR}/lib/common.sh"
 
 require_orchestrator
 
+missing_units=()
+
 enable_system_unit() { # $1=unit
   local u="$1"
   if ! systemctl cat "$u" >/dev/null 2>&1; then
     warn "unit not found: ${u} (package missing?)"
+    missing_units+=("$u")
     return 0
   fi
   if systemctl is-enabled "$u" >/dev/null 2>&1; then
@@ -52,7 +56,8 @@ if [[ "$(findmnt -no FSTYPE / 2>/dev/null || true)" == "btrfs" ]]; then
       fi
     done
   else
-    warn "snapper not installed — skipping snapshot configs"
+    warn "snapper not installed — snapshot configs cannot be created"
+    missing_units+=("snapper")
   fi
   enable_system_unit snapper-timeline.timer
   enable_system_unit snapper-cleanup.timer
@@ -78,6 +83,7 @@ if getent group docker >/dev/null 2>&1; then
   fi
 else
   warn "docker group not found (docker not installed?)"
+  missing_units+=("docker(group)")
 fi
 
 # --- 用户级：rice-dnd.timer ---
@@ -93,4 +99,7 @@ else
   warn "user session bus not reachable — created the enable symlink directly (the timer starts at login)"
 fi
 
+if (( ${#missing_units[@]} > 0 )); then
+  die "required units/packages missing: ${missing_units[*]} — stages 03/06 should provide them"
+fi
 ok "Stage 10 services: done"
