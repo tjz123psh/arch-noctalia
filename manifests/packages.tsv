@@ -74,6 +74,7 @@ lib32-nvidia-utils	multilib	drivers
 libnotify	extra		
 libva-nvidia-driver	extra	drivers	
 libva-utils	extra		
+libxres	extra		Wayland 剪贴板代理识别（linuxqq-wayland-fix 自检项）
 linux-firmware	core	drivers	
 linux-lts	core		
 linux-zen	extra		

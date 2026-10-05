@@ -1,7 +1,7 @@
 # schema=1
 # repo_path<TAB>target_path<TAB>mode<TAB>md5
 # repo_path：本仓库相对路径；target_path：目标机绝对路径；mode：八进制权限（git 只保留可执行位，部署以本表为准）；md5：payload 文件 md5（与目标机原件一致）
-payload/home/.bash_profile	/home/pang/.bash_profile	644	ae4300997da9a08073117f664ff92258
+payload/home/.bash_profile	/home/pang/.bash_profile	644	b731491ce01573c4c946f7266dc7ace3
 payload/home/.config/Kingsoft/Office.conf	/home/pang/.config/Kingsoft/Office.conf	644	5f53702b5cfb3768f84807b0bd972178
 payload/home/.config/Kingsoft/WPSCloud.conf	/home/pang/.config/Kingsoft/WPSCloud.conf	644	bcbd70f9321c201fc1136e6184709d78
 payload/home/.config/Kingsoft/default.ini	/home/pang/.config/Kingsoft/default.ini	644	29f5382ce0fdbd432f57a8e7df3c9097
@@ -22,7 +22,7 @@ payload/home/.config/fcitx5/conf/notifications.conf	/home/pang/.config/fcitx5/co
 payload/home/.config/fcitx5/conf/pinyin.conf	/home/pang/.config/fcitx5/conf/pinyin.conf	600	3ddaea1818d37c43bcdf1eed3a0aebc7
 payload/home/.config/fcitx5/conf/punctuation.conf	/home/pang/.config/fcitx5/conf/punctuation.conf	600	c524f85ab97a43fdaf90e56d73a0b715
 payload/home/.config/fcitx5/profile	/home/pang/.config/fcitx5/profile	600	99e210abb5a1e02b0495983d865d0f65
-payload/home/.config/fish/config.fish	/home/pang/.config/fish/config.fish	600	7591b25de7320da37332481c99024c2c
+payload/home/.config/fish/config.fish	/home/pang/.config/fish/config.fish	600	75cbc310dfe5b8e62b23d20ae6dd7848
 payload/home/.config/fontconfig/fonts.conf	/home/pang/.config/fontconfig/fonts.conf	644	d6acc253adc8ef5bd1e678014aa49097
 payload/home/.config/foot/foot.ini	/home/pang/.config/foot/foot.ini	600	a7b30b6300a786f2101f4639a91df4cf
 payload/home/.config/fuzzel/fuzzel.ini	/home/pang/.config/fuzzel/fuzzel.ini	644	2d4cb66c72e3f04aeb8ed6d9f596f053

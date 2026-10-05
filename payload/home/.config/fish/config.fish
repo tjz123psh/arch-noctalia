@@ -2,19 +2,13 @@
 #  fish — 默认 shell
 # ══════════════════════════════════════════════════════════════
 
-# ── PATH 必须在 exec niri 之前设置，否则 niri 继承不到 ~/bin
+# ── PATH：~/bin 优先
 if not contains "$HOME/bin" $PATH
     set -gx PATH "$HOME/bin" $PATH
 end
 
-# ── 【关键】tty1 自动进 niri 桌面
-#    ⚠️ 换了 shell 就不能再依赖 ~/.bash_profile（fish 不读它），
-#       否则开机只剩一个 fish 提示符、桌面起不来。
-if status is-login
-    if test -z "$WAYLAND_DISPLAY"; and test (tty) = /dev/tty1
-        exec niri
-    end
-end
+# 注：旧的 tty1「exec niri」自动启动已移除 —— 它会截胡 greetd→niri-session，
+# 使 graphical-session.target 不激活、xdg-desktop-portal-gnome 起不来（录屏/共享失效）。
 
 # ── starship 提示符（配色由 Noctalia 从壁纸生成）
 if type -q starship

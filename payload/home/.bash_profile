@@ -3,8 +3,6 @@
 #
 [[ -f ~/.bashrc ]] && . ~/.bashrc
 
-# --- niri autostart on tty1 (DSH rice) ---
-# 直接从登录会话启动，让 libseat/logind 拿到 seat0
-if [[ -z $WAYLAND_DISPLAY && $(tty) == /dev/tty1 ]]; then
-    exec niri >/tmp/niri-tty1.log 2>&1
-fi
+# 注：旧的 tty1「exec niri」自动启动已移除 —— 它会截胡 greetd→niri-session，
+# 使 graphical-session.target 不激活、xdg-desktop-portal-gnome 起不来（录屏/共享失效）。
+
