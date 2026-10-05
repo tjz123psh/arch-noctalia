@@ -7,7 +7,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 out1="$(mktemp)"
 out2="$(mktemp)"
 out3="$(mktemp)"
-trap 'rm -f "$out1" "$out2" "$out3"' EXIT
+out4="$(mktemp)"
+trap 'rm -f "$out1" "$out2" "$out3" "$out4"' EXIT
 
 if ! bash "$ROOT/install.sh" --preview > "$out1" 2>&1; then
   echo "preview exited non-zero:"
@@ -43,4 +44,16 @@ if grep -q 'skipped: --no-aur' "$out1"; then
   exit 1
 fi
 
-echo "ok: deterministic preview, full stage plan, environment line present, no state written, --no-aur annotated"
+# --redo 预览：注明将清记录重跑；默认预览不得出现。
+if ! bash "$ROOT/install.sh" --preview --redo 07 > "$out4" 2>&1; then
+  echo "preview --redo exited non-zero:"
+  cat "$out4"
+  exit 1
+fi
+grep -q 'note: --redo 07' "$out4" || { echo "redo note missing in 'preview --redo 07'"; exit 1; }
+if grep -q 'note: --redo' "$out1"; then
+  echo "default preview must not carry the --redo note"
+  exit 1
+fi
+
+echo "ok: deterministic preview, full stage plan, environment line present, no state written, --no-aur and --redo annotated"

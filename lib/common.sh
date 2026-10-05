@@ -59,3 +59,81 @@ count_rows() {
     echo 0
   fi
 }
+
+# --- 部署校验：目标属性读取（普通用户 → root 回退） ---
+# 系统文件（$HOME 之外）归 root：普通用户读不到时用 root 重试一次。
+# 场景：ESP 以 fmask/dmask=0077 挂载时 /boot 对普通用户不可进入（见 README「权限与 vfat」）。
+# 用法：t_type FILE（-L 跟随软链的文件类型）/ t_perms FILE（权限位）/ t_md5 FILE（内容 md5）。
+_target_probe() { # $1=type|perms|md5  $2=target
+  local kind="$1" t="$2" asroot=0 out=""
+  while :; do
+    case "$kind" in
+      type)
+        if (( asroot == 0 )); then
+          out="$(stat -L -c '%F' -- "$t" 2>/dev/null)"
+        else
+          out="$(as_root stat -L -c '%F' -- "$t" 2>/dev/null)"
+        fi
+        ;;
+      perms)
+        if (( asroot == 0 )); then
+          out="$(stat -c '%a' -- "$t" 2>/dev/null)"
+        else
+          out="$(as_root stat -c '%a' -- "$t" 2>/dev/null)"
+        fi
+        ;;
+      md5)
+        if (( asroot == 0 )); then
+          out="$(md5sum -- "$t" 2>/dev/null | awk '{print $1}')"
+        else
+          out="$(as_root md5sum -- "$t" 2>/dev/null | awk '{print $1}')"
+        fi
+        ;;
+    esac
+    if [[ -n "$out" ]]; then
+      break
+    fi
+    if (( asroot == 1 )); then
+      break
+    fi
+    if [[ "$t" == "${HOME}"/* ]]; then
+      break
+    fi
+    asroot=1
+  done
+  printf '%s' "$out"
+}
+t_type()  { _target_probe type "$1"; }
+t_perms() { _target_probe perms "$1"; }
+t_md5()   { _target_probe md5 "$1"; }
+
+# 目标所在文件系统的类型（沿路径向上找到第一个对当前用户可见的位置）。
+fs_of_target() {
+  local p="$1"
+  while [[ ! -e "$p" && "$p" != "/" ]]; do
+    p="$(dirname -- "$p")"
+  done
+  stat -f -c '%T' -- "$p" 2>/dev/null || printf ''
+}
+
+# FAT 系文件系统没有 Unix 权限位——权限由挂载选项（fmask/dmask）统一决定，不能逐文件校验/设置。
+fs_has_unix_perms() { # $1=fs type（如 vfat/exfat/btrfs）
+  case "${1:-}" in
+    vfat|msdos|exfat) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+# --- seed 清单（个人数据种子：只在缺失时初始化，绝不覆盖已有内容；见 manifests/seed.tsv） ---
+# shellcheck disable=SC2034  # AN_SEED 供 source 本文件的步骤脚本消费；此处只负责填充
+load_seed_targets() { # 填充全局关联数组 AN_SEED[]（键 = files.tsv 的 repo 路径列）
+  declare -gA AN_SEED=()
+  local p _note
+  [[ -f "${AN_ROOT_DIR}/manifests/seed.tsv" ]] || return 0
+  while IFS=$'\t' read -r p _note; do
+    if [[ -z "$p" || "$p" == "#"* ]]; then
+      continue
+    fi
+    AN_SEED["$p"]=1
+  done < "${AN_ROOT_DIR}/manifests/seed.tsv"
+}

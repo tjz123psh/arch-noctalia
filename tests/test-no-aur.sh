@@ -78,4 +78,37 @@ if printf '%s\n' "$out2" | grep -q 'skipped: --no-aur'; then
   exit 1
 fi
 
-echo "ok: --no-aur skips+defers stage 05; a later plain run finishes exactly that stage"
+# ---- 第三轮：--redo 07 → 强制重跑 07..12（01–06 保持完成；05 不动）----
+if ! out3="$(run --redo 07)"; then
+  printf '%s\n' "$out3"
+  echo "[FAIL] --redo 07 run exited non-zero"
+  exit 1
+fi
+printf '%s\n' "$out3"
+printf '%s\n' "$out3" | grep -q 'redo: clearing done-records for stages >= 07' || { echo "[FAIL] redo clearing notice missing"; exit 1; }
+for id in 07-config 08-scripts 09-noctalia 10-services 11-greeter 12-verify; do
+  printf '%s\n' "$out3" | grep -q "STUB ${id}.sh" || { echo "[FAIL] ${id} did not re-run under --redo 07"; exit 1; }
+done
+if printf '%s\n' "$out3" | grep -q 'STUB 06-desktop.sh'; then
+  echo "[FAIL] stage 06 must not re-run under --redo 07"
+  exit 1
+fi
+if printf '%s\n' "$out3" | grep -q 'STUB 05-aur.sh'; then
+  echo "[FAIL] stage 05 must not re-run under --redo 07"
+  exit 1
+fi
+[ "$(wc -l < "$DONE")" = "12" ] || { echo "[FAIL] done-file line count != 12 after --redo"; exit 1; }
+
+# ---- 参数校验：--from 与 --redo 互斥；无效阶段号 ----
+set +e
+out4="$(run --from 05 --redo 07 2>&1)"
+rc4=$?
+out5="$(run --redo 99 2>&1)"
+rc5=$?
+set -e
+[ "$rc4" -ne 0 ] || { echo "[FAIL] --from + --redo should die"; exit 1; }
+printf '%s\n' "$out4" | grep -q 'not both' || { echo "[FAIL] missing 'not both' error"; exit 1; }
+[ "$rc5" -ne 0 ] || { echo "[FAIL] --redo 99 should die (no such stage)"; exit 1; }
+printf '%s\n' "$out5" | grep -q 'no such stage' || { echo "[FAIL] missing 'no such stage' error"; exit 1; }
+
+echo "ok: --no-aur skips+defers stage 05; a later plain run finishes exactly that stage; --redo re-runs forced stages"

@@ -47,7 +47,10 @@ cd ~/arch-noctalia
 - 第 01 步会把 archlinuxcn 源**一律写成安装器标准块**（缺失追加／已有整段覆盖；先备份为 `.pre-arch-noctalia`），随后按实测速度重排镜像；**官方仓库镜像表**（`/etc/pacman.d/mirrorlist`）也会写成标准列表（tuna 打头，先备份）。之后装好 `archlinuxcn-keyring` 与 `paru`。
 - 配置步（07）铺完文件后还会：建标准用户目录（Desktop/Documents/Downloads/…/Templates、Pictures/Screenshots）、生成 zh_CN locale、把登录 shell 设为 fish、重建带主题的 GRUB 菜单。
 - `--no-aur` 跳过第 05 步（AUR）且**不标记完成**；之后任何时候 `./install.sh --run --yes` 都会只补这一步（其余阶段自动识别为已完成）。
-- 中断了没关系，重跑 `./install.sh --run` 会接着来，装过的不会重复装。
+- 中断了没关系，重跑 `./install.sh --run` 会接着来，装过的不会重复装。**要强制重跑某段（重跑修复）**：`./install.sh --run --redo NN` —— 从 NN 起清掉完成记录并重新执行（如 `--redo 07` 重铺配置）。
+- **个人数据不会被覆盖**：两份便签和 `Templates/` 是"种子"——只在缺失时初始化，你在机器上写的内容安装器绝不碰；其余文件若与仓库版本不同会被覆盖，但覆盖前会把旧内容备份到 `.state/overwritten/<时间戳>/`（该目录在克隆的仓库里，可随手恢复）。
+- **权限与 vfat**：GRUB 主题等目标若落在 vfat（ESP）上，权限位由挂载选项（fmask/dmask）统一决定——安装器在 FAT 系文件系统上跳过权限位校验、系统文件读不到时自动改用 root 读，**不改动你的挂载设置**；ESP 怎么挂都不影响部署与自检。
+- 第 12 步自检范围：文件清单、软件包、`~/bin` 软链（存在且可执行）、服务启用状态；"启用但当前未运行"只提示不算失败（可能待重启 / 无对应硬件）。
 - 想自己检查一下（可选）：`tools/selfcheck.sh`、`tests/run-all.sh`。
 
 ## 目录

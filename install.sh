@@ -17,6 +17,7 @@ MODE="preview"
 AN_ASSUME_YES="${AN_ASSUME_YES:-0}"
 MACHINE_OVERRIDE=""
 FROM_STAGE=""
+REDO_STAGE=""
 SKIP_AUR=0
 
 usage() {
@@ -31,7 +32,8 @@ Options:
   --run             perform the installation (steps in order, resumable)
   --preview         read-only: render the full stage plan, change nothing (default)
   --machine M       force machine type (physical|vm) instead of auto-detection
-  --from NN         start from stage NN (resume helper; earlier stages skipped)
+  --from NN         resume: skip stages before NN (done stages are still skipped)
+  --redo NN         repair: clear the done-record of stages >= NN and re-run them
   --no-aur          skip stage 05 (AUR packages); finish it later: ./install.sh --run
   --yes, -y         non-interactive: auto-confirm prompts
   -h, --help        this help
@@ -45,11 +47,16 @@ while [[ $# -gt 0 ]]; do
     --yes|-y) AN_ASSUME_YES=1; shift ;;
     --machine) MACHINE_OVERRIDE="${2:?--machine needs a value}"; shift 2 ;;
     --from) FROM_STAGE="${2:?--from needs a value}"; shift 2 ;;
+    --redo) REDO_STAGE="${2:?--redo needs a value}"; shift 2 ;;
     --no-aur) SKIP_AUR=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) die "unknown option: $1 (see --help)" ;;
   esac
 done
+
+if [[ -n "$FROM_STAGE" && -n "$REDO_STAGE" ]]; then
+  die "use either --from or --redo, not both."
+fi
 
 user="$(current_user)"
 virt="$(detect_virt)"
@@ -57,6 +64,9 @@ machine="${MACHINE_OVERRIDE:-$(detect_machine)}"
 
 if [[ "$MODE" == "preview" ]]; then
   render_plan "preview" "$machine" "$virt" "$user" "$SKIP_AUR"
+  if [[ -n "$REDO_STAGE" ]]; then
+    info "note: --redo ${REDO_STAGE} — in run mode, the done-record of stages >= ${REDO_STAGE} is cleared and they run again"
+  fi
   exit 0
 fi
 
@@ -81,12 +91,25 @@ mkdir -p "$AN_STATE_DIR"
 DONE_FILE="${AN_STATE_DIR}/steps.done"
 touch "$DONE_FILE"
 
+# --redo NN：视同 --from NN，并先把 >= NN 的完成记录清掉（强制重跑；用于"重跑修复"场景）。
+START_LABEL="--from"
+if [[ -n "$REDO_STAGE" ]]; then
+  START_LABEL="--redo"
+  FROM_STAGE="$REDO_STAGE"
+fi
+
 have_from=0
 if [[ -n "$FROM_STAGE" ]]; then
   for id in $(stage_ids); do
     [[ "$id" == "$FROM_STAGE" ]] && have_from=1
   done
-  [[ "$have_from" == "1" ]] || die "--from ${FROM_STAGE}: no such stage."
+  [[ "$have_from" == "1" ]] || die "${START_LABEL} ${FROM_STAGE}: no such stage."
+fi
+
+if [[ -n "$REDO_STAGE" ]]; then
+  info "redo: clearing done-records for stages >= ${REDO_STAGE} (they will re-run)"
+  redo_tmp="${DONE_FILE}.redo.tmp"
+  awk -v r="$REDO_STAGE" '$1 < r' "$DONE_FILE" > "$redo_tmp" && mv -- "$redo_tmp" "$DONE_FILE"
 fi
 
 for id in $(stage_ids); do
@@ -110,7 +133,7 @@ for id in $(stage_ids); do
   [[ -n "$step_file" ]] || die "stage ${id}: step script not found"
   info "=== stage ${id} ${name} ==="
   if ! AN_RUN=1 AN_MACHINE="$machine" AN_ASSUME_YES="$AN_ASSUME_YES" bash "$step_file"; then
-    die "stage ${id} ${name} failed — fix the issue and re-run: ./install.sh --run  (done stages are skipped)"
+    die "stage ${id} ${name} failed — fix the cause, then resume: ./install.sh --run  (done stages are skipped; to force stages again: ./install.sh --run --redo ${id})"
   fi
   echo "$id" >> "$DONE_FILE"
   ok "stage ${id} ${name}: done"

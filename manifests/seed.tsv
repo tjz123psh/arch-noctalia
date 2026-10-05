@@ -1,0 +1,29 @@
+# schema=1
+# seed 清单（个人数据种子，2026-10-05 起）：这些目标"已存在就保持现状、缺失才初始化"——
+# 用户在机器上的编辑绝不被覆盖；12-verify 对其跳过内容核对。
+# <repo 路径（= files.tsv 第 1 列）>\t<备注>
+payload/home/Documents/notes/便签-2.md	个人数据种子（便签/模板）
+payload/home/Documents/notes/便签.md	个人数据种子（便签/模板）
+payload/home/Templates/C 源文件.c	个人数据种子（便签/模板）
+payload/home/Templates/CSS 样式表.css	个人数据种子（便签/模板）
+payload/home/Templates/Dockerfile	个人数据种子（便签/模板）
+payload/home/Templates/Go 程序.go	个人数据种子（便签/模板）
+payload/home/Templates/HTML 页面.html	个人数据种子（便签/模板）
+payload/home/Templates/JSON 文件.json	个人数据种子（便签/模板）
+payload/home/Templates/Java 文件.java	个人数据种子（便签/模板）
+payload/home/Templates/JavaScript.js	个人数据种子（便签/模板）
+payload/home/Templates/KDL 配置.kdl	个人数据种子（便签/模板）
+payload/home/Templates/Makefile	个人数据种子（便签/模板）
+payload/home/Templates/Markdown 文档.md	个人数据种子（便签/模板）
+payload/home/Templates/Python 脚本.py	个人数据种子（便签/模板）
+payload/home/Templates/Rust 程序.rs	个人数据种子（便签/模板）
+payload/home/Templates/SVG 图片.svg	个人数据种子（便签/模板）
+payload/home/Templates/Shell 脚本.sh	个人数据种子（便签/模板）
+payload/home/Templates/TOML 文件.toml	个人数据种子（便签/模板）
+payload/home/Templates/TypeScript.ts	个人数据种子（便签/模板）
+payload/home/Templates/XML 文件.xml	个人数据种子（便签/模板）
+payload/home/Templates/YAML 文件.yaml	个人数据种子（便签/模板）
+payload/home/Templates/文本文档.txt	个人数据种子（便签/模板）
+payload/home/Templates/空白文件	个人数据种子（便签/模板）
+payload/home/Templates/配置.ini	个人数据种子（便签/模板）
+payload/home/Templates/配置文件.conf	个人数据种子（便签/模板）

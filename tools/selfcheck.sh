@@ -76,6 +76,20 @@ if [[ -f "$LINKS" ]]; then
 fi
 info "mapping: ${links} bin links checked"
 
+# seed.tsv（个人数据种子清单）：每行必须是 files.tsv 第 1 列里存在的 repo 路径。
+SEED="${ROOT_DIR}/manifests/seed.tsv"
+seed_rows=0
+if [[ -f "$SEED" ]]; then
+  while IFS=$'\t' read -r p _note; do
+    if [[ -z "$p" || "$p" == "#"* ]]; then continue; fi
+    seed_rows=$((seed_rows + 1))
+    if ! awk -F'\t' -v p="$p" '$1==p {found=1} END{exit !found}' "$FILES"; then
+      bad "seed.tsv references a path not in files.tsv: $p"
+    fi
+  done < <(manifest_rows "$SEED")
+fi
+info "mapping: ${seed_rows} seed rows checked against files.tsv"
+
 # payload 必须全部进 git：注意 payload 内自带 .gitignore（样本原样），
 # 被其命中的文件要 `git add -f`，否则"磁盘上有、提交里没有"。
 ignored="$(git -C "$ROOT_DIR" ls-files --others --ignored --exclude-standard payload/ || true)"
