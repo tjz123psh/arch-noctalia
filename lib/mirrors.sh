@@ -23,8 +23,8 @@ cn_host() {
 }
 
 # 并行实探各镜像（stdin = URL，每行一条）：输出 "速度B/s 序号 URL"；失败/超时 = 0。
-# 指标 = 吞吐量：限时 10s 抓 archlinuxcn.files 前 2MB（range），比"小文件响应时间"更能反映
-# 真实装包体验（曾见某镜像小文件 0.08s 但大文件只有 2MB/s，会触发 pacman "too slow"）。
+# 指标 = 限时 8s 抓 archlinuxcn.files 前 16MB 的吞吐：能识破"瞬间快、持续慢"的镜像
+# （8s 内抓不完 16MB ≈ 持续 <2MB/s，直接沉底；实测 aliyun 就属这类：起步 16~26MB/s、持续仅 ~2MB/s）。
 cn_probe_servers() {
   local tmp s probe t idx=0
   tmp="$(mktemp)"
@@ -33,7 +33,7 @@ cn_probe_servers() {
     idx=$((idx + 1))
     probe="${s/\$arch/x86_64}/archlinuxcn.files"
     (
-      t="$(curl -fsS -o /dev/null --connect-timeout 3 --max-time 10 --range 0-2097151 \
+      t="$(curl -fsS -o /dev/null --connect-timeout 3 --max-time 8 --range 0-16777215 \
             -w '%{speed_download}' "$probe" 2>/dev/null)" || t=""
       printf '%s %s %s\n' "${t:-0}" "$idx" "$s"
     ) >> "$tmp" &
