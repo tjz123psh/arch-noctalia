@@ -13,9 +13,9 @@ payload/home/.config/arkrc	/home/pang/.config/arkrc	600	4a97cd4e889ddea7fc33329f
 payload/home/.config/btop/btop.conf	/home/pang/.config/btop/btop.conf	644	ccfb150eadf127cd183bea74d419808f
 payload/home/.config/btop/themes/noctalia.theme	/home/pang/.config/btop/themes/noctalia.theme	644	a084c6b69323eee8348c83ec57807655
 payload/home/.config/environment.d/10-desktop.conf	/home/pang/.config/environment.d/10-desktop.conf	644	de80ab11ba03ebb877451060254bca23
-payload/home/.config/fastfetch/config.jsonc	/home/pang/.config/fastfetch/config.jsonc	644	c5fbd17523ae5d19e6614d091d935daa
+payload/home/.config/fastfetch/config.jsonc	/home/pang/.config/fastfetch/config.jsonc	644	baf285ffcb9ea181880ac1976463bf30
 payload/home/.config/fastfetch/logo.png	/home/pang/.config/fastfetch/logo.png	644	a4176ae1a403ab05d82eadd1333a9273
-payload/home/.config/fastfetch/themes/noctalia.jsonc	/home/pang/.config/fastfetch/themes/noctalia.jsonc	644	168be891e61020a29fd4ce50e4182724
+payload/home/.config/fastfetch/themes/noctalia.jsonc	/home/pang/.config/fastfetch/themes/noctalia.jsonc	644	420d540b4783a4cc566ed20c1d0cba8c
 payload/home/.config/fcitx5/conf/chttrans.conf	/home/pang/.config/fcitx5/conf/chttrans.conf	600	ffda3fa22413dd8cc96019742a47783d
 payload/home/.config/fcitx5/conf/classicui.conf	/home/pang/.config/fcitx5/conf/classicui.conf	644	9de58f23990bec78f58ff55de9f606b7
 payload/home/.config/fcitx5/conf/notifications.conf	/home/pang/.config/fcitx5/conf/notifications.conf	600	4d6c030467ef9811e92daa5aaaff362d
@@ -26,17 +26,17 @@ payload/home/.config/fish/config.fish	/home/pang/.config/fish/config.fish	600	75
 payload/home/.config/fontconfig/fonts.conf	/home/pang/.config/fontconfig/fonts.conf	644	d6acc253adc8ef5bd1e678014aa49097
 payload/home/.config/foot/foot.ini	/home/pang/.config/foot/foot.ini	600	a7b30b6300a786f2101f4639a91df4cf
 payload/home/.config/fuzzel/fuzzel.ini	/home/pang/.config/fuzzel/fuzzel.ini	644	2d4cb66c72e3f04aeb8ed6d9f596f053
-payload/home/.config/fuzzel/themes/noctalia	/home/pang/.config/fuzzel/themes/noctalia	644	d1cf896deb8c846551afb00a95efdeaa
+payload/home/.config/fuzzel/themes/noctalia	/home/pang/.config/fuzzel/themes/noctalia	644	d2c49ebd95a9d2662db5d8edf84575d4
 payload/home/.config/gtk-3.0/bookmarks	/home/pang/.config/gtk-3.0/bookmarks	644	c786c66e92f89fc90fac9b8108638fd0
 payload/home/.config/gtk-3.0/gtk.css	/home/pang/.config/gtk-3.0/gtk.css	644	911d7779ec37d2ec865ea42b9042b233
-payload/home/.config/gtk-3.0/noctalia.css	/home/pang/.config/gtk-3.0/noctalia.css	644	f4b38ad3a6c0a3ff0fbe7a6ffcc6b5a3
+payload/home/.config/gtk-3.0/noctalia.css	/home/pang/.config/gtk-3.0/noctalia.css	644	d3f17c82a6c1aee4c3349a7567508930
 payload/home/.config/gtk-3.0/settings.ini	/home/pang/.config/gtk-3.0/settings.ini	644	81dedcf377cc5df48512d3bde687352b
 payload/home/.config/gtk-4.0/gtk.css	/home/pang/.config/gtk-4.0/gtk.css	644	fe00e3aa479c36268c83e1711f2ea711
-payload/home/.config/gtk-4.0/noctalia.css	/home/pang/.config/gtk-4.0/noctalia.css	644	210edc5475870432f17300d02fe87ffa
+payload/home/.config/gtk-4.0/noctalia.css	/home/pang/.config/gtk-4.0/noctalia.css	644	ef54bcdd487d59befed6c3b6ea79a845
 payload/home/.config/gtk-4.0/settings.ini	/home/pang/.config/gtk-4.0/settings.ini	644	1984efc9a529b40a060c055ffc65df31
-payload/home/.config/kdeglobals	/home/pang/.config/kdeglobals	644	554c656caa1cfa44bdffc42bd93075f2
+payload/home/.config/kdeglobals	/home/pang/.config/kdeglobals	644	d33aebc6dad77b83d03d8565d5a23065
 payload/home/.config/kitty/kitty.conf	/home/pang/.config/kitty/kitty.conf	600	8ef206e5a2be551ad0b4472893299730
-payload/home/.config/kitty/themes/noctalia.conf	/home/pang/.config/kitty/themes/noctalia.conf	644	8427d7b032a3c5597bc6d97e7053ca57
+payload/home/.config/kitty/themes/noctalia.conf	/home/pang/.config/kitty/themes/noctalia.conf	644	e608a84086f0e524d10625179fa6bc34
 payload/home/.config/mimeapps.list	/home/pang/.config/mimeapps.list	644	723a0486302493f6b67eccf1f8605752
 payload/home/.config/mpv/input.conf	/home/pang/.config/mpv/input.conf	644	5bcdd4458c5a51af460358f096959f20
 payload/home/.config/mpv/mpv.conf	/home/pang/.config/mpv/mpv.conf	644	9c82b939bd96210a52032fa10578e54b
@@ -63,19 +63,19 @@ payload/home/.config/niri/touchpad-state.kdl	/home/pang/.config/niri/touchpad-st
 payload/home/.config/noctalia/hooks.toml	/home/pang/.config/noctalia/hooks.toml	644	ea091838a2d938c768bd025e4b27816f
 payload/home/.config/nomacs/Image Lounge.conf	/home/pang/.config/nomacs/Image Lounge.conf	644	8d4a0f214e9bf402c48be6f5b7002b9e
 payload/home/.config/nwg-look/config	/home/pang/.config/nwg-look/config	644	1d7532f1af614a510283dc0b46520eee
-payload/home/.config/papirus-folders/keep	/home/pang/.config/papirus-folders/keep	644	29cbc8de771093eb9a0ac8cf7cc38944
-payload/home/.config/qt5ct/colors/noctalia.conf	/home/pang/.config/qt5ct/colors/noctalia.conf	644	20a56129aa2d031012b92f066cab4789
+payload/home/.config/papirus-folders/keep	/home/pang/.config/papirus-folders/keep	644	eddf02cea87dcfcab7548cb9e59ab62f
+payload/home/.config/qt5ct/colors/noctalia.conf	/home/pang/.config/qt5ct/colors/noctalia.conf	644	b175435a63c11f4ee575651ac9780dc3
 payload/home/.config/qt5ct/qt5ct.conf	/home/pang/.config/qt5ct/qt5ct.conf	600	7ea98702e9fb6254b9d8d2c23c04599b
-payload/home/.config/qt6ct/colors/noctalia.conf	/home/pang/.config/qt6ct/colors/noctalia.conf	644	20a56129aa2d031012b92f066cab4789
+payload/home/.config/qt6ct/colors/noctalia.conf	/home/pang/.config/qt6ct/colors/noctalia.conf	644	b175435a63c11f4ee575651ac9780dc3
 payload/home/.config/qt6ct/qt6ct.conf	/home/pang/.config/qt6ct/qt6ct.conf	600	362f4e216c51aae75c19c0ceed4f9e42
-payload/home/.config/starship.toml	/home/pang/.config/starship.toml	600	cce799ec87de2eaef1ba0eabb5aa1a98
+payload/home/.config/starship.toml	/home/pang/.config/starship.toml	600	a559cdbd414453b8c88a342cf16563ec
 payload/home/.config/systemd/user/rice-dnd.service	/home/pang/.config/systemd/user/rice-dnd.service	644	f22a9e58b997a46173c0d8fafa9cf4c0
 payload/home/.config/systemd/user/rice-dnd.timer	/home/pang/.config/systemd/user/rice-dnd.timer	644	f938e977eed3f41554d7890cdeea04ab
 payload/home/.config/user-dirs.dirs	/home/pang/.config/user-dirs.dirs	600	45c96841bc79b35d0d7b60cc328e11b2
 payload/home/.config/user-dirs.locale	/home/pang/.config/user-dirs.locale	644	0d61f8370cad1d412f80b84d143e1257
 payload/home/.config/zellij/config.kdl	/home/pang/.config/zellij/config.kdl	644	c1bf1f71354532303f2fc9c7783a81c0
 payload/home/.gitconfig	/home/pang/.gitconfig	644	6a08e646af723158277fe4d52dec4bfd
-payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	c2347472f206801bf83c093770b76953
+payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	511cb164286695596a5a7e6c52d25ccb
 payload/home/Pictures/wallpapers/【哲风壁纸】Fate-saber.png	/home/pang/Pictures/wallpapers/【哲风壁纸】Fate-saber.png	644	f76dbf3abbe4321dddf0a4397e5f9d0c
 payload/home/Pictures/wallpapers/【哲风壁纸】SNAFFUR-动漫少女.png	/home/pang/Pictures/wallpapers/【哲风壁纸】SNAFFUR-动漫少女.png	644	19fa1a7e7a4c21485574e1d46692e9b8
 payload/home/Pictures/wallpapers/【哲风壁纸】二次元少女-动漫插画.png	/home/pang/Pictures/wallpapers/【哲风壁纸】二次元少女-动漫插画.png	644	5484c059e5b581546dbba8e3d1c11b08
@@ -172,7 +172,7 @@ payload/home/scripts/maintenance/terminal-tools	/home/pang/scripts/maintenance/t
 payload/home/scripts/maintenance/tests/DESTRUCTIVE-VM.md	/home/pang/scripts/maintenance/tests/DESTRUCTIVE-VM.md	644	eb29c8ddf9f234250eb05f479312ce52
 payload/home/scripts/maintenance/tests/run	/home/pang/scripts/maintenance/tests/run	755	1f0b4aa3a2c6d024ca54bb2b254afe9b
 payload/system/etc/greetd/config.toml	/etc/greetd/config.toml	644	1812fea641f1c31f43936e83e4cdde83
-payload/system/etc/nwg-hello/background.png	/etc/nwg-hello/background.png	664	f76dbf3abbe4321dddf0a4397e5f9d0c
+payload/system/etc/nwg-hello/background.png	/etc/nwg-hello/background.png	664	5484c059e5b581546dbba8e3d1c11b08
 payload/system/etc/nwg-hello/niri.kdl	/etc/nwg-hello/niri.kdl	644	09b9519d13dde1088eeb1fd9d5085548
 payload/system/etc/nwg-hello/nwg-hello.css	/etc/nwg-hello/nwg-hello.css	644	1885e751ac7389f032ecca5497b43e84
 payload/system/etc/nwg-hello/nwg-hello.json	/etc/nwg-hello/nwg-hello.json	644	ac88a01d6e17a6d1bfc9928d7e6b1e7a
@@ -192,3 +192,128 @@ payload/system/usr/share/fonts/resource-han-rounded/ResourceHanRoundedCN-Bold.tt
 payload/system/usr/share/fonts/resource-han-rounded/ResourceHanRoundedCN-Medium.ttf	/usr/share/fonts/resource-han-rounded/ResourceHanRoundedCN-Medium.ttf	644	e863ba354d8694a539d50d789905bc2b
 payload/system/usr/share/fonts/resource-han-rounded/ResourceHanRoundedCN-Regular.ttf	/usr/share/fonts/resource-han-rounded/ResourceHanRoundedCN-Regular.ttf	644	29f6b531a9ca7ad5df1f05137d545ce0
 payload/system/var/lib/avatars/pang/.face	/var/lib/avatars/pang/.face	644	fd95e09a15d3d0d03d4fe85a8c2335a6
+# ——— 2026-10-05 审计补齐：旧样本（VM）中已有、此前未入仓的文件 ———
+payload/home/.local/bin/niri-keys	/home/pang/.local/bin/niri-keys	755	f9540de6fa0c9e886fe565838a74c41b
+payload/home/.local/share/applications/yazi.desktop	/home/pang/.local/share/applications/yazi.desktop	644	8b82cfe4b627e27940c027bfbb0b44e1
+payload/home/.local/share/nautilus-python/extensions/rice-menu.py	/home/pang/.local/share/nautilus-python/extensions/rice-menu.py	644	77dd6c5ea8dee5366de35b161beee98a
+payload/home/Documents/notes/便签-2.md	/home/pang/Documents/notes/便签-2.md	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Documents/notes/便签.md	/home/pang/Documents/notes/便签.md	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/C 源文件.c	/home/pang/Templates/C 源文件.c	644	86a0fc89a67f71ee9ed8b417735426fd
+payload/home/Templates/CSS 样式表.css	/home/pang/Templates/CSS 样式表.css	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/Dockerfile	/home/pang/Templates/Dockerfile	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/Go 程序.go	/home/pang/Templates/Go 程序.go	644	72c1a1eea1de350a50bd66eedded1d47
+payload/home/Templates/HTML 页面.html	/home/pang/Templates/HTML 页面.html	644	1daa524f9e497f44cc67f660011a8f3b
+payload/home/Templates/JSON 文件.json	/home/pang/Templates/JSON 文件.json	644	5b76b0eef9af8a2300673e0553f609f9
+payload/home/Templates/Java 文件.java	/home/pang/Templates/Java 文件.java	644	8376c3479bfd70f8b30c120795252d9f
+payload/home/Templates/JavaScript.js	/home/pang/Templates/JavaScript.js	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/KDL 配置.kdl	/home/pang/Templates/KDL 配置.kdl	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/Makefile	/home/pang/Templates/Makefile	644	a6e50d645f366e2aca55d112aa192656
+payload/home/Templates/Markdown 文档.md	/home/pang/Templates/Markdown 文档.md	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/Python 脚本.py	/home/pang/Templates/Python 脚本.py	755	1065ed3acba9128e01592bc92888df3d
+payload/home/Templates/Rust 程序.rs	/home/pang/Templates/Rust 程序.rs	644	8c6970e18874dc670cebb14ca3027028
+payload/home/Templates/SVG 图片.svg	/home/pang/Templates/SVG 图片.svg	644	5a91ebab798b36b494c804f82779660c
+payload/home/Templates/Shell 脚本.sh	/home/pang/Templates/Shell 脚本.sh	755	e3cfb7adaca4c3a35da56337a8e55c4a
+payload/home/Templates/TOML 文件.toml	/home/pang/Templates/TOML 文件.toml	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/TypeScript.ts	/home/pang/Templates/TypeScript.ts	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/XML 文件.xml	/home/pang/Templates/XML 文件.xml	644	e72de688099ca121ab54a0879b5ec896
+payload/home/Templates/YAML 文件.yaml	/home/pang/Templates/YAML 文件.yaml	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/文本文档.txt	/home/pang/Templates/文本文档.txt	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/空白文件	/home/pang/Templates/空白文件	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/配置.ini	/home/pang/Templates/配置.ini	644	d41d8cd98f00b204e9800998ecf8427e
+payload/home/Templates/配置文件.conf	/home/pang/Templates/配置文件.conf	644	d41d8cd98f00b204e9800998ecf8427e
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/background.jpg	/boot/grub/themes/Elegant-wave-blur-left-dark/background.jpg	755	0852bbc035097cd732cd389ae4544213
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/4MLinux.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/4MLinux.png	755	6eea0dcdddc9e2c613e704f6e44705d8
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/AlpineLinux.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/AlpineLinux.png	755	93191c663c9f22727b339436035a7050
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/Manjaro.i686.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/Manjaro.i686.png	755	080ea22756fea7b72f96ecb4eb88984e
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/Manjaro.x86_64.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/Manjaro.x86_64.png	755	080ea22756fea7b72f96ecb4eb88984e
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/SystemRescueCD.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/SystemRescueCD.png	755	d6ad807575b72199efc927574420bc5b
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/android.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/android.png	755	9cf34d37aa435739a45a9bbe3e13d741
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/anonymous.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/anonymous.png	755	052f94187e43d2afaef2045466b42320
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/antergos.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/antergos.png	755	ce95b2c8895ac16ad8e57acafd314801
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/arch.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/arch.png	755	d0f850f181cfe5de05b8d676dfd7d0d4
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/archcraft.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/archcraft.png	755	21a995d09dcff6e2f618438cf8000636
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/archlinux.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/archlinux.png	755	d0f850f181cfe5de05b8d676dfd7d0d4
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/arcolinux.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/arcolinux.png	755	888d331a5469122d93b5457af7f563a8
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/artix.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/artix.png	755	aafe04a94765388e7ae55e972e02b10a
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/brunch-settings.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/brunch-settings.png	755	83c7bdbd209f42bba6750088a52ac17d
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/brunch.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/brunch.png	755	dff8a6150171691ea73c7897ec22ace7
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/cancel.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/cancel.png	755	0a1ea119898da3272e212ea05b8512f7
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/chakra.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/chakra.png	755	c73e6acaace3d221aba174b317a16cc8
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/chimera.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/chimera.png	755	d2f52917be76f6fbd0180e2bb31f3654
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/debian.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/debian.png	755	2a8fb306dbedc3c5d4988563670e6001
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/deepin.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/deepin.png	755	a430392f02bfe6d344d5c712f7438d46
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/devuan.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/devuan.png	755	3f50b74d46614c557d367dcfba0ec5ec
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/driver.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/driver.png	755	1b041f1aa9129783466723b9e6a3d71f
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/edit.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/edit.png	755	39d7040c171a5cbd0a762ec84bea79d8
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/efi.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/efi.png	755	9c6560f0da245664fdbd59db5e65fb8e
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/elementary.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/elementary.png	755	1bde3b729469a40122dea8a437523341
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/endeavouros.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/endeavouros.png	755	9023cbfb56a54b48676a99942c309304
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/fedora.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/fedora.png	755	6fbfa80a8509032d62c192e670d3aafb
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/find.efi.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/find.efi.png	755	5ef1df131a8157978e652359d6f14f64
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/find.none.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/find.none.png	755	757a1f5770625533f76a4104a1dd85b2
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/freebsd.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/freebsd.png	755	f4881b7750265ed958e39f0ff78620bc
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/gentoo.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/gentoo.png	755	5b7e8616999c61f663f993c619273408
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/gnu-linux.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/gnu-linux.png	755	bc191b531ea49b9422bf1cc5d648ea5c
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/gpart.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/gpart.png	755	8dbc774d261b33bdfc7f0d5cfcad644a
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/haiku.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/haiku.png	755	0bb3ede040ba4b96e1071f42e6737b1f
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/help.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/help.png	755	aa94332cc4dcadd77e5fedd4c70f98f9
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/kali.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/kali.png	755	8fe8eea2629198254aa44ae89e437b2e
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/kaos.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/kaos.png	755	e67bb9fa1f601739c1910cc9a170b599
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/kbd.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/kbd.png	755	cc62d8097e536f8a88929242113176a9
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/kernel.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/kernel.png	755	5aba2d5f7385878f310af894a83b3b09
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/korora.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/korora.png	755	7f84b5f11470d5922340b4da2bd71263
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/kubuntu.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/kubuntu.png	755	31fd484bf6951160c67a24a4a5d8a9af
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/lang.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/lang.png	755	2501ffded155f2e7f160f59cd9fb49a0
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/lfs.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/lfs.png	755	bc191b531ea49b9422bf1cc5d648ea5c
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/linux.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/linux.png	755	bc191b531ea49b9422bf1cc5d648ea5c
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/linuxmint.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/linuxmint.png	755	efa313296c79381929fdfbbb14e88c21
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/lubuntu.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/lubuntu.png	755	7910434f1b4e247966310c5969516b1e
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/macosx.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/macosx.png	755	58453723deb0f20896f2c4fde5f3af08
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/mageia.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/mageia.png	755	1c5317d2b588cda5cf3e7b64656c05ee
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/manjaro.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/manjaro.png	755	080ea22756fea7b72f96ecb4eb88984e
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/manjarolinux.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/manjarolinux.png	755	080ea22756fea7b72f96ecb4eb88984e
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/memtest.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/memtest.png	755	1b041f1aa9129783466723b9e6a3d71f
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/mx-linux.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/mx-linux.png	755	d1b5f2971168588c63412d939b97532c
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/neon.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/neon.png	755	7e17576bd83520e2581e450b60ecb184
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/nixos.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/nixos.png	755	ac1918e724d8b221c9ae46c02499ed03
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/nobara.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/nobara.png	755	bae85307b51985426c47c9fbc92616dd
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/openSUSE.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/openSUSE.png	755	f5d2a347e7dc89d365b2cb5dfb8e735f
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/parrot.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/parrot.png	755	3afac11bb74c72ed62adbd583ee98068
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/pop-os.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/pop-os.png	755	364d3780e639f05328f2906304f8628c
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/pop.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/pop.png	755	364d3780e639f05328f2906304f8628c
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/recovery.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/recovery.png	755	d1be7383b04bf67ce1337cd26122acf3
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/regolith.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/regolith.png	755	bb198ba9c05455bf86663c1ea68c79f8
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/restart.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/restart.png	755	18e7bd10091f1daec47517c53b0bfad7
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/shutdown.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/shutdown.png	755	e8db516a66afe4aa89ad025414fb09e5
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/siduction.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/siduction.png	755	e34fb309fde32f304762bd7a2ba4fddd
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/solus.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/solus.png	755	f34a774c5a96010044a784541767de45
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/steamos.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/steamos.png	755	f6a19af887a7566e7f3043830ee75b26
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/submenu.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/submenu.png	755	d70a79ba642ad155c08b99bbe2c3e185
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/type.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/type.png	755	4db2244f8b8a91bb249b77b1558f24ad
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/tz.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/tz.png	755	fa878d5c274966795eb0868a31a27d6c
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/ubuntu.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/ubuntu.png	755	9763f24ec7952fb87d837f63af765fae
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/ubuntuDDE.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/ubuntuDDE.png	755	687bab83737a0677bd9247087708e19d
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/unknown.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/unknown.png	755	bc191b531ea49b9422bf1cc5d648ea5c
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/unset.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/unset.png	755	aa33107f69abb616013323fe33733139
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/void.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/void.png	755	358bc3e75bc3b336b06723e109cee9cb
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/windows.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/windows.png	755	b89cfc2bdf421e0296999a0a00550ce4
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/xubuntu.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/xubuntu.png	755	260d55b64e5cb93c9013b12d74eddb08
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/icons/zorin.png	/boot/grub/themes/Elegant-wave-blur-left-dark/icons/zorin.png	755	25ed79745ef747b992ef21976245cd60
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/info.png	/boot/grub/themes/Elegant-wave-blur-left-dark/info.png	755	5b20a25f455f6c0a0db1eddfe5ddff8f
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/logo.png	/boot/grub/themes/Elegant-wave-blur-left-dark/logo.png	755	dbd78d493faed3c077eaefd097bb1819
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/select_c.png	/boot/grub/themes/Elegant-wave-blur-left-dark/select_c.png	755	33cdf41404899f5d884fb1b9e2042491
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/select_e.png	/boot/grub/themes/Elegant-wave-blur-left-dark/select_e.png	755	f0d3782972b5f027ca4157419e15528f
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/select_w.png	/boot/grub/themes/Elegant-wave-blur-left-dark/select_w.png	755	730680ab6ecc2562efa05d3f32d87f52
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/terminus-12.pf2	/boot/grub/themes/Elegant-wave-blur-left-dark/terminus-12.pf2	755	7cfebb59d234aae1da46ec1e31bbf33c
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/terminus-14.pf2	/boot/grub/themes/Elegant-wave-blur-left-dark/terminus-14.pf2	755	8f509393b72d2486b129bbaca06fe4ae
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/terminus-16.pf2	/boot/grub/themes/Elegant-wave-blur-left-dark/terminus-16.pf2	755	292235367d6ce34ab500c4e5e1ede8fe
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/terminus-18.pf2	/boot/grub/themes/Elegant-wave-blur-left-dark/terminus-18.pf2	755	cdb2e467d8ff28051986c60eb67f4265
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/theme.txt	/boot/grub/themes/Elegant-wave-blur-left-dark/theme.txt	755	1a912891ac06a27c9910acf00aa40fb8
+payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/unifont-16.pf2	/boot/grub/themes/Elegant-wave-blur-left-dark/unifont-16.pf2	755	ad707df70708711cc4b533c9b93eed89
+payload/system/etc/default/grub	/etc/default/grub	644	2091b24d420266a53ec6e95b9fb67da0
+payload/system/etc/environment	/etc/environment	644	67863225101199f03e31e254f95ef82b
+payload/system/etc/locale.conf	/etc/locale.conf	644	0b6ed22dfae445473656b625f580cab9
+payload/system/etc/locale.gen	/etc/locale.gen	644	9307d6e9e7eeae3d72326d1974786008
+payload/system/etc/shells	/etc/shells	644	89346d49249948011890efa5f75cc253
+payload/system/etc/systemd/zram-generator.conf	/etc/systemd/zram-generator.conf	644	6061c86d045443c3b52b560e73adb3af
+payload/system/etc/vconsole.conf	/etc/vconsole.conf	644	d7cdb5bf660d946c3499c971055dad20

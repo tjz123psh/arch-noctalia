@@ -160,6 +160,7 @@ xdg-desktop-portal	extra	desktop
 xdg-desktop-portal-gnome	extra	desktop	
 xdg-desktop-portal-gtk	extra	desktop	
 xdg-terminal-exec	extra		
+xdg-user-dirs	extra		标准用户目录（user-dirs.dirs 配套）
 xorg-mkfontscale	extra		
 xwayland-satellite	extra	desktop	
 yazi	extra		

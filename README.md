@@ -26,6 +26,7 @@ curl -fsSL https://raw.githubusercontent.com/tjz123psh/arch-noctalia/main/bootst
 - 目标机用户名是 `pang`，路径按 `/home/pang` 写死。
 - 只从 git / curl 拉取，没有离线包。
 - 分 12 步装：源 → 系统更新 → 软件 → 驱动 → AUR → 桌面 → 配置 → 脚本 → Noctalia → 服务 → 登录界面 → 自检。
+- 配置步（07）铺完文件后还会：建标准用户目录（Desktop/Documents/Downloads/…/Templates、Pictures/Screenshots）、生成 zh_CN locale、把登录 shell 设为 fish、重建带主题的 GRUB 菜单。
 - 中断了没关系，重跑 `./install.sh --run` 会接着来，装过的不会重复装。
 - 想自己检查一下（可选）：`tools/selfcheck.sh`、`tests/run-all.sh`。
 

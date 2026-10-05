@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # steps/12-verify.sh — Stage 12: post-install self check（只读）。
 # 对照 manifests/files.tsv 检查每个目标路径存在、是常规文件、md5 与记录一致；
-# 对照 manifests/packages.tsv（同一套机型/模块过滤）检查缺失的包。
+# 对照 manifests/packages.tsv（同一套机型/模块过滤）检查缺失的包；
+# 另抽查用户目录与登录 shell（与样本形态一致）。
 # 全部通过 → 0；有缺失/不一致 → 1（并逐条列出）。
 set -Eeuo pipefail
 AN_ROOT_DIR="${AN_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
@@ -66,7 +67,20 @@ while IFS=$'\t' read -r pkg _repo module _purpose; do
 done < "$PACKAGES"
 printf '[info]  packages: %d checked, %d missing\n' "$pk_checked" "$pk_missing"
 
-if (( bad > 0 || miss > 0 || pk_missing > 0 )); then
+info "Stage 12 verify: misc (user dirs, login shell)"
+misc_bad=0
+for d in Desktop Documents Downloads Music Videos Public Projects Templates Pictures/Screenshots; do
+  if [[ ! -d "$HOME/$d" ]]; then
+    misc_bad=$((misc_bad + 1))
+    warn "missing user dir: ~/${d}"
+  fi
+done
+if [[ "$(getent passwd "$USER" | cut -d: -f7)" != "/usr/bin/fish" ]]; then
+  misc_bad=$((misc_bad + 1))
+  warn "login shell is not fish: $(getent passwd "$USER" | cut -d: -f7)"
+fi
+
+if (( bad > 0 || miss > 0 || pk_missing > 0 || misc_bad > 0 )); then
   error "Stage 12 verify: FAIL"
   exit 1
 fi

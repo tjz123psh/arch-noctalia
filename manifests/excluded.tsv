@@ -26,3 +26,47 @@ pattern	/home/pang/.local/state/noctalia/plugins/**	插件运行数据（materia
 package	gnome-keyring	主动排除：无任何依赖方；登录时会弹密钥环建环框（2026-10-05 用户决定不装）
 package	vmware-workstation	主动排除：体积太大（350MB 包体、1GB+ 安装）、内核模块随滚动内核易碎（2026-10-05 用户决定不装）
 package	vmware-keymaps	主动排除：随 vmware-workstation 一并排除（2026-10-05 用户决定人工装 VM 软件）
+# ——— 2026-10-05 审计补充（旧样本中存在、有意不入仓的项目） ———
+file	/home/pang/rice-log.md	VM 过程记录（rice 日志；重装形态不复刻）
+file	/home/pang/installed-software.md	VM 过程记录（软件清单快照）
+pattern	an-run*.log	VM 验收过程日志（an-compare 输出）
+dir	/home/pang/.rustup	Rust 工具链（重装后按需 rustup 重建）
+dir	/home/pang/.grok	Grok CLI 工具数据
+file	/home/pang/.bash_history	shell 历史
+file	/home/pang/.local/share/fish/fish_history	shell 历史（fish）
+file	/etc/sudoers.d/99-pang-nopasswd	安全：免密 sudo（安装期便利，不属于形态）
+file	/etc/pam.d/greetd	调试期冗余改动（默认 PAM 栈即可登录；2026-10-05 审计确认）
+file	/etc/systemd/system/ydotoold.service	agent 键盘注入工具残留（ydotool 已不在样本）
+dir	/boot/grub/themes/rice	未激活的候选主题（旧自制，留 VM 备用）
+dir	/boot/grub/themes/starfield	未激活的候选主题（早前候选）
+dir	/etc/vmware	VMware Workstation 应用数据（安装器不装 VM 软件）
+dir	/etc/vmware-installer	VMware Workstation 应用数据
+dir	/etc/vmware-vix	VMware Workstation 应用数据
+dir	/home/pang/.local/share/icons/Papirus	运行时生成（Noctalia papirus-icons 模板，首登再生）
+dir	/home/pang/.local/share/icons/Papirus-Dark	运行时生成（同上）
+dir	/home/pang/.local/share/icons/Papirus-Light	运行时生成（同上）
+dir	/home/pang/.local/share/fcitx5/pinyin	输入法用户词库（使用中生成）
+dir	/home/pang/.local/share/Kingsoft	WPS 用户数据（应用自管）
+dir	/home/pang/.local/share/QtProject	Qt 文档缓存（工具自管）
+dir	/home/pang/.local/share/nautilus/tags	nautilus 标签数据库（运行态）
+dir	/home/pang/.local/share/gvfs-metadata	GVfs 元数据（运行态）
+dir	/home/pang/.local/share/Trash	回收站
+dir	/home/pang/.local/state/nvim	nvim 运行态
+dir	/home/pang/.local/state/paru	paru 运行态（devel.toml）
+dir	/home/pang/.local/state/wireplumber	WirePlumber 路由状态（运行态再生）
+dir	/home/pang/.local/state/opencode	opencode 运行态
+dir	/home/pang/.local/state/maintenance	维护脚本运行态
+file	/home/pang/.local/state/noctalia/notification_history.json	运行状态（Noctalia 自管）
+file	/home/pang/.local/state/noctalia/usage_counts.json	运行状态（Noctalia 自管）
+file	/home/pang/.local/state/noctalia/recently_used.json	运行状态（Noctalia 自管）
+file	/home/pang/.local/state/noctalia/wallpaper_shuffle.json	运行状态（Noctalia 自管）
+file	/home/pang/.local/state/noctalia/state.toml	运行状态（Noctalia 自管）
+file	/home/pang/.local/state/noctalia/.setup-complete	运行标记（Noctalia 自建）
+dir	/home/pang/.local/state/noctalia/community-templates	社区模板缓存（联网自动下载）
+dir	/home/pang/.local/state/noctalia/community-palettes	社区调色板缓存（联网自动下载）
+dir	/home/pang/.local/state/noctalia/plugin-cache	插件缓存（自动重建）
+dir	/home/pang/.local/state/noctalia/screen_recorder	录屏状态（自建）
+dir	/home/pang/.config/nautilus	空目录残留
+dir	/home/pang/.config/opencode	空目录残留
+dir	/home/pang/.config/celluloid	空目录残留（celluloid 已删）
+dir	/home/pang/.config/cef_user_data	空目录残留（WPS cef）

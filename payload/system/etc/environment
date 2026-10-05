@@ -1,0 +1,10 @@
+#
+# /etc/environment — 由 DSH agent 配置
+#
+# 输入法（fcitx5）：Wayland 下 GTK 走 text-input-v3，Qt/XWayland 需要显式指定
+GTK_IM_MODULE=fcitx
+QT_IM_MODULE=fcitx
+XMODIFIERS=@im=fcitx
+
+# Qt 应用跟随 Noctalia 生成的配色
+QT_QPA_PLATFORMTHEME=qt6ct

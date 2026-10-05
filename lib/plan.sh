@@ -14,7 +14,7 @@ AN_STAGES=(
   "04|drivers|install hardware drivers from package list (physical only)"
   "05|aur|install AUR/foreign packages (manifests/aur.tsv, via paru)"
   "06|desktop|install niri + Noctalia desktop packages"
-  "07|config|deploy dotfiles (payload -> target paths, per manifests/files.tsv)"
+  "07|config|deploy payload files (files.tsv) + user dirs / locale / login shell / GRUB"
   "08|scripts|deploy scripts and create the ~/bin symlink layer"
   "09|noctalia|Noctalia settings + plugin source + cursor-track build + enable"
   "10|services|enable services (docker/bluetooth/snapper/scrub/rice-dnd...)"

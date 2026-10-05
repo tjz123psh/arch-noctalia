@@ -1,0 +1,206 @@
+#!/usr/bin/env bash
+# niri 快捷键速查（美化版）：解析 conf.d/binds.kdl 分组着色，kitty + fzf 交互搜索。
+# 由 Super+/ 呼出；原版 hotkey-overlay 保留在 Super+Shift+/。
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: niri-keys [options]
+
+Options:
+  -p, --print    直接打印解析后的快捷键列表，不进入 fzf
+  -h, --help     显示帮助并退出
+
+默认行为:
+  如果不在 kitty 中运行，会自动打开一个 kitty 窗口，再用 fzf 搜索快捷键。
+EOF
+}
+
+PRINT_ONLY=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -p|--print) PRINT_ONLY=true; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) printf 'niri-keys: unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+FILE="$HOME/.config/niri/conf.d/binds.kdl"
+
+if [[ ! -f "$FILE" ]]; then
+  printf '找不到 %s\n' "$FILE" >&2
+  [[ -t 0 ]] && read -r -p "按回车关闭"
+  exit 1
+fi
+
+if [[ "$PRINT_ONLY" == false && -z "${KITTY_WINDOW_ID:-}" ]]; then
+  if command -v kitty >/dev/null 2>&1; then
+    exec kitty --class=niri-keys --title "niri 快捷键速查" \
+      --override initial_window_width=800 --override initial_window_height=600 \
+      --override remember_window_size=no \
+      --override tab_bar_style=hidden \
+      "$0" "$@"
+  fi
+fi
+
+if [[ "$PRINT_ONLY" == false ]] && ! command -v fzf >/dev/null 2>&1; then
+  printf '缺少依赖: fzf\n' >&2
+  exit 127
+fi
+
+BOLD=$'\033[1m'
+DIM=$'\033[2m'
+LB=$'\033[94m'
+CY=$'\033[36m'
+RESET=$'\033[0m'
+
+if [[ ! -t 1 || "$PRINT_ONLY" == true ]]; then
+  BOLD=""; DIM=""; LB=""; CY=""; RESET=""
+fi
+
+# 解析 binds.kdl：段落（// ===== X =====）+ 键（hotkey-overlay-title 或上方注释描述）
+parse_keybinds() {
+  LC_ALL=C.UTF-8 awk '
+    BEGIN { sec=""; cmt="" }
+    /\/\/ ===== / {
+      gsub(/.*===== /, "")
+      gsub(/ =====.*/, "")
+      sec=$0
+      cmt=""
+      next
+    }
+    /\/\// && !/====/ && !/---/ && !/-键说明|此文件由|已取代|按键说明/ {
+      gsub(/^[[:space:]]*\/\/[[:space:]]*/, "")
+      sub(/^[^:]+:[[:space:]]+/, "", $0)
+      gsub(/[[:space:]]*[（(].*[）)][[:space:]]*/, "", $0)
+      cmt=$0
+      next
+    }
+    /hotkey-overlay-title=/ {
+      key=$0
+      gsub(/^[[:space:]]*/, "", key)
+      gsub(/[[:space:]]+hotkey-overlay-title.*/, "", key)
+      gsub(/[[:space:]]+(allow-when-locked|allow-inhibiting|repeat|cooldown-ms).*/, "", key)
+      gsub(/[[:space:]]*\{.*/, "", key)
+      title=$0
+      gsub(/.*hotkey-overlay-title="/, "", title)
+      gsub(/".*/, "", title)
+      if (sec != "") print sec "\t" key "\t" title
+      cmt=""
+      next
+    }
+    cmt != "" && /\{[^}]*;/ && !/hotkey-overlay-title/ && /^[[:space:]]*[A-Za-z]/ {
+      key=$0
+      gsub(/^[[:space:]]*/, "", key)
+      gsub(/[[:space:]]+(allow-when-locked|allow-inhibiting|repeat|cooldown-ms).*/, "", key)
+      gsub(/[[:space:]]*\{.*/, "", key)
+      if (sec != "") print sec "\t" key "\t" cmt
+      next
+    }
+    !/\/\// && !/^[[:space:]]*$/ { cmt="" }
+  ' "$FILE"
+}
+
+# 美化渲染：键名替换 + 按显示宽度对齐（CJK 双宽），一次 python 调用完成
+RENDER_PY=$(cat <<'PY'
+import re, sys, unicodedata
+bold, cy, lb, reset = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+PAIRS = [
+    ("Mod", "Super"), ("Comma", ","), ("Minus", "-"), ("BracketLeft", "["),
+    ("BracketRight", "]"), ("Return", "Enter"), ("Delete", "Del"), ("Space", "空格"),
+    ("Equal", "="), ("Period", "."), ("Slash", "/"), ("Page_Up", "PgUp"),
+    ("Page_Down", "PgDn"), ("Print", "PrtSc"),
+    ("WheelScrollDown", "滚轮↓"), ("WheelScrollUp", "滚轮↑"),
+    ("WheelScrollLeft", "滚轮←"), ("WheelScrollRight", "滚轮→"),
+    ("XF86AudioLowerVolume", "音量↓"), ("XF86AudioRaiseVolume", "音量↑"),
+    ("XF86AudioMicMute", "麦静音"), ("XF86AudioMute", "静音"),
+    ("XF86AudioNext", "下一曲"), ("XF86AudioPrev", "上一曲"),
+    ("XF86AudioPause", "暂停"), ("XF86AudioPlay", "播放"),
+    ("XF86MonBrightnessDown", "亮度↓"), ("XF86MonBrightnessUp", "亮度↑"),
+]
+def fix(k):
+    for a, b in PAIRS:
+        k = k.replace(a, b)
+    return k
+def wid(s):
+    return sum(2 if unicodedata.east_asian_width(c) in "WF" else 1 for c in s)
+def pad(s, n):
+    return s + " " * max(1, n - wid(s))
+rows = []
+for line in sys.stdin:
+    line = line.rstrip("\n")
+    if not line:
+        continue
+    f = line.split("\t")
+    while len(f) < 3:
+        f.append("")
+    rows.append((f[0], f[1], f[2]))
+
+# 相邻「前缀+连续数字、描述相同」的序列折叠成范围（如 Alt+1~9），>=3 个才折叠
+items, i = [], 0
+while i < len(rows):
+    cat, key, desc = rows[i]
+    m = re.match(r"^(.*?)(\d+)$", key)
+    j = i + 1
+    if m:
+        prefix, start = m.group(1), int(m.group(2))
+        while j < len(rows):
+            c2, k2, d2 = rows[j]
+            m2 = re.match(r"^(.*?)(\d+)$", k2)
+            if m2 and m2.group(1) == prefix and int(m2.group(2)) == start + (j - i) and d2 == desc:
+                j += 1
+            else:
+                break
+    if m and j - i >= 3:
+        items.append((cat, f"{prefix}{start}~{start + (j - i) - 1}", desc))
+        i = j
+    else:
+        items.append(rows[i])
+        i += 1
+
+out, last = [], None
+for cat, key, desc in items:
+    if cat != last:
+        if out:
+            out.append("")
+        out.append(f"{bold}{cy}── {cat} {reset}")
+        last = cat
+    out.append(f"  {lb}{pad(fix(key), 30)}{reset} {desc}")
+sys.stdout.write("\n".join(out) + "\n")
+PY
+)
+
+rawdata="$(parse_keybinds)"
+if [[ -z "$rawdata" ]]; then
+  printf '没有找到快捷键数据\n' >&2
+  [[ -t 0 ]] && read -r -p "按回车关闭"
+  exit 1
+fi
+
+entry_count="$(grep -c . <<< "$rawdata" || true)"
+section_count="$(cut -f1 <<< "$rawdata" | sort -u | wc -l)"
+
+fzf_input="$(printf '%s\n' "$rawdata" | LC_ALL=C.UTF-8 python3 -c "$RENDER_PY" "$BOLD" "$CY" "$LB" "$RESET")"
+
+if [[ "$PRINT_ONLY" == true ]]; then
+  printf '%s' "$fzf_input"
+  exit 0
+fi
+
+printf '\033[?25l'
+trap 'printf "\033[?25h"; stty echo 2>/dev/null || true' EXIT
+
+selected="$(printf '%s' "$fzf_input" | fzf --ansi --reverse \
+  --prompt='搜索快捷键: ' \
+  --header="共 ${entry_count} 条 · ${section_count} 组 · 输入即筛选 · Esc 关闭" \
+  --header-first \
+  --pointer='▸' \
+  --info=inline \
+  --border=none \
+  --bind 'esc:abort,ctrl-c:abort')" || selected=""
+
+if [[ -n "$selected" ]]; then
+  printf '%s按回车关闭%s\n' "$DIM" "$RESET"
+  read -r || true
+fi
