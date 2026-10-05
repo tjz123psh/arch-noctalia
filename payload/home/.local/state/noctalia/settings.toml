@@ -330,13 +330,13 @@ transition_duration = 1100.0
     enabled = true
 
     [wallpaper.default]
-    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】二次元少女-动漫插画.png"
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】樱花-电脑.png"
 
     [wallpaper.last]
-    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】二次元少女-动漫插画.png"
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】樱花-电脑.png"
 
     [wallpaper.monitors.Virtual-1]
-    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】二次元少女-动漫插画.png"
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】樱花-电脑.png"
 
 [widget.active_window]
 color = "#f0dedecc"
