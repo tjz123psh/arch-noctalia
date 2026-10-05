@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # steps/06-desktop.sh — Stage 06: niri + Noctalia desktop packages.
-# 计划（后续里程碑实现）：安装 packages.tsv 中 module=desktop 的包
-#   （niri、noctalia、xdg-desktop-portal 系列、fcitx5 桌面组件等）。
-# 现状：里程碑 1 = 骨架。只做只读校验，然后明确停止（不会改动系统）。
+# 只处理 packages.tsv 中 module=desktop 的行（niri、noctalia、portal、fcitx5、greetd 等）。
+# 幂等：--needed + 已装过滤；重复运行安全。
 set -Eeuo pipefail
 AN_ROOT_DIR="${AN_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 # shellcheck source=lib/common.sh
@@ -14,20 +13,24 @@ machine="${AN_MACHINE:?AN_MACHINE is required (set by install.sh)}"
 MANIFEST="${AN_ROOT_DIR}/manifests/packages.tsv"
 [[ -f "$MANIFEST" ]] || die "missing manifest: ${MANIFEST}"
 
-desktop=0
-installed=0
+selected=0
+to_install=()
 while IFS=$'\t' read -r pkg _repo module _purpose; do
   if [[ -z "$pkg" || "$pkg" == "#"* ]]; then
     continue
   fi
-  if [[ "${module:-}" == "desktop" ]]; then
-    desktop=$((desktop + 1))
-    if pacman -Q "$pkg" >/dev/null 2>&1; then
-      installed=$((installed + 1))
-    fi
+  [[ "${module:-}" == "desktop" ]] || continue
+  selected=$((selected + 1))
+  if ! pacman -Q "$pkg" >/dev/null 2>&1; then
+    to_install+=("$pkg")
   fi
 done < "$MANIFEST"
 
-info "Stage 06 desktop: ${desktop} desktop packages listed (machine=${machine}); ${installed} already installed"
-warn "not implemented in milestone 1 (skeleton) — stopping before any changes"
-exit 90
+info "selected ${selected} desktop packages for machine=${machine}; ${#to_install[@]} still to install"
+if (( ${#to_install[@]} == 0 )); then
+  ok "Stage 06 desktop: nothing to do"
+  exit 0
+fi
+confirm "Install ${#to_install[@]} desktop packages now?" || die "declined"
+as_root pacman -S --needed --noconfirm "${to_install[@]}"
+ok "Stage 06 desktop: done"

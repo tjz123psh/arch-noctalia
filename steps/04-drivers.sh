@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# steps/04-drivers.sh — Stage 04: hardware drivers（物理机）。
-# 计划（后续里程碑实现）：安装 packages.tsv 中 module=drivers 的驱动/固件包
-#   （AMD 核显、NVIDIA、asusctl/supergfxctl 等），仅物理机执行；vm（测试）跳过。
-# 现状：里程碑 1 = 骨架。本步骤只做只读校验，然后明确停止（不会改动系统）。
+# steps/04-drivers.sh — Stage 04: hardware drivers.
+# 只处理 packages.tsv 中 module=drivers 的行（AMD 核显、NVIDIA、asusctl/supergfxctl 等）。
+# 仅物理机执行；machine != physical 时说明后跳过（VM 是验证场地，不装目标机驱动）。
+# 幂等：--needed + 已装过滤；重复运行安全。
 set -Eeuo pipefail
 AN_ROOT_DIR="${AN_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 # shellcheck source=lib/common.sh
@@ -14,21 +14,30 @@ machine="${AN_MACHINE:?AN_MACHINE is required (set by install.sh)}"
 MANIFEST="${AN_ROOT_DIR}/manifests/packages.tsv"
 [[ -f "$MANIFEST" ]] || die "missing manifest: ${MANIFEST}"
 
-drivers=0
+if [[ "$machine" != "physical" ]]; then
+  info "machine is not physical (machine=${machine}) — drivers are physical-only; skipping"
+  ok "Stage 04 drivers: nothing to do"
+  exit 0
+fi
+
+selected=0
+to_install=()
 while IFS=$'\t' read -r pkg _repo module _purpose; do
   if [[ -z "$pkg" || "$pkg" == "#"* ]]; then
     continue
   fi
-  if [[ "${module:-}" == "drivers" ]]; then
-    drivers=$((drivers + 1))
+  [[ "${module:-}" == "drivers" ]] || continue
+  selected=$((selected + 1))
+  if ! pacman -Q "$pkg" >/dev/null 2>&1; then
+    to_install+=("$pkg")
   fi
 done < "$MANIFEST"
 
-info "Stage 04 drivers: ${drivers} driver packages listed (machine=${machine})"
-if [[ "$machine" != "physical" ]]; then
-  info "machine is not physical — the drivers stage would be skipped"
+info "selected ${selected} driver packages for machine=${machine}; ${#to_install[@]} still to install"
+if (( ${#to_install[@]} == 0 )); then
   ok "Stage 04 drivers: nothing to do"
   exit 0
 fi
-warn "not implemented in milestone 1 (skeleton) — stopping before any changes"
-exit 90
+confirm "Install ${#to_install[@]} driver packages now?" || die "declined"
+as_root pacman -S --needed --noconfirm "${to_install[@]}"
+ok "Stage 04 drivers: done"
