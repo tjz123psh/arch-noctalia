@@ -4,19 +4,25 @@
 
 ## 怎么用
 
-重装系统时，先手动装好基础 Arch、能联网（就是我安装教程里 §9.1 那步：`pacman.conf` 加上 archlinuxcn 源，装好 `paru` 和 `git`）。然后：
+重装系统时，先手动装好基础 Arch、能联网（就是我安装教程里 §9.1 那步：`pacman.conf` 加上 archlinuxcn 源，装好 `paru` 和 `git`）。然后就一行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tjz123psh/arch-noctalia/main/bootstrap.sh | bash
+```
+
+它会拉下仓库并**直接开始安装**（无人值守；在终端里有 TTY 时 sudo 密码照常提示）。只想先看一眼计划、不动系统：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tjz123psh/arch-noctalia/main/bootstrap.sh | bash -s -- --preview
+```
+
+也可以老办法来（先看再装）：
 
 ```bash
 git clone https://github.com/tjz123psh/arch-noctalia.git ~/arch-noctalia
 cd ~/arch-noctalia
 ./install.sh --preview   # 先看一眼要干什么，不动系统
 ./install.sh --run       # 开始安装
-```
-
-也可以一行把仓库拉下来（拉完先预览）：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/tjz123psh/arch-noctalia/main/bootstrap.sh | bash
 ```
 
 装完重启，就是完整的桌面。
@@ -32,7 +38,7 @@ curl -fsSL https://raw.githubusercontent.com/tjz123psh/arch-noctalia/main/bootst
 
 ## 目录
 
-- `install.sh` / `bootstrap.sh` —— 入口（bootstrap 就是 clone 再转 install）
+- `install.sh` / `bootstrap.sh` —— 入口（bootstrap = clone + 直接转 install；不带参数时按 `--run --yes` 一键实装）
 - `steps/` —— 12 个安装步骤
 - `manifests/` —— 软件和文件的清单
 - `payload/` —— 要装到机器上的配置、脚本、字体、插件

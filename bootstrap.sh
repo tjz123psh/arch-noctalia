@@ -3,8 +3,9 @@
 # 仅依赖 git（与 curl 拉取本脚本本身）。
 #
 # 用法：
-#   curl -fsSL <raw-url> | bash -s -- [--src <git-url|path>] [--dest <dir>] [-- <install.sh 参数...>]
-#   bash bootstrap.sh [同参数]
+#   curl -fsSL <raw-url> | bash                    # 一键：clone + 直接实装（--run --yes）
+#   curl -fsSL <raw-url> | bash -s -- --preview    # 只预览：clone + 渲染计划，不动系统
+#   bash bootstrap.sh [--src <git-url|path>] [--dest <dir>] [-- <install.sh 参数...>]
 #
 # 例：
 #   bash bootstrap.sh --src /home/pang/Projects/arch-noctalia --dest ~/arch-noctalia-test -- --preview
@@ -27,6 +28,9 @@ Options:
   --dest DIR  where to clone. Default: ~/arch-noctalia
   --          everything after is passed to install.sh (e.g. -- --preview)
   -h, --help  this help
+
+不带 install.sh 参数时 = 一键实装（等价于 install.sh --run --yes）；
+只想预览用：bash bootstrap.sh -- --preview
 EOF
 }
 
@@ -39,6 +43,12 @@ while [[ $# -gt 0 ]]; do
     *) echo "[error] unknown option: $1 (pass install.sh args after --)" >&2; exit 2 ;;
   esac
 done
+
+# 默认 = 一键实装；只想预览时走 `-- --preview`。
+if [[ ${#PASSTHROUGH[@]} -eq 0 ]]; then
+  PASSTHROUGH=(--run --yes)
+  echo "[info] 无 install 参数 → 一键实装（--run --yes）；只看计划请用: bash -s -- --preview"
+fi
 
 if ! command -v git >/dev/null 2>&1; then
   echo "[error] git is required. Install it first (the manual §9.1 step installs git)." >&2
@@ -56,5 +66,10 @@ else
   esac
 fi
 
-echo "[info] handing over to install.sh"
+# curl|bash 时 stdin 是脚本管道；把终端还给 install.sh，交互提示（如 sudo 密码）才可用。
+if [[ ! -t 0 ]] && (: </dev/tty) 2>/dev/null; then
+  exec </dev/tty
+fi
+
+echo "[info] handing over to install.sh (${PASSTHROUGH[*]})"
 exec bash "$DEST/install.sh" "${PASSTHROUGH[@]}"
