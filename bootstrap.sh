@@ -29,8 +29,8 @@ Options:
   --          everything after is passed to install.sh (e.g. -- --preview)
   -h, --help  this help
 
-不带 install.sh 参数时 = 一键实装（等价于 install.sh --run --yes）；
-只想预览用：bash bootstrap.sh -- --preview
+With no install.sh args, the full install runs right away (= install.sh --run --yes).
+Dry run: bash bootstrap.sh -- --preview
 EOF
 }
 
@@ -47,7 +47,7 @@ done
 # 默认 = 一键实装；只想预览时走 `-- --preview`。
 if [[ ${#PASSTHROUGH[@]} -eq 0 ]]; then
   PASSTHROUGH=(--run --yes)
-  echo "[info] 无 install 参数 → 一键实装（--run --yes）；只看计划请用: bash -s -- --preview"
+  echo "[info] no install args -> one-click install (--run --yes); dry run: bash -s -- --preview"
 fi
 
 if ! command -v git >/dev/null 2>&1; then
@@ -66,10 +66,11 @@ else
   esac
 fi
 
-# curl|bash 时 stdin 是脚本管道；把终端还给 install.sh，交互提示（如 sudo 密码）才可用。
-if [[ ! -t 0 ]] && (: </dev/tty) 2>/dev/null; then
-  exec </dev/tty
-fi
-
 echo "[info] handing over to install.sh (${PASSTHROUGH[*]})"
+# ⚠ 不要在脚本中途 `exec < 某个文件` 换本进程的 stdin：curl|bash 时脚本流走的就是 stdin，
+#    换掉后 bash 会转去从终端读“下一行脚本”——静默挂死（2026-10-05 实测事故）。
+#    只把 /dev/tty 挂给子进程，sudo 密码等交互提示照常可用。
+if [[ ! -t 0 ]] && (: </dev/tty) 2>/dev/null; then
+  exec bash "$DEST/install.sh" "${PASSTHROUGH[@]}" </dev/tty
+fi
 exec bash "$DEST/install.sh" "${PASSTHROUGH[@]}"
