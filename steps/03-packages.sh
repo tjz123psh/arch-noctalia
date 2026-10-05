@@ -37,5 +37,6 @@ if (( ${#to_install[@]} == 0 )); then
   exit 0
 fi
 confirm "Install ${#to_install[@]} packages now?" || die "declined"
-as_root pacman -S --needed --noconfirm "${to_install[@]}"
+# --ask=4：遇到冲突时自动回答"替换/移除冲突包"（样本中 exfat-utils→exfatprogs 即此形态）
+as_root pacman -S --needed --noconfirm --ask=4 "${to_install[@]}"
 ok "Stage 03 packages: done"

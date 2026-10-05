@@ -53,7 +53,8 @@ else
   failed=()
   for pkg in "${repo_pending[@]}"; do
     info "installing repo package: ${pkg}"
-    if ! as_root pacman -S --needed --noconfirm "$pkg"; then
+    # --ask=4：冲突包自动替换（与 03 一致）
+    if ! as_root pacman -S --needed --noconfirm --ask=4 "$pkg"; then
       warn "install failed: ${pkg} (repo)"
       failed+=("$pkg")
     fi
