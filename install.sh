@@ -63,7 +63,10 @@ fi
 have sudo || die "sudo is required (the base install provides it)."
 have pacman || die "pacman is required (Arch base system)."
 have git || die "git is required (manual §9.1 installs it)."
-sudo -v || die "sudo authentication failed."
+# 免密 sudo（NOPASSWD）环境跳过交互校验；否则校验一次并缓存时间戳（交互 TTY 下提示输入密码）。
+if ! sudo -n true 2>/dev/null; then
+  sudo -v || die "sudo authentication failed."
+fi
 
 render_plan "run" "$machine" "$virt" "$user"
 printf '\n'
