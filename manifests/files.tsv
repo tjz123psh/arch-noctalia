@@ -24,7 +24,6 @@ payload/home/.config/fcitx5/conf/punctuation.conf	/home/pang/.config/fcitx5/conf
 payload/home/.config/fcitx5/profile	/home/pang/.config/fcitx5/profile	600	99e210abb5a1e02b0495983d865d0f65
 payload/home/.config/fish/config.fish	/home/pang/.config/fish/config.fish	600	75cbc310dfe5b8e62b23d20ae6dd7848
 payload/home/.config/fontconfig/fonts.conf	/home/pang/.config/fontconfig/fonts.conf	644	d6acc253adc8ef5bd1e678014aa49097
-payload/home/.config/foot/foot.ini	/home/pang/.config/foot/foot.ini	600	a7b30b6300a786f2101f4639a91df4cf
 payload/home/.config/fuzzel/fuzzel.ini	/home/pang/.config/fuzzel/fuzzel.ini	644	2d4cb66c72e3f04aeb8ed6d9f596f053
 payload/home/.config/fuzzel/themes/noctalia	/home/pang/.config/fuzzel/themes/noctalia	644	d853dd326be4db3c04324a7ae762a1f5
 payload/home/.config/gtk-3.0/bookmarks	/home/pang/.config/gtk-3.0/bookmarks	644	c786c66e92f89fc90fac9b8108638fd0
