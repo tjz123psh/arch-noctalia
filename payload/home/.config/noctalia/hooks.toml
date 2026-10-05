@@ -1,3 +1,4 @@
 # Noctalia hooks（2026-10-03）：壁纸变化后把登录界面背景同步过去
 [hooks]
 wallpaper_changed = "/home/pang/bin/rice-login-bg"
+colors_changed = "/home/pang/scripts/desktop/rice-btop-theme"

@@ -11,7 +11,7 @@ payload/home/.config/Kingsoft/roamingdevice.conf	/home/pang/.config/Kingsoft/roa
 payload/home/.config/QtProject.conf	/home/pang/.config/QtProject.conf	644	ba18c5e38f5dd134f75c7dc42a6165f9
 payload/home/.config/arkrc	/home/pang/.config/arkrc	600	4a97cd4e889ddea7fc33329fa2b25635
 payload/home/.config/btop/btop.conf	/home/pang/.config/btop/btop.conf	644	ccfb150eadf127cd183bea74d419808f
-payload/home/.config/btop/themes/noctalia.theme	/home/pang/.config/btop/themes/noctalia.theme	644	a084c6b69323eee8348c83ec57807655
+payload/home/.config/btop/themes/noctalia.theme	/home/pang/.config/btop/themes/noctalia.theme	644	e14c2824c7f33dbb4565302552347391
 payload/home/.config/environment.d/10-desktop.conf	/home/pang/.config/environment.d/10-desktop.conf	644	de80ab11ba03ebb877451060254bca23
 payload/home/.config/fastfetch/config.jsonc	/home/pang/.config/fastfetch/config.jsonc	644	baf285ffcb9ea181880ac1976463bf30
 payload/home/.config/fastfetch/logo.png	/home/pang/.config/fastfetch/logo.png	644	a4176ae1a403ab05d82eadd1333a9273
@@ -60,7 +60,7 @@ payload/home/.config/niri/scripts/niri-quit	/home/pang/.config/niri/scripts/niri
 payload/home/.config/niri/scripts/niri-touchpad-toggle	/home/pang/.config/niri/scripts/niri-touchpad-toggle	755	8d61140492f987262916c92dcd20dd43
 payload/home/.config/niri/scripts/niri-vmtest-gen	/home/pang/.config/niri/scripts/niri-vmtest-gen	755	56f32cfbc990146539830314ff7ad146
 payload/home/.config/niri/touchpad-state.kdl	/home/pang/.config/niri/touchpad-state.kdl	644	a1736ed20f68a1881059550c4b32c650
-payload/home/.config/noctalia/hooks.toml	/home/pang/.config/noctalia/hooks.toml	644	ea091838a2d938c768bd025e4b27816f
+payload/home/.config/noctalia/hooks.toml	/home/pang/.config/noctalia/hooks.toml	644	949788850bc98a9878df6d6e80bd9edf
 payload/home/.config/nomacs/Image Lounge.conf	/home/pang/.config/nomacs/Image Lounge.conf	644	8d4a0f214e9bf402c48be6f5b7002b9e
 payload/home/.config/nwg-look/config	/home/pang/.config/nwg-look/config	644	1d7532f1af614a510283dc0b46520eee
 payload/home/.config/papirus-folders/keep	/home/pang/.config/papirus-folders/keep	644	eddf02cea87dcfcab7548cb9e59ab62f
@@ -317,3 +317,5 @@ payload/system/etc/locale.gen	/etc/locale.gen	644	9307d6e9e7eeae3d72326d19747860
 payload/system/etc/shells	/etc/shells	644	89346d49249948011890efa5f75cc253
 payload/system/etc/systemd/zram-generator.conf	/etc/systemd/zram-generator.conf	644	6061c86d045443c3b52b560e73adb3af
 payload/system/etc/vconsole.conf	/etc/vconsole.conf	644	d7cdb5bf660d946c3499c971055dad20
+# ——— 2026-10-05 btop 主题跟随色板：rice-btop-theme（系统现有 scripts 行在文首段） ———
+payload/home/scripts/desktop/rice-btop-theme	/home/pang/scripts/desktop/rice-btop-theme	755	5b55fc4a01e559b91917b857e1e68eac

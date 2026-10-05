@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# rice-btop-theme — 让 btop 主题跟随 Noctalia 现行色板。
+# 色源：~/.config/kitty/themes/noctalia.conf（Noctalia 每次调色板变化都会重生成它）。
+# 产物：~/.config/btop/themes/noctalia.theme（覆盖写；btop 下次启动时生效）。
+# 触发：Noctalia hook colors_changed（见 ~/.config/noctalia/hooks.toml）；也可手动跑。
+set -euo pipefail
+
+SRC="${HOME}/.config/kitty/themes/noctalia.conf"
+OUT="${HOME}/.config/btop/themes/noctalia.theme"
+[[ -f "$SRC" ]] || exit 0
+mkdir -p "$(dirname "$OUT")"
+
+get() { awk -v k="$1" '$1==k {print $2; exit}' "$SRC"; }
+mix() { # mix a b pct —— 在 a、b 两色之间按 b 的占比 pct(%) 混合
+  local a="${1#\#}" b="${2#\#}" p="${3:-50}"
+  printf '#%02x%02x%02x' \
+    $(( (16#${a:0:2} * (100 - p) + 16#${b:0:2} * p) / 100 )) \
+    $(( (16#${a:2:2} * (100 - p) + 16#${b:2:2} * p) / 100 )) \
+    $(( (16#${a:4:2} * (100 - p) + 16#${b:4:2} * p) / 100 ))
+}
+
+bg=$(get background); fg=$(get foreground)
+c1=$(get color1)  # 强调末端（salmon）
+c2=$(get color2)  # primary
+c4=$(get color4)  # secondary
+c6=$(get color6)  # 中间调
+c7=$(get color7)  # 亮调
+c8=$(get color8)  # 灰调
+
+cat > "$OUT" <<EOF
+# Noctalia 色板主题 —— 由 rice-btop-theme 按现行色板生成（勿手改；换壁纸/调色板后自动重生成）
+theme[main_bg]="${bg}"
+theme[main_fg]="${fg}"
+theme[title]="${fg}"
+theme[hi_fg]="${c2}"
+theme[selected_bg]="${c2}"
+theme[selected_fg]="${bg}"
+theme[inactive_fg]="${c8}"
+theme[graph_text]="${c6}"
+theme[meter_bg]="$(mix "$bg" "$fg" 18)"
+theme[proc_misc]="${c4}"
+theme[cpu_box]="${c2}"
+theme[mem_box]="${c4}"
+theme[net_box]="${c6}"
+theme[proc_box]="${c6}"
+theme[div_line]="$(mix "$bg" "$fg" 32)"
+theme[temp_start]="${c4}"
+theme[temp_mid]="${c2}"
+theme[temp_end]="${c1}"
+theme[cpu_start]="${c4}"
+theme[cpu_mid]="${c2}"
+theme[cpu_end]="${c1}"
+theme[free_start]="${c4}"
+theme[free_mid]="${c2}"
+theme[free_end]="${c1}"
+theme[used_start]="${c4}"
+theme[used_mid]="${c2}"
+theme[used_end]="${c1}"
+theme[available_start]="${c4}"
+theme[available_mid]="${c6}"
+theme[available_end]="${c7}"
+theme[cached_start]="${c8}"
+theme[cached_mid]="${c6}"
+theme[cached_end]="${c7}"
+theme[download_start]="${c8}"
+theme[download_mid]="${c6}"
+theme[download_end]="${c7}"
+theme[upload_start]="${c4}"
+theme[upload_mid]="${c2}"
+theme[upload_end]="${c1}"
+theme[process_start]="${c8}"
+theme[process_mid]="${c6}"
+theme[process_end]="${c7}"
+EOF
+printf 'btop theme regenerated from current palette: %s\n' "$OUT"
