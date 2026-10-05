@@ -2,7 +2,7 @@
 # steps/05-aur.sh — Stage 05: AUR / foreign packages.
 # 读 manifests/aur.tsv：role=explicit 逐个安装（aur → paru 非 root，其余 → pacman）；
 # role=dependency 不主动装，结尾只核对并 warn；单个失败不中断，结尾汇总。
-# 幂等：已装过滤；paru 需先按手动 §9.1 备好。
+# 幂等：已装过滤；paru 由 stage 01 备好（archlinuxcn）。
 set -Eeuo pipefail
 AN_ROOT_DIR="${AN_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 # shellcheck source=lib/common.sh
@@ -46,7 +46,7 @@ if (( ${#aur_pending[@]} == 0 && ${#repo_pending[@]} == 0 )); then
   ok "Stage 05 aur: nothing to do"
 else
   if (( ${#aur_pending[@]} > 0 )) && ! have paru; then
-    die "paru is required for AUR packages but was not found — complete the manual §9.1 (archlinuxcn + paru), then re-run."
+    die "paru is required for AUR packages but was not found — stage 01 installs it from archlinuxcn; re-run from stage 01: ./install.sh --run --from 01"
   fi
   info "selected ${explicit_total} explicit packages; ${#aur_pending[@]} AUR + ${#repo_pending[@]} repo still to install (machine=${machine})"
   confirm "Install ${#aur_pending[@]} AUR + ${#repo_pending[@]} repo packages now?" || die "declined"

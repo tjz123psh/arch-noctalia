@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # steps/01-sources.sh — Stage 01: sources
-# 目的：确认手动 §9.1 已生效，并补齐安装器真正需要的东西：
-#   1) archlinuxcn 仓库已配置（缺失 → 停止并给出指引；安装器不代做 §9.1）
+# 目的：把"源"相关的一切准备好（2026-10-05 起 §9.1 的配置部分由本步代做）：
+#   1) archlinuxcn 仓库：缺失则自动补齐（先备份 pacman.conf；写法照物理机）
 #   2) [multilib] 已启用（lib32 包需要；§9.5 的兜底）
 #   3) 刷新数据库（pacman -Sy）+ 确保 archlinuxcn-keyring 已装
-#   4) 镜像健康检查（只读；失败仅提示，不阻塞）
+#   4) paru（AUR 辅助）：缺失则从 archlinuxcn 自动安装
+#   5) 镜像健康检查（只读；失败仅提示，不阻塞）
 # 幂等：重复运行安全。
 set -Eeuo pipefail
 AN_ROOT_DIR="${AN_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
@@ -26,11 +27,27 @@ if ! have curl; then
 fi
 ok "tool: curl present"
 
-# 1) archlinuxcn 必须已由手动 §9.1 配好 —— 缺了就停。
-if ! grep -qE '^[[:space:]]*\[archlinuxcn\]' "$PACMAN_CONF"; then
-  die "archlinuxcn repo is missing in ${PACMAN_CONF}. Complete the manual step §9.1 first (add the archlinuxcn section, install paru/git), then re-run."
+# 1) archlinuxcn：缺失则自动补齐（2026-10-05 用户要求：不再手填镜像地址；写法照物理机 pacman.conf）。
+if grep -qE '^[[:space:]]*\[archlinuxcn\]' "$PACMAN_CONF"; then
+  ok "archlinuxcn repo: present"
+else
+  info "archlinuxcn repo missing in ${PACMAN_CONF} — adding it (backup first)"
+  confirm "Add the [archlinuxcn] repo section to ${PACMAN_CONF}?" || die "archlinuxcn repo is required (stages 03-05 use it)."
+  as_root cp -a "$PACMAN_CONF" "${PACMAN_CONF}.pre-arch-noctalia"
+  as_root tee -a "$PACMAN_CONF" >/dev/null <<'EOF'
+
+[archlinuxcn]
+Server = https://mirrors.aliyun.com/archlinuxcn/$arch
+Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch
+Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/$arch
+Server = https://mirrors.cloud.tencent.com/archlinuxcn/$arch
+Server = https://mirrors.huaweicloud.com/archlinuxcn/$arch
+Server = https://mirrors.lzu.edu.cn/archlinuxcn/$arch
+Server = https://mirrors.zju.edu.cn/archlinuxcn/$arch
+EOF
+  grep -qE '^[[:space:]]*\[archlinuxcn\]' "$PACMAN_CONF" || die "failed to add [archlinuxcn] — please edit ${PACMAN_CONF} manually."
+  ok "archlinuxcn repo: added (backup: ${PACMAN_CONF}.pre-arch-noctalia)"
 fi
-ok "archlinuxcn repo: present"
 
 # 2) [multilib]（lib32 包的依赖）
 if grep -qE '^[[:space:]]*\[multilib\]' "$PACMAN_CONF"; then
@@ -55,6 +72,15 @@ else
   info "installing archlinuxcn-keyring"
   as_root pacman -S --needed --noconfirm archlinuxcn-keyring
   ok "archlinuxcn-keyring: installed"
+fi
+
+# 4b) paru（AUR 辅助，来自 archlinuxcn；§9.1 原为手动步骤，2026-10-05 起由本步兜底）
+if have paru; then
+  ok "paru: present"
+else
+  info "installing paru (AUR helper from archlinuxcn)"
+  as_root pacman -S --needed --noconfirm paru
+  ok "paru: installed"
 fi
 
 # 5) 镜像健康检查（只读）
