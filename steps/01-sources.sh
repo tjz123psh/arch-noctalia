@@ -2,6 +2,7 @@
 # steps/01-sources.sh — Stage 01: sources
 # 目的：把"源"相关的一切准备好（2026-10-05 起 §9.1 的配置部分由本步代做）：
 #   1) archlinuxcn 仓库：缺失则自动补齐（先备份 pacman.conf；写法照物理机）
+#   1b) 镜像"降级链"：并行实探，快的排前、不通的沉底（pacman 逐文件取用，前不行后顶上）
 #   2) [multilib] 已启用（lib32 包需要；§9.5 的兜底）
 #   3) 刷新数据库（pacman -Sy）+ 确保 archlinuxcn-keyring 已装
 #   4) paru（AUR 辅助）：缺失则从 archlinuxcn 自动安装
@@ -11,6 +12,8 @@ set -Eeuo pipefail
 AN_ROOT_DIR="${AN_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 # shellcheck source=lib/common.sh
 source "${AN_ROOT_DIR}/lib/common.sh"
+# shellcheck source=lib/mirrors.sh
+source "${AN_ROOT_DIR}/lib/mirrors.sh"
 
 require_orchestrator
 machine="${AN_MACHINE:?AN_MACHINE is required (set by install.sh)}"
@@ -49,6 +52,28 @@ Server = https://mirrors.zju.edu.cn/archlinuxcn/$arch
 EOF
   grep -qE '^[[:space:]]*\[archlinuxcn\]' "$PACMAN_CONF" || die "failed to add [archlinuxcn] — please edit ${PACMAN_CONF} manually."
   ok "archlinuxcn repo: added (backup: ${PACMAN_CONF}.pre-arch-noctalia)"
+fi
+
+# 1b) 镜像"降级链"：并行实探 [archlinuxcn] 各镜像，快的排前、不通的沉底；顺序变了才改写。
+#     pacman 逐文件按 Server 顺序取用，天然"前不行后顶上"；本步保证慢/死镜像不打头阵。
+mapfile -t cn_servers < <(cn_servers_in_conf "$PACMAN_CONF")
+if (( ${#cn_servers[@]} >= 2 )); then
+  info "probing ${#cn_servers[@]} archlinuxcn mirrors (parallel)…"
+  mapfile -t cn_fast < <(printf '%s\n' "${cn_servers[@]}" | cn_probe_servers | cn_order_servers)
+  tmp_conf="$(mktemp)"
+  printf '%s\n' "${cn_fast[@]}" | cn_rewrite_conf "$PACMAN_CONF" > "$tmp_conf"
+  if (( ${#cn_fast[@]} < 2 )); then
+    warn "mirror probe returned no usable result — leaving order as-is"
+  elif cmp -s "$tmp_conf" "$PACMAN_CONF"; then
+    ok "mirror order: already fastest-first"
+  else
+    [[ -e "${PACMAN_CONF}.pre-arch-noctalia" ]] || as_root cp -a "$PACMAN_CONF" "${PACMAN_CONF}.pre-arch-noctalia"
+    as_root tee "$PACMAN_CONF" >/dev/null < "$tmp_conf"
+    ok "mirror order updated: first=$(cn_host "${cn_fast[0]}"), last=$(cn_host "${cn_fast[-1]}")"
+  fi
+  rm -f "$tmp_conf"
+else
+  warn "archlinuxcn mirror list has <2 entries — skipping reorder"
 fi
 
 # 2) [multilib]（lib32 包的依赖）
