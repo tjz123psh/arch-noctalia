@@ -18,7 +18,7 @@ rows=$(grep -cvE '^#|^$' "$FILES")
 prows=$(grep -cvE '^#|^$' "$PKGS")
 [ "$prows" -ge 150 ] || bad "packages.tsv rows too few: $prows"
 arows=$(grep -cvE '^#|^$' "$AUR")
-[ "$arows" -ge 10 ] || bad "aur.tsv rows too few: $arows"
+[ "$arows" -ge 9 ] || bad "aur.tsv rows too few: $arows"
 
 n=0
 while IFS=$'\t' read -r repo _target mode md5; do

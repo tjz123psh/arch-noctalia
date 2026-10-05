@@ -71,3 +71,4 @@ dir	/home/pang/.config/opencode	空目录残留
 dir	/home/pang/.config/celluloid	空目录残留（celluloid 已删）
 dir	/home/pang/.config/cef_user_data	空目录残留（WPS cef）
 package	linuxqq-nt-bwrap	替换为 linuxqq-wayland-fix（2026-10-05 用户决定：更稳定、Wayland 修复更多）
+package	snapd-xdg-open-git	旧 QQ 包 linuxqq-nt-bwrap 的依赖；QQ 换 linuxqq-wayland-fix 后无人引用（2026-10-05 用户确认移除 aur.tsv 检查行）

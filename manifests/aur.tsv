@@ -6,7 +6,6 @@ dbx-bin	aur	explicit
 linuxqq-wayland-fix	aur	explicit	Wayland 修复版（屏幕共享/剪贴板/截图；替换 linuxqq-nt-bwrap）
 obsidian-bin	aur	explicit	
 opencode-bin	aur	explicit	
-snapd-xdg-open-git	aur	dependency	
 ttf-wps-fonts	aur	explicit	
 wechat-universal-bwrap	aur	explicit	
 wps-office-cn	aur	explicit	
