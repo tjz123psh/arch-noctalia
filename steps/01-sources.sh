@@ -34,15 +34,17 @@ else
   info "archlinuxcn repo missing in ${PACMAN_CONF} — adding it (backup first)"
   confirm "Add the [archlinuxcn] repo section to ${PACMAN_CONF}?" || die "archlinuxcn repo is required (stages 03-05 use it)."
   as_root cp -a "$PACMAN_CONF" "${PACMAN_CONF}.pre-arch-noctalia"
+  # 顺序 = 2026-10-05 宿主同链路实测（持续速度）：tuna/lzu/huawei ≈20MB/s，ustc ≈10，
+  # aliyun 持续仅 ≈2MB/s（大文件会触发 pacman "operation too slow"），tencent 抖动，zju 常超时（留作最后兜底）。
   as_root tee -a "$PACMAN_CONF" >/dev/null <<'EOF'
 
 [archlinuxcn]
-Server = https://mirrors.aliyun.com/archlinuxcn/$arch
-Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch
 Server = https://mirrors.tuna.tsinghua.edu.cn/archlinuxcn/$arch
-Server = https://mirrors.cloud.tencent.com/archlinuxcn/$arch
-Server = https://mirrors.huaweicloud.com/archlinuxcn/$arch
 Server = https://mirrors.lzu.edu.cn/archlinuxcn/$arch
+Server = https://mirrors.huaweicloud.com/archlinuxcn/$arch
+Server = https://mirrors.ustc.edu.cn/archlinuxcn/$arch
+Server = https://mirrors.aliyun.com/archlinuxcn/$arch
+Server = https://mirrors.cloud.tencent.com/archlinuxcn/$arch
 Server = https://mirrors.zju.edu.cn/archlinuxcn/$arch
 EOF
   grep -qE '^[[:space:]]*\[archlinuxcn\]' "$PACMAN_CONF" || die "failed to add [archlinuxcn] — please edit ${PACMAN_CONF} manually."
