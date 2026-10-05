@@ -2,7 +2,8 @@
 # steps/11-greeter.sh — Stage 11: greetd + nwg-hello 登录界面。
 # 1) 复核资产（/etc/greetd/config.toml、/etc/nwg-hello/*、/var/lib/avatars/pang/.face）——内容由 07 部署；
 # 2) 给 /etc/nwg-hello/background.png 加 ACL u:pang:rw（壁纸→登录背景同步 hook 需要写入权限）；
-# 3) 启用 greetd（tty1 由 nwg-hello 接管；不 --now——重启后生效，避免掐断当前安装会话）。
+# 3) 启用 greetd（tty1 由 nwg-hello 接管；不 --now——重启后生效，避免掐断当前安装会话）；
+#    并启用 getty@tty2（应急控制台 VT2，与样本一致）。
 # 幂等：已启用 / ACL 已存在 → 跳过；重复运行安全。
 set -Eeuo pipefail
 AN_ROOT_DIR="${AN_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
@@ -47,7 +48,7 @@ facl="$(getfacl -p "$BG" 2>/dev/null || true)"
 grep -q '^user:pang:rw-' <<<"$facl" || die "failed to verify the ACL on ${BG}"
 info "ACL verified: u:pang:rw on background.png"
 
-# --- 3) greetd ---
+# --- 3) greetd（tty1） ---
 if systemctl is-enabled greetd >/dev/null 2>&1; then
   info "already enabled: greetd"
 else
@@ -55,5 +56,13 @@ else
   ok "enabled: greetd"
 fi
 systemctl is-enabled greetd >/dev/null 2>&1 || die "greetd is not enabled"
+
+# --- 4) 应急控制台 VT2 ---
+if systemctl is-enabled getty@tty2.service >/dev/null 2>&1; then
+  info "already enabled: getty@tty2.service"
+else
+  as_root systemctl enable getty@tty2.service
+  ok "enabled: getty@tty2.service"
+fi
 
 ok "Stage 11 greeter: done"

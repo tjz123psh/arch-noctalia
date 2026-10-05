@@ -2,9 +2,9 @@
 # steps/10-services.sh — Stage 10: enable services.
 # 系统级：docker、bluetooth（enable --now）；btrfs（root 是 btrfs 时）：snapper 配置缺则按默认模板创建、
 #   snapper-timeline.timer / snapper-cleanup.timer / grub-btrfsd.service / btrfs-scrub@-.timer 启用；
-#   另把当前用户加入 docker 组（下次登录生效）。
+#   物理机驱动配套 asusd / supergfxd 若存在则启用；另把当前用户加入 docker 组（下次登录生效）。
 # 用户级：rice-dnd.timer（单元文件由 07 部署；无用户总线时退化为手工 enable 软链）。
-# 缺失（应由 03/06 的包提供）的单元/包在结尾汇总为失败；grub-btrfsd 为显式可选。
+# 缺失（应由 03/06 的包提供）的单元/包在结尾汇总为失败；grub-btrfsd / asusd / supergfxd 为显式可选。
 # 注：greetd 的启用归 11；本步骤不碰 tty1。
 # 幂等：已启用/已配置/已在组内 → 跳过；重复运行安全。
 set -Eeuo pipefail
@@ -34,6 +34,13 @@ enable_system_unit() { # $1=unit
 # --- 基础服务 ---
 enable_system_unit docker.service
 enable_system_unit bluetooth.service
+
+# --- 物理机驱动配套（由 04 的包提供；本机不存在则跳过） ---
+for u in asusd.service supergfxd.service; do
+  if systemctl cat "$u" >/dev/null 2>&1; then
+    enable_system_unit "$u"
+  fi
+done
 
 # --- btrfs：snapper 配置 + 快照/巡检单元 ---
 if [[ "$(findmnt -no FSTYPE / 2>/dev/null || true)" == "btrfs" ]]; then
