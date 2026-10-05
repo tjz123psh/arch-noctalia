@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # steps/01-sources.sh — Stage 01: sources
 # 目的：把"源"相关的一切准备好（2026-10-05 起 §9.1 的配置部分由本步代做）：
+#   1a) 官方仓库镜像表（/etc/pacman.d/mirrorlist）：一律写入标准列表（tuna 打头；先备份、幂等）
 #   1) archlinuxcn 仓库：一律写入安装器标准块（缺失追加／已有整段覆盖，先备份；用户 2026-10-05 确认可覆盖）
 #   1b) 镜像"降级链"：并行实探，快的排前、不通的沉底（pacman 逐文件取用，前不行后顶上）
 #   2) [multilib] 已启用（lib32 包需要；§9.5 的兜底）
@@ -29,6 +30,32 @@ if ! have curl; then
   as_root pacman -S --needed --noconfirm curl
 fi
 ok "tool: curl present"
+
+# 1a) 官方仓库镜像表：一律写成安装器标准列表（tuna 打头）——base 自带顺序可能阿里云打头
+#     （实测 aliyun 持续只有 ~2.3MB/s，会拖垮 stage 02/03）。先备份、内容一致则跳过（幂等）。
+MIRRORLIST="/etc/pacman.d/mirrorlist"
+confirm "Write the installer's official mirror list to ${MIRRORLIST}?" || die "official mirrorlist is required (stages 02-03 use it)."
+tmp_ml="$(mktemp)"
+cat > "$tmp_ml" <<'EOF'
+# arch-noctalia 写入：官方仓库镜像（tuna 打头）
+Server = https://mirrors.tuna.tsinghua.edu.cn/archlinux/$repo/os/$arch
+Server = https://mirrors.huaweicloud.com/archlinux/$repo/os/$arch
+Server = https://mirrors.ustc.edu.cn/archlinux/$repo/os/$arch
+Server = https://mirrors.aliyun.com/archlinux/$repo/os/$arch
+Server = https://mirrors.cloud.tencent.com/archlinux/$repo/os/$arch
+EOF
+if cmp -s "$tmp_ml" "$MIRRORLIST"; then
+  ok "official mirrorlist: already the installer's list"
+  rm -f "$tmp_ml"
+else
+  if [[ -e "$MIRRORLIST" && ! -e "${MIRRORLIST}.pre-arch-noctalia" ]]; then
+    as_root cp -a "$MIRRORLIST" "${MIRRORLIST}.pre-arch-noctalia"
+  fi
+  as_root tee "$MIRRORLIST" >/dev/null < "$tmp_ml"
+  rm -f "$tmp_ml"
+  grep -q '^Server' "$MIRRORLIST" || die "failed to write ${MIRRORLIST} — please check it manually."
+  ok "official mirrorlist: installer's list written (backup: ${MIRRORLIST}.pre-arch-noctalia)"
+fi
 
 # 1) archlinuxcn：一律写成安装器标准块——缺失则追加、已有则整段覆盖
 #    （2026-10-05 用户确认"覆盖即可"：重装时不会再手配源）。覆盖前自动备份；随后 1b 按实测重排。
