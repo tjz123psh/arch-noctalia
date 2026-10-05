@@ -2,3 +2,8 @@
 .state/
 *.tmp
 *.swp
+*~
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
