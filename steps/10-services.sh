@@ -25,9 +25,17 @@ enable_system_unit() { # $1=unit
   fi
   if systemctl is-enabled "$u" >/dev/null 2>&1; then
     info "already enabled: ${u}"
-  else
-    as_root systemctl enable --now "$u"
+    return 0
+  fi
+  if as_root systemctl enable --now "$u"; then
     ok "enabled: ${u}"
+  elif [[ ! -d "/usr/lib/modules/$(uname -r)" ]]; then
+    # 刚升级过内核但尚未重启：运行中内核的模块已不在磁盘上（如 docker 需要 nf_tables）——
+    # 单元保持 enabled，启动自动延期到重启之后。
+    warn "${u}: start deferred — the running kernel's modules were replaced by the upgrade; it will start after reboot"
+    systemctl is-enabled "$u" >/dev/null 2>&1 || missing_units+=("$u")
+  else
+    die "failed to start ${u} (see: systemctl status ${u})"
   fi
 }
 
