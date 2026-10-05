@@ -69,10 +69,16 @@ _target_probe() { # $1=type|perms|md5  $2=target
   while :; do
     case "$kind" in
       type)
+        # %F 输出是本地化文本（zh_CN 下为"普通文件"）——强制 C locale，纯用户侧/root 侧一致。
+        # root 侧用 env 显式传 LC_ALL，不依赖 sudo 的 env_keep 配置。
         if (( asroot == 0 )); then
-          out="$(stat -L -c '%F' -- "$t" 2>/dev/null)"
+          out="$(LC_ALL=C stat -L -c '%F' -- "$t" 2>/dev/null)"
         else
-          out="$(as_root stat -L -c '%F' -- "$t" 2>/dev/null)"
+          out="$(as_root env LC_ALL=C stat -L -c '%F' -- "$t" 2>/dev/null)"
+        fi
+        # coreutils 把空文件报为 "regular empty file"——归一为 "regular file"（调用方只关心是否常规文件）。
+        if [[ "$out" == "regular empty file" ]]; then
+          out="regular file"
         fi
         ;;
       perms)
