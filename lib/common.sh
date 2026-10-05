@@ -62,7 +62,7 @@ count_rows() {
 
 # --- 部署校验：目标属性读取（普通用户 → root 回退） ---
 # 系统文件（$HOME 之外）归 root：普通用户读不到时用 root 重试一次。
-# 场景：ESP 以 fmask/dmask=0077 挂载时 /boot 对普通用户不可进入（见 README「权限与 vfat」）。
+# 场景：ESP 以 fmask/dmask=0077 挂载时 /boot 对普通用户不可进入（见 README 要点）。
 # 用法：t_type FILE（-L 跟随软链的文件类型）/ t_perms FILE（权限位）/ t_md5 FILE（内容 md5）。
 _target_probe() { # $1=type|perms|md5  $2=target
   local kind="$1" t="$2" asroot=0 out=""
