@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # steps/12-verify.sh — Stage 12: post-install self check（只读）。
 # 对照 manifests/files.tsv 检查每个目标路径存在、是常规文件、md5 与记录一致
-#   （seed 行除外：那是个人数据种子，内容可能被用户编辑，跳过内容核对；
+#   （seed 行：个人数据种子，只核对存在性、跳过内容核对——内容可能被用户编辑；
 #    系统文件普通用户读不到时回退 root 读——ESP/0077 掩码场景，见 lib/common.sh）；
 # 对照 manifests/packages.tsv（同一套机型/模块过滤）检查缺失的包；
 # 对照 manifests/bin-links.tsv 检查 ~/bin 软链层（存在且可执行）；
@@ -33,13 +33,18 @@ while IFS=$'\t' read -r repo_path target _mode md5; do
   if [[ -z "$target" || "$target" == "#"* ]]; then
     continue
   fi
-  # seed（个人数据种子）：用户可能已编辑，内容不做核对。
+  ftype="$(t_type "$target")"
+  # seed（个人数据种子）：用户可能已编辑——只核对存在性，内容不做核对（缺失仍计入失败）。
   if [[ -n "${AN_SEED[$repo_path]:-}" ]]; then
-    seeded=$((seeded + 1))
+    if [[ -z "$ftype" ]]; then
+      miss=$((miss + 1))
+      warn "missing (seed): ${target}"
+    else
+      seeded=$((seeded + 1))
+    fi
     continue
   fi
   checked=$((checked + 1))
-  ftype="$(t_type "$target")"
   if [[ -z "$ftype" ]]; then
     miss=$((miss + 1))
     warn "missing: ${target}"
@@ -60,7 +65,7 @@ while IFS=$'\t' read -r repo_path target _mode md5; do
 done < "$FILES"
 printf '[info]  files: %d checked, %d ok, %d mismatched, %d missing\n' "$checked" "$okc" "$bad" "$miss"
 if (( seeded > 0 )); then
-  info "seed files skipped (user data — initialized only when missing): ${seeded}"
+  info "seed files (user data): existence checked, content skipped: ${seeded}"
 fi
 
 info "Stage 12 verify: checking packages against packages.tsv"

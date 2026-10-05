@@ -115,7 +115,7 @@ fi
 for id in $(stage_ids); do
   name="$(stage_name "$id")"
   if [[ -n "$FROM_STAGE" && "$id" < "$FROM_STAGE" ]]; then
-    info "stage ${id} ${name}: skipped (--from ${FROM_STAGE})"
+    info "stage ${id} ${name}: skipped (${START_LABEL} ${FROM_STAGE})"
     continue
   fi
   if grep -qx "$id" "$DONE_FILE" 2>/dev/null; then
@@ -139,10 +139,25 @@ for id in $(stage_ids); do
   ok "stage ${id} ${name}: done"
 done
 
-if [[ "$SKIP_AUR" == "1" ]]; then
-  ok "all stages complete except AUR (--no-aur: deferred by design)."
+# 结尾状态以完成记录（DONE_FILE）为准，而不是以本次运行的参数为准——
+# 例如先 --no-aur、后 --redo 07 时，05 依旧未装，必须如实报告（不能误报"全部完成"）。
+missing_stages=()
+for id in $(stage_ids); do
+  if ! grep -qx "$id" "$DONE_FILE" 2>/dev/null; then
+    missing_stages+=("$id")
+  fi
+done
+if (( ${#missing_stages[@]} == 0 )); then
+  ok "all stages complete."
+elif (( ${#missing_stages[@]} == 1 )) && [[ "${missing_stages[0]}" == "05" ]]; then
+  if [[ "$SKIP_AUR" == "1" ]]; then
+    ok "all stages complete except AUR (--no-aur: deferred by design)."
+  else
+    ok "all stages complete except AUR (not installed yet)."
+  fi
   info "after login, finish the AUR packages with: ${AN_ROOT_DIR}/install.sh --run --yes"
 else
-  ok "all stages complete."
+  warn "stages not completed: ${missing_stages[*]}"
+  info "finish them with: ${AN_ROOT_DIR}/install.sh --run   (or force a stage again: ./install.sh --run --redo NN)"
 fi
 info "next: reboot / re-login. The desktop (niri + Noctalia) is ready; see README for post-install notes."

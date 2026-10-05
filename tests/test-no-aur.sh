@@ -54,6 +54,19 @@ if printf '%s\n' "$out1" | grep -q 'STUB 05-aur.sh'; then
   exit 1
 fi
 
+# ---- 第一轮补测：05 仍未装时 --redo 07 → 结尾必须如实报告（不能误报全量完成）----
+if ! out2b="$(run --redo 07)"; then
+  printf '%s\n' "$out2b"
+  echo "[FAIL] --redo 07 (before 05) exited non-zero"
+  exit 1
+fi
+printf '%s\n' "$out2b" | grep -q 'stage 01 sources: skipped (--redo 07)' || { echo "[FAIL] skip label should say '--redo 07'"; exit 1; }
+printf '%s\n' "$out2b" | grep -q 'all stages complete except AUR (not installed yet)' || { echo "[FAIL] footer must report AUR as outstanding"; exit 1; }
+if printf '%s\n' "$out2b" | grep -q 'all stages complete\.$'; then
+  echo "[FAIL] footer must not claim everything complete while 05 is pending"
+  exit 1
+fi
+
 # ---- 第二轮：普通 --run --yes → 只补 05 ----
 if ! out2="$(run)"; then
   printf '%s\n' "$out2"
@@ -78,7 +91,7 @@ if printf '%s\n' "$out2" | grep -q 'skipped: --no-aur'; then
   exit 1
 fi
 
-# ---- 第三轮：--redo 07 → 强制重跑 07..12（01–06 保持完成；05 不动）----
+# ---- 第三轮：--redo 07（此时 05 已装）→ 强制重跑 07..12 ----
 if ! out3="$(run --redo 07)"; then
   printf '%s\n' "$out3"
   echo "[FAIL] --redo 07 run exited non-zero"
@@ -98,6 +111,11 @@ if printf '%s\n' "$out3" | grep -q 'STUB 05-aur.sh'; then
   exit 1
 fi
 [ "$(wc -l < "$DONE")" = "12" ] || { echo "[FAIL] done-file line count != 12 after --redo"; exit 1; }
+printf '%s\n' "$out3" | grep -q 'all stages complete\.$' || { echo "[FAIL] footer after --redo (05 done) should be plain 'all stages complete.'"; exit 1; }
+if printf '%s\n' "$out3" | grep -q 'except AUR'; then
+  echo "[FAIL] footer after --redo (05 done) must not mention AUR"
+  exit 1
+fi
 
 # ---- 参数校验：--from 与 --redo 互斥；无效阶段号 ----
 set +e
