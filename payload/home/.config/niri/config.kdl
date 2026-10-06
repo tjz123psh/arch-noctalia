@@ -32,6 +32,6 @@ include "conf.d/layer-rules.kdl"
 include "conf.d/binds.kdl"
 include "conf.d/cursor.kdl"
 include "conf.d/recent-windows.kdl"
-// 触摸板开关状态（由 ~/.local/bin/niri-touchpad-toggle 改写，勿手改）
-include "touchpad-state.kdl"
+// 触摸板开关状态（由 ~/bin/niri-touchpad-toggle 改写，勿手改）
+include "conf.d/touchpad-state.kdl"
 

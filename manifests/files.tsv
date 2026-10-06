@@ -52,13 +52,13 @@ payload/home/.config/niri/conf.d/outputs.kdl	/home/pang/.config/niri/conf.d/outp
 payload/home/.config/niri/conf.d/overview.kdl	/home/pang/.config/niri/conf.d/overview.kdl	644	3683ca24a0023b1c69a74be0dc24d565
 payload/home/.config/niri/conf.d/recent-windows.kdl	/home/pang/.config/niri/conf.d/recent-windows.kdl	644	679c92bd0799770ebcca35d1139167a6
 payload/home/.config/niri/conf.d/startup.kdl	/home/pang/.config/niri/conf.d/startup.kdl	644	cbfa3680cad08778ef3b19340180a37a
+payload/home/.config/niri/conf.d/touchpad-state.kdl	/home/pang/.config/niri/conf.d/touchpad-state.kdl	644	4cf106ec433527fb51ce8be635893a9f
 payload/home/.config/niri/conf.d/window-rules.kdl	/home/pang/.config/niri/conf.d/window-rules.kdl	644	86568d69349320741e564935760d0cd8
-payload/home/.config/niri/config.kdl	/home/pang/.config/niri/config.kdl	600	3d7108af37fb9ea5b97ebe2b9cf47ce2
+payload/home/.config/niri/config.kdl	/home/pang/.config/niri/config.kdl	600	c25567cc6b41352a33ec9e9eed9f80a9
 payload/home/.config/niri/scripts/niri-force-kill-window	/home/pang/.config/niri/scripts/niri-force-kill-window	755	1f4fe11f8ae05ed3ecf172f698fd2e46
 payload/home/.config/niri/scripts/niri-quit	/home/pang/.config/niri/scripts/niri-quit	755	b07b12985da06d5c9ff62487b6a3bcf0
-payload/home/.config/niri/scripts/niri-touchpad-toggle	/home/pang/.config/niri/scripts/niri-touchpad-toggle	755	8d61140492f987262916c92dcd20dd43
+payload/home/.config/niri/scripts/niri-touchpad-toggle	/home/pang/.config/niri/scripts/niri-touchpad-toggle	755	675269243c9bf08cc11a4f7f9c7e00fe
 payload/home/.config/niri/scripts/niri-vmtest-gen	/home/pang/.config/niri/scripts/niri-vmtest-gen	755	56f32cfbc990146539830314ff7ad146
-payload/home/.config/niri/touchpad-state.kdl	/home/pang/.config/niri/touchpad-state.kdl	644	a1736ed20f68a1881059550c4b32c650
 payload/home/.config/noctalia/hooks.toml	/home/pang/.config/noctalia/hooks.toml	644	949788850bc98a9878df6d6e80bd9edf
 payload/home/.config/nomacs/Image Lounge.conf	/home/pang/.config/nomacs/Image Lounge.conf	644	8d4a0f214e9bf402c48be6f5b7002b9e
 payload/home/.config/nwg-look/config	/home/pang/.config/nwg-look/config	644	1d7532f1af614a510283dc0b46520eee

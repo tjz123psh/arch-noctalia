@@ -1,4 +1,4 @@
-// 触摸板开关状态 —— 由 ~/.local/bin/niri-touchpad-toggle（Fn+F10）维护，一般不用手改。
+// 触摸板开关状态 —— 由 ~/bin/niri-touchpad-toggle（Fn+F10）维护，一般不用手改。
 // 本文件是触摸板设置（tap / natural-scroll / accel-speed / dwt）的唯一来源：
 // niri 对 touchpad 小节是整体替换而不是逐项合并，设置必须集中写在这里，
 // 由 config.kdl 顶层 include 加载。

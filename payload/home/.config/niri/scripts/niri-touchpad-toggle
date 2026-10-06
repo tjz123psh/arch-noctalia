@@ -18,7 +18,7 @@
 set -euo pipefail
 
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/niri"
-STATE_FILE="$CONFIG_DIR/touchpad-state.kdl"
+STATE_FILE="$CONFIG_DIR/conf.d/touchpad-state.kdl"
 LABEL="niri-touchpad-toggle"
 
 usage() {
