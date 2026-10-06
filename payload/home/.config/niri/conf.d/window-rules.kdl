@@ -65,3 +65,11 @@ window-rule {
     default-column-width { fixed 1600; }
     default-window-height { fixed 1000; }
 }
+
+// Noctalia 设置面板等窗口（Super+, 呼出）：浮动
+window-rule {
+    match app-id=r#"^dev\.noctalia\.Noctalia$"#
+    open-floating true
+    default-column-width { fixed 1020; }
+    default-window-height { fixed 720; }
+}
