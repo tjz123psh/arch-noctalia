@@ -3,7 +3,7 @@ spawn-at-startup "sh" "-c" "nwg-hello; niri msg action quit --skip-confirmation"
 hotkey-overlay { skip-at-startup; }
 gestures { hot-corners { off; }; }
 layout { background-color "#0b0b12"; }
-output "Virtual-1" {
+output "eDP-1" {
     mode "1920x1080"
 }
 

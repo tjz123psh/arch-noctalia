@@ -48,7 +48,7 @@ payload/home/.config/niri/conf.d/hotkey-overlay.kdl	/home/pang/.config/niri/conf
 payload/home/.config/niri/conf.d/input.kdl	/home/pang/.config/niri/conf.d/input.kdl	644	945487f07ed9d4b8465e74fe194fd43a
 payload/home/.config/niri/conf.d/layer-rules.kdl	/home/pang/.config/niri/conf.d/layer-rules.kdl	644	9c0aaf0e8b61017727c743de083b68ea
 payload/home/.config/niri/conf.d/layout.kdl	/home/pang/.config/niri/conf.d/layout.kdl	644	166e409741a0398bd1277560d57e7f8c
-payload/home/.config/niri/conf.d/outputs.kdl	/home/pang/.config/niri/conf.d/outputs.kdl	644	ceb9e9c167bfcdc77f019b44742c0c21
+payload/home/.config/niri/conf.d/outputs.kdl	/home/pang/.config/niri/conf.d/outputs.kdl	644	3bbaf9a816a2faba882bb3d08d00d187
 payload/home/.config/niri/conf.d/overview.kdl	/home/pang/.config/niri/conf.d/overview.kdl	644	3683ca24a0023b1c69a74be0dc24d565
 payload/home/.config/niri/conf.d/recent-windows.kdl	/home/pang/.config/niri/conf.d/recent-windows.kdl	644	679c92bd0799770ebcca35d1139167a6
 payload/home/.config/niri/conf.d/startup.kdl	/home/pang/.config/niri/conf.d/startup.kdl	644	cbfa3680cad08778ef3b19340180a37a
@@ -74,7 +74,7 @@ payload/home/.config/user-dirs.dirs	/home/pang/.config/user-dirs.dirs	600	45c968
 payload/home/.config/user-dirs.locale	/home/pang/.config/user-dirs.locale	644	0d61f8370cad1d412f80b84d143e1257
 payload/home/.config/zellij/config.kdl	/home/pang/.config/zellij/config.kdl	644	c1bf1f71354532303f2fc9c7783a81c0
 payload/home/.gitconfig	/home/pang/.gitconfig	644	6a08e646af723158277fe4d52dec4bfd
-payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	a2764a43cca223770ee455399e0aa3b5
+payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	824cec80dd6d9d327f45a1b72eafbe56
 payload/home/.local/share/applications/qq.desktop	/home/pang/.local/share/applications/qq.desktop	644	a93b140354cb6f3ee0c6f3f86a2d9090
 payload/home/.local/share/applications/linuxqq-wayland-fix.desktop	/home/pang/.local/share/applications/linuxqq-wayland-fix.desktop	644	73afa243ba8c4f34e8426bbd1a8ae73d
 payload/home/Pictures/wallpapers/【哲风壁纸】Fate-saber.png	/home/pang/Pictures/wallpapers/【哲风壁纸】Fate-saber.png	644	f76dbf3abbe4321dddf0a4397e5f9d0c
@@ -174,7 +174,7 @@ payload/home/scripts/maintenance/tests/DESTRUCTIVE-VM.md	/home/pang/scripts/main
 payload/home/scripts/maintenance/tests/run	/home/pang/scripts/maintenance/tests/run	755	1f0b4aa3a2c6d024ca54bb2b254afe9b
 payload/system/etc/greetd/config.toml	/etc/greetd/config.toml	644	1812fea641f1c31f43936e83e4cdde83
 payload/system/etc/nwg-hello/background.png	/etc/nwg-hello/background.png	664	2dfb5f774726de3c166ab9df1d282426
-payload/system/etc/nwg-hello/niri.kdl	/etc/nwg-hello/niri.kdl	644	09b9519d13dde1088eeb1fd9d5085548
+payload/system/etc/nwg-hello/niri.kdl	/etc/nwg-hello/niri.kdl	644	f190ba42fd66d323323a6d141cd61600
 payload/system/etc/nwg-hello/nwg-hello.css	/etc/nwg-hello/nwg-hello.css	644	1885e751ac7389f032ecca5497b43e84
 payload/system/etc/nwg-hello/nwg-hello.json	/etc/nwg-hello/nwg-hello.json	644	ac88a01d6e17a6d1bfc9928d7e6b1e7a
 payload/system/usr/share/fonts/google-sans-flex/GoogleSansFlex-Rounded.ttf	/usr/share/fonts/google-sans-flex/GoogleSansFlex-Rounded.ttf	644	7291408d3d5a9777012b07a5c36bcb04
