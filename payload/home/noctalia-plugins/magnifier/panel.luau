@@ -26,8 +26,8 @@ local HEAD_H, FOOT_H, GAP = 28, 42, 6
 local IMG_W = PANEL_W - PAD * 2                              -- 620
 local IMG_H = PANEL_H - PAD * 2 - HEAD_H - FOOT_H - GAP * 2  -- 368
 local ZOOM_MIN, ZOOM_MAX, ZOOM_STEP = 1.0, 8.0, 1.25
-local TICK_MS = 70         -- 轮询光标/抓帧节流
-local IDLE_MS = 1200       -- 光标没动时的兜底刷新（放大镜开着时桌面输入被接走，内容基本不变）
+local TICK_MS = 16         -- 每个显示帧读取最新光标位置
+local IDLE_MS = 33         -- 跟随模式下持续刷新动态内容；抓帧串行，不积压任务
 local PANEL_TOP = 44
 local MARGIN = 24
 
@@ -61,6 +61,8 @@ local trackerSeq = 0
 local trackerStart = 0
 local heartbeatPath = nil
 local lastHeartbeat = 0
+local lastStateWrite = 0
+local lastViewSave = 0
 
 -- ============ 小工具 ============
 local function clamp(v, lo, hi) return math.max(lo, math.min(hi, v)) end
@@ -128,6 +130,9 @@ end
 
 local function write_state()
   if not dir then return end
+  local now = noctalia.nowMs()
+  if now - lastStateWrite < 1000 then return end
+  lastStateWrite = now
   local cx, cy = center()
   noctalia.writeFile(dir .. "/state.txt", string.format(
     "mode=%s\nzoom=%.2f\nview=%d,%d %dx%d\ncenter=%d,%d\npanel=%d,%d %dx%d\nout=%d,%d %dx%d\nseq=%d\nnote=%s\ncursor=%s\nsrc=%s\nclicks=%d\npath=%s\n",
@@ -250,24 +255,29 @@ local function capture()
   seq = seq + 1
   local path = string.format("%s/frame-%d.png", dir, seq)
   local g, mine = gen, seq
-  -- argv 直启（不经 shell）+ PNG 最低压缩：实测抓帧 44ms，这两项省下约 20-30ms
+  -- argv 直启 + 无损 PNG 不压缩，减少每帧编码耗时
   local geo = string.format("%d,%d %dx%d", vx, vy, vw, vh)
-  local ok = noctalia.runAsync({ "grim", "-c", "-l", "1", "-g", geo, path }, function(res)
+  local ok = noctalia.runAsync({ "grim", "-c", "-l", "0", "-g", geo, path }, function(res)
     guard("capture", function()
     if alive then panel.setNeedsFrameTick(true) end   -- 重申订阅（重启运行时后订阅会丢）
-    if g ~= gen then return end
+    if not alive or g ~= gen or mine ~= seq then return end
     inflight = false
     if res.exitCode == 0 then
       curPath = path
       note(follow and "跟随" or "定格")
-      -- 清帧不再每帧一次（省一次进程启动）：每 8 帧清一批，关闭时统一清
-      if mine % 8 == 0 and mine > 8 then
-        noctalia.runAsync(string.format("rm -f '%s/frame-%d.png' '%s/frame-%d.png'", dir, mine - 4, dir, mine - 8))
+      -- 仅回收本轮已过时的截图，保留最近三帧给图片加载；不再启动清理进程。
+      -- 旧方案每八帧只清两张，持续刷新时会不断占用内存盘。
+      if mine > 3 then
+        noctalia.removeFile(string.format("%s/frame-%d.png", dir, mine - 3))
       end
     else
       note("抓帧失败")
     end
-    save_view()
+    local now = noctalia.nowMs()
+    if now - lastViewSave >= 1000 then
+      lastViewSave = now
+      save_view()
+    end
     render()
     if pendingShot and alive then
       pendingShot = false
@@ -347,6 +357,11 @@ function onOpen(context)
   gen = gen + 1
   follow = true
   seq = 0
+  inflight = false
+  pendingShot = false
+  lastPoll = 0
+  lastStateWrite = 0
+  lastViewSave = 0
   curPath = nil
   lastNote = ""
   clicks = 0
@@ -394,7 +409,7 @@ function onFrameTick(deltaMs)
   ticks = ticks + 1
   beat()
   local now = noctalia.nowMs()
-  if now - lastPoll < 30 then return end     -- 轮询节流（不必每帧读一次追踪器文件）
+  if now - lastPoll < TICK_MS then return end -- 只读取最新位置，不排队处理历史移动
   lastPoll = now
   -- 追踪器失联（>5s 没任何记录，含 2s 一次的 alive）→ 自动重启，免得"画面冻住"要手动重开面板
   if now - trackerStart > 8000 and (lastRecordMs == 0 or now - lastRecordMs > 8000) then

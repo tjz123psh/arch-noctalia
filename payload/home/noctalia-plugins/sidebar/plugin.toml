@@ -1,18 +1,57 @@
 id = "pang/sidebar"
-name = "Sidebar（搜索/媒体/窗口/计时/系统/最近/笔记）"
-version = "1.0.0"
-plugin_api = 27
+name = "Sidebar · 随手工作台"
+version = "2.0.0"
+plugin_api = 32
 author = "pang"
 license = "MIT"
-description = "左侧全高面板：搜索框、媒体卡、窗口列表、计时器、系统一览、最近文件、临时笔记；卡片可折叠、拖拽排序。"
+description = "轻量侧边工作台：搜索、紧凑媒体、窗口、计时、系统、最近文件与随手记；支持专注模式、卡片置顶、拖拽整理和可调动效。"
 icon = "layout-sidebar-left"
 tags = ["custom", "utility", "panel"]
+dependencies = ["playerctl", "niri", "curl", "libnotify", "xdg-utils"]
+
+[[setting]]
+key = "notes_dir"
+type = "folder"
+label_key = "settings.notes_dir.label"
+description_key = "settings.notes_dir.description"
+default = "~/Documents/notes"
+
+[[setting]]
+key = "search_limit"
+type = "int"
+label_key = "settings.search_limit.label"
+description_key = "settings.search_limit.description"
+default = 10
+min = 3
+max = 20
+
+[[setting]]
+key = "recent_count"
+type = "int"
+label_key = "settings.recent_count.label"
+description_key = "settings.recent_count.description"
+default = 8
+min = 3
+max = 15
+
+[[setting]]
+key = "motion"
+type = "select"
+label_key = "settings.motion.label"
+description_key = "settings.motion.description"
+default = "light"
+options = [
+  { value = "light", label_key = "settings.motion.light" },
+  { value = "soft", label_key = "settings.motion.soft" },
+  { value = "off", label_key = "settings.motion.off" },
+]
 
 [[panel]]
 id = "panel"
 entry = "panel.luau"
-width = 380
+width = 420
 height = "fill"
 placement = "floating"
 position = "center_left"
 keyboard_focus = "exclusive"
+capture_keys = ["Up", "Down"]

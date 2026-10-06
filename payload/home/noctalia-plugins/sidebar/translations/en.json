@@ -1,0 +1,23 @@
+{
+  "settings": {
+    "notes_dir": {
+      "label": "Notes folder",
+      "description": "Folder that stores the note files."
+    },
+    "search_limit": {
+      "label": "Search result limit",
+      "description": "Maximum number of app search results (3-20)."
+    },
+    "recent_count": {
+      "label": "Recent files shown",
+      "description": "How many recent files the card lists (3-15)."
+    },
+    "motion": {
+      "label": "Card motion",
+      "description": "\"Unfold\" is snappier, \"Scroll\" is more relaxed. \"Off\" only disables card motion, not the panel animation itself.",
+      "light": "Unfold · 300 ms",
+      "soft": "Scroll · 440 ms",
+      "off": "Off"
+    }
+  }
+}

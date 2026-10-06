@@ -1,0 +1,23 @@
+{
+  "settings": {
+    "notes_dir": {
+      "label": "笔记目录",
+      "description": "存放便签文件的文件夹。"
+    },
+    "search_limit": {
+      "label": "搜索结果上限",
+      "description": "应用搜索最多显示多少条（3–20）。"
+    },
+    "recent_count": {
+      "label": "最近文件条数",
+      "description": "「最近文件」卡片列出多少条（3–15）。"
+    },
+    "motion": {
+      "label": "卡片动效",
+      "description": "「舒展」更利落，「画卷」更舒缓；选「关闭」只取消卡片动效，不影响面板本身的动画。",
+      "light": "舒展 · 300 ms",
+      "soft": "画卷 · 440 ms",
+      "off": "关闭卡片动效"
+    }
+  }
+}
