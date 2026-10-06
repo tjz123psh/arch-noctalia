@@ -1094,6 +1094,39 @@ STUB
   pass 'snapshot deletion warns about paired batches and batches its calls'
 }
 
+test_quicksave_permission_denied_guides_fix() {
+  local bin="$TMP_DIR/quicksave-perm-bin"
+  local log="$TMP_DIR/quicksave-perm.log"
+  local home="$TMP_DIR/quicksave-perm-home"
+  local out status=0
+  mkdir -p "$bin" "$home"
+  cat > "$bin/snapper" <<'STUB'
+#!/usr/bin/env bash
+case " $* " in
+  *' list-configs '*) printf 'config\037subvolume\nroot\037/\n' ;;
+  *' get-config '*) printf 'No permissions.\n' >&2; exit 1 ;;
+esac
+STUB
+  printf '%s\n' '#!/usr/bin/env bash' 'exit 0' > "$bin/btrfs"
+  cat > "$bin/pkexec" <<'STUB'
+#!/usr/bin/env bash
+printf 'pkexec %s\n' "$*" >> "$PERM_TEST_LOG"
+exit 0
+STUB
+  chmod +x "$bin"/*
+
+  out="$(printf 'n\n' | PERM_TEST_LOG="$log" HOME="$home" PATH="$bin:$PATH" \
+    MAINTENANCE_LOCK_FILE="$TMP_DIR/quicksave-perm.lock" \
+    "$ROOT/quicksave" 2>&1)" || status=$?
+  [[ "$status" -ne 0 ]] || fail 'quicksave must stop when permission is denied and the fix is declined'
+  assert_contains "$out" '无法由当前用户读取' \
+    'quicksave must recognise snapper "No permissions." as a permission problem'
+  [[ "$out" != *'并非权限不足'* ]] \
+    || fail 'quicksave must not misclassify "No permissions." as an unrelated failure'
+  [[ ! -s "$log" ]] || fail 'quicksave must not run pkexec when the user declines the fix'
+  pass 'quicksave recognises No permissions as fixable and only fixes with consent'
+}
+
 test_quicksave_deletes_ids_in_one_call() {
   local bin="$TMP_DIR/quicksave-multi-bin"
   local log="$TMP_DIR/quicksave-multi.log"
@@ -3248,6 +3281,7 @@ for _test_name in \
   test_maintenance_lock_spoof_rejected \
   test_quicksave_batch_transaction \
   test_quicksave_delete_query_failure \
+  test_quicksave_permission_denied_guides_fix \
   test_quickload_defaults_to_newest_snapshot \
   test_quickload_resolution_and_failure \
   test_term_snapshot_delete_guards \

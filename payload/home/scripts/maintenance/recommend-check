@@ -257,7 +257,7 @@ main() {
     "fakeroot|fakeroot|必要|官方仓库更新检查|pacman-contrib 的 checkupdates 需要它建立临时数据库；缺失时待更新列表无法检查 Pacman 更新。"
     "shellcheck|shellcheck|推荐|维护脚本静态检查|改 term-menu、sysup、clean 等脚本前先跑，能提前发现常见 Bash 问题。"
     "downgrade|downgrade|可选|pacd 降级工具|pacd 强依赖 downgrade；不需要包版本回退时可以不装。"
-    "strace|strace|可选|pacrrr 残留追踪|pacrrr 需要用 strace 追踪应用读写路径；不用残留追踪清理时可以不装。"
+    "strace|strace|可选|pacr --trace-command 残留追踪|pacr --trace-command 需要用 strace 追踪应用读写路径；不用残留追踪清理时可以不装。"
     "upower|upower|可选|check-battery 电池读取|check-battery 通过 upower 读取电池状态；台式机或不用该脚本时可以不装。"
   )
 

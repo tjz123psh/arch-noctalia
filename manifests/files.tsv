@@ -133,8 +133,8 @@ payload/home/scripts/maintenance/offsite-backup-schedule	/home/pang/scripts/main
 payload/home/scripts/maintenance/pacnew-check	/home/pang/scripts/maintenance/pacnew-check	755	17f5f2fe4190a8e60037ceb0faae17e2
 payload/home/scripts/maintenance/post-update-check	/home/pang/scripts/maintenance/post-update-check	755	50e06145b99553874ef470fc058c5c8a
 payload/home/scripts/maintenance/quickload	/home/pang/scripts/maintenance/quickload	755	ab62341b4dce01b3a1401ea433698fe8
-payload/home/scripts/maintenance/quicksave	/home/pang/scripts/maintenance/quicksave	755	c419021e1e67cc46a4d09481e6791578
-payload/home/scripts/maintenance/recommend-check	/home/pang/scripts/maintenance/recommend-check	755	c4c827f65abb1fcb07ac6c656e3a3563
+payload/home/scripts/maintenance/quicksave	/home/pang/scripts/maintenance/quicksave	755	e087cbeef9b62338ae3aead11582f6ed
+payload/home/scripts/maintenance/recommend-check	/home/pang/scripts/maintenance/recommend-check	755	cb67f028461ea9bd3793c9b4d822502b
 payload/home/scripts/maintenance/review/README.md	/home/pang/scripts/maintenance/review/README.md	600	1bdf2b9274a0dc01083df4173621356c
 payload/home/scripts/maintenance/review/backup.md	/home/pang/scripts/maintenance/review/backup.md	644	8408e10298ae3bb619d21ab373f9322f
 payload/home/scripts/maintenance/review/diagnostics.md	/home/pang/scripts/maintenance/review/diagnostics.md	644	483d72fafad8fe0803277dba68b4d2cc
@@ -179,7 +179,7 @@ payload/home/scripts/maintenance/sysup	/home/pang/scripts/maintenance/sysup	755	
 payload/home/scripts/maintenance/term-menu	/home/pang/scripts/maintenance/term-menu	755	f7443f782f855210354b6ccfa638d64c
 payload/home/scripts/maintenance/terminal-tools	/home/pang/scripts/maintenance/terminal-tools	755	11e6f47ea88deb23cdf8ca6e1a338f07
 payload/home/scripts/maintenance/tests/DESTRUCTIVE-VM.md	/home/pang/scripts/maintenance/tests/DESTRUCTIVE-VM.md	644	eb29c8ddf9f234250eb05f479312ce52
-payload/home/scripts/maintenance/tests/run	/home/pang/scripts/maintenance/tests/run	755	1f0b4aa3a2c6d024ca54bb2b254afe9b
+payload/home/scripts/maintenance/tests/run	/home/pang/scripts/maintenance/tests/run	755	e2301d9d0390989948087b3275a76736
 payload/system/etc/greetd/config.toml	/etc/greetd/config.toml	644	1812fea641f1c31f43936e83e4cdde83
 payload/system/etc/nwg-hello/background.png	/etc/nwg-hello/background.png	664	2dfb5f774726de3c166ab9df1d282426
 payload/system/etc/nwg-hello/niri.kdl	/etc/nwg-hello/niri.kdl	644	f190ba42fd66d323323a6d141cd61600
