@@ -173,7 +173,7 @@ payload/home/scripts/maintenance/review1/evidence/ui-lib-smoke.sh	/home/pang/scr
 payload/home/scripts/maintenance/review1/ui-checks.md	/home/pang/scripts/maintenance/review1/ui-checks.md	644	2fd21588181c15aa5cf836abcd927718
 payload/home/scripts/maintenance/review1/update-chain.md	/home/pang/scripts/maintenance/review1/update-chain.md	644	32e729712eacb19227abaf537d58ee30
 payload/home/scripts/maintenance/review1/verify.md	/home/pang/scripts/maintenance/review1/verify.md	644	df8cbf25bcc57632fe23864bf55f5a26
-payload/home/scripts/maintenance/run	/home/pang/scripts/maintenance/run	755	7776e25ba1a766b7bfbe51a36e37a692
+payload/home/scripts/maintenance/run	/home/pang/scripts/maintenance/run	755	4b6991afc1f0869a6fb7b87c0f3a1903
 payload/home/scripts/maintenance/storage-health	/home/pang/scripts/maintenance/storage-health	755	c5b8c1e6bee73cb780fadfb4be12f4bf
 payload/home/scripts/maintenance/sysup	/home/pang/scripts/maintenance/sysup	755	36c56681e44e362dc3d9065b8f04b197
 payload/home/scripts/maintenance/term-menu	/home/pang/scripts/maintenance/term-menu	755	f7443f782f855210354b6ccfa638d64c

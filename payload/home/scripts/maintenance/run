@@ -2,7 +2,7 @@
 set -euo pipefail
 export MAINTENANCE_NO_NOTIFY=1
 
-ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 TESTS_RUN=0
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf -- "$TMP_DIR"' EXIT
@@ -1094,6 +1094,39 @@ STUB
   pass 'snapshot deletion warns about paired batches and batches its calls'
 }
 
+test_quicksave_permission_denied_guides_fix() {
+  local bin="$TMP_DIR/quicksave-perm-bin"
+  local log="$TMP_DIR/quicksave-perm.log"
+  local home="$TMP_DIR/quicksave-perm-home"
+  local out status=0
+  mkdir -p "$bin" "$home"
+  cat > "$bin/snapper" <<'STUB'
+#!/usr/bin/env bash
+case " $* " in
+  *' list-configs '*) printf 'config\037subvolume\nroot\037/\n' ;;
+  *' get-config '*) printf 'No permissions.\n' >&2; exit 1 ;;
+esac
+STUB
+  printf '%s\n' '#!/usr/bin/env bash' 'exit 0' > "$bin/btrfs"
+  cat > "$bin/pkexec" <<'STUB'
+#!/usr/bin/env bash
+printf 'pkexec %s\n' "$*" >> "$PERM_TEST_LOG"
+exit 0
+STUB
+  chmod +x "$bin"/*
+
+  out="$(printf 'n\n' | PERM_TEST_LOG="$log" HOME="$home" PATH="$bin:$PATH" \
+    MAINTENANCE_LOCK_FILE="$TMP_DIR/quicksave-perm.lock" \
+    "$ROOT/quicksave" 2>&1)" || status=$?
+  [[ "$status" -ne 0 ]] || fail 'quicksave must stop when permission is denied and the fix is declined'
+  assert_contains "$out" '无法由当前用户读取' \
+    'quicksave must recognise snapper "No permissions." as a permission problem'
+  [[ "$out" != *'并非权限不足'* ]] \
+    || fail 'quicksave must not misclassify "No permissions." as an unrelated failure'
+  [[ ! -s "$log" ]] || fail 'quicksave must not run pkexec when the user declines the fix'
+  pass 'quicksave recognises No permissions as fixable and only fixes with consent'
+}
+
 test_quicksave_deletes_ids_in_one_call() {
   local bin="$TMP_DIR/quicksave-multi-bin"
   local log="$TMP_DIR/quicksave-multi.log"
@@ -1601,6 +1634,30 @@ STUB
   [[ "$out" != *'bluetooth inactive'* ]] \
     || fail 'hw-doctor must not warn about an enabled unit skipped by a systemd condition'
   pass 'hw-doctor treats a condition-skipped enabled unit as expected, not a failure'
+}
+
+test_boot_check_non_uefi_skip() {
+  local bin="$TMP_DIR/boot-nuefi-bin"
+  local out
+  mkdir -p "$bin"
+  cat > "$bin/pacman" <<'STUB'
+#!/usr/bin/env bash
+printf 'grub\nefibootmgr\nos-prober\ngrub-btrfs\nsnapper\nbtrfs-progs\n'
+STUB
+  cat > "$bin/systemctl" <<'STUB'
+#!/usr/bin/env bash
+printf 'inactive\n'
+exit 3
+STUB
+  chmod +x "$bin"/*
+
+  # BOOT_CHECK_EFI_DIR 指向不存在的路径 = 模拟传统 BIOS 固件机器。
+  out="$(BOOT_CHECK_EFI_DIR="$TMP_DIR/no-efi" PATH="$bin:$PATH" "$ROOT/boot-check" 2>&1)" || true
+  assert_contains "$out" 'efibootmgr 跳过：当前系统非 UEFI 模式' \
+    'boot-check skips efibootmgr on non-UEFI firmware instead of failing'
+  [[ "$out" != *'efibootmgr 读取失败'* ]] \
+    || fail 'boot-check must not report an efibootmgr query failure on non-UEFI firmware'
+  pass 'boot-check treats EFI boot entries as not applicable on non-UEFI firmware'
 }
 
 test_privileged_read_prompts() {
@@ -3022,6 +3079,68 @@ STUB
   pass 'storage health distinguishes healthy disks from SMART media errors'
 }
 
+test_storage_health_preserves_empty_fields() {
+  local bin="$TMP_DIR/storage-empty-bin"
+  local out rc=0
+  mkdir -p "$bin"
+  cat > "$bin/lsblk" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' '{"blockdevices":[{"path":"/dev/test","type":"disk","model":"Fixture SCSI Disk","size":32212254720}]}'
+STUB
+  # 模拟「内部字段缺失」的磁盘（如虚拟机虚拟盘）：serial_number/smart_status/
+  # power_on_time 都不存在、exit_status=4——解析必须保持空字段不折叠、不串位。
+  cat > "$bin/smartctl" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' '{"smartctl":{"exit_status":4},"model_name":"Fixture SCSI Disk","device":{"name":"/dev/test","type":"scsi","protocol":"SCSI"},"temperature":{"current":0},"smart_support":{"available":false}}'
+STUB
+  cat > "$bin/sudo" <<'STUB'
+#!/usr/bin/env bash
+if [[ "${1:-}" == '-n' ]]; then
+  shift
+  [[ "${1:-}" == 'true' ]] && exit 0
+fi
+exec "$@"
+STUB
+  cat > "$bin/df" <<'STUB'
+#!/usr/bin/env bash
+printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\n/dev/test 1000 500 500 50%% /\n'
+STUB
+  cat > "$bin/findmnt" <<'STUB'
+#!/usr/bin/env bash
+printf '/ /dev/testp1[/@]\n'
+STUB
+  cat > "$bin/btrfs" <<'STUB'
+#!/usr/bin/env bash
+if [[ " $* " == *' device stats '* ]]; then
+  printf '[/dev/testp1].write_io_errs 0\n[/dev/testp1].corruption_errs 0\n'
+else
+  printf 'UUID: fixture\ndata_bytes_scrubbed: 1024\nread_errors: 0\ncsum_errors: 0\nverify_errors: 0\nuncorrectable_errors: 0\n'
+fi
+STUB
+  cat > "$bin/systemd-escape" <<'STUB'
+#!/usr/bin/env bash
+printf '%s\n' '-'
+STUB
+  cat > "$bin/systemctl" <<'STUB'
+#!/usr/bin/env bash
+printf 'enabled\n'
+STUB
+  chmod +x "$bin"/*
+
+  out="$(PATH="$bin:$PATH" "$ROOT/storage-health" 2>&1)" || rc=$?
+  assert_contains "$out" 'Fixture SCSI Disk' \
+    'storage health keeps the model name when a disk omits interior fields'
+  [[ "$out" != *'序列号'* ]] \
+    || fail 'storage health must not shift an absent serial into the displayed value'
+  assert_contains "$out" 'SMART 数据读取失败' \
+    'storage health reads the exit status of a device that cannot answer full SMART'
+  [[ "$out" != *'设备没有提供 SMART 总体结论'* ]] \
+    || fail 'storage health must not misread a shifted exit status as a missing SMART conclusion'
+  [[ "$rc" -ne 0 ]] \
+    || fail 'storage health must report a device whose SMART data cannot be read'
+  pass 'storage health preserves empty SMART fields instead of shifting columns'
+}
+
 test_terminal_tools_lifecycle() {
   local home="$TMP_DIR/terminal-tools-home"
   local config_home="$TMP_DIR/terminal-tools-config"
@@ -3162,6 +3281,7 @@ for _test_name in \
   test_maintenance_lock_spoof_rejected \
   test_quicksave_batch_transaction \
   test_quicksave_delete_query_failure \
+  test_quicksave_permission_denied_guides_fix \
   test_quickload_defaults_to_newest_snapshot \
   test_quickload_resolution_and_failure \
   test_term_snapshot_delete_guards \
@@ -3171,6 +3291,7 @@ for _test_name in \
   test_strict_check_status \
   test_diagnostic_query_failures \
   test_hw_doctor_condition_skipped \
+  test_boot_check_non_uefi_skip \
   test_privileged_read_prompts \
   test_gpu_compact_health_summary \
   test_offsite_rejects_same_disk \
@@ -3192,6 +3313,7 @@ for _test_name in \
   test_backup_restore_plan_and_apply_guards \
   test_btrfs_scrub_management \
   test_storage_health_strict_status \
+  test_storage_health_preserves_empty_fields \
   test_terminal_tools_lifecycle \
   test_cli_argument_contracts \
   test_audit_mode_suppresses_notifications; do
