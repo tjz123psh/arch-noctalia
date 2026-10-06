@@ -53,7 +53,7 @@ payload/home/.config/niri/conf.d/overview.kdl	/home/pang/.config/niri/conf.d/ove
 payload/home/.config/niri/conf.d/recent-windows.kdl	/home/pang/.config/niri/conf.d/recent-windows.kdl	644	679c92bd0799770ebcca35d1139167a6
 payload/home/.config/niri/conf.d/startup.kdl	/home/pang/.config/niri/conf.d/startup.kdl	644	cbfa3680cad08778ef3b19340180a37a
 payload/home/.config/niri/conf.d/touchpad-state.kdl	/home/pang/.config/niri/conf.d/touchpad-state.kdl	644	4cf106ec433527fb51ce8be635893a9f
-payload/home/.config/niri/conf.d/window-rules.kdl	/home/pang/.config/niri/conf.d/window-rules.kdl	644	5092711bb991c85680b8924082d855b6
+payload/home/.config/niri/conf.d/window-rules.kdl	/home/pang/.config/niri/conf.d/window-rules.kdl	644	c9f69d03f78dfec6beb248804b0362f3
 payload/home/.config/niri/config.kdl	/home/pang/.config/niri/config.kdl	600	c25567cc6b41352a33ec9e9eed9f80a9
 payload/home/.config/niri/scripts/niri-force-kill-window	/home/pang/.config/niri/scripts/niri-force-kill-window	755	1f4fe11f8ae05ed3ecf172f698fd2e46
 payload/home/.config/niri/scripts/niri-quit	/home/pang/.config/niri/scripts/niri-quit	755	b07b12985da06d5c9ff62487b6a3bcf0

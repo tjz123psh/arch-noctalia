@@ -73,3 +73,9 @@ window-rule {
     default-column-width { fixed 1020; }
     default-window-height { fixed 720; }
 }
+
+// 视频播放器（mpv，含 b23 弹窗）：浮动播放窗
+window-rule {
+    match app-id=r#"^mpv$"#
+    open-floating true
+}
