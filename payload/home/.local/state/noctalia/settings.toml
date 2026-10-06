@@ -247,9 +247,6 @@ offset_y = 56
 frame_rate = 144
 video_qp = 15
 
-[plugin_settings."pang/sidebar"]
-panel_layer = "overlay"
-
 [plugins]
 enabled = [ "noctalia/screen_recorder", "oldirtty/color_picker", "pang/magnifier", "8bury/mini-docker", "pang/sidebar" ]
 
@@ -475,6 +472,10 @@ hide_when_no_media = true
 max_length = 170
 min_length = 60
 type = "media"
+
+[widget."8bury/mini-docker:mini-docker"]
+show_count = false
+status_mode = "hidden"
 
 [widget.network]
 capsule = false
