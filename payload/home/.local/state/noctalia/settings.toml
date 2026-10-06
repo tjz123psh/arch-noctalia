@@ -274,6 +274,7 @@ panel_anchor_bar = "default"
 polkit_agent = true
 popup_borders = true
 popup_shadows = true
+settings_window_translucent = true
 
     [shell.animation]
     enabled = true
