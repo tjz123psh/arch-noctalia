@@ -74,6 +74,7 @@ order = [ "default" ]
             "screenshot",
             "screenrec",
             "color-picker",
+            "mini-docker",
             "nightlight",
             "control-center"
         ]
@@ -153,7 +154,7 @@ magnification_scale = 1.3500000000000001
 main_axis_padding = 14
 margin_edge = 12
 margin_ends = 16
-pinned = [ "firefox", "kitty", "obsidian", "org.gnome.Nautilus", "wps-office-prometheus", "transmission-gtk" ]
+pinned = [ "kitty", "obsidian", "org.gnome.Nautilus", "wps-office-prometheus", "Google Chrome", "transmission-gtk" ]
 position = "right"
 radius = 18
 reserve_space = false
@@ -246,8 +247,11 @@ offset_y = 56
 frame_rate = 144
 video_qp = 15
 
+[plugin_settings."pang/sidebar"]
+panel_layer = "overlay"
+
 [plugins]
-enabled = [ "noctalia/screen_recorder", "oldirtty/color_picker", "pang/sidebar", "pang/magnifier" ]
+enabled = [ "noctalia/screen_recorder", "oldirtty/color_picker", "pang/magnifier", "8bury/mini-docker", "pang/sidebar" ]
 
     [[plugins.source]]
     kind = "git"
@@ -376,13 +380,13 @@ transition_duration = 1100.0
     enabled = true
 
     [wallpaper.default]
-    path = "/home/pang/Pictures/wallpapers/斑斓.png"
+    path = "/home/pang/Pictures/wallpapers/蓝调.png"
 
     [wallpaper.last]
-    path = "/home/pang/Pictures/wallpapers/斑斓.png"
+    path = "/home/pang/Pictures/wallpapers/蓝调.png"
 
     [wallpaper.monitors.eDP-1]
-    path = "/home/pang/Pictures/wallpapers/斑斓.png"
+    path = "/home/pang/Pictures/wallpapers/蓝调.png"
 
 [widget.active_window]
 color = "#f0dedecc"
