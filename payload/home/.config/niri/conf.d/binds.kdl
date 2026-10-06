@@ -23,8 +23,8 @@ binds {
     Mod+M hotkey-overlay-title="任务管理器" { spawn "kitty" "--class" "btop" "-e" "btop"; }
     // Super+N: 打开/关闭通知中心
     Mod+N hotkey-overlay-title="通知中心" { spawn "noctalia" "msg" "panel-toggle" "control-center" "notifications"; }
-    // Super+Shift+N: 打开/关闭记事本
-    Mod+Shift+N hotkey-overlay-title="侧栏面板（便签）" { spawn "noctalia" "msg" "panel-toggle" "pang/sidebar:panel"; }
+    // Super+Shift+W: 打开/关闭记事本
+    Mod+Shift+W hotkey-overlay-title="侧栏面板（便签）" { spawn "noctalia" "msg" "panel-toggle" "pang/sidebar:panel"; }
     // Super+V: 打开/关闭剪贴板管理器
     Mod+V hotkey-overlay-title="剪贴板" { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
     // Super+Y: 浏览/更换壁纸

@@ -40,7 +40,7 @@ payload/home/.config/mimeapps.list	/home/pang/.config/mimeapps.list	644	723a0486
 payload/home/.config/mpv/input.conf	/home/pang/.config/mpv/input.conf	644	5bcdd4458c5a51af460358f096959f20
 payload/home/.config/mpv/mpv.conf	/home/pang/.config/mpv/mpv.conf	644	9c82b939bd96210a52032fa10578e54b
 payload/home/.config/niri/conf.d/animations.kdl	/home/pang/.config/niri/conf.d/animations.kdl	644	a1b28f515b3d9f270ed91b256c080316
-payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	b3981ba33bbbf812b43395e4900593bf
+payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	1f215ba201ab9170302754c9b3dd8ee8
 payload/home/.config/niri/conf.d/cursor.kdl	/home/pang/.config/niri/conf.d/cursor.kdl	644	da3d31125409f685f2dd5ffcb3c87cb4
 payload/home/.config/niri/conf.d/environment.kdl	/home/pang/.config/niri/conf.d/environment.kdl	644	e45f34c51d19f609b89570898a0584ae
 payload/home/.config/niri/conf.d/general.kdl	/home/pang/.config/niri/conf.d/general.kdl	644	4e00543e1ddac2d25b58333982010608
