@@ -17,7 +17,7 @@ order = [ "default" ]
     capsule_opacity = 0.36999999172985554
     capsule_padding = 7.0
     capsule_thickness = 0.71999998763203621
-    center = [ "datetime", "weather", "media", "audio_visualizer" ]
+    center = [ "datetime", "weather" ]
     concave_edge_corners = true
     contact_shadow = false
     enabled = true
@@ -42,7 +42,7 @@ order = [ "default" ]
     shadow = true
     show_on_workspace_switch = true
     smart_auto_hide = false
-    start = [ "launcher", "workspaces", "active_window" ]
+    start = [ "launcher", "workspaces", "active_window", "media" ]
     thickness = 36
     widget_spacing = 12
 
@@ -361,7 +361,7 @@ source = "wallpaper"
 wallpaper_scheme = "m3-tonal-spot"
 
     [theme.templates]
-    builtin_ids = [ "kitty", "starship", "gtk3", "gtk4", "qt", "kcolorscheme" ]
+    builtin_ids = [ "gtk3", "gtk4", "kcolorscheme", "kitty", "qt", "starship" ]
     community_ids = [ "fuzzel", "fcitx5", "fastfetch", "papirus-icons" ]
     enable_community_templates = true
 
@@ -375,13 +375,13 @@ transition_duration = 1100.0
     enabled = true
 
     [wallpaper.default]
-    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】动漫.png"
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】樱花-电脑.png"
 
     [wallpaper.last]
-    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】动漫.png"
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】樱花-电脑.png"
 
     [wallpaper.monitors.eDP-1]
-    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】动漫.png"
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】樱花-电脑.png"
 
 [widget.active_window]
 color = "#f0dedecc"
