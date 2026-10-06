@@ -34,9 +34,17 @@ window-rule {
     default-window-height { fixed 500; }
 }
 
-// 任务管理器（Super+M / Ctrl+Alt+Del；btop 顶替 DMS processlist）
+// 任务管理器（btop；Ctrl+Alt+Del 呼出）
 window-rule {
     match app-id="btop"
+    open-floating true
+    default-column-width { fixed 1100; }
+    default-window-height { fixed 680; }
+}
+
+// 资源管理器（Resources；Super+M 呼出；与 btop 同尺寸同形态）
+window-rule {
+    match app-id=r#"^net\.nokyan\.Resources$"#
     open-floating true
     default-column-width { fixed 1100; }
     default-window-height { fixed 680; }

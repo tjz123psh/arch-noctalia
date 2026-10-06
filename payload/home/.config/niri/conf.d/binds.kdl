@@ -19,8 +19,8 @@ binds {
     Mod+Alt+L hotkey-overlay-title="锁定屏幕" { spawn "noctalia" "msg" "session" "lock"; }
     // Super+,: 打开 Noctalia 设置
     Mod+Comma hotkey-overlay-title="系统设置" { spawn "noctalia" "msg" "settings-toggle"; }
-    // Super+M: 打开任务管理器（btop）
-    Mod+M hotkey-overlay-title="任务管理器" { spawn "kitty" "--class" "btop" "-e" "btop"; }
+    // Super+M: 资源管理器（Resources；btop 走 Ctrl+Alt+Del）
+    Mod+M hotkey-overlay-title="资源管理器" { spawn "resources"; }
     // Super+N: 打开/关闭通知中心
     Mod+N hotkey-overlay-title="通知中心" { spawn "noctalia" "msg" "panel-toggle" "control-center" "notifications"; }
     // Super+Shift+W: 打开/关闭记事本
