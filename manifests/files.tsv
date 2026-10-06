@@ -59,7 +59,7 @@ payload/home/.config/niri/scripts/niri-force-kill-window	/home/pang/.config/niri
 payload/home/.config/niri/scripts/niri-quit	/home/pang/.config/niri/scripts/niri-quit	755	b07b12985da06d5c9ff62487b6a3bcf0
 payload/home/.config/niri/scripts/niri-touchpad-toggle	/home/pang/.config/niri/scripts/niri-touchpad-toggle	755	675269243c9bf08cc11a4f7f9c7e00fe
 payload/home/.config/niri/scripts/niri-vmtest-gen	/home/pang/.config/niri/scripts/niri-vmtest-gen	755	56f32cfbc990146539830314ff7ad146
-payload/home/.config/noctalia/hooks.toml	/home/pang/.config/noctalia/hooks.toml	644	949788850bc98a9878df6d6e80bd9edf
+payload/home/.config/noctalia/hooks.toml	/home/pang/.config/noctalia/hooks.toml	644	4d490f82b7f6bfb12483930963beb6c0
 payload/home/.config/nomacs/Image Lounge.conf	/home/pang/.config/nomacs/Image Lounge.conf	644	8d4a0f214e9bf402c48be6f5b7002b9e
 payload/home/.config/nwg-look/config	/home/pang/.config/nwg-look/config	644	1d7532f1af614a510283dc0b46520eee
 payload/home/.config/papirus-folders/keep	/home/pang/.config/papirus-folders/keep	644	54ede524b231ba359a3a461fd6aa5197
@@ -94,6 +94,7 @@ payload/home/scripts/desktop/gsudo	/home/pang/scripts/desktop/gsudo	755	7e2ac2fa
 payload/home/scripts/desktop/rice-aur	/home/pang/scripts/desktop/rice-aur	755	b23985db28773b90be190f0abcad89eb
 payload/home/scripts/desktop/rice-dnd-auto	/home/pang/scripts/desktop/rice-dnd-auto	755	25cf89309f7c7f353ba775acb8374135
 payload/home/scripts/desktop/rice-doctor	/home/pang/scripts/desktop/rice-doctor	711	9d1c43e1ff86f75b046c060940004973
+payload/home/scripts/desktop/rice-fcitx-theme	/home/pang/scripts/desktop/rice-fcitx-theme	755	b24273ba1cc0fc3c1d7426a6b917b3fa
 payload/home/scripts/desktop/rice-fix-wallpaper	/home/pang/scripts/desktop/rice-fix-wallpaper	711	d5895f90482705ca652e06a8d4cb7d71
 payload/home/scripts/desktop/rice-login-bg	/home/pang/scripts/desktop/rice-login-bg	755	238867a0da2f911d77d2d0a8ff6ec339
 payload/home/scripts/desktop/rice-record	/home/pang/scripts/desktop/rice-record	755	0455b2bd8128fd5aafcbc30fe22ed0cc
