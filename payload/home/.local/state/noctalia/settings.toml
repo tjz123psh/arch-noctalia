@@ -269,6 +269,10 @@ max_visible = 4
 background_opacity = 0.5
 offset_y = 56
 
+[plugin_settings."noctalia/screen_recorder"]
+frame_rate = 144
+video_qp = 15
+
 [plugins]
 enabled = [ "noctalia/screen_recorder", "oldirtty/color_picker", "pang/sidebar", "pang/magnifier" ]
 
@@ -398,16 +402,16 @@ transition_duration = 1100.0
     enabled = true
 
     [wallpaper.default]
-    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】SNAFFUR-动漫少女.png"
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】动漫.png"
 
     [wallpaper.last]
-    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】SNAFFUR-动漫少女.png"
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】动漫.png"
 
     [wallpaper.monitors.Virtual-1]
     path = "/home/pang/Pictures/wallpapers/【哲风壁纸】樱花-电脑.png"
 
     [wallpaper.monitors.eDP-1]
-    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】SNAFFUR-动漫少女.png"
+    path = "/home/pang/Pictures/wallpapers/【哲风壁纸】动漫.png"
 
 [widget.active_window]
 color = "#f0dedecc"
