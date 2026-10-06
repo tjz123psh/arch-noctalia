@@ -34,7 +34,7 @@ payload/home/.config/gtk-4.0/gtk.css	/home/pang/.config/gtk-4.0/gtk.css	644	fe00
 payload/home/.config/gtk-4.0/noctalia.css	/home/pang/.config/gtk-4.0/noctalia.css	644	6e78a06e09330ea3300e38ef9ad59239
 payload/home/.config/gtk-4.0/settings.ini	/home/pang/.config/gtk-4.0/settings.ini	644	1984efc9a529b40a060c055ffc65df31
 payload/home/.config/kdeglobals	/home/pang/.config/kdeglobals	644	5a8213dd3359c4bf1a7c6683809ab1fb
-payload/home/.config/kitty/kitty.conf	/home/pang/.config/kitty/kitty.conf	600	8ef206e5a2be551ad0b4472893299730
+payload/home/.config/kitty/kitty.conf	/home/pang/.config/kitty/kitty.conf	600	b993363d74a38facb36abec3c3a1f9fd
 payload/home/.config/kitty/themes/noctalia.conf	/home/pang/.config/kitty/themes/noctalia.conf	644	5f316a7b24c98b21efe2bef057a68442
 payload/home/.config/mimeapps.list	/home/pang/.config/mimeapps.list	644	723a0486302493f6b67eccf1f8605752
 payload/home/.config/mpv/input.conf	/home/pang/.config/mpv/input.conf	644	5bcdd4458c5a51af460358f096959f20
