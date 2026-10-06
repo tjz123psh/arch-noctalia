@@ -31,6 +31,7 @@ window-rule {
     match app-id="quickterminal"
     open-floating true
     default-column-width { fixed 800; }
+    default-window-height { fixed 500; }
 }
 
 // 任务管理器（Super+M / Ctrl+Alt+Del；btop 顶替 DMS processlist）
