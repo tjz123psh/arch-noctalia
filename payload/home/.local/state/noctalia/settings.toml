@@ -74,7 +74,7 @@ order = [ "default" ]
             "screenshot",
             "screenrec",
             "color-picker",
-            "mini-docker",
+            "8bury/mini-docker:mini-docker",
             "nightlight",
             "control-center"
         ]
@@ -380,13 +380,13 @@ transition_duration = 1100.0
     enabled = true
 
     [wallpaper.default]
-    path = "/home/pang/Pictures/wallpapers/蓝调.png"
+    path = "/home/pang/Pictures/wallpapers/初雪.png"
 
     [wallpaper.last]
-    path = "/home/pang/Pictures/wallpapers/蓝调.png"
+    path = "/home/pang/Pictures/wallpapers/初雪.png"
 
     [wallpaper.monitors.eDP-1]
-    path = "/home/pang/Pictures/wallpapers/蓝调.png"
+    path = "/home/pang/Pictures/wallpapers/初雪.png"
 
 [widget.active_window]
 color = "#f0dedecc"
