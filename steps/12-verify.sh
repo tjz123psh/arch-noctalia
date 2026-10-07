@@ -6,6 +6,7 @@
 # 对照 manifests/packages.tsv（同一套机型/模块过滤）检查缺失的包；
 # 对照 manifests/bin-links.tsv 检查 ~/bin 软链层（存在且可执行）；
 # 服务状态清点：所管服务必须 enabled；当前未运行只提示不算失败（可能待重启/无硬件）；
+#   另核对 snapper-timeline.timer 的生效日历=每周（07 部署的 drop-in 覆盖上游 hourly）；
 # 另抽查用户目录与登录 shell（与样本形态一致）。
 # 全部通过 → 0；有缺失/不一致 → 1（并逐条列出）。
 set -Eeuo pipefail
@@ -150,12 +151,22 @@ for u in "${svc_required[@]}"; do
     svc_inactive+=("$u")
   fi
 done
-printf '[info]  services: %d checked, %d not enabled, %d enabled-but-inactive\n' "${#svc_required[@]}" "$svc_bad" "${#svc_inactive[@]}"
+# 生效日历核对：snapper timeline 必须是每周一次（07 部署的 /etc drop-in 覆盖上游 hourly）。
+svc_sched_bad=0
+if systemctl cat snapper-timeline.timer >/dev/null 2>&1; then
+  cal="$(systemctl show -p TimersCalendar --value snapper-timeline.timer 2>/dev/null || true)"
+  cal_entries="$(awk -F'OnCalendar=' '{print NF-1}' <<<"$cal")"
+  if [[ "$cal_entries" != "1" || "$cal" != *'OnCalendar=Mon *-*-* 00:00:00'* ]]; then
+    svc_sched_bad=1
+    warn "snapper-timeline.timer is not weekly (expected exactly one weekly OnCalendar): ${cal:-<empty>}"
+  fi
+fi
+printf '[info]  services: %d checked, %d not enabled, %d enabled-but-inactive, %d wrong schedule\n' "${#svc_required[@]}" "$svc_bad" "${#svc_inactive[@]}" "$svc_sched_bad"
 if (( ${#svc_inactive[@]} > 0 )); then
   info "note: enabled but not running right now (may be deferred to reboot / hardware-dependent): ${svc_inactive[*]}"
 fi
 
-if (( bad > 0 || miss > 0 || pk_missing > 0 || misc_bad > 0 || links_bad > 0 || svc_bad > 0 )); then
+if (( bad > 0 || miss > 0 || pk_missing > 0 || misc_bad > 0 || links_bad > 0 || svc_bad > 0 || svc_sched_bad > 0 )); then
   error "Stage 12 verify: FAIL"
   exit 1
 fi

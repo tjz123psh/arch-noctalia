@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # steps/10-services.sh — Stage 10: enable services.
 # 系统级：docker、bluetooth（enable --now）；btrfs（root 是 btrfs 时）：snapper 配置缺则按默认模板创建、
-#   snapper-timeline.timer / snapper-cleanup.timer / grub-btrfsd.service / btrfs-scrub@-.timer 启用；
+#   snapper-timeline.timer（每周一次——drop-in 由 07 部署）/ snapper-cleanup.timer / grub-btrfsd.service /
+#   btrfs-scrub@-.timer 启用；
 #   物理机驱动配套 asusd / supergfxd 若存在则启用；另把当前用户加入 docker 组（下次登录生效）。
 # 用户级：rice-dnd.timer（单元文件由 07 部署；无用户总线时退化为手工 enable 软链）。
 # 幂等与重跑修复：已启用的单元额外核对"当前是否在跑"——没在跑的会补一次启动尝试，
@@ -67,6 +68,10 @@ enable_system_unit() { # $1=unit
     die "failed to start ${u} (see: systemctl status ${u})"
   fi
 }
+
+# 07 可能刚部署/更新了 systemd 单元与 drop-in（如 snapper-timeline.timer 的"每周一次"覆盖）：
+# 先让 systemd 重读磁盘上的定义——幂等；已装机的重跑靠它把新 drop-in 立即生效（否则要等重启）。
+as_root systemctl daemon-reload
 
 # --- 基础服务 ---
 enable_system_unit docker.service

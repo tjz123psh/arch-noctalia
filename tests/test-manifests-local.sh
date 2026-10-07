@@ -52,6 +52,14 @@ grep -q '^payload/system/etc/greetd/config.toml' "$FILES" || bad "no greetd conf
 grep -q '^payload/system/var/lib/avatars/pang/.face' "$FILES" || bad "no avatar mapping"
 grep -q '^payload/home/Pictures/wallpapers/' "$FILES" || bad "no wallpaper mapping"
 
+# snapper timeline 每周一次：drop-in 必须在册，内容=清空上游 OnCalendar + weekly（12 步另核对生效日历）。
+DROPIN="$ROOT/payload/system/etc/systemd/system/snapper-timeline.timer.d/override.conf"
+grep -q '^payload/system/etc/systemd/system/snapper-timeline.timer.d/override.conf' "$FILES" || bad "no snapper-timeline weekly drop-in mapping"
+if [[ -f "$DROPIN" ]]; then
+  grep -qx 'OnCalendar=' "$DROPIN" || bad "snapper drop-in must clear the upstream OnCalendar"
+  grep -qx 'OnCalendar=weekly' "$DROPIN" || bad "snapper drop-in must set OnCalendar=weekly"
+fi
+
 echo "checked: files rows=$rows (iterated $n), packages=$prows, aur=$arows"
 if (( fail > 0 )); then
   echo "test-manifests-local: FAIL"
