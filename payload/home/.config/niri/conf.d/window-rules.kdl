@@ -42,9 +42,10 @@ window-rule {
     default-window-height { fixed 680; }
 }
 
-// 资源管理器（Resources；Super+M 呼出；与 btop 同尺寸同形态）
+// 资源（GNOME Resources；Super+M 呼出；与 btop 同尺寸同形态）
+// ⚠ 其窗口 App ID 实测为 org.gnome.Resources（不是 nokyan 同名应用的 net.nokyan.Resources）
 window-rule {
-    match app-id=r#"^net\.nokyan\.Resources$"#
+    match app-id=r#"^org\.gnome\.Resources$"#
     open-floating true
     default-column-width { fixed 1100; }
     default-window-height { fixed 680; }
