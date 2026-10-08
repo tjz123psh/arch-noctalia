@@ -7,7 +7,7 @@ linuxqq-wayland-fix	aur	explicit	Wayland 修复版（屏幕共享/剪贴板/截�
 obsidian-bin	aur	explicit	
 opencode-bin	aur	explicit	
 ttf-wps-fonts	aur	explicit	
-wechat-universal-bwrap	aur	explicit	
+wechat-bin	aur	explicit	官方包重打包（替换 wechat-universal-bwrap）
 wps-office-cn	aur	explicit	
 wps-office-mime-cn	aur	explicit	
 wps-office-mui-zh-cn	aur	explicit	
