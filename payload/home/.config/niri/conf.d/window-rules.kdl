@@ -51,6 +51,14 @@ window-rule {
     default-window-height { fixed 680; }
 }
 
+// 资源监视器（Mission Center；Super+M 呼出；与 btop 同尺寸同形态）
+window-rule {
+    match app-id="io.missioncenter.MissionCenter"
+    open-floating true
+    default-column-width { fixed 1100; }
+    default-window-height { fixed 680; }
+}
+
 // 快捷键速查浮层（Super+/ 呼出；kitty + fzf）
 window-rule {
     match app-id="niri-keys"

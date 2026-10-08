@@ -19,8 +19,8 @@ binds {
     Mod+Alt+L hotkey-overlay-title="锁定屏幕" { spawn "noctalia" "msg" "session" "lock"; }
     // Super+,: 打开 Noctalia 设置
     Mod+Comma hotkey-overlay-title="系统设置" { spawn "noctalia" "msg" "settings-toggle"; }
-    // Super+M: 资源管理器（Resources；btop 走 Ctrl+Alt+Del）
-    Mod+M hotkey-overlay-title="资源管理器" { spawn "resources"; }
+    // Super+M: 资源监视器（Mission Center；btop 走 Ctrl+Alt+Del）
+    Mod+M hotkey-overlay-title="资源监视器" { spawn "missioncenter"; }
     // Super+N: 打开/关闭通知中心
     Mod+N hotkey-overlay-title="通知中心" { spawn "noctalia" "msg" "panel-toggle" "control-center" "notifications"; }
     // Super+Shift+W: 打开/关闭记事本
@@ -56,6 +56,9 @@ binds {
 
     // 触摸板开关（Fn+F10 / XF86TouchpadToggle；改写 touchpad-state.kdl 的 off 行后重载配置）
     XF86TouchpadToggle allow-when-locked=true hotkey-overlay-title="开关触摸板" { spawn "/home/pang/.config/niri/scripts/niri-touchpad-toggle"; }
+    // 屏幕亮度（Fn 亮度键；brightnessctl，5% 步进）
+    XF86MonBrightnessUp allow-when-locked=true hotkey-overlay-title="调高亮度" { spawn "brightnessctl" "-n" "set" "5%+"; }
+    XF86MonBrightnessDown allow-when-locked=true hotkey-overlay-title="调低亮度" { spawn "brightnessctl" "-n" "set" "5%-"; }
 
     // ===== 工作区切换（使用 Alt 键） =====
     // 原为 Super+1~9，已改为 Alt+1~9
@@ -103,7 +106,12 @@ binds {
     Mod+Shift+U hotkey-overlay-title="上下移动整个工作区" { move-workspace-down; }
     // Super+Shift+滚轮: 上下切换工作区（在滚轮导航段定义）
 
-    // ===== 截图 =====（Mod+Print 系列 vellum 待脚本移植）
+    // ===== 截图 =====
+
+    // Mod+Print: vellum 框选截图
+    Mod+Print hotkey-overlay-title="vellum 框选截图" { spawn "/home/pang/.local/bin/vellumctl" "region"; }
+    // Mod+Shift+Print: vellum 长截图
+    Mod+Shift+Print hotkey-overlay-title="vellum 长截图" { spawn "/home/pang/.local/bin/vellumctl" "long"; }
 
     // Alt+Print: 截取当前窗口
     Alt+Print hotkey-overlay-title="截取窗口" { spawn-sh "/home/pang/scripts/desktop/screenshot-sound arm; /home/pang/scripts/desktop/screenshot-clipboard window"; }
@@ -136,6 +144,8 @@ binds {
     // --- 终端 ---
     // Alt+Enter: 打开终端（kitty，原为 Super+Enter）
     Alt+Return hotkey-overlay-title="打开终端" { spawn "kitty" "-e" "fish"; }
+    // Alt+B: 从剪贴板读 B 站链接并在 mpv 浮动窗口播放
+    Alt+B hotkey-overlay-title="B站播放" { spawn-sh "/home/pang/bin/b23"; }
     // Alt+Slash: 临时浮动终端（独立实例，不干扰当前工作区布局）
     Alt+Slash hotkey-overlay-title="浮动终端" { spawn "kitty" "--single-instance" "--class" "quickterminal"; }
 
@@ -279,10 +289,10 @@ binds {
     // Mod+Shift+W   创建窗口规则（DMS 图形编辑器；niri 侧手写规则）
     // Super+Shift+C: 打开维护终端菜单
     Mod+Shift+C hotkey-overlay-title="维护菜单" { spawn-sh "kitty --class=term-menu --override initial_window_width=1600 --override initial_window_height=1000 -e $HOME/scripts/maintenance/term-menu"; }
-    // Alt+B  B站播放（b23 脚本）
+    // Alt+A: 放大镜
     Alt+A hotkey-overlay-title="放大镜" { spawn-sh "noctalia msg panel-toggle pang/magnifier:panel"; }
     // Alt+F5 录屏菜单（shorin-screenrec-menu 脚本）
-    // Mod+Print / Mod+Shift+Print / Mod+Ctrl+Print  vellum 框选 / 长截图 / 钉图（vellumctl）
+    // Mod+Ctrl+Print  vellum 钉图（vellumctl pin-last，未绑定）
     // Ctrl+XF86AudioLowerVolume / Ctrl+XF86AudioRaiseVolume  媒体音量微调（需 playerctl 小脚本）
 }
 
