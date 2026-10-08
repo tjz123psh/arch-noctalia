@@ -82,6 +82,7 @@ linux-zen-headers	extra
 linux-lts-headers	core		LTS 备用内核的头文件（nvidia-open-dkms 在 lts 上构建所需）
 mesa	extra	drivers	
 mesa-utils	extra	drivers	
+mission-center	extra		
 mkinitcpio	core		
 mpv	extra		
 mpv-mpris	extra		
