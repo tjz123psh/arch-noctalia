@@ -1,13 +1,13 @@
 id = "pang/sidebar"
 name = "Sidebar · 随手工作台"
-version = "2.1.1"
+version = "2.2.0"
 plugin_api = 32
 author = "pang"
 license = "MIT"
-description = "轻量侧边工作台：搜索、紧凑媒体、窗口、计时、系统、最近文件与随手记；支持专注模式、卡片置顶、拖拽整理和可调动效。"
+description = "轻量侧边工作台：搜索、窗口、自由时长计时（90s/25m/1h30m/1:30 任填；预设、加时、到点通知）、系统、最近文件与随手记；支持专注模式、卡片置顶、拖拽整理和可调动效。"
 icon = "layout-sidebar-left"
 tags = ["custom", "utility", "panel"]
-dependencies = ["playerctl", "niri", "curl", "libnotify", "xdg-utils", "glib2", "file", "util-linux", "findutils"]
+dependencies = ["niri", "libnotify", "xdg-utils", "glib2", "util-linux", "findutils"]
 
 [[setting]]
 key = "notes_dir"

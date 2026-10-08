@@ -49,8 +49,8 @@ test("closing halfway through soft motion reopens at the saved target", function
 end)
 
 test("toolbar count follows header toggles immediately", function()
-  local h = ready() assert(find(h.tree, "toolbar-status").props.text == "3 项展开")
-  h.env.onIpc("toggle", "wins") assert(find(h.tree, "toolbar-status").props.text == "4 项展开")
+  local h = ready() assert(find(h.tree, "toolbar-status").props.text == "2 项展开")
+  h.env.onIpc("toggle", "wins") assert(find(h.tree, "toolbar-status").props.text == "3 项展开")
 end)
 
 test("end drop exits the pinned group and malformed drops do nothing", function()
@@ -176,21 +176,57 @@ test("reopen read failure locks stale cached note against overwriting disk", fun
   assert(h.files["/notes/second.md"] == "external changed content")
 end)
 
-test("panel open reclaims orphaned cover files but keeps real data", function()
-  local h = harness() h.allowRemove = true
-  h.files["/data/sidebar-art-A1b2C3d4E5"] = "orphaned cover"
-  h.files["/data/art_0.jpg"] = "legacy slot"
-  h.files["/data/app_usage.json"] = "{}"
-  h.env.onOpen() h:settle()
-  assert(h.files["/data/sidebar-art-A1b2C3d4E5"] == nil and h.files["/data/art_0.jpg"] == nil)
-  assert(h.files["/data/app_usage.json"] == "{}" and h.files["/notes/便签.md"] == "existing note")
+-- v2.2 计时器：自由时长解析 / 启动参数与到点文案 / 运行中延长
+test("timer free-duration input parses flexible syntaxes", function()
+  local h = ready(nil, { open = { timer = true } })
+  for _, c in ipairs({
+    { "90s", "1:30" }, { "25m", "25:00" }, { "1h30m", "1:30:00" }, { "1:30", "1:30" },
+    { "1:30:00", "1:30:00" }, { "2时", "2:00:00" }, { "90", "1:30:00" }, { "90分30秒", "1:30:30" },
+    { "1小时15分", "1:15:00" },
+  }) do
+    h.env.onTimerDurInput(c[1])
+    assert(text(h, c[2]), "expected " .. c[2] .. " for " .. c[1])
+  end
+  for _, bad in ipairs({ "abc", "0", "1:70", "-5", "25x" }) do
+    h.env.onTimerDurInput(bad)
+    assert(text(h, "无法识别的时长"), "expected error hint for " .. bad)
+  end
 end)
 
-test("cover sweep runs after the first frame, not during it", function()
-  local h = harness() h.allowRemove = true h.files["/data/sidebar-art-Zz9Yy8Xx7W"] = "orphan"
-  h.fs = {} h.env.onOpen()
-  assert(h.fs.list == nil and h.files["/data/sidebar-art-Zz9Yy8Xx7W"] == "orphan")
-  h:settle() assert(h.files["/data/sidebar-art-Zz9Yy8Xx7W"] == nil)
+test("timer start passes seconds and readable message", function()
+  local h = ready()
+  h.env.onTimerSetSec(90)
+  h.env.onTimerToggle()
+  local start = take(h, function(cmd) return type(cmd) == "string" and cmd:find("action='start'", 1, true) end)
+  assert(start.command:find("secs='90'", 1, true))
+  assert(start.command:find("1 分钟 30 秒到了", 1, true))
+end)
+
+test("timer extend restarts with remaining plus added time", function()
+  local h = ready()
+  h.env.onTimerSetSec(600)
+  h.env.onTimerToggle()
+  local start = take(h, function(cmd) return type(cmd) == "string" and cmd:find("action='start'", 1, true) end)
+  assert(start.command:find("secs='600'", 1, true))
+  start.callback({ exitCode = 0, stdout = "LIVE 4242 8888 mock-round" })
+  h:step(60000)
+  h.env.onTimerExtend(300)
+  local stop = take(h, function(cmd) return type(cmd) == "string" and cmd:find("action='stop'", 1, true) end)
+  stop.callback({ exitCode = 0, stdout = "STOPPED" })
+  local restart = take(h, function(cmd) return type(cmd) == "string" and cmd:find("action='start'", 1, true) end)
+  assert(restart.command:find("secs='840'", 1, true), "expected remaining 540 + 300")
+end)
+
+test("timer ipc channel starts and stops", function()
+  local h = ready()
+  h.env.onIpc("timer", "start:2m")
+  local start = take(h, function(cmd) return type(cmd) == "string" and cmd:find("action='start'", 1, true) end)
+  assert(start.command:find("secs='120'", 1, true))
+  start.callback({ exitCode = 0, stdout = "LIVE 4242 8888 mock-round" })
+  h:settle()
+  h.env.onIpc("timer", "stop")
+  local stop = take(h, function(cmd) return type(cmd) == "string" and cmd:find("action='stop'", 1, true) end)
+  assert(stop.command:find("action='stop'", 1, true))
 end)
 
 print(passed .. " regressions passed")
