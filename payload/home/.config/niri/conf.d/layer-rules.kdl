@@ -26,17 +26,9 @@ layer-rule {
 // 强制 xray/blur/noise/saturation 会因此回退成整块 surface，造成开关闪块。
 // 有效 client region 仍会让 Niri 自动启用模糊；Noctalia 的动画/阴影保持不变。
 
-// 浮动模式下的面板（万一以后把 *_placement 改成 floating）
-layer-rule {
-    match namespace="^noctalia-panel$"
-    background-effect {
-        xray true
-        blur true
-        noise 0.025
-        saturation 1.2
-    }
-
-}
+// 浮动模式 / 插件面板（noctalia-panel）：与 attached 同策——由 client blur region 驱动，
+// 不在此强制 background-effect。v5.2.1 的持久面板打开时先发 NULL 区域，
+// 强制规则会回退成整块背景特效（插件面板/浮动面板的开关闪块），撤除后不再出现。
 
 // 点击拦截层：全屏透明层，明确禁止模糊 —— 保证点顶栏部件时顶栏依旧清晰
 layer-rule {
