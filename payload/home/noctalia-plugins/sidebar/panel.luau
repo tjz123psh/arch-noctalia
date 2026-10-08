@@ -392,7 +392,7 @@ done
     local list = {}
     for line in ((res.stdout or "") .. "\n"):gmatch("([^\n]*)\n") do
       if line ~= "" then
-        local name, exec, icon, term, path, id, visible = line:match("^(.-)\t(.-)\t(.-)\t(.-)\t(.-)\t(.-)\t([01])$")
+        local name, exec, icon, term, path, id, visible = line:match("^([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([^\t]*)\t([01])$")
         if id and not seen[id] then
           seen[id] = true
           if visible == "1" and name ~= "" then
@@ -634,6 +634,10 @@ end
 
 -- URI 的 + 是文件名本身，不是空格；只解码一次，拒绝坏转义和 NUL。
 local function artDecode(value)
+  if not value:find("%", 1, true) then
+    if value:find("%z") then return nil end
+    return value
+  end
   if value:gsub("%%[%x][%x]", ""):find("%%") then return nil end
   local decoded = value:gsub("%%(%x%x)", function(hex) return string.char(tonumber(hex, 16)) end)
   if decoded:find("%z") then return nil end
@@ -1571,6 +1575,7 @@ end
 
 -- XML 实体解码：href 里的路径可能含 &amp; 等（&amp; 必须最后解，避免二次解码）
 local function xmlUnescape(s)
+  if not s:find("&", 1, true) then return s end
   local function cp(n, base)
     local c = tonumber(n, base)
     if c and c > 0 and c < 0x110000 and not (c >= 0xD800 and c <= 0xDFFF) and utf8 and utf8.char then return utf8.char(c) end
@@ -2328,7 +2333,7 @@ function update()
   -- 窗口列表：展开时每秒，收起时 3 秒一次（收起态只需要数量）
   if open.wins or winsTick % 3 == 1 then refreshWins() end
   recent.tick = recent.tick + 1
-  if recent.tick % 10 == 1 then refreshRecent() end
+  if recent.tick % 30 == 1 then refreshRecent() end
   -- 计时器推进；接管中的后台计时每 3 秒探测一次是否已结束
   if timer.running and not timer.adopted then
     local rem = (timer.deadlineMs - noctalia.nowMs()) / 1000
