@@ -17,8 +17,6 @@ end
 local function harness(motion, layout)
   local h = { now = 1000000, renders = 0, nodes = 0, built = 0, frame = false, async = {}, encoded = {}, files = {}, fs = {}, errors = {} }
   local function ioCall(name) h.fs[name] = (h.fs[name] or 0) + 1 end
-  h.files["/notes/便签.md"] = "existing note"
-  h.files["/notes/second.md"] = "second note"
   if layout then h.files["/data/panel_layout.json"] = "layout" h.encoded.layout = layout end
   h.encoded.wins = { { id = 1, title = "Example", app_id = "example", is_focused = true, workspace_id = 1 } }
   h.encoded.workspaces = { { id = 1, idx = 1 } }
@@ -50,7 +48,7 @@ local function harness(motion, layout)
     fileExists = function(p) ioCall("exists") return h.files[p] ~= nil end,
     renameFile = function() error("unexpected migration") end,
     removeFile = function(p) if not h.allowRemove then error("unexpected deletion: " .. p) end h.files[p] = nil return true end,
-    expandPath = function(p) return p == "~/Documents/notes" and "/notes" or p end,
+    expandPath = function(p) return p end,
     appIconPath = function() ioCall("icon") return nil end,
     fuzzyScore = function(q, name) if name:lower():find(q:lower(), 1, true) then return 1 end end,
     runAsync = function(cmd, cb) if h.rejectAsync then return false end h.async[#h.async + 1] = { command = cmd, callback = cb } return true end,
@@ -132,14 +130,13 @@ end
 local passed = 0
 local function test(name, fn) fn() passed = passed + 1 print("PASS " .. name) end
 
-test("first frame precedes note and subprocess IO", function()
+test("first frame precedes subprocess IO", function()
   local h = harness() h.fs = {} h.env.onOpen()
   assert(h.renders == 1 and #h.async == 0)
   assert(not h.fs.mkdir and not h.fs.list and not h.fs.write)
   assert((h.fs.read or 0) == 1, "only layout read is allowed before first frame")
   visit(h.tree, function(n) assert(n.props.opacity == nil or n.props.opacity == 1, "no group alpha animation") end)
   h:settle() assert(not h.frame and h.seconds)
-  assert(h:height("note") == 240)
 end)
 
 test("rapid reversal is continuous and ends at the latest target", function()
@@ -164,20 +161,20 @@ end)
 test("focus mode restores the previous layout", function()
   local h = harness() h.env.onOpen() h:settle()
   h.env.onIpc("focus") h:settle()
-  assert(h:height("search") > 0 and h:height("note") == 0)
+  assert(h:height("search") > 0 and h:height("timer") == 0)
   h.env.onIpc("toggle", "timer") h:settle()
   assert(h:height("timer") > 0 and h:height("search") == 0)
   h.env.onIpc("focus") h:settle()
-  assert(h:height("search") > 0 and h:height("note") > 0 and h:height("timer") == 0)
+  assert(h:height("search") > 0 and h:height("timer") == 0)
 end)
 
 test("pins persist; drag validates keys and crosses groups", function()
   local h = harness() h.env.onOpen() h:settle()
-  h.env.onIpc("pin", "note") h:settle()
-  assert(h:layout().pinned.note)
+  h.env.onIpc("pin", "timer") h:settle()
+  assert(h:layout().pinned.timer)
   local list = find(h.tree, "cards").children[1].children
-  assert(list[1].props.key == "pinned-label" and list[2].props.key == "card-note")
-  h.env.onCardDrop("wins", "before|note") h:settle() assert(h:layout().pinned.wins)
+  assert(list[1].props.key == "pinned-label" and list[2].props.key == "card-timer")
+  h.env.onCardDrop("wins", "before|timer") h:settle() assert(h:layout().pinned.wins)
   local before = h.renders h.env.onCardDrop("invalid", "before|search") assert(h.renders == before)
 end)
 
@@ -205,21 +202,12 @@ test("closing invalidates pending callbacks and stops ticks", function()
 end)
 
 test("legacy and malformed layout migration is complete and unique", function()
-  local h = harness(nil, { order = { "note", "note", "unknown", 1 }, open = { search = false }, pinned = { note = true } })
+  local h = harness(nil, { order = { "timer", "timer", "unknown", 1 }, open = { search = false }, pinned = { timer = true } })
   h.env.onOpen() h:settle()
   assert(h:height("search") == 0)
   local seen, count = {}, 0
   visit(h.tree, function(n) local k = n.props.key if k and k:match("^card%-") then assert(not seen[k]) seen[k] = true count = count + 1 end end)
-  assert(count == 6)
-end)
-
-test("failed note save survives close, reopen and note switching", function()
-  local h = harness() h.env.onOpen() h:settle()
-  h.env.onNoteEdited("unsaved important text") h.failWrite = true
-  h.env.onNoteSwitch("1") h.env.onClose() h.env.onOpen() h:settle()
-  local found = false
-  visit(h.tree, function(n) if n.type == "input" and n.props.multiline then assert(n.props.value == "unsaved important text") found = true end end)
-  assert(found)
+  assert(count == 5)
 end)
 
 test("stable idle update does not rebuild unrelated cards", function()

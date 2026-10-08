@@ -1,9 +1,5 @@
 {
   "settings": {
-    "notes_dir": {
-      "label": "Notes folder",
-      "description": "Folder that stores the note files."
-    },
     "search_limit": {
       "label": "Search result limit",
       "description": "Maximum number of app search results (3-20)."

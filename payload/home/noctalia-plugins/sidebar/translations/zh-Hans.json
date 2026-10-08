@@ -1,9 +1,5 @@
 {
   "settings": {
-    "notes_dir": {
-      "label": "笔记目录",
-      "description": "存放便签文件的文件夹。"
-    },
     "search_limit": {
       "label": "搜索结果上限",
       "description": "应用搜索最多显示多少条（3–20）。"

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 运行 sidebar 插件的全部离线检查：不启动桌面程序、不播放媒体、不写入用户笔记。
+# 运行 sidebar 插件的全部离线检查：不启动桌面程序、不播放媒体、不写入用户数据。
 # 用法：bash sidebar/tests/run_all.sh
 set -euo pipefail
 cd -- "$(dirname -- "$0")/../.."

@@ -1,10 +1,10 @@
 --!nonstrict
 -- pang/sidebar v2.2 — 布局稳定优先 / 数据安全 / 自由时长计时器（媒体卡已按用户要求移除）
--- 卡片：搜索 / 随手记 / 窗口 / 计时器 / 系统 / 最近文件。
+-- 卡片：搜索 / 窗口 / 计时器 / 系统 / 最近文件。
 -- 默认正文即时收展，只淡入箭头；柔和模式短高度过渡。输入收起时卸载以解除焦点。
 -- 卡片头部/列表行/空状态共用构件；搜索支持 Alt+↑↓ 选择、
---       Enter 打开选中项；窗口/最近/笔记加右键菜单；曲线可悬停读数；
---       修正异步竞态与错误路径（应用列表、计时器 pid、笔记目录、xbel 解析）。
+--       Enter 打开选中项；窗口/最近加右键菜单；曲线可悬停读数；
+--       修正异步竞态与错误路径（应用列表、计时器 pid、xbel 解析）。
 -- plugin_api 32：容器 tooltip / panel.openContextMenu / ui.graph 指针回调。
 
 -- ============ 通用小工具 ============
@@ -31,7 +31,6 @@ local function trunc(s, n)
   end
   return s -- 无法确认 UTF-8 边界时不截断，避免中文乱码。
 end
-local function endsWith(s, suffix) return s:sub(-#suffix) == suffix end
 local function shq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
 
 -- ============ 设计 token（一处定义，各卡统一引用） ============
@@ -46,7 +45,6 @@ local CL = {                                                             -- 颜�
 }
 
 -- 插件设置（Settings → Plugins 修改；声明见 plugin.toml 的 [[setting]]）
-local NOTES_DIR = noctalia.getConfig("notes_dir") or "~/Documents/notes"
 local SEARCH_LIMIT = tonumber(noctalia.getConfig("search_limit")) or 10
 local RECENT_COUNT = tonumber(noctalia.getConfig("recent_count")) or 8
 
@@ -55,10 +53,10 @@ local render -- forward declaration
 local updateToolbarStatus
 local timer -- forward declaration：计时器状态（布局文件持久化 durSec，见 flushLayout）
 
--- 折叠状态 + 卡片顺序（可拖拽排序）：默认展开 搜索/笔记；顺序与折叠持久化到 panel_layout.json
-local open = { search = true, note = true, wins = false, timer = false, sysmon = false, recent = false }
-local order = { "search", "note", "wins", "timer", "sysmon", "recent" }
-local CARD_KEYS = { search = true, note = true, wins = true, timer = true, sysmon = true, recent = true }
+-- 折叠状态 + 卡片顺序（可拖拽排序）：默认展开 搜索；顺序与折叠持久化到 panel_layout.json
+local open = { search = true, wins = false, timer = false, sysmon = false, recent = false }
+local order = { "search", "wins", "timer", "sysmon", "recent" }
+local CARD_KEYS = { search = true, wins = true, timer = true, sysmon = true, recent = true }
 local stateDirty = false    -- 性能：只在可见数据变化时重绘（空闲秒不重绘）
 local winsTick = 0
 local updateTick = 0
@@ -117,14 +115,14 @@ local function foldValue(key)
 end
 local function bodyVisible(key)
   -- 隐藏不会 blur；收起输入卡片时真正移除输入框。
-  if key == "search" or key == "note" or key == "timer" then return open[key] end
+  if key == "search" or key == "timer" then return open[key] end
   return retainedBodies[key] or warmVisible[key] or open[key] or folds[key] ~= nil
 end
 local function setCardOpen(key, value)
   if not CARD_KEYS[key] or open[key] == value then return end
   local from = foldValue(key)
   open[key] = value
-  if key == "search" or key == "note" or key == "timer" then markDirty(key) end
+  if key == "search" or key == "timer" then markDirty(key) end
   local target = value and 1 or 0
   if MOTION == "light" then feedback[key] = noctalia.nowMs() wake() end
   local node, header = motionNodes[key], headerNodes[key]
@@ -498,7 +496,7 @@ function onSearchSubmit(_)
   end
 end
 
--- Alt+↑↓ 选择结果；普通方向键留给多行笔记（宿主全局捕获不能按焦点放行）。
+-- Alt+↑↓ 选择结果；普通方向键留给输入框（宿主全局捕获不能按焦点放行）。
 function onKey(chord, pressed)
   if pressed == false or pressed == "false" then return end
   if not panelVisible or not open.search or activeCard ~= "search" or search.cmdMode or #search.results == 0 then return end
@@ -1505,290 +1503,9 @@ local function recentCard()
   return cardShell("recent", children, math.min(280, math.max(48, #recent.list * 58)))
 end
 
--- ============ 卡 6：临时笔记（多便签 + 预览） ============
-local note = {
-  dir = "", path = "", buffer = "", rev = 0, dirty = false, idle = 0,
-  stamp = "", pendingClear = false, pendingDelete = false, preview = false,
-  files = {}, sel = 0, failures = 0, retryAt = 0, broken = false, editFocus = false, loaded = false, creating = false,
-}
-
-local function noteStatePath() return noctalia.pluginDataDir() .. "/note_state.json" end
-
-local function saveNote()
-  if not note.dirty or note.path == "" then
-    note.idle = 0
-    return
-  end
-  local ok, err = noctalia.writeFile(note.path, note.buffer)
-  note.idle = 0
-  if ok then
-    note.dirty = false
-    note.failures = 0
-    note.stamp = noctalia.formatTime("%H:%M:%S")
-    markDirty("note")
-  else
-    -- 退避重试：首次失败提示一次，之后 2^n 秒拉长间隔，避免每 2 秒弹错
-    note.failures = note.failures + 1
-    note.retryAt = noctalia.nowMs() + 2 ^ math.min(note.failures, 5) * 1000
-    if note.failures == 1 then
-      noctalia.notifyError("临时笔记", err or "写入失败")
-    end
-  end
-end
-
--- 自动保存节拍：编辑停止 ~2 秒后落盘，失败按退避间隔重试
-local function noteTick()
-  if not note.dirty then return end
-  note.idle = note.idle + 1
-  if note.idle >= 2 and noctalia.nowMs() >= note.retryAt then
-    saveNote()
-  end
-end
-
-local function persistNoteState()
-  if note.path ~= "" then
-    local enc = noctalia.json.encode({ file = basename(note.path) })
-    if enc then noctalia.writeFile(noteStatePath(), enc) end
-  end
-end
-
-local function scanNotes()
-  local out = {}
-  local names = noctalia.listDir(note.dir) or {}
-  for _, n in ipairs(names) do
-    if endsWith(n, ".md") then table.insert(out, n) end
-  end
-  table.sort(out)
-  return out
-end
-
-local function openNoteFile(name)
-  if not name or name == "" then return end
-  local path = note.dir .. "/" .. name
-  local content, err = noctalia.readFile(path)
-  if content == nil then
-    noctalia.notifyError("随手记", err or "无法读取笔记，已保留当前内容")
-    if note.path == "" or note.path == path then note.broken = true end
-    return false
-  end
-  if note.path == path and note.buffer == content and not note.dirty then return true end
-  note.path = path
-  note.buffer = content
-  for i, f in ipairs(note.files) do if f == name then note.sel = i - 1 end end
-  note.dirty = false
-  note.rev = note.rev + 1
-  note.pendingClear = false
-  note.pendingDelete = false
-  note.failures = 0
-  note.retryAt = 0
-  note.editFocus = false
-  note.stamp = ""
-  return true
-end
-
--- 用 noclobber 排他创建：同步工具刚创建的同名文件也绝不会被清空。
-local function createNewNote(seed)
-  if note.creating then return end
-  note.creating = true
-  local command = { "sh", "-c", [[
-dir=$1
-n=1
-while [ "$n" -le 10000 ]; do
-  if [ "$n" -eq 1 ]; then name='便签.md'; else name="便签-$n.md"; fi
-  path="$dir/$name"
-  if [ -e "$path" ] || [ -L "$path" ]; then n=$((n + 1)); continue; fi
-  if (umask 077; set -C; : > "$path") 2>/dev/null; then printf '%s\n' "$name"; exit 0; fi
-  if [ ! -e "$path" ] && [ ! -L "$path" ]; then exit 1; fi
-  n=$((n + 1))
-done
-exit 1
-]], "sidebar-note-create", note.dir }
-  local function finish(res)
-    note.creating = false
-    local name = trim(res.stdout or "")
-    if res.exitCode == 0 and (name == "便签.md" or name:match("^便签%-%d+%.md$")) then
-      note.files = scanNotes()
-      saveNote()
-      if not note.dirty and openNoteFile(name) then
-        if seed and seed ~= "" and note.buffer == "" then
-          note.buffer, note.dirty, note.rev = seed, true, note.rev + 1
-          saveNote()
-        end
-        persistNoteState()
-      end
-    else
-      noctalia.notifyError("随手记", "无法新建便签，现有内容未改动")
-      if note.path == "" then note.broken = true end
-    end
-    note.loaded = true
-    markDirty("note")
-  end
-  if not noctalia.runAsync(command, finish) then finish({ exitCode = -1 }) end
-  markDirty("note")
-end
-
-function onNoteSwitch(value)
-  local idx = tonumber(value)
-  if not note.loaded or note.broken or note.creating or idx == nil or idx < 0 or idx % 1 ~= 0 or idx > #note.files then return end
-  saveNote()
-  if note.dirty then render("note") return end
-  if idx == #note.files then
-    createNewNote()
-  else
-    local name = note.files[idx + 1]
-    if name and openNoteFile(name) then persistNoteState() end
-  end
-  render("note")
-end
-
-function onNoteEdited(value)
-  if not panelVisible or not open.note or not note.loaded or note.broken or note.path == "" then return end
-  activeCard = "note"
-  local wasDirty = note.dirty
-  note.buffer = value or ""
-  if note.inputProps then note.inputProps.value = note.buffer end
-  note.dirty = true
-  note.idle = 0
-  if not wasDirty then markDirty("note") end
-end
-
-function onTogglePreview()
-  note.preview = not note.preview
-  render("note")
-end
-
-function onClearClick() note.pendingClear = true render("note") end
-function onClearConfirm()
-  if not note.pendingClear or note.broken or note.path == "" then return end
-  note.buffer = ""
-  note.dirty = true
-  note.rev = note.rev + 1
-  note.pendingClear = false
-  saveNote()
-  render("note")
-end
-function onClearCancel() note.pendingClear = false render("note") end
-
--- 右键垃圾桶：删除当前便签（保留至少一份）
-function openNoteMenu()
-  panel.openContextMenu({
-    items = {
-      { id = "clear", label = "清空内容" },
-      { kind = "separator" },
-      { id = "delete", label = "删除这份便签", enabled = #note.files > 1 },
-    },
-    onActivate = "onNoteMenuAction",
-  })
-end
-
-function onNoteMenuAction(actionId, _ctx)
-  if actionId == "clear" then
-    note.pendingDelete = false
-    note.pendingClear = true
-  elseif actionId == "delete" then
-    note.pendingClear = false
-    note.pendingDelete = true
-  end
-  render("note")
-end
-
-function onDeleteConfirm()
-  if not note.pendingDelete or note.creating or #note.files <= 1 then return end
-  note.pendingDelete = false
-  local path = note.path
-  if path == "" then return end
-  local ok, err = noctalia.removeFile(path)
-  if not ok then
-    noctalia.notifyError("临时笔记", err or "删除失败")
-    render("note")
-    return
-  end
-  note.path, note.buffer, note.dirty = "", "", false
-  note.files = scanNotes()
-  local target = note.files[1]
-  if target then openNoteFile(target) else createNewNote() end
-  persistNoteState()
-  render("note")
-end
-function onDeleteCancel() note.pendingDelete = false render("note") end
-
-local function noteCard()
-  if not note.loaded then
-    return cardShell("note", { cardHeader("note", "note", "随手记"), emptyState("pencil", "准备笔记…") }, 240)
-  end
-  local statusText
-  if note.broken then
-    return cardShell("note", {
-      cardHeader("note", "note", "临时笔记", {
-        ui.label({ text = "笔记不可用", fontSize = FS.small, color = CL.muted }),
-      }),
-      emptyState("alert-triangle", "无法读取笔记或目录，请检查权限后重开"),
-    }, 48)
-  end
-  if note.dirty then
-    statusText = "输入中…"
-  elseif note.stamp ~= "" then
-    statusText = "已保存 " .. note.stamp
-  else
-    statusText = "就绪"
-  end
-  local extras = {
-    ui.label({ text = statusText, fontSize = FS.small, color = CL.muted }),
-  }
-  if note.pendingClear then
-    extras[#extras + 1] = ui.button({ text = "确认清空", variant = "destructive", controlSize = "sm", onClick = "onClearConfirm" })
-    extras[#extras + 1] = ui.button({ glyph = "close", variant = "ghost", controlSize = "sm", onClick = "onClearCancel" })
-  elseif note.pendingDelete then
-    extras[#extras + 1] = ui.button({ text = "确认删除", variant = "destructive", controlSize = "sm", onClick = "onDeleteConfirm" })
-    extras[#extras + 1] = ui.button({ glyph = "close", variant = "ghost", controlSize = "sm", onClick = "onDeleteCancel" })
-  else
-    extras[#extras + 1] = ui.button({ glyph = note.preview and "pencil" or "eye", variant = "ghost", controlSize = "sm", tooltip = note.preview and "编辑" or "预览", onClick = "onTogglePreview" })
-    extras[#extras + 1] = ui.button({
-      glyph = "trash", variant = "ghost", controlSize = "sm",
-      tooltip = "清空内容（右键删除整份）", onClick = "onClearClick", onRightClick = "openNoteMenu",
-    })
-  end
-  local block = { cardHeader("note", "note", "随手记", extras) }
-  if bodyVisible("note") then
-    local opts = {}
-    for _, f in ipairs(note.files) do table.insert(opts, f) end
-    table.insert(opts, "＋ 新建便签")
-    local body
-    if note.preview then
-      body = ui.column({ fill = "surface_variant/0.22", radius = 8, padding = 8 }, {
-        ui.markdown({ text = note.buffer ~= "" and note.buffer or "_（空）_", width = 340 }),
-      })
-    elseif note.buffer:match("^%s*$") and not note.editFocus then
-      -- 空便签：先显示可点击的提示（输入框在 frameVisible=false 时不渲染自己的 placeholder）
-      body = ui.row({
-        fill = "surface_variant/0.35", radius = RD.row, padding = SP.block, height = 200, align = "start",
-        onClick = function() activeCard = "note" note.editFocus = true note.wantFocus = true render("note") end, tooltip = "点击开始输入",
-      }, {
-        ui.label({ text = "随手记点什么…", fontSize = FS.body, color = CL.muted }),
-      })
-    else
-      -- frameVisible=false：不用输入框自带的高亮边框（圆角不受控、偏圆），
-      -- 外框与预览模式保持同一规格（fill/radius 8/padding 8/height 240）
-      note.inputProps = focusOnce({
-        key = "note-" .. note.rev, value = note.buffer, multiline = true,
-        flexGrow = 1, frameVisible = false, focus = note.wantFocus or nil,
-        placeholder = "随手记点什么…", onChange = "onNoteEdited",
-      })
-      body = ui.row({ fill = "surface_variant/0.35", radius = 8, padding = 8, height = 200, align = "stretch" }, {
-        ui.input(note.inputProps),
-      })
-    end
-    table.insert(block, ui.select({ key = "note-select", options = opts, selectedIndex = note.sel, enabled = not note.creating, controlSize = "sm", onChange = "onNoteSwitch" }))
-    table.insert(block, body)
-  end
-  note.wantFocus = false
-  return cardShell("note", block, 240)
-end
-
 -- ============ 生命周期 ============
 local cardBuilders = {
   search = searchCard,
-  note = noteCard,
   wins = winsCard,
   timer = timerCard,
   sysmon = sysCard,
@@ -1817,7 +1534,7 @@ end
 local function setLayout(mode)
   focusMode, focusRestore = false, nil
   for key in pairs(CARD_KEYS) do
-    setCardOpen(key, mode == "all" or (mode == "daily" and (key == "search" or key == "note")))
+    setCardOpen(key, mode == "all" or (mode == "daily" and key == "search"))
   end
   render("layout")
   persistLayout()
@@ -1852,7 +1569,7 @@ local function toolbar()
     }),
     ui.row({ gap = 6, align = "center" }, {
       ui.button({ key = "daily", text = "常用", glyph = "layout-grid", controlSize = "sm", flexGrow = 1,
-        variant = "secondary", tooltip = "展开搜索和笔记", onClick = function() setLayout("daily") end }),
+        variant = "secondary", tooltip = "展开搜索", onClick = function() setLayout("daily") end }),
       ui.button({ key = "focus", text = "专注", glyph = "focus-2", controlSize = "sm", flexGrow = 1,
         variant = focusMode and "primary" or "ghost", tooltip = focusMode and "退出并恢复原布局" or "只展开当前卡片，切换时自动收起其他卡片",
         onClick = function() setFocusMode(not focusMode) end }),
@@ -1897,7 +1614,7 @@ render = function(key)
       })
       for _, k in ipairs(order) do
         if (pinned[k] == true) == pinGroup then
-          if not cardCache[k] or (dirtyCards[k] and (next(folds) == nil or motionNodes[k] == nil or k == "search" or k == "note" or k == "timer")) then
+          if not cardCache[k] or (dirtyCards[k] and (next(folds) == nil or motionNodes[k] == nil or k == "search" or k == "timer")) then
             cardCache[k] = cardBuilders[k]()
             dirtyCards[k] = nil
           end
@@ -1922,53 +1639,6 @@ render = function(key)
   })
   stateDirty = next(dirtyCards) ~= nil
   submitTree()
-end
-
-local function initializeNotes()
-  -- 保存失败后的未落盘缓冲优先，绝不在重开时被磁盘旧内容覆盖。
-  if note.creating then return end
-  if note.dirty then note.loaded = true markDirty("note") return end
-  -- 笔记目录与迁移（目录不可用时标记 broken，卡片显示错误态而不是让 onOpen 崩溃）
-  note.dir = noctalia.expandPath(NOTES_DIR)
-  note.broken = false
-  local dirOk, dirErr = noctalia.mkdirAll(note.dir)
-  if dirOk then
-    note.files = scanNotes()
-    if #note.files == 0 then
-      local old = noctalia.expandPath("~/Documents/scratchpad.md")
-      if noctalia.fileExists(old) then
-        local seed, err = noctalia.readFile(old)
-        if seed == nil then
-          note.broken, note.loaded = true, true
-          noctalia.notifyError("随手记", err or "无法读取旧笔记，原件未改动")
-          markDirty("note")
-        else
-          createNewNote(seed) -- 只复制到排他创建的新文件，不移动/覆盖旧原件。
-        end
-        return
-      end
-      note.files = scanNotes()
-    end
-    if #note.files == 0 then createNewNote() return end
-  else
-    note.broken = true
-    noctalia.notifyError("临时笔记", dirErr or "无法创建笔记目录")
-  end
-  if not note.broken then
-    local target = note.files[1]
-    local saved = noctalia.readFile(noteStatePath())
-    if saved then
-      local state = noctalia.json.decode(saved)
-      if type(state) == "table" and state.file then
-        for _, f in ipairs(note.files) do
-          if f == state.file then target = f end
-        end
-      end
-    end
-    openNoteFile(target)
-  end
-  note.loaded = true
-  markDirty("note")
 end
 
 local function restoreLayout()
@@ -2086,11 +1756,9 @@ function onOpen(_context)
   search.text, search.results, search.cmdText, search.cmdMode = "", {}, nil, false
   search.rev, search.wantFocus = search.rev + 1, open.search
   bootReady = false
-  -- 先交付首帧，再错峰加载。缓存内容立即可用，不等笔记/进程读取。
+  -- 先交付首帧，再错峰加载。缓存内容立即可用，不等进程读取。
   bootAt = noctalia.nowMs() + 280
   bootQueue = {
-    -- 复用首个加载任务的帧位：既不占用首帧，也不改变其余任务的错峰节奏。
-    function() initializeNotes() end,
     function() if not apps.loaded or noctalia.nowMs() - apps.loadedAt > 600000 then refreshApps() end end,
     function() timerAdopt() end,
     refreshWins,
@@ -2122,14 +1790,10 @@ function onClose()
   panel.setNeedsFrameTick(false)
   panel.setWantsSecondTicks(false)
   if layoutSaveAt then flushLayout() end
-  saveNote()
-  persistNoteState()
 end
 
 function onExit(_signal, _reason)
   if layoutSaveAt then flushLayout() end
-  saveNote()
-  persistNoteState()
 end
 
 -- IPC 也用于快捷键绑定与无鼠标回归；不暴露任意执行或文件路径。
@@ -2194,8 +1858,6 @@ function update()
     sysmon.disk = noctalia.diskStats(noctalia.expandPath("~/"))
     markDirty("sysmon")
   end
-  -- 笔记自动保存（编辑停顿后的落盘 + 失败退避重试）
-  noteTick()
   -- 分钟变化才更新时钟；其余由数据回调按需提交。
   local minute = noctalia.formatTime("%H:%M")
   if minute ~= clockMinute then clockMinute = minute stateDirty = true end
