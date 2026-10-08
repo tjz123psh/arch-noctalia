@@ -18,6 +18,7 @@ local function harness(motion, layout)
   local h = { now = 1000000, renders = 0, nodes = 0, built = 0, frame = false, async = {}, encoded = {}, files = {}, fs = {}, errors = {} }
   local function ioCall(name) h.fs[name] = (h.fs[name] or 0) + 1 end
   h.files["/notes/便签.md"] = "existing note"
+  h.files["/notes/second.md"] = "second note"
   if layout then h.files["/data/panel_layout.json"] = "layout" h.encoded.layout = layout end
   h.encoded.wins = { { id = 1, title = "Example", app_id = "example", is_focused = true, workspace_id = 1 } }
   h.encoded.workspaces = { { id = 1, idx = 1 } }
@@ -42,17 +43,17 @@ local function harness(motion, layout)
     nowMs = function() return h.now end,
     setUpdateInterval = function() end,
     formatTime = function(pattern) return pattern == "%H:%M" and "12:00" or "10 / 06 · 12:00" end,
-    readFile = function(p) ioCall("read") return h.files[p] end,
+    readFile = function(p) ioCall("read") if h.failRead and h.failRead[p] then return nil, "simulated read failure" end return h.files[p] end,
     writeFile = function(p, text) ioCall("write") if h.failWrite then return false, "simulated failure" end h.files[p] = text return true end,
-    listDir = function() ioCall("list") return { "便签.md", "second.md" } end,
+    listDir = function(dir) ioCall("list") local names = {} for p in pairs(h.files) do local name = p:match("^" .. dir .. "/([^/]+)$") if name then names[#names + 1] = name end end return names end,
     mkdirAll = function() ioCall("mkdir") return true end,
     fileExists = function(p) ioCall("exists") return h.files[p] ~= nil end,
     renameFile = function() error("unexpected migration") end,
-    removeFile = function() error("unexpected deletion") end,
+    removeFile = function(p) if not h.allowRemove then error("unexpected deletion: " .. p) end h.files[p] = nil return true end,
     expandPath = function(p) return p == "~/Documents/notes" and "/notes" or p end,
     appIconPath = function() ioCall("icon") return nil end,
     fuzzyScore = function(q, name) if name:lower():find(q:lower(), 1, true) then return 1 end end,
-    runAsync = function(cmd, cb) h.async[#h.async + 1] = { command = cmd, callback = cb } return true end,
+    runAsync = function(cmd, cb) if h.rejectAsync then return false end h.async[#h.async + 1] = { command = cmd, callback = cb } return true end,
     runInTerminal = function() error("unexpected command execution") end,
     notifyError = function(_, msg) h.errors[#h.errors + 1] = msg end,
     notify = function() end,
@@ -60,7 +61,7 @@ local function harness(motion, layout)
     copyToClipboard = function() return true end,
     systemStats = function() return { sampledAtMs = 10, cpu = { usagePercent = 5 }, ram = { usagePercent = 20, totalMb = 100, usedMb = 20 } } end,
     diskStats = function() ioCall("disk") return { usagePercent = 25 } end,
-    string = { urlDecode = function(v) return v end },
+    string = { urlDecode = function(v) return (v:gsub("%%(%x%x)", function(x) return string.char(tonumber(x, 16)) end)) end },
     json = {
       encode = function(v) local k = "json-" .. tostring(#h.encoded + 1) h.encoded[#h.encoded + 1] = k h.encoded[k] = copy(v) return k end,
       decode = function(v) return copy(h.encoded[v]) end,
@@ -77,7 +78,7 @@ local function harness(motion, layout)
           if cmd:find("niri msg -j windows", 1, true) then result.stdout = [[wins
 ###
 workspaces]]
-          elseif cmd:find("awk -F", 1, true) then result.stdout = [[Example	example	example	0	/usr/share/applications/example.desktop
+          elseif cmd:find("XDG_DATA_HOME", 1, true) and cmd:find("applications", 1, true) then result.stdout = [[Example	example	example	0	/usr/share/applications/example.desktop	example.desktop	1
 ]]
           elseif cmd:find("playerctl metadata --format", 1, true) then result.exitCode = 1
           end
@@ -97,6 +98,7 @@ workspaces]]
   function h:height(key) local n = find(self.tree, "body-" .. key) return n and n.props.visible ~= false and n.props.height or 0 end
   return h
 end
+if arg[2] == "--harness" then return { harness = harness, find = find, visit = visit, copy = copy } end
 if arg[2] == "--bench" then
   local h = harness() h.fs = {} h.env.onOpen()
   local firstIO = 0 for _, count in pairs(h.fs) do firstIO = firstIO + count end
@@ -141,7 +143,7 @@ test("first frame precedes note and subprocess IO", function()
 end)
 
 test("rapid reversal is continuous and ends at the latest target", function()
-  local h = harness() h.env.onOpen() h:settle()
+  local h = harness("soft") h.env.onOpen() h:settle()
   h.env.onIpc("toggle", "wins") h:step() h:step(64)
   local mid = h:height("wins") assert(mid > 0 and mid < 100)
   h.env.onIpc("toggle", "wins") assert(math.abs(h:height("wins") - mid) < 1)
@@ -151,7 +153,7 @@ test("rapid reversal is continuous and ends at the latest target", function()
 end)
 
 test("animation frames build no controls and perform no IO", function()
-  local h = harness() h.env.onOpen() h:settle()
+  local h = harness("soft") h.env.onOpen() h:settle()
   h.env.onIpc("toggle", "wins")
   local built, fs = h.built, copy(h.fs)
   h:step() h:step(48) h:step(48)

@@ -1,13 +1,13 @@
 id = "pang/sidebar"
 name = "Sidebar · 随手工作台"
-version = "2.0.0"
+version = "2.1.0"
 plugin_api = 32
 author = "pang"
 license = "MIT"
 description = "轻量侧边工作台：搜索、紧凑媒体、窗口、计时、系统、最近文件与随手记；支持专注模式、卡片置顶、拖拽整理和可调动效。"
 icon = "layout-sidebar-left"
 tags = ["custom", "utility", "panel"]
-dependencies = ["playerctl", "niri", "curl", "libnotify", "xdg-utils"]
+dependencies = ["playerctl", "niri", "curl", "libnotify", "xdg-utils", "glib2", "file", "util-linux", "findutils"]
 
 [[setting]]
 key = "notes_dir"
@@ -54,4 +54,5 @@ height = "fill"
 placement = "floating"
 position = "center_left"
 keyboard_focus = "exclusive"
-capture_keys = ["Up", "Down"]
+# 全局捕获不能按输入焦点放行，普通方向键必须留给多行笔记。
+capture_keys = ["Alt+Up", "Alt+Down"]

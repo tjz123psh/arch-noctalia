@@ -1,8 +1,8 @@
 --!nonstrict
--- pang/sidebar v2.0 — 轻量工作台：分层布局 / 专注与置顶 / 裁切动效 / 按需刷新
+-- pang/sidebar v2.1 — 稳定布局优先 / 软动画限频 / 数据安全 / 按需刷新
 -- 卡片：搜索 / 媒体 / 随手记 / 窗口 / 计时器 / 系统 / 最近文件。
--- 数据更新与画卷式展开分离；折叠内容预建并保留，点击不再重新创建控件。
--- v0.3：卡片头部/列表行/空状态抽成共用构件与设计 token；搜索支持 ↑↓ 选择、
+-- 默认正文即时收展，只淡入箭头；柔和模式短高度过渡。输入收起时卸载以解除焦点。
+-- 卡片头部/列表行/空状态共用构件；搜索支持 Alt+↑↓ 选择、
 --       Enter 打开选中项；窗口/最近/笔记加右键菜单；媒体可拖拽跳转、曲线可悬停读数；
 --       修正异步竞态与错误路径（应用列表、封面、计时器 pid、笔记目录、xbel 解析）。
 -- plugin_api 32：容器 tooltip / panel.openContextMenu / ui.graph 指针回调。
@@ -25,7 +25,13 @@ local function fmtBps(b)
 end
 local function basename(p) return (p:match("[^/]+$")) or p end
 local function dirname(p) return (p:match("^(.*)/[^/]*$")) or "" end
-local function trunc(s, n) if #s > n then return s:sub(1, n - 1) .. "…" end return s end
+local function trunc(s, n)
+  if utf8 and utf8.offset then
+    local ok, pos = pcall(utf8.offset, s, n + 1)
+    if ok then return pos and (s:sub(1, utf8.offset(s, n) - 1) .. "…") or s end
+  end
+  return s -- 无法确认 UTF-8 边界时不截断，避免中文乱码。
+end
 local function endsWith(s, suffix) return s:sub(-#suffix) == suffix end
 local function shq(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
 
@@ -47,6 +53,7 @@ local RECENT_COUNT = tonumber(noctalia.getConfig("recent_count")) or 8
 
 local MOTION = noctalia.getConfig("motion") or "light"
 local render -- forward declaration
+local updateToolbarStatus
 
 -- 折叠状态 + 卡片顺序（可拖拽排序）：默认展开 搜索/媒体/笔记；顺序与折叠持久化到 panel_layout.json
 local open = { search = true, media = true, note = true, wins = false, timer = false, sysmon = false, recent = false }
@@ -58,7 +65,7 @@ local winsTick = 0
 local mediaTick = 0
 local updateTick = 0
 
--- 宿主负责开场，插件只动画裁切高度，避免整树叠加透明度。
+-- 宿主负责面板开场；插件不叠加整树透明度，软模式的高度仍会触发布局。
 local folds, motionNodes, cardCache, dirtyCards = {}, {}, {}, {}
 local retainedBodies, headerNodes, warmVisible = {}, {}, {}
 local lastMotionSubmit, settleAt = 0, 0
@@ -72,10 +79,10 @@ local focusMode, focusRestore, activeCard = false, nil, "search"
 local customizing, layoutLoaded = false, false
 local layoutSaveAt = nil
 local bootQueue, bootAt, bootReady = {}, 0, false
-local motionMs = MOTION == "off" and 0 or (MOTION == "soft" and 440 or 300)
--- 画卷式：开头立刻起速（不吃掉首帧延迟），中段平稳，收尾自然减速。
--- 纯余弦/缓入曲线在起点速度为 0，视觉上就是"顿一下才开始动"。
-local function ease(x) return 0.18 * x + 0.82 * (0.5 - 0.5 * math.cos(x * math.pi)) end
+local motionMs = MOTION == "soft" and 220 or 0
+local feedback = {} -- 轻量模式只淡入箭头；正文一次布局。
+-- ease-out 首帧即可看到响应；不使用先慢后快的长缓入。
+local function ease(x) return 1 - (1 - x) ^ 3 end
 local function wake() if panelVisible then panel.setNeedsFrameTick(true) end end
 local function markDirty(key) dirtyCards[key] = true stateDirty = true wake() end
 -- 每个数据源最多一个在途请求；关闭/重开后旧回调不能污染新状态。
@@ -100,7 +107,7 @@ local function focusOnce(props)
 end
 local function submitTree()
   panel.render(cachedTree)
-  -- focus 是一次性请求，不能留在缓存中每个动画帧重复抢焦点。
+  -- 宿主仅在创建 Input 时读取 focus/value；缓存不保留过时的创建请求。
   for _, props in ipairs(focusEdges) do props.focus = nil end
   focusEdges = {}
 end
@@ -110,12 +117,18 @@ local function foldValue(key)
   local x = math.min(1, math.max(0, (noctalia.nowMs() - m.t0) / m.duration))
   return m.from + (m.to - m.from) * ease(x)
 end
-local function bodyVisible(key) return retainedBodies[key] or open[key] or folds[key] ~= nil end
+local function bodyVisible(key)
+  -- 隐藏不会 blur；收起输入卡片时真正移除输入框。
+  if key == "search" or key == "note" then return open[key] end
+  return retainedBodies[key] or warmVisible[key] or open[key] or folds[key] ~= nil
+end
 local function setCardOpen(key, value)
   if not CARD_KEYS[key] or open[key] == value then return end
   local from = foldValue(key)
   open[key] = value
+  if key == "search" or key == "note" then markDirty(key) end
   local target = value and 1 or 0
+  if MOTION == "light" then feedback[key] = noctalia.nowMs() wake() end
   local node, header = motionNodes[key], headerNodes[key]
   if node then
     -- 常态路径只改已有节点；不在点击时构造列表、输入框或图片。
@@ -128,11 +141,9 @@ local function setCardOpen(key, value)
       header.row.props.tooltip = value and "点击收起" or "点击展开"
     end
   else
-    -- 没有可动画的节点（卡片没有正文，或刚被重建）：直接重建，让状态和画面立刻一致，
-    -- 不要开一个什么都不会动的折叠、拖到最后再整块跳过去。
+    -- 冷卡片也先从当前高度开始：只标记构造，不在 setLayout 循环里提交多次。
+    warmVisible[key] = true
     markDirty(key)
-    if panelVisible then render("pending") end
-    return
   end
   if motionMs == 0 then
     folds[key] = nil
@@ -143,7 +154,7 @@ local function setCardOpen(key, value)
     end
   else
     folds[key] = { from = from, to = target, t0 = noctalia.nowMs(),
-      duration = math.max(120, motionMs * (value and 1 or 0.85) * math.sqrt(math.abs(target - from))) }
+      duration = math.max(80, motionMs * (value and 1 or 0.85) * math.sqrt(math.abs(target - from))) }
     lastMotionSubmit = 0
     wake()
   end
@@ -169,6 +180,8 @@ end
 
 -- 拖拽落下：payload = 被拖的卡片 key；value = "before|<key>" 或 "end"
 function onCardDrop(payload, value)
+  if type(payload) ~= "string" or type(value) ~= "string" then return end
+  if value ~= "end" and not value:match("^before|[^|]+$") then return end
   local anchor = nil
   if value ~= "end" then
     local _, a = value:match("^([^|]+)|(.+)$")
@@ -182,6 +195,7 @@ function onCardDrop(payload, value)
   end
   if not src then return end
   if value == "end" then
+    pinned[payload] = false
     table.remove(order, src)
     table.insert(order, payload)
   elseif anchor and anchor ~= payload then
@@ -213,9 +227,10 @@ local function toggleCard(key)
     end
   end
   setCardOpen(key, value)
-  if not motionNodes[key] then
+  if not motionNodes[key] or next(dirtyCards) ~= nil then
     render("layout")
   else
+    if updateToolbarStatus then updateToolbarStatus() end
     submitTree()
   end
   persistLayout()
@@ -333,30 +348,43 @@ end
 local frequentCache = nil
 local function refreshApps()
   local cmd = [[
-for d in "$HOME/.local/share/applications" /usr/share/applications; do
+# XDG 优先级：用户应用可隐藏/覆盖系统同 ID；不以显示名称去重。
+home=${XDG_DATA_HOME:-$HOME/.local/share}
+dirs=${XDG_DATA_DIRS:-/usr/local/share:/usr/share}
+oldIFS=$IFS
+IFS=:
+set -f
+set -- "$home" $dirs
+IFS=$oldIFS
+for root do
+  d="$root/applications"
   [ -d "$d" ] || continue
-  set -- "$d"/*.desktop
-  [ -e "$1" ] || continue
-  awk -F'=' '
+  find "$d" -type f -name '*.desktop' -exec awk -v root="$d/" -F'=' '
     function flush() {
-      if (name != "" && !nd && type == "Application" && exec != "") {
-        gsub(/ ?%[fFuUdDnNickvm]/, "", exec)
-        printf "%s\t%s\t%s\t%d\t%s\n", name, exec, icon, term, fname
-      }
+      if (fname == "") return
+      id=substr(fname,length(root)+1); gsub(/\//,"-",id)
+      visible=(!hidden && !nd && type=="Application" && (exec!="" || dbus))
+      if (localname!="") name=localname
+      printf "%s\t%s\t%s\t%d\t%s\t%s\t%d\n", name,exec,icon,term,fname,id,visible
     }
-    function reset() { name=""; exec=""; icon=""; term=0; nd=0; type=""; s=0; fname=FILENAME }
+    function reset() { name=""; localname=""; exec=""; icon=""; term=0; nd=0; hidden=0; dbus=0; type=""; s=0; fname=FILENAME }
+    BEGIN { locale=ENVIRON["LC_ALL"]; if(locale=="") locale=ENVIRON["LC_MESSAGES"]; if(locale=="") locale=ENVIRON["LANG"]; sub(/\..*/,"",locale); sub(/@.*/,"",locale) }
     FNR==1 { flush(); reset() }
     END { flush() }
+    { sub(/\r$/, "") }
     $0=="[Desktop Entry]" { s=1; next }
     /^\[/ { s=0; next }
     !s { next }
-    $1=="Name" && name=="" { name=substr($0,6) }
-    $1=="Exec" && exec=="" { exec=substr($0,6) }
-    $1=="Icon" && icon=="" { icon=substr($0,6) }
+    $1=="Name" { name=substr($0,6) }
+    $1=="Name[" locale "]" { localname=substr($0,index($0,"=")+1) }
+    $1=="Exec" { exec=substr($0,6) }
+    $1=="Icon" { icon=substr($0,6) }
     $1=="Terminal" && $2=="true" { term=1 }
     $1=="NoDisplay" && $2=="true" { nd=1 }
-    $1=="Type" && type=="" { type=substr($0,6) }
-  ' "$@"
+    $1=="Hidden" && $2=="true" { hidden=1 }
+    $1=="DBusActivatable" && $2=="true" { dbus=1 }
+    $1=="Type" { type=substr($0,6) }
+  ' {} +
 done
 ]]
   local started = query("apps", cmd, function(res)
@@ -364,16 +392,13 @@ done
     local list = {}
     for line in ((res.stdout or "") .. "\n"):gmatch("([^\n]*)\n") do
       if line ~= "" then
-        local name, exec, icon, term, path = line:match("^(.-)\t(.-)\t(.-)\t(.-)\t(.*)$")
-        if name and not seen[name] then
-          seen[name] = true
-          table.insert(list, {
-            name = name,
-            exec = exec,
-            icon = icon or "",
-            terminal = (term == "1"),
-            id = (path:match("([^/]+)%.desktop$") or ""),
-          })
+        local name, exec, icon, term, path, id, visible = line:match("^(.-)\t(.-)\t(.-)\t(.-)\t(.-)\t(.-)\t([01])$")
+        if id and not seen[id] then
+          seen[id] = true
+          if visible == "1" and name ~= "" then
+            list[#list + 1] = { name = name, exec = exec, icon = icon or "", terminal = term == "1",
+              path = path, id = id:gsub("%.desktop$", "") }
+          end
         end
       end
     end
@@ -450,15 +475,15 @@ local function launchApp(a)
   if not a then return end
   recordUsage(a)
   frequentCache = nil
-  if a.terminal then
-    noctalia.runInTerminal(a.exec)
-  else
-    noctalia.runAsync(a.exec)
-  end
-  panel.close()
+  -- GIO 正确处理 Desktop Entry 的转义、占位符、Terminal 与 D-Bus 激活。
+  local started = noctalia.runAsync({ "gio", "launch", a.path }, function(res)
+    if res.exitCode ~= 0 then noctalia.notifyError("搜索", "应用启动失败：" .. a.name) end
+  end)
+  if started then panel.close() else noctalia.notifyError("搜索", "无法启动应用") end
 end
 
 function onSearchChanged(value)
+  if not panelVisible or not open.search then return end
   activeCard = "search"
   search.text = value or ""
   refreshSearchResults()
@@ -475,15 +500,15 @@ function onSearchSubmit(_)
   end
 end
 
--- ↑↓ 在结果间移动选择（chord 与 plugin.toml 的 capture_keys 逐条对应）
+-- Alt+↑↓ 选择结果；普通方向键留给多行笔记（宿主全局捕获不能按焦点放行）。
 function onKey(chord, pressed)
   if pressed == false or pressed == "false" then return end
-  if not open.search or search.cmdMode or #search.results == 0 then return end
+  if not panelVisible or not open.search or activeCard ~= "search" or search.cmdMode or #search.results == 0 then return end
   local c = tostring(chord or ""):lower()
-  if c == "down" then
+  if c == "alt+down" then
     search.sel = math.min(#search.results, search.sel + 1)
     render("search")
-  elseif c == "up" then
+  elseif c == "alt+up" then
     search.sel = math.max(1, search.sel - 1)
     render("search")
   end
@@ -564,7 +589,7 @@ local function searchCard()
         end
         table.insert(children, listRow("res-" .. (a.id ~= "" and a.id or a.name), i == search.sel, function() launchApp(a) end, rowKids))
       end
-      table.insert(children, ui.label({ text = "↑↓ 选择 · Enter 打开", fontSize = FS.small, color = CL.muted, textAlign = "end" }))
+      table.insert(children, ui.label({ text = "Alt+↑↓ 选择 · Enter 打开", fontSize = FS.small, color = CL.muted, textAlign = "end" }))
     elseif apps.error then
       table.insert(children, emptyState("alert-triangle", "应用列表读取失败"))
     elseif not apps.loaded then
@@ -590,116 +615,268 @@ local function searchCard()
 end
 
 -- ============ 卡 2：媒体 ============
-local media = { ok = false, status = "Stopped", artist = "", title = "", lengthUs = 0, posUs = 0, seeking = nil }
-local artPath = nil
-local artHash = ""
-local artSlot = 0
-local artGen = 0          -- 封面异步代次：过期回调直接丢弃
-local artLastTryMs = 0
+local media = { ok = false, status = "Stopped", artist = "", title = "", player = "", lengthUs = 0, posUs = 0, seeking = nil }
+local artPath, artUrl, artGen = nil, "", 0 -- onClose 也递增 artGen，旧回调只能清理自己的文件
+local artJob, artLastTryMs = nil, nil
+local artCache, artOwned = {}, {} -- 最多四张；仅删除本轮 mktemp 创建并登记的封面
+local mediaPollAt, mediaPollGen, mediaPollOpen = nil, -1, nil
+local seekRevision, seekActive, seekQueued = 0, nil, nil
+local refreshMedia, refreshArt, startSeek
+local MEDIA_SEP = string.char(31)
+local MEDIA_FORMAT = table.concat({ "{{playerInstance}}", "{{status}}", "{{artist}}", "{{title}}",
+  "{{mpris:length}}", "{{position}}", "{{mpris:trackid}}", "{{xesam:url}}", "{{mpris:artUrl}}" }, MEDIA_SEP)
 
-local refreshArt -- 前向声明（refreshMedia 回调里在曲目变化时调用）
-
-local function refreshMedia()
-  query("media",
-    "playerctl metadata --format '{{status}}|||{{artist}}|||{{title}}|||{{mpris:length}}|||{{position}}'",
-    function(res)
-      local prevSig = media.status .. "|" .. media.artist .. "|" .. media.title .. "|" .. media.lengthUs .. "|" .. media.posUs .. "|" .. tostring(media.ok) .. "|" .. tostring(artPath)
-      if res.exitCode ~= 0 or res.stdout == "" then
-        media.ok = false
-        media.seeking = nil
-        if artPath ~= nil or artHash ~= "" then
-          artGen = artGen + 1 -- 使在途的封面提取失效
-          artHash = ""
-          artPath = nil
-        end
-      else
-        local line = res.stdout:gsub("%s+$", "")
-        local status, artist, title, len, pos = line:match("^(.-)|||(.-)|||(.-)|||(.-)|||(.-)$")
-        if status == nil then
-          media.ok = false
-          media.seeking = nil
-        else
-          media.ok = true
-          media.status = status
-          media.artist = artist
-          media.title = title
-          media.lengthUs = tonumber(len) or 0
-          -- playerctl format 里的 position 已是微秒
-          media.posUs = tonumber(pos) or 0
-          -- 性能：封面哈希只在曲目变化时跑（空闲秒不再起进程）；status 变化不触发
-          local msig = artist .. "|" .. title
-          if msig ~= lastMediaSig then
-            lastMediaSig = msig
-            media.seeking = nil
-            refreshArt()
-          elseif artPath == nil and (noctalia.nowMs() - artLastTryMs) > 30000 then
-            refreshArt() -- 上轮提取失败：每 30 秒重试一次
-          end
-        end
-      end
-      local newSig = media.status .. "|" .. media.artist .. "|" .. media.title .. "|" .. media.lengthUs .. "|" .. media.posUs .. "|" .. tostring(media.ok) .. "|" .. tostring(artPath)
-      if newSig ~= prevSig then markDirty("media") end
-    end)
+local function mediaNumber(value)
+  local n = tonumber(value)
+  if n == nil or n ~= n or n == math.huge or n == -math.huge then return nil end
+  return n
 end
 
--- 封面：全部交给 shell 处理（data:/file:/http: 三种来源），Lua 侧只比较短哈希；
--- 哈希在提取成功后才提交，代次不匹配的回调直接丢弃（快速切歌不再串封面）
+-- URI 的 + 是文件名本身，不是空格；只解码一次，拒绝坏转义和 NUL。
+local function artDecode(value)
+  if value:gsub("%%[%x][%x]", ""):find("%%") then return nil end
+  local decoded = value:gsub("%%(%x%x)", function(hex) return string.char(tonumber(hex, 16)) end)
+  if decoded:find("%z") then return nil end
+  return decoded
+end
+
+local function artFilePath(url)
+  if url:sub(1, 5):lower() ~= "file:" then return nil end
+  local path = url:sub(6)
+  if path:sub(1, 2) == "//" then
+    local host, rest = path:match("^//([^/]*)(/.*)$")
+    if not host or (host ~= "" and host:lower() ~= "localhost") then return nil end
+    path = rest
+  end
+  path = path:match("^[^?#]*") -- 原始 ?/# 分隔查询和片段；%3F/%23 仍是文件名
+  if path:sub(1, 1) ~= "/" then return nil end
+  return artDecode(path)
+end
+
+local function discardArt(path)
+  if path and artOwned[path] then
+    -- 本轮临时封面，未命中时可重新下载；不查找/清扫旧文件或用户文件。
+    noctalia.removeFile(path)
+    artOwned[path] = nil
+  end
+end
+
+-- 面板关闭或热重载后，上一轮的封面临时会失去登记而永久留在数据目录里；开面板时回收一次。
+-- 只删本插件格式且当前未登记的文件：本会话仍在用的缓存路径都在 artOwned 中。
+-- art_0.jpg/art_1.jpg 是 2.1 之前的固定槽位，已不再读取；回退旧版时会自动重建。
+local function sweepArtTemp()
+  if artJob then return end
+  local dir = noctalia.pluginDataDir()
+  if type(dir) ~= "string" or dir:sub(1, 1) ~= "/" then return end
+  local names = noctalia.listDir(dir)
+  if type(names) ~= "table" then return end
+  for _, name in ipairs(names) do
+    if type(name) == "string" and (name:match("^sidebar%-art%-%w+$") or name:match("^art_%d+%.jpg$")) then
+      local path = dir .. "/" .. name
+      if not artOwned[path] then noctalia.removeFile(path) end
+    end
+  end
+end
+
+local function selectArt(url)
+  if artUrl == url then return end
+  artUrl, artPath, artLastTryMs = url, nil, nil
+  artGen = artGen + 1 -- 新曲立即撤下旧图；失败时 artPath 为空，不再被旧图挡住重试
+end
+
 refreshArt = function()
-  local gen = artGen + 1
-  artGen = gen
-  artLastTryMs = noctalia.nowMs()
-  noctalia.runAsync(
-    "playerctl metadata mpris:artUrl 2>/dev/null | md5sum | cut -c1-12",
-    function(res)
-      if gen ~= artGen then return end
-      local h = (res.stdout or ""):gsub("%s+$", "")
-      if res.exitCode ~= 0 or h == "" or h == "d41d8cd98f00" then
-        if artPath ~= nil then
-          artPath = nil
-          markDirty("media")
-        end
-        artHash = ""
+  if not panelVisible or not open.media or not media.ok or artUrl == "" or artPath then return end
+  local now = noctalia.nowMs()
+  if artLastTryMs and now - artLastTryMs < 30000 then return end
+  for i, entry in ipairs(artCache) do
+    if entry.url == artUrl then
+      table.remove(artCache, i)
+      if noctalia.fileExists(entry.path) then
+        table.insert(artCache, entry)
+        artPath = entry.path
+        markDirty("media")
         return
       end
-      if h == artHash and artPath ~= nil then return end
-      local slot = 1 - artSlot
-      local dest = noctalia.pluginDataDir() .. "/art_" .. tostring(slot) .. ".jpg"
-      local extract = "u=$(playerctl metadata mpris:artUrl); case \"$u\" in\n"
-        .. "file://*) cp -- \"${u#file://}\" " .. shq(dest) .. ";;\n"
-        .. "http*) curl -sL --max-time 20 -o " .. shq(dest) .. " \"$u\";;\n"
-        .. "data:*) printf '%s' \"$u\" | sed 's/^data:[^,]*,//' | base64 -d > " .. shq(dest) .. ";;\nesac"
-      noctalia.runAsync(extract, function(eres)
-        if gen ~= artGen then return end
-        if eres.exitCode ~= 0 or not noctalia.fileExists(dest) then return end -- 失败保留旧封面，由重试路径再试
-        artHash = h
-        artSlot = slot
-        artPath = dest
-        markDirty("media")
-      end)
+      discardArt(entry.path)
+      break
+    end
+  end
+  if artJob then return end
+  artLastTryMs = now
+  local job = { gen = artGen, lifecycle = generation, url = artUrl }
+  artJob = job -- 包括旧曲在内最多一个下载；切歌时仅保留最新需求，不堆积 curl
+  local function current()
+    return job.gen == artGen and job.lifecycle == generation and panelVisible and media.ok and job.url == artUrl
+  end
+  local function finish(success)
+    if job.done then return end
+    job.done = true
+    if artJob == job then artJob = nil end
+    local valid = current()
+    if success and valid then
+      artPath = job.path -- 成功使用新路径，既不覆盖其他代次，也不命中旧纹理缓存
+      table.insert(artCache, { url = job.url, path = job.path })
+      while #artCache > 4 do discardArt(table.remove(artCache, 1).path) end
+      markDirty("media")
+    else
+      discardArt(job.path)
+      if not valid and job.url == artUrl then artLastTryMs = nil end
+    end
+    if not valid then refreshArt() end
+  end
+  local function validate(res)
+    if res.exitCode ~= 0 or not current() then finish(false) return end
+    local started = noctalia.runAsync({ "file", "--brief", "--mime-type", "--", job.path }, function(vres)
+      local mime = trim(vres.stdout or "")
+      local image = mime == "image/jpeg" or mime == "image/png" or mime == "image/gif" or mime == "image/webp"
+        or mime == "image/bmp" or mime == "image/x-ms-bmp" or mime == "image/tiff" or mime == "image/avif"
+      finish(vres.exitCode == 0 and image and noctalia.fileExists(job.path))
     end)
+    if not started then finish(false) end
+  end
+  local dir = noctalia.pluginDataDir()
+  if type(dir) ~= "string" or dir:sub(1, 1) ~= "/" then finish(false) return end
+  local prefix = dir .. "/sidebar-art-"
+  local started = noctalia.runAsync({ "mktemp", prefix .. "XXXXXXXXXX" }, function(res)
+    local dest = (res.stdout or ""):gsub("\r?\n$", "")
+    local suffix = dest:sub(#prefix + 1)
+    if res.exitCode ~= 0 or dest:sub(1, #prefix) ~= prefix or #suffix ~= 10 or not suffix:match("^%w+$") then
+      finish(false) return
+    end
+    job.path, artOwned[dest] = dest, true
+    if not current() then finish(false) return end
+    local command
+    local scheme = (job.url:match("^([%a][%w+.-]*):") or ""):lower()
+    if scheme == "file" then
+      local source = artFilePath(job.url)
+      if not source then finish(false) return end
+      command = { "cp", "--", source, dest }
+    elseif scheme == "http" or scheme == "https" then
+      -- -f 拒绝 HTTP 错误页；文件内容 MIME 另行拒绝 HTTP 200 返回的 HTML/JSON。
+      command = { "curl", "--fail", "--silent", "--show-error", "--location", "--max-time", "20",
+        "--max-filesize", "8388608", "--proto", "=http,https", "--proto-redir", "=http,https", "--output", dest, "--", job.url }
+    elseif scheme == "data" then
+      local header, payload = job.url:match("^data:([^,]*),(.*)$")
+      if not header or not header:lower():match("^image/[^;]+;base64$") or #payload > 12000000 then finish(false) return end
+      payload = artDecode(payload)
+      if not payload or not noctalia.writeFile(dest, payload) then finish(false) return end
+      -- 大 data URI 落在已分配文件，不塞入命令行；中间文件也由 mktemp 独占。
+      command = "tmp=$(mktemp " .. shq(prefix .. "XXXXXXXXXX") .. ") || exit 1\n"
+        .. "trap 'rm -f -- \"$tmp\"' EXIT\n"
+        .. "base64 --decode -- " .. shq(dest) .. " > \"$tmp\" && mv -f -- \"$tmp\" " .. shq(dest)
+    else
+      finish(false) return
+    end
+    if not noctalia.runAsync(command, validate) then finish(false) end
+  end)
+  if not started then finish(false) end
 end
 
-function onMediaPrev() noctalia.runAsync("playerctl previous") end
-function onMediaNext() noctalia.runAsync("playerctl next") end
-function onMediaToggle() noctalia.runAsync("playerctl play-pause") end
+local function mediaVisualSig()
+  if not open.media then return tostring(media.ok) .. MEDIA_SEP .. media.title end
+  return table.concat({ tostring(media.ok), media.status, media.artist, media.title, tostring(media.lengthUs),
+    tostring(math.floor(media.posUs / 1000000)), tostring(media.seeking), tostring(artPath) }, MEDIA_SEP)
+end
 
--- 拖动进度条：拖动期间用预览值渲染，松手后用 argv 形式定位，避免 shell 解析
+refreshMedia = function(force)
+  if not panelVisible then return end
+  local now = noctalia.nowMs()
+  local interval = open.media and media.ok and media.status == "Playing" and 1000 or 3000
+  if not force and mediaPollGen == generation and mediaPollOpen == open.media and mediaPollAt and now - mediaPollAt < interval then
+    refreshArt()
+    return
+  end
+  if inFlight.media == generation then return end
+  if mediaPollGen ~= generation then
+    seekRevision, seekQueued, media.seeking = seekRevision + 1, nil, nil
+  end
+  mediaPollAt, mediaPollGen, mediaPollOpen = now, generation, open.media
+  local revision, allowPosition = seekRevision, seekActive == nil and seekQueued == nil
+  -- URL 和曲目信息来自同一次读取；不再先算哈希、再读一次可能已变更的 URL。
+  query("media", { "playerctl", "metadata", "--format", MEDIA_FORMAT }, function(res)
+    local before = mediaVisualSig()
+    local fields = {}
+    if res.exitCode == 0 then
+      local line = (res.stdout or ""):gsub("\r?\n$", "")
+      for field in (line .. MEDIA_SEP):gmatch("(.-)" .. MEDIA_SEP) do fields[#fields + 1] = field end
+    end
+    if #fields ~= 9 or (fields[2] ~= "Playing" and fields[2] ~= "Paused" and fields[2] ~= "Stopped") or fields[1] == "" then
+      media.ok, media.seeking, media.player = false, nil, ""
+      media.status, media.artist, media.title, media.lengthUs, media.posUs = "Stopped", "", "", 0, 0
+      lastMediaSig, seekQueued, seekRevision = "", nil, seekRevision + 1
+      selectArt("")
+    else
+      local length = math.max(0, mediaNumber(fields[5]) or 0)
+      local key = table.concat({ fields[1], fields[7], fields[8], fields[3], fields[4], tostring(length) }, MEDIA_SEP)
+      local changed = key ~= lastMediaSig
+      if changed then
+        lastMediaSig, media.seeking, seekQueued, seekRevision = key, nil, nil, seekRevision + 1
+      end
+      media.ok, media.player, media.status, media.artist, media.title = true, fields[1], fields[2], fields[3], fields[4]
+      media.lengthUs = length
+      -- 定位前/定位中的旧轮询仍可更新元数据，但不能把刚定位的进度拉回去。
+      if changed or (allowPosition and revision == seekRevision and not seekActive and not seekQueued and media.seeking == nil) then
+        local position = math.max(0, mediaNumber(fields[6]) or 0)
+        media.posUs = length > 0 and math.min(length, position) or position
+      end
+      selectArt(fields[9])
+      refreshArt()
+    end
+    if before ~= mediaVisualSig() then markDirty("media") end
+  end)
+end
+
+local function mediaControl(command)
+  local args = { "playerctl" }
+  if media.player ~= "" then args[#args + 1] = "--player=" .. media.player end
+  args[#args + 1] = command
+  local gen = generation
+  noctalia.runAsync(args, function()
+    if gen == generation and panelVisible then refreshMedia(true) end
+  end)
+end
+function onMediaPrev() mediaControl("previous") end
+function onMediaNext() mediaControl("next") end
+function onMediaToggle() mediaControl("play-pause") end
+
+-- 连续松手只保留最新目标，命令串行执行，避免旧定位最后到达播放器。
+startSeek = function()
+  if seekActive or not seekQueued then return end
+  local job = seekQueued
+  seekQueued = nil
+  if not panelVisible or job.gen ~= generation or job.key ~= lastMediaSig then return end
+  seekActive = job
+  local function done()
+    if seekActive ~= job then return end
+    seekActive = nil
+    if job.gen == generation and panelVisible then
+      seekRevision = seekRevision + 1 -- 连定位过程中发出的轮询也一并作废
+      mediaPollAt = nil -- 若旧查询仍在途，完成后下一秒即可读回实际位置（含定位失败）
+      if seekQueued then startSeek() else refreshMedia(true) end
+    else
+      startSeek()
+    end
+  end
+  local started = noctalia.runAsync({ "playerctl", "--player=" .. job.player, "position", string.format("%.3f", job.target / 1000000) }, done)
+  if not started then done() end
+end
+
 function onSeekChange(value)
-  local v = tonumber(value)
-  if v == nil or media.lengthUs <= 0 then return end
+  local v = mediaNumber(value)
+  if not panelVisible or not media.ok or not v or media.lengthUs <= 0 then return end
   media.seeking = math.min(1, math.max(0, v / 1000))
   render("media")
 end
 
 function onSeekEnd(value)
-  local v = tonumber(value)
-  if v == nil or media.lengthUs <= 0 then return end
-  local ratio = math.min(1, math.max(0, v / 1000))
-  local targetUs = math.floor(ratio * media.lengthUs)
-  noctalia.runAsync({ "playerctl", "position", string.format("%.3f", targetUs / 1000000) })
-  media.posUs = targetUs -- 乐观更新，下一次轮询回来前先按目标显示
-  media.seeking = nil
+  local v = mediaNumber(value)
+  if not panelVisible or not media.ok or not v or media.lengthUs <= 0 then return end
+  local target = math.floor(math.min(1, math.max(0, v / 1000)) * media.lengthUs)
+  seekRevision = seekRevision + 1
+  seekQueued = { gen = generation, key = lastMediaSig, player = media.player, target = target }
+  media.posUs, media.seeking = target, nil
   markDirty("media")
+  startSeek()
 end
 
 local function mediaCard()
@@ -900,100 +1077,304 @@ local function winsCard()
 end
 
 -- ============ 卡 4：计时器（独立进程发通知，面板关着也能提醒） ============
-local timer = { durMin = 25, remain = 1500, deadlineMs = 0, running = false, done = false, adopted = false }
-
+local timer = {
+  durMin = 25, remain = 1500, deadlineMs = 0, running = false, done = false, adopted = false,
+  rev = 0, round = nil, pending = nil, error = nil,
+}
+local timerQueue, timerActive, timerProbeFlight = {}, nil, nil
 local function timerPidPath() return noctalia.pluginDataDir() .. "/timer.pid" end
-local function timerKill()
-  local pf = timerPidPath()
-  noctalia.runAsync("if [ -f " .. shq(pf) .. " ]; then PID=$(cat " .. shq(pf) .. "); kill -TERM -$PID 2>/dev/null; kill -TERM $PID 2>/dev/null; rm -f " .. shq(pf) .. "; fi")
-end
-local function timerStart()
-  if timer.running then return end
-  if timer.remain <= 0 then timer.remain = timer.durMin * 60 end -- 到点后再点“开始”= 用当前时长重新计时
-  timer.deadlineMs = noctalia.nowMs() + timer.remain * 1000
-  timer.running = true
-  timer.done = false
-  local pf = timerPidPath()
-  local secs = math.floor(timer.remain + 0.999)
-  local msg = string.format("%d 分钟到了", timer.durMin)
-  local inner = "echo $$ > " .. shq(pf) .. "; sleep " .. secs .. "; notify-send -a sidebar-panel 计时器 \"" .. msg .. "\"; rm -f " .. shq(pf)
-  noctalia.runAsync("setsid sh -c " .. shq(inner))
-end
-local function timerPause()
-  if not timer.running then return end
-  timerKill()
-  timer.remain = math.max(0, (timer.deadlineMs - noctalia.nowMs()) / 1000)
-  timer.running = false
-end
-local function timerReset()
-  timerKill()
-  timer.running = false
-  timer.done = false
-  timer.adopted = false
-  timer.remain = timer.durMin * 60
-end
 
--- 与磁盘对账：热重载/重启后若后台进程还活着，接管显示（剩余时间不可知）
-local function timerAdopt()
-  timer.adopted = false
-  if not timer.running and noctalia.fileExists(timerPidPath()) then
-    timer.adopted = true
-    timer.running = true
-    timer.done = false
+-- 控制队列不使用 query：关闭面板只能停止重绘，不能丢弃启停回调或放行第二条命令。
+local function timerPump()
+  if timerActive or #timerQueue == 0 then return end
+  local job = table.remove(timerQueue, 1)
+  timerActive = job
+  local function finish(res)
+    if timerActive ~= job then return end -- 同步失败/重复回调只结算一次
+    timerActive = nil
+    job.callback(res)
+    timerPump()
   end
+  local command = job.build()
+  if not command then finish({ exitCode = 0, stdout = "STOPPED" }) return end
+  local started = noctalia.runAsync(command, finish)
+  if not started then finish({ exitCode = -1, stdout = "" }) end
+end
+local function timerSubmit(build, callback)
+  timerQueue[#timerQueue + 1] = { build = build, callback = callback }
+  timerPump()
 end
 
--- 接管期间轮询后台进程是否还活着；进程消失即视为到点/被终止
-local function timerProbe()
+-- v2 worker 不接收外部 kill：停止只撤销本轮记录，最多一秒后自行退出。
+-- 每次检查/到期清理均持同一把锁且核对完整身份；旧轮次绝不清掉新记录。
+local TIMER_WORKER = [=[
+pf=$1; token=$2; secs=$3; msg=$4
+stat=$(cat "/proc/$$/stat") || exit 1
+rest=${stat##*) }; set -- $rest; shift 19; birth=$1
+owned="v2 $$ $birth $token"
+[ ! -L "$pf.lock" ] && [ ! -L "$pf" ] || exit 1
+exec 9>>"$pf.lock" || exit 1
+# /proc/uptime 为两位小数的单调时间；不能累减 sleep 次数，否则长计时会累积漂移。
+clock_ticks() {
+  read -r uptime unused < /proc/uptime || return 1
+  whole=${uptime%.*}; fraction=${uptime#*.}
+  ticks=$((whole * 100 + 1$fraction - 100))
+}
+deadline=''
+while :; do
+  flock -x 9 || exit 1
+  current=$(cat "$pf" 2>/dev/null)
+  [ "$current" = "$owned" ] || exit 0
+  clock_ticks || exit 1
+  [ -n "$deadline" ] || deadline=$((ticks + secs * 100))
+  if [ "$ticks" -ge "$deadline" ]; then
+    : > "$pf" || exit 1
+    flock -u 9; exec 9>&-
+    notify-send -a sidebar-panel 计时器 "$msg"
+    exit
+  fi
+  flock -u 9
+  sleep 1 || exit 1
+done
+]=]
+
+-- shell 返回 LIVE/BUSY + pid/birth/token，GONE、CHANGED 或明确失败。
+-- 旧纯数字记录只在完整匹配本插件旧命令后可接管，绝不凭 kill -0 杀任意 PID。
+local function timerCommand(action, raw, birth, secs, request)
   local pf = timerPidPath()
-  noctalia.runAsync("[ -f " .. shq(pf) .. " ] && kill -0 $(cat " .. shq(pf) .. ") 2>/dev/null", function(res)
-    if res.exitCode == 0 then return end
-    if timer.adopted and timer.running then
-      timer.adopted = false
-      timer.running = false
-      timer.done = true
-      timer.remain = 0
-      markDirty("timer")
+  local legacyPrefix = "sh\n-c\necho $$ > " .. shq(pf) .. "; sleep "
+  local legacyMiddle = '; notify-send -a sidebar-panel 计时器 "'
+  local legacySuffix = ' 分钟到了"; rm -f ' .. shq(pf)
+  local command = "pf=" .. shq(pf) .. "; action=" .. shq(action)
+    .. "; expected=" .. shq(raw or "") .. "; expected_birth=" .. shq(birth or "")
+    .. "; secs=" .. shq(tostring(secs or 0)) .. "; request=" .. shq(request or "")
+    .. "; msg=" .. shq(string.format("%d 分钟到了", timer.durMin))
+    .. "; legacy_prefix=" .. shq(legacyPrefix) .. "; legacy_middle=" .. shq(legacyMiddle)
+    .. "; legacy_suffix=" .. shq(legacySuffix) .. "; worker=" .. shq(TIMER_WORKER) .. "\n"
+  return command .. [=[
+number() { case "$1" in ''|*[!0-9]*) return 1;; esac; }
+proc_info() {
+  [ "$pid" -gt 1 ] 2>/dev/null || return 1
+  stat=$(cat "/proc/$pid/stat" 2>/dev/null) || return 1
+  rest=${stat##*) }; set -- $rest
+  [ "$#" -ge 20 ] || return 1
+  case "$1" in Z|X) return 1;; esac
+  group=$3; session=$4; shift 19; actual_birth=$1
+}
+load_record() {
+  set -- $record
+  if [ "$#" -eq 4 ] && [ "$1" = v2 ]; then
+    pid=$2; birth=$3; token=$4
+    number "$pid" && number "$birth" || return 2
+    case "$token" in ''|*[!0-9-]*) return 2;; esac
+    proc_info || return 1
+    [ "$birth" = "$actual_birth" ] || return 1
+    [ "$group" = "$pid" ] && [ "$session" = "$pid" ] || return 2
+    cmd=$(tr '\000' '\n' < "/proc/$pid/cmdline" 2>/dev/null) || return 1
+    marker=$(printf '\nsidebar-timer-v2\n%s\n%s' "$pf" "$token")
+    nl='
+'
+    case "$cmd" in *"$marker$nl"*) return 0;; *) return 2;; esac
+  fi
+  [ "$#" -eq 1 ] && number "$1" || return 2
+  pid=$1; token=legacy
+  proc_info || return 1
+  birth=$actual_birth
+  [ "$group" = "$pid" ] && [ "$session" = "$pid" ] || return 2
+  cmd=$(tr '\000' '\n' < "/proc/$pid/cmdline" 2>/dev/null) || return 1
+  tail=${cmd#"$legacy_prefix"}; old_secs=${tail%%;*}
+  tail=${tail#"$old_secs$legacy_middle"}; old_minutes=${tail%% *}
+  number "$old_secs" && number "$old_minutes" || return 2
+  [ "$cmd" = "$legacy_prefix$old_secs$legacy_middle$old_minutes$legacy_suffix" ] || return 2
+}
+report() { printf '%s %s %s %s\n' "$1" "$pid" "$birth" "$token"; }
+[ ! -L "$pf" ] && [ ! -L "$pf.lock" ] || exit 3
+exec 9>>"$pf.lock" || exit 3
+flock -x -w 3 9 || exit 3
+record=''
+if [ -e "$pf" ]; then record=$(cat "$pf") || exit 3; fi
+if [ "$action" != start ] && [ "$record" != "$expected" ]; then
+  if [ -z "$record" ]; then printf 'GONE\n'; else printf 'CHANGED\n'; fi
+  exit 0
+fi
+if [ -n "$record" ]; then load_record; state=$?; else state=1; fi
+if [ "$state" -eq 2 ]; then printf 'UNSAFE\n'; exit 3; fi
+if [ "$action" = probe ]; then
+  if [ "$state" -eq 0 ]; then report LIVE; else printf 'GONE\n'; fi
+  exit 0
+fi
+if [ "$action" = stop ]; then
+  if [ "$state" -eq 0 ] && [ "$token" = legacy ]; then
+    [ -z "$expected_birth" ] || [ "$birth" = "$expected_birth" ] || exit 3
+    # 只杀已验证的旧 shell，不向负 PID/进程组发信号；再核对出生时间并等待退出。
+    proc_info && [ "$actual_birth" = "$birth" ] || exit 3
+    kill -TERM "$pid" 2>/dev/null || { proc_info && exit 3; }
+    tries=0
+    while proc_info && [ "$actual_birth" = "$birth" ]; do
+      tries=$((tries + 1)); [ "$tries" -lt 40 ] || exit 3
+      sleep 0.05
+    done
+  fi
+  # v2 撤销授权即可，完全不使用 PID 信号。缺失/已结束也可安全停止。
+  current=$(cat "$pf" 2>/dev/null)
+  if [ "$current" = "$expected" ]; then : > "$pf" || exit 3; fi
+  printf 'STOPPED\n'; exit 0
+fi
+if [ "$state" -eq 0 ]; then report BUSY; exit 4; fi
+for tool in setsid flock sleep notify-send; do command -v "$tool" >/dev/null 2>&1 || exit 3; done
+token="$request-$$"
+# 子进程不能继承回调管道或锁；它取得独立锁后才开始倒计时。
+setsid sh -c "$worker" sidebar-timer-v2 "$pf" "$token" "$secs" "$msg" 9>&- </dev/null >/dev/null 2>&1 &
+pid=$!; tries=0
+while :; do
+  if proc_info && [ "$group" = "$pid" ] && [ "$session" = "$pid" ]; then break; fi
+  tries=$((tries + 1)); [ "$tries" -lt 40 ] || exit 3
+  sleep 0.025
+done
+birth=$actual_birth
+printf 'v2 %s %s %s\n' "$pid" "$birth" "$token" > "$pf" || exit 3
+report LIVE
+]=]
+end
+
+local function timerIdentity(res)
+  local kind, pid, birth, token = trim(res.stdout or ""):match("^(%u+) (%d+) (%d+) ([%w%-]+)$")
+  if kind ~= "LIVE" and kind ~= "BUSY" then return nil end
+  local raw = token == "legacy" and pid or ("v2 " .. pid .. " " .. birth .. " " .. token)
+  return { raw = raw, birth = birth }, kind
+end
+local function timerChanged(rev)
+  if rev ~= timer.rev then return false end
+  timer.pending = nil
+  markDirty("timer")
+  return true
+end
+local function timerNewIntent(pending)
+  timer.rev = timer.rev + 1
+  timer.pending, timer.error = pending, nil
+  return timer.rev
+end
+
+local function timerKill(rev)
+  -- 捕获轮次对象，不在排队命令执行时读取“当前轮次”；启动完成后会填入该对象的身份。
+  local round = timer.round
+  if not round then round = { raw = trim(noctalia.readFile(timerPidPath()) or "") } end
+  timerSubmit(function()
+    if not round.raw or round.raw == "" then return nil end
+    return timerCommand("stop", round.raw, round.birth)
+  end, function(res)
+    if not timerChanged(rev) then return end
+    local status = trim(res.stdout or "")
+    if res.exitCode ~= 0 or (status ~= "STOPPED" and status ~= "GONE") then
+      timer.error = "停止失败，后台记录未改动；请重试"
+      timer.round, timer.running, timer.adopted = round, true, true
+    else
+      timer.round = nil
     end
   end)
 end
+local function timerStart()
+  if timer.running then return end
+  if timer.remain <= 0 then timer.remain = timer.durMin * 60 end
+  local secs = math.max(1, math.ceil(timer.remain))
+  local rev = timerNewIntent("启动中…")
+  local round = {}
+  timer.round = round
+  timer.running, timer.done, timer.adopted = true, false, false
+  timer.deadlineMs = noctalia.nowMs() + secs * 1000
+  local command = timerCommand("start", nil, nil, secs, tostring(math.floor(noctalia.nowMs())) .. "-" .. rev)
+  timerSubmit(function()
+    round.startedAt = noctalia.nowMs()
+    return command
+  end, function(res)
+    local identity, kind = timerIdentity(res)
+    if identity then round.raw, round.birth = identity.raw, identity.birth end
+    if not timerChanged(rev) then return end
+    if identity and kind == "LIVE" and res.exitCode == 0 then
+      timer.deadlineMs = round.startedAt + secs * 1000
+      timer.remain = math.max(0, (timer.deadlineMs - noctalia.nowMs()) / 1000)
+      timer.running, timer.adopted = true, false
+    else
+      timer.running, timer.adopted = identity ~= nil, identity ~= nil
+      timer.error = kind == "BUSY" and "后台已有计时，请先停止" or "启动失败，请检查计时器命令或后台记录"
+    end
+  end)
+end
+local function timerPause()
+  if not timer.running then return end
+  local rev = timerNewIntent("停止中…")
+  timer.remain = timer.adopted and timer.durMin * 60 or math.max(0, (timer.deadlineMs - noctalia.nowMs()) / 1000)
+  timer.running, timer.adopted, timer.done = false, false, false
+  timerKill(rev)
+end
+local function timerReset()
+  local rev = timerNewIntent("停止中…")
+  timer.running, timer.done, timer.adopted = false, false, false
+  timer.remain = timer.durMin * 60
+  timerKill(rev)
+end
+
+local function timerProbe()
+  if not timer.adopted or timerProbeFlight then return end
+  local round, rev = timer.round, timer.rev
+  if not round then return end
+  local flight = {}
+  timerProbeFlight = flight
+  local raw = round.raw
+  timerSubmit(function() return timerCommand("probe", raw) end, function(res)
+    if timerProbeFlight == flight then timerProbeFlight = nil end
+    local identity = timerIdentity(res)
+    -- 即使用户已经点停止，仍给被捕获的旧轮次补齐出生时间；只禁止它修改新界面。
+    if identity and identity.raw == raw then round.birth = identity.birth end
+    if timer.round ~= round or timer.rev ~= rev or not timer.adopted then return end
+    if res.exitCode ~= 0 then
+      timer.error = "无法核验后台计时；未停止任何进程"
+    elseif identity then
+      round.raw, round.birth = identity.raw, identity.birth
+      timer.error = nil
+    elseif trim(res.stdout or "") == "CHANGED" then
+      -- 外部重载换了记录：下次只核对新快照，当前回调不能宣告新计时已结束。
+      timer.round = { raw = trim(noctalia.readFile(timerPidPath()) or "") }
+      timer.error = "后台记录已变化，正在重新核对"
+    elseif trim(res.stdout or "") == "GONE" then
+      timer.adopted, timer.running, timer.done = false, false, true
+      timer.remain, timer.round, timer.error = 0, nil, nil
+    else
+      timer.error = "后台核验未返回有效结果，请重试"
+    end
+    markDirty("timer")
+  end)
+end
+-- 关开面板不清 adopted；只有身份核验或明确的用户操作才改变接管状态。
+local function timerAdopt()
+  if timer.running or timer.pending then
+    if timer.adopted then timerProbe() end
+    return
+  end
+  local raw = trim(noctalia.readFile(timerPidPath()) or "")
+  if raw == "" then return end
+  timer.rev = timer.rev + 1
+  timer.round = { raw = raw }
+  timer.adopted, timer.running, timer.done, timer.error = true, true, false, nil
+  markDirty("timer")
+  timerProbe()
+end
 
 local function timerPreset(m)
-  timerKill()
   timer.durMin = m
-  timer.running = false
-  timer.done = false
-  timer.adopted = false
-  timer.remain = m * 60
-end
-
-function onTimerToggle()
-  if timer.adopted then
-    -- 接管中的后台计时：停止并复位
-    timerKill()
-    timer.adopted = false
-    timer.running = false
-    timer.done = false
-    timer.remain = timer.durMin * 60
-  elseif timer.running then
-    timerPause()
-  else
-    timerStart()
-  end
-  render("timer")
-end
-function onTimerReset()
   timerReset()
+end
+function onTimerToggle()
+  if timer.running then timerPause() else timerStart() end
   render("timer")
 end
--- 拖动自定义时长：仅待机时生效，松手前就同步显示
+function onTimerReset() timerReset() render("timer") end
 function onTimerDurChange(value)
-  if timer.running then return end
+  if timer.running or timer.pending then return end
   local v = tonumber(value)
-  if v == nil then return end
-  timer.durMin = math.floor(v)
-  timer.remain = timer.durMin * 60
-  timer.done = false
+  if not v or v ~= v or v == math.huge or v == -math.huge then return end
+  timer.durMin = math.min(120, math.max(1, math.floor(v)))
+  timer.remain, timer.done, timer.error = timer.durMin * 60, false, nil
   render("timer")
 end
 function onTimerPreset5() timerPreset(5) render("timer") end
@@ -1002,7 +1383,10 @@ function onTimerPreset25() timerPreset(25) render("timer") end
 
 local function timerCard()
   local status, summary
-  if timer.adopted then
+  if timer.pending or timer.error then
+    status = timer.pending or timer.error
+    summary = status
+  elseif timer.adopted then
     status = "后台计时中"
     summary = status
   elseif timer.running then
@@ -1021,6 +1405,7 @@ local function timerCard()
     }),
   }
   if bodyVisible("timer") then
+    if timer.error then table.insert(children, emptyState("alert-triangle", timer.error)) end
     local function presetBtn(m)
       return ui.button({
         text = m .. " 分",
@@ -1055,7 +1440,7 @@ local function timerCard()
       ui.button({ text = "重置", variant = "ghost", controlSize = "sm", flexGrow = 1, enabled = not timer.adopted, onClick = "onTimerReset" }),
     }))
   end
-  return cardShell("timer", children, 190)
+  return cardShell("timer", children, timer.error and 232 or 190)
 end
 
 -- ============ 卡 5：系统一览 ============
@@ -1188,7 +1573,7 @@ end
 local function xmlUnescape(s)
   local function cp(n, base)
     local c = tonumber(n, base)
-    if c and c > 0 and c < 0x110000 and utf8 and utf8.char then return utf8.char(c) end
+    if c and c > 0 and c < 0x110000 and not (c >= 0xD800 and c <= 0xDFFF) and utf8 and utf8.char then return utf8.char(c) end
     return "?"
   end
   s = s:gsub("&#x(%x+);", function(n) return cp(n, 16) end)
@@ -1198,7 +1583,7 @@ end
 
 local function refreshRecent()
   -- grep -o 逐条取出 bookmark 标签，Lua 侧再按属性名取值（不依赖属性顺序）
-  query("recent", [[f="$HOME/.local/share/recently-used.xbel"; [ -f "$f" ] || exit 0; grep -o '<bookmark [^>]*>' "$f" || true]], function(res)
+  query("recent", [[f="${XDG_DATA_HOME:-$HOME/.local/share}/recently-used.xbel"; [ -f "$f" ] || exit 0; grep -o '<bookmark [^>]*>' "$f" || true]], function(res)
     local prevSig = recentSig(recent.list) .. tostring(recent.ok) .. tostring(recent.loaded)
     local list = {}
     if res.exitCode == 0 then
@@ -1206,8 +1591,12 @@ local function refreshRecent()
         local href = line:match('href="([^"]*)"')
         if href and href:sub(1, 7) == "file://" then
           local visited = line:match('visited="([^"]*)"') or ""
-          local path = noctalia.string.urlDecode(xmlUnescape(href:sub(8)))
-          table.insert(list, { ts = visited, path = path })
+          local uri = xmlUnescape(href)
+          local host, escaped = uri:match("^file://([^/]*)(/.*)$")
+          if host and (host == "" or host:lower() == "localhost") then
+            local path = artDecode(escaped:match("^[^?#]*"))
+            if path and not path:find("%z") then list[#list + 1] = { ts = visited, path = path } end
+          end
         end
       end
       table.sort(list, function(x, y) return x.ts > y.ts end)
@@ -1297,7 +1686,7 @@ end
 local note = {
   dir = "", path = "", buffer = "", rev = 0, dirty = false, idle = 0,
   stamp = "", pendingClear = false, pendingDelete = false, preview = false,
-  files = {}, sel = 0, failures = 0, retryAt = 0, broken = false, editFocus = false, loaded = false,
+  files = {}, sel = 0, failures = 0, retryAt = 0, broken = false, editFocus = false, loaded = false, creating = false,
 }
 
 local function noteStatePath() return noctalia.pluginDataDir() .. "/note_state.json" end
@@ -1352,9 +1741,17 @@ end
 
 local function openNoteFile(name)
   if not name or name == "" then return end
-  note.path = note.dir .. "/" .. name
-  local content = noctalia.readFile(note.path)
-  note.buffer = content or ""
+  local path = note.dir .. "/" .. name
+  local content, err = noctalia.readFile(path)
+  if content == nil then
+    noctalia.notifyError("随手记", err or "无法读取笔记，已保留当前内容")
+    if note.path == "" or note.path == path then note.broken = true end
+    return false
+  end
+  if note.path == path and note.buffer == content and not note.dirty then return true end
+  note.path = path
+  note.buffer = content
+  for i, f in ipairs(note.files) do if f == name then note.sel = i - 1 end end
   note.dirty = false
   note.rev = note.rev + 1
   note.pendingClear = false
@@ -1363,57 +1760,73 @@ local function openNoteFile(name)
   note.retryAt = 0
   note.editFocus = false
   note.stamp = ""
+  return true
 end
 
-local function createNewNote()
-  local n = 2
-  local existing = {}
-  for _, f in ipairs(note.files) do existing[f] = true end
-  local name = "便签-2.md"
-  while existing[name] do
-    n = n + 1
-    name = "便签-" .. n .. ".md"
+-- 用 noclobber 排他创建：同步工具刚创建的同名文件也绝不会被清空。
+local function createNewNote(seed)
+  if note.creating then return end
+  note.creating = true
+  local command = { "sh", "-c", [[
+dir=$1
+n=1
+while [ "$n" -le 10000 ]; do
+  if [ "$n" -eq 1 ]; then name='便签.md'; else name="便签-$n.md"; fi
+  path="$dir/$name"
+  if [ -e "$path" ] || [ -L "$path" ]; then n=$((n + 1)); continue; fi
+  if (umask 077; set -C; : > "$path") 2>/dev/null; then printf '%s\n' "$name"; exit 0; fi
+  if [ ! -e "$path" ] && [ ! -L "$path" ]; then exit 1; fi
+  n=$((n + 1))
+done
+exit 1
+]], "sidebar-note-create", note.dir }
+  local function finish(res)
+    note.creating = false
+    local name = trim(res.stdout or "")
+    if res.exitCode == 0 and (name == "便签.md" or name:match("^便签%-%d+%.md$")) then
+      note.files = scanNotes()
+      saveNote()
+      if not note.dirty and openNoteFile(name) then
+        if seed and seed ~= "" and note.buffer == "" then
+          note.buffer, note.dirty, note.rev = seed, true, note.rev + 1
+          saveNote()
+        end
+        persistNoteState()
+      end
+    else
+      noctalia.notifyError("随手记", "无法新建便签，现有内容未改动")
+      if note.path == "" then note.broken = true end
+    end
+    note.loaded = true
+    markDirty("note")
   end
-  local ok, err = noctalia.writeFile(note.dir .. "/" .. name, "")
-  if not ok then
-    noctalia.notifyError("临时笔记", err or "无法新建便签")
-    return nil
-  end
-  return name
+  if not noctalia.runAsync(command, finish) then finish({ exitCode = -1 }) end
+  markDirty("note")
 end
 
 function onNoteSwitch(value)
   local idx = tonumber(value)
-  if idx == nil then return end
+  if not note.loaded or note.broken or note.creating or idx == nil or idx < 0 or idx % 1 ~= 0 or idx > #note.files then return end
   saveNote()
-  if note.dirty then return end -- 保存失败时保留缓冲，不切走
-  persistNoteState()
-  -- selectedIndex 假定 0 基；最后一项是"＋ 新建便签"
-  if idx >= #note.files then
-    local name = createNewNote()
-    if name then
-      note.files = scanNotes()
-      for i, f in ipairs(note.files) do
-        if f == name then note.sel = i - 1 end
-      end
-      openNoteFile(name)
-    end
+  if note.dirty then render("note") return end
+  if idx == #note.files then
+    createNewNote()
   else
     local name = note.files[idx + 1]
-    if name then
-      note.sel = idx
-      openNoteFile(name)
-    end
+    if name and openNoteFile(name) then persistNoteState() end
   end
-  persistNoteState()
   render("note")
 end
 
 function onNoteEdited(value)
+  if not panelVisible or not open.note or not note.loaded or note.broken or note.path == "" then return end
   activeCard = "note"
+  local wasDirty = note.dirty
   note.buffer = value or ""
+  if note.inputProps then note.inputProps.value = note.buffer end
   note.dirty = true
   note.idle = 0
+  if not wasDirty then markDirty("note") end
 end
 
 function onTogglePreview()
@@ -1423,6 +1836,7 @@ end
 
 function onClearClick() note.pendingClear = true render("note") end
 function onClearConfirm()
+  if not note.pendingClear or note.broken or note.path == "" then return end
   note.buffer = ""
   note.dirty = true
   note.rev = note.rev + 1
@@ -1456,6 +1870,7 @@ function onNoteMenuAction(actionId, _ctx)
 end
 
 function onDeleteConfirm()
+  if not note.pendingDelete or note.creating or #note.files <= 1 then return end
   note.pendingDelete = false
   local path = note.path
   if path == "" then return end
@@ -1465,21 +1880,10 @@ function onDeleteConfirm()
     render("note")
     return
   end
+  note.path, note.buffer, note.dirty = "", "", false
   note.files = scanNotes()
   local target = note.files[1]
-  if target then
-    note.sel = 0
-    openNoteFile(target)
-  else
-    local name = createNewNote()
-    if name then
-      note.files = scanNotes()
-      for i, f in ipairs(note.files) do
-        if f == name then note.sel = i - 1 end
-      end
-      openNoteFile(name)
-    end
-  end
+  if target then openNoteFile(target) else createNewNote() end
   persistNoteState()
   render("note")
 end
@@ -1487,15 +1891,15 @@ function onDeleteCancel() note.pendingDelete = false render("note") end
 
 local function noteCard()
   if not note.loaded then
-    return cardShell("note", { cardHeader("note", "note", "随手记"), emptyState("pencil", "准备笔记…") }, 48)
+    return cardShell("note", { cardHeader("note", "note", "随手记"), emptyState("pencil", "准备笔记…") }, 240)
   end
   local statusText
   if note.broken then
     return cardShell("note", {
       cardHeader("note", "note", "临时笔记", {
-        ui.label({ text = "目录不可用", fontSize = FS.small, color = CL.muted }),
+        ui.label({ text = "笔记不可用", fontSize = FS.small, color = CL.muted }),
       }),
-      emptyState("alert-triangle", "笔记目录不可用"),
+      emptyState("alert-triangle", "无法读取笔记或目录，请检查权限后重开"),
     }, 48)
   end
   if note.dirty then
@@ -1542,20 +1946,16 @@ local function noteCard()
     else
       -- frameVisible=false：不用输入框自带的高亮边框（圆角不受控、偏圆），
       -- 外框与预览模式保持同一规格（fill/radius 8/padding 8/height 240）
+      note.inputProps = focusOnce({
+        key = "note-" .. note.rev, value = note.buffer, multiline = true,
+        flexGrow = 1, frameVisible = false, focus = note.wantFocus or nil,
+        placeholder = "随手记点什么…", onChange = "onNoteEdited",
+      })
       body = ui.row({ fill = "surface_variant/0.35", radius = 8, padding = 8, height = 200, align = "stretch" }, {
-        ui.input(focusOnce({
-          key = "note-" .. note.rev,
-          value = note.buffer,
-          multiline = true,
-          flexGrow = 1,
-          frameVisible = false,
-          focus = note.wantFocus or nil,
-          placeholder = "随手记点什么…",
-          onChange = "onNoteEdited",
-        })),
+        ui.input(note.inputProps),
       })
     end
-    table.insert(block, ui.select({ options = opts, selectedIndex = note.sel, controlSize = "sm", onChange = "onNoteSwitch" }))
+    table.insert(block, ui.select({ key = "note-select", options = opts, selectedIndex = note.sel, enabled = not note.creating, controlSize = "sm", onChange = "onNoteSwitch" }))
     table.insert(block, body)
   end
   note.wantFocus = false
@@ -1601,12 +2001,20 @@ local function setLayout(mode)
   persistLayout()
 end
 
-local function toolbar()
+local toolbarStatusProps
+local function toolbarStatus()
   local count = 0
   for _, key in ipairs(order) do if open[key] then count = count + 1 end end
-  local subtitle = focusMode and "一次只做一件事" or "把常用的事，放在手边"
   local status = timer.running and (timer.adopted and "后台计时中" or ("计时 " .. fmtSec(timer.remain)))
     or (media.ok and media.status == "Playing" and "音乐播放中" or (count .. " 项展开"))
+  return status
+end
+updateToolbarStatus = function()
+  if toolbarStatusProps then toolbarStatusProps.text = toolbarStatus() end
+end
+local function toolbar()
+  local subtitle = focusMode and "一次只做一件事" or "把常用的事，放在手边"
+  toolbarStatusProps = { key = "toolbar-status", text = toolbarStatus(), fontSize = FS.small, color = "primary" }
   local children = {
     ui.row({ align = "center", gap = 10 }, {
       ui.row({ width = 38, height = 38, fill = "primary/0.14", radius = 12, align = "center", justify = "center" }, {
@@ -1631,7 +2039,7 @@ local function toolbar()
     }),
     ui.row({ align = "center", justify = "space_between" }, {
       ui.label({ text = noctalia.formatTime("%m / %d  ·  %H:%M"), fontSize = FS.small, color = CL.muted }),
-      ui.label({ text = status, fontSize = FS.small, color = "primary" }),
+      ui.label(toolbarStatusProps),
     }),
   }
   if customizing then
@@ -1667,7 +2075,7 @@ render = function(key)
       })
       for _, k in ipairs(order) do
         if (pinned[k] == true) == pinGroup then
-          if not cardCache[k] or (dirtyCards[k] and (next(folds) == nil or motionNodes[k] == nil)) then
+          if not cardCache[k] or (dirtyCards[k] and (next(folds) == nil or motionNodes[k] == nil or k == "search" or k == "note")) then
             cardCache[k] = cardBuilders[k]()
             dirtyCards[k] = nil
           end
@@ -1696,6 +2104,7 @@ end
 
 local function initializeNotes()
   -- 保存失败后的未落盘缓冲优先，绝不在重开时被磁盘旧内容覆盖。
+  if note.creating then return end
   if note.dirty then note.loaded = true markDirty("note") return end
   -- 笔记目录与迁移（目录不可用时标记 broken，卡片显示错误态而不是让 onOpen 崩溃）
   note.dir = noctalia.expandPath(NOTES_DIR)
@@ -1706,19 +2115,19 @@ local function initializeNotes()
     if #note.files == 0 then
       local old = noctalia.expandPath("~/Documents/scratchpad.md")
       if noctalia.fileExists(old) then
-        noctalia.renameFile(old, note.dir .. "/便签.md")
+        local seed, err = noctalia.readFile(old)
+        if seed == nil then
+          note.broken, note.loaded = true, true
+          noctalia.notifyError("随手记", err or "无法读取旧笔记，原件未改动")
+          markDirty("note")
+        else
+          createNewNote(seed) -- 只复制到排他创建的新文件，不移动/覆盖旧原件。
+        end
+        return
       end
       note.files = scanNotes()
     end
-    if #note.files == 0 then
-      local wOk, wErr = noctalia.writeFile(note.dir .. "/便签.md", "")
-      if wOk then
-        note.files = scanNotes()
-      else
-        note.broken = true
-        noctalia.notifyError("临时笔记", wErr or "无法写入笔记目录")
-      end
-    end
+    if #note.files == 0 then createNewNote() return end
   else
     note.broken = true
     noctalia.notifyError("临时笔记", dirErr or "无法创建笔记目录")
@@ -1733,10 +2142,6 @@ local function initializeNotes()
           if f == state.file then target = f end
         end
       end
-    end
-    note.sel = 0
-    for i, f in ipairs(note.files) do
-      if f == target then note.sel = i - 1 end
     end
     openNoteFile(target)
   end
@@ -1777,6 +2182,13 @@ end
 function onFrameTick(_deltaMs)
   if not panelVisible or not cachedTree then panel.setNeedsFrameTick(false) return end
   local now, changed = noctalia.nowMs(), false
+  if (next(folds) ~= nil or next(feedback) ~= nil) and now - lastMotionSubmit < 16 then return end
+  for key, t0 in pairs(feedback) do
+    local header = headerNodes[key]
+    local x = math.min(1, (now - t0) / 120)
+    if header then header.arrow.props.opacity = 0.45 + 0.55 * ease(x) changed = true end
+    if x >= 1 then feedback[key] = nil end
+  end
   for key, m in pairs(folds) do
     local progress, node = foldValue(key), motionNodes[key]
     if node == nil then
@@ -1803,7 +2215,7 @@ function onFrameTick(_deltaMs)
   end
   if next(folds) == nil then
     if next(dirtyCards) ~= nil then stateDirty = true end
-    if #bootQueue > 0 and now >= bootAt then
+    if #bootQueue > 0 and now >= bootAt and next(feedback) == nil then
       local task = table.remove(bootQueue, 1)
       task()
       bootAt = now + 16
@@ -1822,7 +2234,7 @@ function onFrameTick(_deltaMs)
     submitTree()
   end
   if changed then lastMotionSubmit = now end
-  panel.setNeedsFrameTick(next(folds) ~= nil or stateDirty or #bootQueue > 0 or layoutSaveAt ~= nil)
+  panel.setNeedsFrameTick(next(folds) ~= nil or next(feedback) ~= nil or stateDirty or #bootQueue > 0 or layoutSaveAt ~= nil)
 end
 
 noctalia.setUpdateInterval(1000)
@@ -1833,21 +2245,37 @@ function onOpen(_context)
   panelVisible = true
   clockMinute = noctalia.formatTime("%H:%M")
   focusEdges = {}
-  folds, motionNodes, cardCache, dirtyCards = {}, {}, {}, {}
+  folds, feedback = {}, {}
+  lastMotionSubmit, settleAt = 0, 0
+  if customizing then for key in pairs(CARD_KEYS) do dirtyCards[key] = true end end
   customizing = false
+  dirtyCards.search = true
+  -- 面板关闭会销毁原生树；首屏不带收起的大列表，避免重新打开时集中创建。
+  for key in pairs(CARD_KEYS) do
+    if not open[key] then
+      retainedBodies[key], warmVisible[key] = nil, nil
+      dirtyCards[key] = true
+    end
+  end
   search.text, search.results, search.cmdText, search.cmdMode = "", {}, nil, false
   search.rev, search.wantFocus = search.rev + 1, open.search
   bootReady = false
   -- 先交付首帧，再错峰加载。缓存内容立即可用，不等笔记/进程读取。
   bootAt = noctalia.nowMs() + 280
   bootQueue = {
-    initializeNotes,
+    -- 复用首个加载任务的帧位：既不占用首帧，也不改变其余任务的错峰节奏。
+    function() sweepArtTemp() initializeNotes() end,
     function() if not apps.loaded or noctalia.nowMs() - apps.loadedAt > 600000 then refreshApps() end end,
     function() timerAdopt() refreshMedia() end,
     refreshWins,
     refreshRecent,
   }
-  render()
+  for _, key in ipairs({ "wins" }) do
+    if not retainedBodies[key] then
+      bootQueue[#bootQueue + 1] = function() warmVisible[key] = true markDirty(key) end
+    end
+  end
+  render("pending")
   panel.setWantsSecondTicks(true)
   wake()
 end
@@ -1857,7 +2285,13 @@ function onClose()
   generation = generation + 1
   artGen = artGen + 1
   focusEdges = {}
-  folds = {}
+  folds, feedback = {}, {}
+  for key, node in pairs(motionNodes) do
+    node.viewport.props.height = open[key] and node.height or 0.1
+    node.viewport.props.visible = open[key]
+    node.shell.props.gap = open[key] and SP.block or 0
+    if headerNodes[key] then headerNodes[key].arrow.props.opacity = 1 end
+  end
   bootQueue = {}
   bootReady = false
   panel.setNeedsFrameTick(false)

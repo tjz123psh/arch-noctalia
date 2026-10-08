@@ -14,9 +14,9 @@
     },
     "motion": {
       "label": "Card motion",
-      "description": "\"Unfold\" is snappier, \"Scroll\" is more relaxed. \"Off\" only disables card motion, not the panel animation itself.",
-      "light": "Unfold · 300 ms",
-      "soft": "Scroll · 440 ms",
+      "description": "Light expands content immediately with brief arrow feedback, avoiding repeated scroll resizing. Soft keeps a short reveal. Off only disables card motion, not the panel animation.",
+      "light": "Light · instant layout (recommended)",
+      "soft": "Soft · 220 ms",
       "off": "Off"
     }
   }
