@@ -21,24 +21,10 @@ layer-rule {
     }
 }
 
-// 面板 / 控制中心 / 启动器：更厚的毛玻璃 + 更大圆角
-// ⚠ 面板的真实 namespace 是 noctalia-attached-panel（attached 模式）。
-//   不能写成 ^noctalia-panel —— 那会连 "noctalia-panel-click-shield" 一起匹配，
-//   而那是全屏点击拦截层，被模糊+加阴影后，一点顶栏部件整屏（含顶栏）就发糊发暗。
-layer-rule {
-    match namespace="^noctalia-attached-panel"
-
-    // ⚠ 这里不要加 shadow / geometry-corner-radius。
-    //   面板的 layer surface 比可见内容大（含不可见留白），niri 只能按整块 surface 画阴影，
-    //   于是内容之外会浮出一个大圆角描边 —— 就是"打开菜单有两层"的原因。
-    //   Noctalia 自己会给面板画阴影（[shell.panel] shadow），不需要 niri 再画一层。
-    background-effect {
-        xray true
-        blur true
-        noise 0.025
-        saturation 1.2
-    }
-}
+// attached 面板（日历 / 控制中心）：由 Noctalia 的 client blur region 控制毛玻璃。
+// 不在这里强制 background-effect：v5.2.1 动画端点会撤销 client region，
+// 强制 xray/blur/noise/saturation 会因此回退成整块 surface，造成开关闪块。
+// 有效 client region 仍会让 Niri 自动启用模糊；Noctalia 的动画/阴影保持不变。
 
 // 浮动模式下的面板（万一以后把 *_placement 改成 floating）
 layer-rule {
