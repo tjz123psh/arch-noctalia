@@ -3,14 +3,14 @@
 // ══════════════════════════════════════════════════════════════
 //  动效：弹簧曲线 + 自定义着色器（不照搬默认）
 //  · 工作区/视线移动 → 弹簧（跟手、收尾柔和）
-//  · 窗口开关 → 轻微缩放 + 淡入，用 custom-shader 手写
+//  · 窗口开关 → 460ms 柔韧舒展 + 340ms 向下收拢
 // ══════════════════════════════════════════════════════════════
 animations {
     // ══════════════════════════════════════════════════════════════
     //  动效总纲：
     //   · 直接操作类（工作区/视线/窗口移动、缩放）→ 弹簧，跟手、不拖沓
-    //   · 出现类（开窗/截图 UI）→ 短时长 + 过冲曲线，先看得清再稳住
-    //   · 消失类（关窗）→ 更短、收缩幅度更小，像化掉而不是缩没
+    //   · 开窗 → 460ms可见舒展 + 单次回弹；截图 UI 保持原样
+    //   · 关窗 → 340ms向下收拢，保留可见过程后再淡出
     //   · 大场景（概览）→ 软一点的弹簧，收尾有一点回弹，显得有生命
     // ══════════════════════════════════════════════════════════════
 
@@ -19,24 +19,22 @@ animations {
         spring damping-ratio=0.95 stiffness=900 epsilon=0.0001
     }
 
-    // 窗口打开：340ms，MD3 standard 曲线（缓起 → 快中段 → 长收尾）
-    // 着色器做两件事：0.90 倍放大 + 从下往上浮 16px，淡入按 1.7 倍速先跑完。
-    // 这样是"浮上来"，不是"啪一下出现"。
+    // 窗口打开：460ms 舒展；线性时间只由 shader 做一次运动设计。
+    // t² 延后主要动作；单次过冲在约337ms达到峰值，最后约123ms柔和落稳。
+    // 从88%宽/84%高展开，上浮32px；峰值约102%宽/102.6%高，不反复弹跳。
     window-open {
-        duration-ms 340
-        curve "cubic-bezier" 0.2 0.0 0.0 1.0
+        duration-ms 460
+        curve "linear"
         custom-shader r"
             vec4 open_color(vec3 coords_geo, vec3 size_geo) {
-                float p = niri_progress;
-                float e = clamp(p, 0.0, 1.4);
+                float t = clamp(niri_clamped_progress, 0.0, 1.0);
+                float u = t * t - 1.0;
+                float grow = 1.0 + 3.3 * u * u * u + 2.3 * u * u;
 
-                float scale = mix(0.90, 1.0, e);
-                float rise = (1.0 - e) * 16.0 / max(size_geo.y, 1.0);
-
-                vec2 c = (coords_geo.xy - vec2(0.5)) / scale + vec2(0.5);
-                c.y -= rise;
-                coords_geo = vec3(c, 1.0);
-
+                vec2 scale = mix(vec2(0.88, 0.84), vec2(1.0), grow);
+                vec2 offset = vec2(0.0, 32.0 * (1.0 - grow) / max(size_geo.y, 1.0));
+                vec2 sample_geo = (coords_geo.xy - vec2(0.5) - offset) / scale + vec2(0.5);
+                coords_geo = vec3(sample_geo, 1.0);
                 vec3 coords_tex = niri_geo_to_tex * coords_geo;
 
                 vec4 color = vec4(0.0);
@@ -45,45 +43,51 @@ animations {
                     color = texture2D(niri_tex, coords_tex.xy);
                 }
 
-                float a = clamp(niri_clamped_progress * 1.7, 0.0, 1.0);
-                color *= a * a * (3.0 - 2.0 * a);
-                return color;
+                // 约147ms显清楚，余下的舒展和回弹都可见；保持预乘透明度。
+                float opacity = smoothstep(0.0, 0.32, t);
+                return color * opacity;
             }
         "
     }
 
-    // 窗口关闭：收缩幅度只有 3.5%，主要是淡出，用 smoothstep 让首尾都不生硬
-    // ⚠ 实测：close 的着色器里**不能**写 0..1 边界判断（官方默认也没有），
-    //   写了会让整扇窗直接透明 —— 看起来像"关窗动画没跑"。open 里则必须写。
+    // 关闭不是打开倒放：340ms向下轻收，前约75ms保留原不透明度，再连续淡出。
+    // 保留原 close 采样方式：不加0..1几何裁切，避免历史上的整窗透明问题。
     window-close {
-        duration-ms 200
-        curve "cubic-bezier" 0.4 0.0 0.2 1.0
+        duration-ms 340
+        curve "linear"
         custom-shader r"
             vec4 close_color(vec3 coords_geo, vec3 size_geo) {
-                float p = niri_clamped_progress;
-                float scale = mix(1.0, 0.965, p);
-                coords_geo = vec3((coords_geo.xy - vec2(0.5)) / scale + vec2(0.5), 1.0);
+                float t = clamp(niri_clamped_progress, 0.0, 1.0);
+                float shrink = smoothstep(0.0, 1.0, t);
+
+                vec2 scale = mix(vec2(1.0), vec2(0.84, 0.90), shrink);
+                scale.y -= 0.048 * shrink * (1.0 - shrink);
+                vec2 offset = vec2(0.0, 30.0 * shrink / max(size_geo.y, 1.0));
+                coords_geo = vec3((coords_geo.xy - vec2(0.5) - offset) / scale + vec2(0.5), 1.0);
                 vec3 coords_tex = niri_geo_to_tex * coords_geo;
                 vec4 color = texture2D(niri_tex, coords_tex.xy);
-                float a = 1.0 - p;
-                color *= a * a * (3.0 - 2.0 * a);
-                return color;
+
+                // 中途仍保留约71%原不透明度，让收拢过程看得清，不留长透明尾巴。
+                float opacity = 1.0 - smoothstep(0.22, 1.0, t);
+                return color * opacity;
             }
         "
     }
 
-    // 视线横移 / 窗口移动 / 窗口缩放：三者参数保持一致，niri 官方建议
-    // （同步动画时它会互相借用参数，不一致会出现两种手感）
+    // 最大化/还原及尺寸变化：使用更舒展的原生弹簧。
+    // 横向视线、让位/补位和尺寸变化保持同值；保留原生速度接续。
+    // 同样用于普通横移、窗口移动和列宽切换，不限定于 Alt+F。
+    // 保留独立开/关窗动作，不额外叠加纹理拉伸或淡出。
     horizontal-view-movement {
-        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
+        spring damping-ratio=0.90 stiffness=180 epsilon=0.0001
     }
 
     window-movement {
-        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
+        spring damping-ratio=0.90 stiffness=180 epsilon=0.0001
     }
 
     window-resize {
-        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
+        spring damping-ratio=0.90 stiffness=180 epsilon=0.0001
     }
 
     // 概览开关：软弹簧 + 轻微回弹，像镜头推拉

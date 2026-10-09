@@ -1,13 +1,13 @@
 id = "pang/sidebar"
 name = "Sidebar · 随手工作台"
-version = "2.2.1"
+version = "2.3.2"
 plugin_api = 32
 author = "pang"
 license = "MIT"
-description = "轻量侧边工作台：搜索、窗口、自由时长计时（90s/25m/1h30m/1:30 任填；预设、加时、到点通知）、系统与最近文件；支持专注模式、卡片置顶、拖拽整理和可调动效。"
+description = "轻量侧边工作台：新建便签、多行正文编辑、自动保存、待办勾选与 25 分钟任务专注；保留搜索、窗口、系统、最近文件及卡片整理。"
 icon = "layout-sidebar-left"
 tags = ["custom", "utility", "panel"]
-dependencies = ["niri", "libnotify", "xdg-utils", "glib2", "util-linux", "findutils"]
+dependencies = ["niri", "libnotify", "xdg-utils", "glib2", "util-linux", "findutils", "python"]
 
 [[setting]]
 key = "search_limit"
@@ -26,6 +26,13 @@ description_key = "settings.recent_count.description"
 default = 8
 min = 3
 max = 15
+
+[[setting]]
+key = "notes_dir"
+type = "string"
+label_key = "settings.notes_dir.label"
+description_key = "settings.notes_dir.description"
+default = "~/Documents/notes"
 
 [[setting]]
 key = "motion"

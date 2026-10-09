@@ -1,6 +1,6 @@
 --!nonstrict
--- pang/sidebar v2.2 — 布局稳定优先 / 数据安全 / 自由时长计时器（媒体卡已按用户要求移除）
--- 卡片：搜索 / 窗口 / 计时器 / 系统 / 最近文件。
+-- pang/sidebar v2.3.2 — Markdown 待办 / 任务专注计时 / 布局稳定与数据安全
+-- 卡片：搜索 / 便签待办 / 窗口 / 计时器 / 系统 / 最近文件。
 -- 默认正文即时收展，只淡入箭头；柔和模式短高度过渡。输入收起时卸载以解除焦点。
 -- 卡片头部/列表行/空状态共用构件；搜索支持 Alt+↑↓ 选择、
 --       Enter 打开选中项；窗口/最近加右键菜单；曲线可悬停读数；
@@ -47,6 +47,8 @@ local CL = {                                                             -- 颜�
 -- 插件设置（Settings → Plugins 修改；声明见 plugin.toml 的 [[setting]]）
 local SEARCH_LIMIT = tonumber(noctalia.getConfig("search_limit")) or 10
 local RECENT_COUNT = tonumber(noctalia.getConfig("recent_count")) or 8
+local NOTES_DIR = noctalia.expandPath(noctalia.getConfig("notes_dir") or "~/Documents/notes")
+local notes -- 异步便签状态
 
 local MOTION = noctalia.getConfig("motion") or "light"
 local render -- forward declaration
@@ -54,9 +56,9 @@ local updateToolbarStatus
 local timer -- forward declaration：计时器状态（布局文件持久化 durSec，见 flushLayout）
 
 -- 折叠状态 + 卡片顺序（可拖拽排序）：默认展开 搜索；顺序与折叠持久化到 panel_layout.json
-local open = { search = true, wins = false, timer = false, sysmon = false, recent = false }
-local order = { "search", "wins", "timer", "sysmon", "recent" }
-local CARD_KEYS = { search = true, wins = true, timer = true, sysmon = true, recent = true }
+local open = { search = true, notes = false, wins = false, timer = false, sysmon = false, recent = false }
+local order = { "search", "notes", "wins", "timer", "sysmon", "recent" }
+local CARD_KEYS = { search = true, notes = true, wins = true, timer = true, sysmon = true, recent = true }
 local stateDirty = false    -- 性能：只在可见数据变化时重绘（空闲秒不重绘）
 local winsTick = 0
 local updateTick = 0
@@ -115,14 +117,17 @@ local function foldValue(key)
 end
 local function bodyVisible(key)
   -- 隐藏不会 blur；收起输入卡片时真正移除输入框。
-  if key == "search" or key == "timer" then return open[key] end
+  if key == "search" or key == "timer" or key == "notes" then return open[key] end
   return retainedBodies[key] or warmVisible[key] or open[key] or folds[key] ~= nil
 end
 local function setCardOpen(key, value)
   if not CARD_KEYS[key] or open[key] == value then return end
   local from = foldValue(key)
   open[key] = value
-  if key == "search" or key == "timer" then markDirty(key) end
+  if key == "search" or key == "timer" or key == "notes" then markDirty(key) end
+  if key == "notes" and notes then
+    if value then notes.refresh() else notes.flush() end
+  end
   local target = value and 1 or 0
   if MOTION == "light" then feedback[key] = noctalia.nowMs() wake() end
   local node, header = motionNodes[key], headerNodes[key]
@@ -160,7 +165,7 @@ local function layoutPath() return noctalia.pluginDataDir() .. "/panel_layout.js
 local layoutWarned = false
 local function flushLayout()
   layoutSaveAt = nil
-  local enc = noctalia.json.encode({ version = 2, order = order, open = open, pinned = pinned, focusMode = focusMode, focusRestore = focusRestore, activeCard = activeCard, timerSec = timer and timer.durSec or nil })
+  local enc = noctalia.json.encode({ version = 2, order = order, open = open, pinned = pinned, focusMode = focusMode, focusRestore = focusRestore, activeCard = activeCard, timerSec = timer and timer.durSec or nil, notesFile = notes and (notes.selected or notes.restoreName) or nil })
   if not enc then return end
   local ok, err = noctalia.writeFile(layoutPath(), enc)
   if not ok and not layoutWarned then
@@ -777,11 +782,22 @@ end
 -- ============ 卡 3：计时器（独立进程发通知，面板关着也能提醒） ============
 timer = {
   durSec = 1500, roundSec = 1500, remain = 1500, deadlineMs = 0, running = false, done = false, adopted = false,
-  rev = 0, round = nil, pending = nil, error = nil,
+  rev = 0, round = nil, pending = nil, error = nil, task = nil,
 }
 local timerInput = { text = "", sec = nil, rev = 0 } -- 自由时长输入框的文案、解析结果与重键计数
 local timerQueue, timerActive, timerProbeFlight = {}, nil, nil
 local function timerPidPath() return noctalia.pluginDataDir() .. "/timer.pid" end
+local function timerTaskFor(raw)
+  if not raw or raw == "" then return nil end
+  local saved = noctalia.readFile(timerPidPath() .. ".task")
+  if type(saved) ~= "string" or #saved > 4096 then return nil end
+  local owner, payload = saved:match("^([^\n]*)\n(.*)$")
+  if owner ~= raw then return nil end
+  local task = noctalia.json.decode(trim(payload or ""))
+  if type(task) ~= "table" or type(task.label) ~= "string" or task.label == "" or #task.label > 1000
+    or type(task.note) ~= "string" or #task.note > 255 or type(task.line) ~= "number" then return nil end
+  return { label = task.label:gsub("%c", " "), note = task.note, line = task.line }
+end
 
 -- 自由时长解析：90 / 90s / 25m / 1h30m / 1:30（分:秒）/ 1:30:00（时:分:秒）；范围 1 秒～24 小时。
 local function clampDur(v)
@@ -853,7 +869,7 @@ end
 -- v2 worker 不接收外部 kill：停止只撤销本轮记录，最多一秒后自行退出。
 -- 每次检查/到期清理均持同一把锁且核对完整身份；旧轮次绝不清掉新记录。
 local TIMER_WORKER = [=[
-pf=$1; token=$2; secs=$3; msg=$4
+pf=$1; token=$2; secs=$3; msg=$4; title=${5:-计时器}
 stat=$(cat "/proc/$$/stat") || exit 1
 rest=${stat##*) }; set -- $rest; shift 19; birth=$1
 owned="v2 $$ $birth $token"
@@ -875,7 +891,7 @@ while :; do
   if [ "$ticks" -ge "$deadline" ]; then
     : > "$pf" || exit 1
     flock -u 9; exec 9>&-
-    notify-send -a sidebar-panel 计时器 "$msg"
+    notify-send -a sidebar-panel "$title" "$msg"
     exit
   fi
   flock -u 9
@@ -885,7 +901,7 @@ done
 
 -- shell 返回 LIVE/BUSY + pid/birth/token，GONE、CHANGED 或明确失败。
 -- 旧纯数字记录只在完整匹配本插件旧命令后可接管，绝不凭 kill -0 杀任意 PID。
-local function timerCommand(action, raw, birth, secs, request)
+local function timerCommand(action, raw, birth, secs, request, task)
   local pf = timerPidPath()
   local legacyPrefix = "sh\n-c\necho $$ > " .. shq(pf) .. "; sleep "
   local legacyMiddle = '; notify-send -a sidebar-panel 计时器 "'
@@ -893,7 +909,9 @@ local function timerCommand(action, raw, birth, secs, request)
   local command = "pf=" .. shq(pf) .. "; action=" .. shq(action)
     .. "; expected=" .. shq(raw or "") .. "; expected_birth=" .. shq(birth or "")
     .. "; secs=" .. shq(tostring(secs or 0)) .. "; request=" .. shq(request or "")
-    .. "; msg=" .. shq(durationLabel(tonumber(secs) or timer.durSec) .. "到了")
+    .. "; msg=" .. shq(durationLabel(tonumber(secs) or timer.durSec) .. "到了" .. (task and ("\n" .. task.label:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")) or ""))
+    .. "; title=" .. shq(task and "专注计时" or "计时器")
+    .. "; task_json=" .. shq((task and noctalia.json.encode(task)) or "")
     .. "; legacy_prefix=" .. shq(legacyPrefix) .. "; legacy_middle=" .. shq(legacyMiddle)
     .. "; legacy_suffix=" .. shq(legacySuffix) .. "; worker=" .. shq(TIMER_WORKER) .. "\n"
   return command .. [=[
@@ -966,10 +984,11 @@ if [ "$action" = stop ]; then
   printf 'STOPPED\n'; exit 0
 fi
 if [ "$state" -eq 0 ]; then report BUSY; exit 4; fi
+[ ! -L "$pf.task" ] && { [ ! -e "$pf.task" ] || { [ -f "$pf.task" ] && [ "$(stat -c %h "$pf.task")" = 1 ]; }; } || exit 3
 for tool in setsid flock sleep notify-send; do command -v "$tool" >/dev/null 2>&1 || exit 3; done
 token="$request-$$"
 # 子进程不能继承回调管道或锁；它取得独立锁后才开始倒计时。
-setsid sh -c "$worker" sidebar-timer-v2 "$pf" "$token" "$secs" "$msg" 9>&- </dev/null >/dev/null 2>&1 &
+setsid sh -c "$worker" sidebar-timer-v2 "$pf" "$token" "$secs" "$msg" "$title" 9>&- </dev/null >/dev/null 2>&1 &
 pid=$!; tries=0
 while :; do
   if proc_info && [ "$group" = "$pid" ] && [ "$session" = "$pid" ]; then break; fi
@@ -977,7 +996,11 @@ while :; do
   sleep 0.025
 done
 birth=$actual_birth
-printf 'v2 %s %s %s\n' "$pid" "$birth" "$token" > "$pf" || exit 3
+record="v2 $pid $birth $token"
+umask 077
+# 元数据和轮次在同一把锁内发布；旧任务名不会套到新计时上。
+printf '%s\n%s\n' "$record" "$task_json" > "$pf.task" || exit 3
+printf '%s\n' "$record" > "$pf" || exit 3
 report LIVE
 ]=]
 end
@@ -992,11 +1015,13 @@ local function timerChanged(rev)
   if rev ~= timer.rev then return false end
   timer.pending = nil
   markDirty("timer")
+  markDirty("notes")
   return true
 end
 local function timerNewIntent(pending)
   timer.rev = timer.rev + 1
   timer.pending, timer.error = pending, nil
+  markDirty("notes")
   return timer.rev
 end
 
@@ -1013,6 +1038,7 @@ local function timerKill(rev)
     if res.exitCode ~= 0 or (status ~= "STOPPED" and status ~= "GONE") then
       timer.error = "停止失败，后台记录未改动；请重试"
       timer.round, timer.running, timer.adopted = round, true, true
+      timer.task = round.task or timerTaskFor(round.raw)
     else
       timer.round = nil
     end
@@ -1023,12 +1049,12 @@ local function timerStart()
   if timer.remain <= 0 then timer.remain = timer.durSec end
   local secs = math.max(1, math.ceil(timer.remain))
   local rev = timerNewIntent("启动中…")
-  local round = {}
+  local round = { task = timer.task }
   timer.round = round
   timer.roundSec = secs
   timer.running, timer.done, timer.adopted = true, false, false
   timer.deadlineMs = noctalia.nowMs() + secs * 1000
-  local command = timerCommand("start", nil, nil, secs, tostring(math.floor(noctalia.nowMs())) .. "-" .. rev)
+  local command = timerCommand("start", nil, nil, secs, tostring(math.floor(noctalia.nowMs())) .. "-" .. rev, round.task)
   timerSubmit(function()
     round.startedAt = noctalia.nowMs()
     return command
@@ -1039,9 +1065,10 @@ local function timerStart()
     if identity and kind == "LIVE" and res.exitCode == 0 then
       timer.deadlineMs = round.startedAt + secs * 1000
       timer.remain = math.max(0, (timer.deadlineMs - noctalia.nowMs()) / 1000)
-      timer.running, timer.adopted = true, false
+      timer.running, timer.adopted, timer.task = true, false, round.task
     else
       timer.running, timer.adopted = identity ~= nil, identity ~= nil
+      if identity then timer.task = timerTaskFor(identity.raw) round.task = timer.task end
       timer.error = kind == "BUSY" and "后台已有计时，请先停止" or "启动失败，请检查计时器命令或后台记录"
     end
   end)
@@ -1080,11 +1107,14 @@ local function timerProbe()
       timer.error = nil
     elseif trim(res.stdout or "") == "CHANGED" then
       -- 外部重载换了记录：下次只核对新快照，当前回调不能宣告新计时已结束。
-      timer.round = { raw = trim(noctalia.readFile(timerPidPath()) or "") }
+      local nextRaw = trim(noctalia.readFile(timerPidPath()) or "")
+      timer.task = timerTaskFor(nextRaw)
+      timer.round = { raw = nextRaw, task = timer.task }
       timer.error = "后台记录已变化，正在重新核对"
     elseif trim(res.stdout or "") == "GONE" then
       timer.adopted, timer.running, timer.done = false, false, true
       timer.remain, timer.round, timer.error = 0, nil, nil
+      markDirty("notes")
     else
       timer.error = "后台核验未返回有效结果，请重试"
     end
@@ -1100,7 +1130,8 @@ local function timerAdopt()
   local raw = trim(noctalia.readFile(timerPidPath()) or "")
   if raw == "" then return end
   timer.rev = timer.rev + 1
-  timer.round = { raw = raw }
+  timer.task = timerTaskFor(raw)
+  timer.round = { raw = raw, task = timer.task }
   timer.adopted, timer.running, timer.done, timer.error = true, true, false, nil
   markDirty("timer")
   timerProbe()
@@ -1110,6 +1141,8 @@ function onTimerSetSec(value) -- 预设与自由输入共用：只在未计时�
   if timer.running or timer.pending then return end
   local v = tonumber(value)
   if not v or v ~= v or v == math.huge or v == -math.huge or v < 1 then return end
+  timer.task = nil
+  markDirty("notes")
   timer.durSec = math.min(86400, math.floor(v))
   timer.remain, timer.roundSec, timer.done, timer.error = timer.durSec, timer.durSec, false, nil
   render("timer")
@@ -1124,6 +1157,8 @@ function onTimerDurInput(text)
   timerInput.text = tostring(text or "")
   timerInput.sec = parseDuration(timerInput.text)
   if timerInput.sec and not timer.running and not timer.pending then
+    timer.task = nil
+    markDirty("notes")
     timer.durSec = timerInput.sec
     timer.remain, timer.roundSec, timer.done, timer.error = timer.durSec, timer.durSec, false, nil
     persistLayout()
@@ -1153,7 +1188,7 @@ function onTimerExtend(addSec)
   end, function(res)
     if not timerChanged(rev) then return end
     local status = trim(res.stdout or "")
-    if res.exitCode ~= 0 and status ~= "STOPPED" and status ~= "GONE" then
+    if res.exitCode ~= 0 or (status ~= "STOPPED" and status ~= "GONE") then
       -- 旧轮未停止：恢复运行态，剩余按原截止时刻重算，不宣称已延长
       timer.round, timer.running = round, true
       timer.remain = math.max(0, (timer.deadlineMs - noctalia.nowMs()) / 1000)
@@ -1173,9 +1208,11 @@ function timerIpc(payload) -- 无鼠标回归/快捷键通道：start:<时长> /
   if verb == "start" then
     local sec = parseDuration(arg)
     if sec and not timer.running and not timer.pending then
+      timer.task = nil
       timer.durSec, timer.remain, timer.roundSec = sec, sec, sec
       timer.error = nil
       timerStart()
+      persistLayout()
     end
   elseif verb == "stop" then
     timerPause()
@@ -1206,12 +1243,16 @@ local function timerCard()
     summary = status
   end
   local children = {
-    cardHeader("timer", "clock-hour-4", "计时器", {
+    cardHeader("timer", "clock-hour-4", timer.task and "专注计时" or "计时器", {
       ui.label({ text = summary, fontSize = FS.small, color = CL.muted }),
     }),
   }
   if bodyVisible("timer") then
     if timer.error then table.insert(children, emptyState("alert-triangle", timer.error)) end
+    if timer.task then
+      table.insert(children, ui.label({ key = "timer-task", text = timer.task.label, fontSize = FS.body, fontWeight = "bold", maxLines = 2 }))
+      table.insert(children, ui.label({ text = timer.task.note, fontSize = FS.small, color = CL.muted, maxLines = 1 }))
+    end
     table.insert(children, ui.row({ align = "center", gap = SP.block }, {
       ui.label({ text = timer.adopted and "—:—" or fmtSec(timer.remain), fontSize = FS.hero, fontWeight = "bold", flexGrow = 1 }),
       ui.button({
@@ -1260,7 +1301,305 @@ local function timerCard()
     end
   end
   local bodyH = timer.error and 288 or (timer.running and (timer.adopted and 60 or 112) or 218)
-  return cardShell("timer", children, bodyH)
+  return cardShell("timer", children, bodyH + (timer.task and 60 or 0))
+end
+
+
+-- ============ 便签：直接多行编辑，待办和专注是辅助操作 ============
+notes = { list = {}, loaded = false, selected = nil, note = nil, request = nil, saving = nil,
+  text = "", dirty = false, saveAt = nil, inputRev = 0, editVersion = 0, wantFocus = false,
+  creating = false, navigation = nil, conflict = false, error = nil, truncated = false }
+function notes.command(action, ...)
+  local args = { "python3", noctalia.pluginDir() .. "/notes.py", action, NOTES_DIR }
+  for _, value in ipairs({ ... }) do args[#args + 1] = tostring(value) end
+  return args
+end
+function notes.result(res)
+  local raw = res.stdout or ""
+  if #raw > 524288 then return nil, "便签数据过大，请用编辑器打开" end
+  local value = noctalia.json.decode(raw)
+  if res.exitCode ~= 0 or type(value) ~= "table" or value.ok ~= true then
+    return nil, type(value) == "table" and value.message or "无法读写便签，请检查目录和 Python", type(value) == "table" and value.error or nil
+  end
+  return value
+end
+function notes.accept(note, keepBuffer)
+  if type(note) ~= "table" or note.name ~= notes.selected or type(note.revision) ~= "string"
+    or type(note.text) ~= "string" or type(note.editable) ~= "boolean" or type(note.tasks) ~= "table"
+    or type(note.taskCount) ~= "number" or type(note.doneCount) ~= "number" then return false end
+  notes.note = note
+  if not keepBuffer then
+    if notes.text ~= note.text then notes.inputRev = notes.inputRev + 1 end
+    notes.text = note.text
+  end
+  notes.dirty = note.editable and notes.text ~= note.text
+  for _, item in ipairs(notes.list) do
+    if item.name == note.name then item.taskCount, item.doneCount = note.taskCount, note.doneCount return true end
+  end
+  table.insert(notes.list, 1, { name = note.name, title = note.title, taskCount = note.taskCount, doneCount = note.doneCount })
+  return true
+end
+function notes.refresh(manual)
+  if notes.dirty then if manual then notes.flush() end return end
+  if not panelVisible or not open.notes or notes.saving or notes.request or notes.conflict then return end
+  local request = { gen = generation, name = notes.selected, version = notes.editVersion }
+  notes.request = request
+  if manual then notes.error = nil end
+  local function finish(res)
+    if notes.request ~= request then return end
+    notes.request = nil
+    if request.gen ~= generation or not panelVisible or not open.notes then
+      if notes.dirty then notes.flush() elseif panelVisible and open.notes then notes.refresh() end
+      return
+    end
+    -- A read started before typing cannot replace the user's buffer or base revision.
+    if request.name ~= notes.selected or request.version ~= notes.editVersion or notes.dirty then
+      markDirty("notes")
+      if notes.dirty and notes.saveAt and notes.saveAt <= noctalia.nowMs() then notes.flush() end
+      notes.go() -- A stale read must still release queued navigation, including undo-to-clean.
+      return
+    end
+    local value, err = notes.result(res)
+    if not value then notes.error = err
+    elseif request.name then
+      if notes.accept(value.note, false) then notes.error = nil else notes.error = "便签数据不完整，请重试" end
+    elseif type(value.notes) == "table" then
+      notes.list, notes.loaded, notes.truncated, notes.error = value.notes, true, value.truncated == true, nil
+      if notes.restoreName then
+        local name = notes.restoreName; notes.restoreName = nil
+        for _, item in ipairs(notes.list) do if item.name == name then notes.navigation = { name = name } break end end
+      end
+    else notes.error = "便签列表不完整，请重试" end
+    markDirty("notes")
+    notes.go()
+  end
+  local command = request.name and notes.command("read", request.name) or notes.command("list")
+  if not noctalia.runAsync(command, finish) then finish({ exitCode = -1, stdout = "" }) end
+  markDirty("notes")
+end
+function notes.mutate(kind, command)
+  if notes.saving then return end
+  local job = { kind = kind, text = notes.text, version = notes.editVersion }
+  notes.saving, notes.saveAt, notes.error = job, nil, nil
+  notes.creating = kind == "create"
+  local function finish(res)
+    if notes.saving ~= job then return end
+    notes.saving, notes.creating = nil, false
+    local value, err, code = notes.result(res)
+    if value and kind == "create" and type(value.note) == "table" then
+      notes.selected = value.note.name
+      notes.text = value.note.text or ""
+      notes.inputRev, notes.editVersion = notes.inputRev + 1, notes.editVersion + 1
+      notes.wantFocus, notes.navigation = true, nil
+    end
+    if value and notes.accept(value.note, kind ~= "create") then
+      notes.conflict, notes.error = false, nil
+      persistLayout()
+      if notes.dirty then
+        -- Edits typed while a save was in flight belong to the following save.
+        notes.saveAt = noctalia.nowMs() + 500
+        if not panelVisible or not open.notes then notes.flush() end
+      else notes.go() end
+    else
+      notes.error, notes.conflict = err or "保存结果未确认，请保留输入", code == "conflict"
+      notes.navigation, notes.saveAt = nil, nil
+    end
+    markDirty("notes")
+  end
+  if not noctalia.runAsync(command, finish) then finish({ exitCode = -1, stdout = "" }) end
+  markDirty("notes")
+end
+function notes.flush()
+  if not notes.dirty or not notes.note or notes.saving or notes.request then return end
+  notes.saveAt = nil
+  if notes.conflict then return end
+  if #notes.text > 65536 or notes.text:find("\0", 1, true) then
+    notes.error = "内容过大或包含空字符，尚未保存；请保留输入并用编辑器处理"
+    markDirty("notes")
+    return
+  end
+  notes.mutate("save", notes.command("save", notes.note.name, notes.note.revision, notes.text))
+end
+function notes.go()
+  if not notes.navigation or notes.saving or notes.request then return end
+  if notes.dirty then notes.flush() return end
+  local nav = notes.navigation
+  notes.navigation = nil
+  if nav.external then
+    notes.launchPath(NOTES_DIR .. "/" .. nav.name)
+  elseif nav.create then
+    notes.mutate("create", notes.command("create", ""))
+  else
+    notes.selected, notes.note, notes.text = nav.name, nil, ""
+    notes.inputRev, notes.editVersion = notes.inputRev + 1, notes.editVersion + 1
+    notes.error, notes.conflict, notes.wantFocus = nil, false, nav.name ~= nil
+    persistLayout()
+    notes.refresh()
+  end
+  markDirty("notes")
+end
+function notes.select(name)
+  if notes.creating then return end
+  if name then
+    local exists = false
+    for _, item in ipairs(notes.list) do if item.name == name then exists = true break end end
+    if not exists then return end
+  end
+  notes.navigation = { name = name }
+  notes.go()
+  render("notes")
+end
+function onNoteNew(copyDraft)
+  if notes.creating then return end
+  if copyDraft then
+    if notes.saving or notes.request then return end
+    if #notes.text > 65536 or notes.text:find("\0", 1, true) then notes.error = "内容过大或包含空字符，请复制到外部编辑器" render("notes") return end
+    notes.mutate("create", notes.command("create", notes.text))
+  else
+    notes.navigation = { create = true }
+    notes.go()
+  end
+  render("notes")
+end
+function onNoteEdited(value, rev)
+  if not panelVisible or not open.notes or notes.creating or not notes.note or not notes.note.editable then return end
+  if rev and rev ~= notes.inputRev then return end
+  if type(value) ~= "string" then return end
+  local wasDirty = notes.dirty
+  notes.text = value:gsub("\r\n", "\n")
+  notes.editVersion = notes.editVersion + 1
+  notes.dirty = notes.text ~= notes.note.text
+  notes.saveAt = notes.dirty and not notes.conflict and (noctalia.nowMs() + 800) or nil
+  if not notes.conflict then notes.error = nil end
+  if wasDirty ~= notes.dirty then markDirty("notes") else wake() end
+end
+function notes.task(line)
+  if not notes.note then return nil end
+  for _, task in ipairs(notes.note.tasks) do if task.line == tonumber(line) then return task end end
+  return nil
+end
+function onNoteToggle(line, name, revision)
+  if not panelVisible or not open.notes or notes.dirty or notes.saving or notes.request or notes.conflict then return end
+  if name and (not notes.note or notes.note.name ~= name or notes.note.revision ~= revision) then return end
+  local task = notes.task(line)
+  if not task or not notes.note.editable then return end
+  -- Update the visible editor too, before accepting further keyboard input.
+  local start = 1
+  -- Match Python bytes.splitlines: CR, LF and CRLF are physical line breaks.
+  -- Locate the checkbox without changing the existing newline bytes.
+  for _ = 1, task.line - 1 do
+    local nextLine = notes.text:find("[\r\n]", start)
+    if not nextLine then return end
+    start = nextLine + (notes.text:sub(nextLine, nextLine + 1) == "\r\n" and 2 or 1)
+  end
+  local stop = notes.text:find("[\r\n]", start) or (#notes.text + 1)
+  local marker = notes.text:find("%[[ xX]%]", start)
+  if not marker or marker >= stop then return end
+  notes.text = notes.text:sub(1, marker) .. (task.done and " " or "x") .. notes.text:sub(marker + 2)
+  notes.inputRev, notes.editVersion = notes.inputRev + 1, notes.editVersion + 1
+  notes.dirty = true
+  notes.mutate("toggle", notes.command("toggle", notes.note.name, notes.note.revision, task.line, task.done and "0" or "1"))
+  render("notes")
+end
+function onNoteFocus(line, name, revision)
+  if not panelVisible or not open.notes or notes.dirty or notes.saving or notes.request or notes.conflict then return end
+  if name and (not notes.note or notes.note.name ~= name or notes.note.revision ~= revision) then return end
+  local task = notes.task(line)
+  if not task or task.done then return end
+  if timer.running or timer.pending then notes.error = "已有计时正在进行，请先暂停或停止它" render("notes") return end
+  timer.task = { label = task.text, note = notes.note.name, line = task.line }
+  timer.durSec, timer.remain, timer.roundSec = 1500, 1500, 1500
+  timer.done, timer.error = false, nil
+  timerInput.text, timerInput.sec, timerInput.rev = "", nil, timerInput.rev + 1
+  notes.error = nil
+  activeCard = "timer"
+  if focusMode then for key in pairs(CARD_KEYS) do setCardOpen(key, key == "timer") end
+  else setCardOpen("timer", true) end
+  timerStart()
+  markDirty("notes")
+  render("timer")
+  persistLayout()
+end
+function notes.launchPath(path)
+  local function finish(res) if res.exitCode ~= 0 then notes.error = "无法打开，请检查默认编辑器或文件管理器" markDirty("notes") end end
+  if not noctalia.runAsync({ "xdg-open", path }, finish) then finish({ exitCode = -1 }) end
+end
+function notes.openFile(folder)
+  if folder then notes.launchPath(NOTES_DIR) return end
+  if not notes.selected or notes.creating then return end
+  notes.navigation = { external = true, name = notes.selected }
+  notes.go() -- Reuse the save/read queue; never open an outdated disk version.
+  render("notes")
+end
+function notes.card()
+  local children = { cardHeader("notes", "notes", "便签", { ui.label({ text = notes.loaded and (#notes.list .. " 份") or "本地 Markdown", fontSize = FS.small, color = CL.muted }) }) }
+  if bodyVisible("notes") then
+    children[#children + 1] = ui.row({ align = "center", gap = SP.tight }, {
+      ui.button({ key = "notes-back", glyph = "arrow-left", width = 28, height = 28, variant = "ghost", visible = notes.selected ~= nil,
+        enabled = not notes.creating, tooltip = "保存并返回便签列表", onClick = function() notes.select(nil) end }),
+      ui.label({ text = notes.selected or "我的便签", fontSize = FS.body, fontWeight = "bold", maxLines = 1, flexGrow = 1 }),
+      ui.button({ key = "notes-new", text = "新建", glyph = "plus", variant = "secondary", controlSize = "sm", enabled = not notes.creating,
+        tooltip = "新建一份便签，不覆盖已有文件", onClick = function() onNoteNew(false) end }),
+      ui.button({ key = "notes-open", glyph = notes.selected and "external-link" or "folder", width = 28, height = 28, variant = "ghost",
+        tooltip = notes.selected and "用外部编辑器打开" or "打开便签目录", onClick = function() notes.openFile(not notes.selected) end }),
+    })
+    if notes.creating then
+      children[#children + 1] = emptyState("file-text", "正在新建便签…")
+    elseif not notes.selected then
+      if #notes.list == 0 and not notes.request then children[#children + 1] = emptyState("notes", "点击「新建」，开始写第一份便签") end
+      if notes.request then children[#children + 1] = emptyState("file-text", "正在读取便签…") end
+      for _, item in ipairs(notes.list) do
+        local name = item.name
+        children[#children + 1] = listRow("note-" .. name, false, function() notes.select(name) end, {
+          ui.glyph({ name = "file-text", size = 16, color = CL.muted }),
+          ui.label({ text = item.title, fontSize = FS.body, flexGrow = 1, maxLines = 1 }),
+          ui.glyph({ name = "chevron-right", size = 12, color = CL.muted }),
+        })
+      end
+      if notes.truncated then children[#children + 1] = ui.label({ text = "仅列出前 100 份；更多文件请打开目录", fontSize = FS.small, color = CL.muted }) end
+    elseif notes.note then
+      local current, rev = notes.note, notes.inputRev
+      if current.editable then
+        children[#children + 1] = ui.row({ height = 260, align = "stretch" }, {
+          ui.input(focusOnce({ key = "notes-editor-" .. rev, value = notes.text, multiline = true, submitOnEnter = false,
+            flexGrow = 1, placeholder = "在这里写便签…", focus = notes.wantFocus or nil,
+            onChange = function(value) onNoteEdited(value, rev) end })),
+        })
+      else children[#children + 1] = emptyState("file-text", "文件较大或含空字符，请用外部编辑器打开") end
+      local status = notes.saving and "保存中…" or (notes.dirty and "未保存" or "已保存")
+      children[#children + 1] = ui.row({ align = "center", gap = SP.tight }, {
+        ui.label({ key = "notes-save-status", text = status, fontSize = FS.small, color = notes.dirty and "primary" or CL.muted, flexGrow = 1 }),
+        ui.label({ text = "自动保存", fontSize = FS.small, color = CL.muted }),
+        ui.button({ key = "notes-save", glyph = "device-floppy", width = 28, height = 28, variant = "ghost", enabled = notes.dirty and not notes.saving and not notes.conflict,
+          tooltip = "立即保存", onClick = function() notes.flush() render("notes") end }),
+      })
+      if #current.tasks == 0 then
+        children[#children + 1] = ui.label({ text = "写下 - [ ] 事项，即可在下方勾选或开始专注计时。", fontSize = FS.small, color = CL.muted, maxLines = 2 })
+      else
+        children[#children + 1] = ui.label({ text = "待办 · " .. (current.taskCount - current.doneCount) .. " 项未完成", fontSize = FS.small, color = CL.muted })
+      end
+      local busy = notes.dirty or notes.saving or notes.request or notes.conflict
+      for _, task in ipairs(current.tasks) do
+        local line = task.line
+        local active = timer.running and timer.task and timer.task.note == current.name and timer.task.line == line and timer.task.label == task.text
+        children[#children + 1] = ui.row({ key = "task-" .. line, padding = 6, radius = RD.row, gap = 6, align = "center", fill = active and CL.rowActive or CL.row }, {
+          ui.button({ key = "task-check-" .. line, glyph = task.done and "square-check" or "square", width = 28, height = 28, variant = "ghost", enabled = not busy and current.editable,
+            tooltip = task.done and "标记为未完成" or "完成这项待办", onClick = function() onNoteToggle(line, current.name, current.revision) end }),
+          ui.label({ text = task.text, flexGrow = 1, fontSize = FS.body, maxLines = 2, color = task.done and CL.muted or "on_surface" }),
+          ui.button({ key = "task-focus-" .. line, text = active and "专注中" or "25分", variant = active and "secondary" or "ghost", controlSize = "sm",
+            enabled = not task.done and not busy and not timer.running and not timer.pending, tooltip = "专注 25 分钟，到点不自动勾选完成", onClick = function() onNoteFocus(line, current.name, current.revision) end }),
+        })
+      end
+      if current.truncated then children[#children + 1] = ui.label({ text = "仅显示前 100 项待办", fontSize = FS.small, color = CL.muted }) end
+    else children[#children + 1] = emptyState("file-text", "正在打开便签…") end
+    if notes.error then children[#children + 1] = ui.label({ text = notes.error, fontSize = FS.small, color = "error", maxLines = 4 }) end
+    if notes.conflict then
+      children[#children + 1] = ui.button({ key = "notes-save-copy", text = "将当前输入另存为新便签", variant = "secondary", controlSize = "sm", onClick = function() onNoteNew(true) end })
+    end
+  end
+  notes.wantFocus = false
+  local tasks = notes.note and #notes.note.tasks or 0
+  return cardShell("notes", children, notes.selected and math.min(520, 380 + tasks * 48) or math.min(330, math.max(100, #notes.list * 46 + 46)))
 end
 
 -- ============ 卡 4：系统一览 ============
@@ -1506,6 +1845,7 @@ end
 -- ============ 生命周期 ============
 local cardBuilders = {
   search = searchCard,
+  notes = function() return notes.card() end,
   wins = winsCard,
   timer = timerCard,
   sysmon = sysCard,
@@ -1546,6 +1886,7 @@ local function toolbarStatus()
   for _, key in ipairs(order) do if open[key] then count = count + 1 end end
   local status = timer.running and (timer.adopted and "后台计时中" or ("计时 " .. fmtSec(timer.remain)))
     or (count .. " 项展开")
+  if timer.running and timer.task then status = trunc(timer.task.label, 10) .. " · " .. status end
   return status
 end
 updateToolbarStatus = function()
@@ -1614,7 +1955,7 @@ render = function(key)
       })
       for _, k in ipairs(order) do
         if (pinned[k] == true) == pinGroup then
-          if not cardCache[k] or (dirtyCards[k] and (next(folds) == nil or motionNodes[k] == nil or k == "search" or k == "timer")) then
+          if not cardCache[k] or (dirtyCards[k] and (next(folds) == nil or motionNodes[k] == nil or k == "search" or k == "timer" or k == "notes")) then
             cardCache[k] = cardBuilders[k]()
             dirtyCards[k] = nil
           end
@@ -1647,6 +1988,7 @@ local function restoreLayout()
   local raw = noctalia.readFile(layoutPath())
   local st = raw and noctalia.json.decode(raw)
   if type(st) ~= "table" then return end
+  notes.restoreName = type(st.notesFile) == "string" and st.notesFile or nil
   for k in pairs(CARD_KEYS) do
     if type(st.open) == "table" and type(st.open[k]) == "boolean" then open[k] = st.open[k] end
     pinned[k] = type(st.pinned) == "table" and st.pinned[k] == true or false
@@ -1726,11 +2068,13 @@ function onFrameTick(_deltaMs)
       render("pending")
     end
     if layoutSaveAt and now >= layoutSaveAt then flushLayout() end
+    if notes.saveAt and now >= notes.saveAt then notes.flush() end
   elseif changed then
     submitTree()
   end
   if changed then lastMotionSubmit = now end
-  panel.setNeedsFrameTick(next(folds) ~= nil or next(feedback) ~= nil or stateDirty or #bootQueue > 0 or layoutSaveAt ~= nil)
+  panel.setNeedsFrameTick(next(folds) ~= nil or next(feedback) ~= nil or stateDirty or #bootQueue > 0 or layoutSaveAt ~= nil
+    or (notes.saveAt ~= nil and notes.saving == nil and notes.request == nil))
 end
 
 noctalia.setUpdateInterval(1000)
@@ -1745,7 +2089,8 @@ function onOpen(_context)
   lastMotionSubmit, settleAt = 0, 0
   if customizing then for key in pairs(CARD_KEYS) do dirtyCards[key] = true end end
   customizing = false
-  dirtyCards.search = true
+  dirtyCards.search, dirtyCards.notes = true, true
+  -- Notes must remount from the latest buffer, even if a save/read/conflict is pending.
   -- 面板关闭会销毁原生树；首屏不带收起的大列表，避免重新打开时集中创建。
   for key in pairs(CARD_KEYS) do
     if not open[key] then
@@ -1763,6 +2108,7 @@ function onOpen(_context)
     function() timerAdopt() end,
     refreshWins,
     refreshRecent,
+    function() if open.notes then notes.refresh() end end,
   }
   for _, key in ipairs({ "wins" }) do
     if not retainedBodies[key] then
@@ -1775,6 +2121,7 @@ function onOpen(_context)
 end
 
 function onClose()
+  notes.flush() -- 关闭时立即提交最后一段输入；在途保存完成后继续排空后续输入。
   panelVisible = false
   generation = generation + 1
   focusEdges = {}
@@ -1793,17 +2140,38 @@ function onClose()
 end
 
 function onExit(_signal, _reason)
+  notes.flush()
   if layoutSaveAt then flushLayout() end
 end
 
 -- IPC 也用于快捷键绑定与无鼠标回归；不暴露任意执行或文件路径。
 function onIpc(event, payload)
+  if event == "timer" then
+    restoreLayout()
+    -- The v2 worker clears its record on completion, even while UI ticks sleep.
+    -- Do not mistake a failed read or an in-flight control command for completion.
+    if timer.running and not timer.pending then
+      local raw = noctalia.readFile(timerPidPath())
+      if type(raw) == "string" and trim(raw) == "" then
+        timer.rev = timer.rev + 1
+        timer.running, timer.adopted, timer.done = false, false, true
+        timer.remain, timer.round = 0, nil
+        markDirty("notes")
+      end
+    end
+    timerAdopt()
+    timerIpc(payload)
+    if not panelVisible and layoutSaveAt then flushLayout() end
+    return
+  end
   if not panelVisible then return end
   if event == "toggle" and CARD_KEYS[payload] then toggleCard(payload)
   elseif event == "layout" and (payload == "daily" or payload == "all" or payload == "none") then setLayout(payload)
   elseif event == "focus" then setFocusMode(not focusMode)
   elseif event == "customize" then customizing = not customizing render()
-  elseif event == "timer" then timerIpc(payload)
+  elseif event == "notes" and payload == "refresh" then notes.refresh(true)
+  elseif event == "notes" and payload == "new" then onNoteNew(false)
+  elseif event == "notes" and type(payload) == "string" and payload:sub(1, 7) == "select:" then notes.select(payload:sub(8))
   elseif event == "pin" and CARD_KEYS[payload] then pinned[payload] = not pinned[payload] render() persistLayout()
   end
 end
@@ -1816,6 +2184,8 @@ function update()
   if open.wins or winsTick % 3 == 1 then refreshWins() end
   recent.tick = recent.tick + 1
   if recent.tick % 30 == 1 then refreshRecent() end
+  -- 展开便签时才低频刷新；保存操作不随面板关闭取消。
+  if open.notes and updateTick % 10 == 1 then notes.refresh() end
   -- 计时器推进；接管中的后台计时每 3 秒探测一次是否已结束
   if timer.running and not timer.adopted then
     local rem = (timer.deadlineMs - noctalia.nowMs()) / 1000
@@ -1824,6 +2194,7 @@ function update()
       timer.done = true
       timer.remain = 0
       markDirty("timer")
+      markDirty("notes")
     else
       timer.remain = rem
       markDirty("timer") -- 收起时顶部计时摘要也持续更新

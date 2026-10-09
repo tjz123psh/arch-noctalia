@@ -9,7 +9,8 @@
 #   6) 覆盖"内容不同"的文件前，先把旧内容备份到 .state/overwritten/<时间戳>/；
 #   7) 两种环境适配（不改挂载设置）：FAT 系（vfat/exfat，如 ESP）没有 Unix 权限位——权限由挂载选项
 #      决定，这类文件系统跳过权限位校验；系统文件普通用户读不到时，校验改用 root 读；
-#   8) 部署后收尾：建标准用户目录、locale-gen、登录 shell（fish）、GRUB 菜单重建。
+#   8) 部署后收尾：建标准用户目录、locale-gen、登录 shell（fish）、GRUB 菜单重建、
+#      GSettings vendor override 重编译（*.gschema.override → glib-compile-schemas）。
 set -Eeuo pipefail
 AN_ROOT_DIR="${AN_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 # shellcheck source=lib/common.sh
@@ -203,6 +204,20 @@ fi
 if have grub-mkconfig && [[ -d /boot/grub ]]; then
   as_root grub-mkconfig -o /boot/grub/grub.cfg >/dev/null || die "grub-mkconfig failed"
   ok "GRUB menu regenerated (theme applied)"
+fi
+
+# e) GSettings vendor override：/usr/share/glib-2.0/schemas/*.gschema.override 已随文件部署，
+#    重编译 schema 归档让"系统默认值"生效（如 Mission Center 的外观默认值）。
+#    需要该 schema 已安装（包由 03/06 步装入），否则跳过——不因一个可选程序中断安装。
+if [[ -f /usr/share/glib-2.0/schemas/io.missioncenter.MissionCenter.gschema.xml ]]; then
+  if have glib-compile-schemas; then
+    as_root glib-compile-schemas /usr/share/glib-2.0/schemas || die "glib-compile-schemas failed"
+    ok "GSettings schemas recompiled (vendor overrides applied)"
+  else
+    warn "glib-compile-schemas not available — gschema overrides not applied"
+  fi
+else
+  warn "mission-center schema not installed — skipped GSettings override compile"
 fi
 
 ok "Stage 07 config: done"

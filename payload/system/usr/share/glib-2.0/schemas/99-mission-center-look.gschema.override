@@ -1,0 +1,11 @@
+# Mission Center（Super+M「任务中心」）外观默认值
+# 由 arch-noctalia 随 07-config 部署；部署后需 glib-compile-schemas /usr/share/glib-2.0/schemas 生效。
+# 注意：这里设置的是"系统默认值"。用户在程序里改过的值存在 dconf 里，dconf 优先，不会被覆盖。
+# 配套的窗口毛玻璃样式在 payload/home/.config/gtk-4.0/gtk.css（作用域 .mission-center-window）。
+
+[io.missioncenter.MissionCenter]
+performance-smooth-graphs=true
+performance-sliding-graphs=true
+performance-page-data-points=120
+performance-show-network-virtual=false
+performance-show-network-other=false

@@ -1,16 +1,53 @@
 #!/usr/bin/env bash
-# rice-btop-theme — 让 btop 主题跟随 Noctalia 现行色板。
-# 色源：~/.config/kitty/themes/noctalia.conf（Noctalia 每次调色板变化都会重生成它）。
-# 产物：~/.config/btop/themes/noctalia.theme（覆盖写；btop 下次启动时生效）。
-# 触发：Noctalia hook colors_changed（见 ~/.config/noctalia/hooks.toml）；也可手动跑。
+# rice-btop-theme — 从 Noctalia kitty 色板生成 btop 主题；无参调用。
+# 由 colors_changed 调用；只原子更新主题文件，不发未核验的信号，btop 下次启动时生效。
 set -euo pipefail
+umask 077
 
-SRC="${HOME}/.config/kitty/themes/noctalia.conf"
-OUT="${HOME}/.config/btop/themes/noctalia.theme"
+case ${XDG_CONFIG_HOME:-} in
+  /*) CONFIG_HOME=$XDG_CONFIG_HOME ;;
+  *) CONFIG_HOME="${HOME:?HOME must be set}/.config" ;;
+esac
+[[ "$CONFIG_HOME" == /* ]] || { printf 'config home must be absolute\n' >&2; exit 1; }
+SRC="$CONFIG_HOME/kitty/themes/noctalia.conf"
 [[ -f "$SRC" ]] || exit 0
-mkdir -p "$(dirname "$OUT")"
+OUT_DIR="$CONFIG_HOME/btop/themes"
+mkdir -p -- "$OUT_DIR"
+OUT_DIR=$(cd -- "$OUT_DIR" && pwd -P)
+OUT="$OUT_DIR/noctalia.theme"
+LOCK="$OUT_DIR/.noctalia.theme.lock"
+# The lock inode is persistent: deleting it would break serialization.
+[[ ! -L "$LOCK" && ( ! -e "$LOCK" || -f "$LOCK" ) ]] || exit 1
+exec {lock_fd}>>"$LOCK"
+flock -x "$lock_fd"
+[[ ! -L "$OUT" && ( ! -e "$OUT" || -f "$OUT" ) ]] || exit 1
 
-get() { awk -v k="$1" '$1==k {print $2; exit}' "$SRC"; }
+# One read of SRC, first occurrence wins exactly as in the original get().
+# Validate every required color before shell arithmetic or output creation.
+palette=$(LC_ALL=C awk '
+  BEGIN {
+    n=split("background foreground color1 color2 color4 color6 color7 color8", keys, " ")
+    for (i=1; i<=n; i++) required[keys[i]]=1
+  }
+  $1 in required && !seen[$1]++ { colors[$1]=$2 }
+  END {
+    for (i=1; i<=n; i++) {
+      k=keys[i]
+      if (length(colors[k]) != 7 || colors[k] !~ /^#[0-9a-fA-F]+$/) {
+        print "rice-btop-theme: missing or invalid " k > "/dev/stderr"
+        bad=1
+      }
+    }
+    if (bad) exit 1
+    for (i=1; i<=n; i++) print keys[i], colors[keys[i]]
+  }
+' "$SRC")
+declare -A colors
+while read -r key value; do colors["$key"]=$value; done <<<"$palette"
+bg=${colors[background]}; fg=${colors[foreground]}
+c1=${colors[color1]}; c2=${colors[color2]}; c4=${colors[color4]}
+c6=${colors[color6]}; c7=${colors[color7]}; c8=${colors[color8]}
+
 mix() { # mix a b pct —— 在 a、b 两色之间按 b 的占比 pct(%) 混合
   local a="${1#\#}" b="${2#\#}" p="${3:-50}"
   printf '#%02x%02x%02x' \
@@ -19,15 +56,25 @@ mix() { # mix a b pct —— 在 a、b 两色之间按 b 的占比 pct(%) 混合
     $(( (16#${a:4:2} * (100 - p) + 16#${b:4:2} * p) / 100 ))
 }
 
-bg=$(get background); fg=$(get foreground)
-c1=$(get color1)  # 强调末端（salmon）
-c2=$(get color2)  # primary
-c4=$(get color4)  # secondary
-c6=$(get color6)  # 中间调
-c7=$(get color7)  # 亮调
-c8=$(get color8)  # 灰调
-
-cat > "$OUT" <<EOF
+meter=$(mix "$bg" "$fg" 18)
+divider=$(mix "$bg" "$fg" 32)
+tmp=''
+cleanup() {
+  local status=$?
+  trap - EXIT
+  # Only the exact mktemp-owned file in the resolved output directory is removed.
+  if [[ -n "$tmp" && "$(dirname -- "$tmp")" == "$OUT_DIR" && -f "$tmp" && ! -L "$tmp" ]]; then
+    rm -f -- "$tmp" || :
+  fi
+  exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+tmp=$(mktemp -- "$OUT_DIR/.noctalia.theme.XXXXXXXXXX")
+[[ "$(dirname -- "$tmp")" == "$OUT_DIR" && -f "$tmp" && ! -L "$tmp" ]] || exit 1
+cat > "$tmp" <<EOF
 # Noctalia 色板主题 —— 由 rice-btop-theme 按现行色板生成（勿手改；换壁纸/调色板后自动重生成）
 theme[main_bg]="${bg}"
 theme[main_fg]="${fg}"
@@ -37,13 +84,13 @@ theme[selected_bg]="${c2}"
 theme[selected_fg]="${bg}"
 theme[inactive_fg]="${c8}"
 theme[graph_text]="${c6}"
-theme[meter_bg]="$(mix "$bg" "$fg" 18)"
+theme[meter_bg]="${meter}"
 theme[proc_misc]="${c4}"
 theme[cpu_box]="${c2}"
 theme[mem_box]="${c4}"
 theme[net_box]="${c6}"
 theme[proc_box]="${c6}"
-theme[div_line]="$(mix "$bg" "$fg" 32)"
+theme[div_line]="${divider}"
 theme[temp_start]="${c4}"
 theme[temp_mid]="${c2}"
 theme[temp_end]="${c1}"
@@ -72,4 +119,13 @@ theme[process_start]="${c8}"
 theme[process_mid]="${c6}"
 theme[process_end]="${c7}"
 EOF
+# Preserve an existing regular theme's mode; new themes stay user-private (0600).
+if [[ -f "$OUT" && ! -L "$OUT" ]]; then
+  chmod --reference="$OUT" -- "$tmp"
+fi
+# Both paths are exact, absolute, in the same resolved directory. -T forbids
+# treating a substituted destination directory as a move-into-directory request.
+[[ "$(dirname -- "$tmp")" == "$OUT_DIR" && "$(dirname -- "$OUT")" == "$OUT_DIR" && ! -L "$OUT" ]] || exit 1
+mv -fT -- "$tmp" "$OUT"
+tmp=''
 printf 'btop theme regenerated from current palette: %s\n' "$OUT"

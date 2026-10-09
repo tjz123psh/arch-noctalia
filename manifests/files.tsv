@@ -24,13 +24,13 @@ payload/home/.config/fcitx5/conf/punctuation.conf	/home/pang/.config/fcitx5/conf
 payload/home/.config/fcitx5/profile	/home/pang/.config/fcitx5/profile	600	99e210abb5a1e02b0495983d865d0f65
 payload/home/.config/fish/config.fish	/home/pang/.config/fish/config.fish	600	75cbc310dfe5b8e62b23d20ae6dd7848
 payload/home/.config/fontconfig/fonts.conf	/home/pang/.config/fontconfig/fonts.conf	644	d6acc253adc8ef5bd1e678014aa49097
-payload/home/.config/fuzzel/fuzzel.ini	/home/pang/.config/fuzzel/fuzzel.ini	644	2d4cb66c72e3f04aeb8ed6d9f596f053
+payload/home/.config/fuzzel/fuzzel.ini	/home/pang/.config/fuzzel/fuzzel.ini	644	d1a19effee7b476ddda72cea4b46751b
 payload/home/.config/fuzzel/themes/noctalia	/home/pang/.config/fuzzel/themes/noctalia	644	d853dd326be4db3c04324a7ae762a1f5
 payload/home/.config/gtk-3.0/bookmarks	/home/pang/.config/gtk-3.0/bookmarks	644	c786c66e92f89fc90fac9b8108638fd0
 payload/home/.config/gtk-3.0/gtk.css	/home/pang/.config/gtk-3.0/gtk.css	644	911d7779ec37d2ec865ea42b9042b233
 payload/home/.config/gtk-3.0/noctalia.css	/home/pang/.config/gtk-3.0/noctalia.css	644	e3f058f3d4ad0448e17bb28d2a9810a9
 payload/home/.config/gtk-3.0/settings.ini	/home/pang/.config/gtk-3.0/settings.ini	644	81dedcf377cc5df48512d3bde687352b
-payload/home/.config/gtk-4.0/gtk.css	/home/pang/.config/gtk-4.0/gtk.css	644	fe00e3aa479c36268c83e1711f2ea711
+payload/home/.config/gtk-4.0/gtk.css	/home/pang/.config/gtk-4.0/gtk.css	644	203af7a9d8579230a9a4908cfd2263db
 payload/home/.config/gtk-4.0/noctalia.css	/home/pang/.config/gtk-4.0/noctalia.css	644	6e78a06e09330ea3300e38ef9ad59239
 payload/home/.config/gtk-4.0/settings.ini	/home/pang/.config/gtk-4.0/settings.ini	644	1984efc9a529b40a060c055ffc65df31
 payload/home/.config/kdeglobals	/home/pang/.config/kdeglobals	644	5a8213dd3359c4bf1a7c6683809ab1fb
@@ -39,14 +39,14 @@ payload/home/.config/kitty/themes/noctalia.conf	/home/pang/.config/kitty/themes/
 payload/home/.config/mimeapps.list	/home/pang/.config/mimeapps.list	644	723a0486302493f6b67eccf1f8605752
 payload/home/.config/mpv/input.conf	/home/pang/.config/mpv/input.conf	644	5bcdd4458c5a51af460358f096959f20
 payload/home/.config/mpv/mpv.conf	/home/pang/.config/mpv/mpv.conf	644	9c82b939bd96210a52032fa10578e54b
-payload/home/.config/niri/conf.d/animations.kdl	/home/pang/.config/niri/conf.d/animations.kdl	644	a1b28f515b3d9f270ed91b256c080316
+payload/home/.config/niri/conf.d/animations.kdl	/home/pang/.config/niri/conf.d/animations.kdl	644	2f4096e01b3860d62ea0f6d23fff2031
 payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	d90ff9ceb6af330eff4e9243eddc3787
 payload/home/.config/niri/conf.d/cursor.kdl	/home/pang/.config/niri/conf.d/cursor.kdl	644	da3d31125409f685f2dd5ffcb3c87cb4
 payload/home/.config/niri/conf.d/environment.kdl	/home/pang/.config/niri/conf.d/environment.kdl	644	e45f34c51d19f609b89570898a0584ae
 payload/home/.config/niri/conf.d/general.kdl	/home/pang/.config/niri/conf.d/general.kdl	644	4e00543e1ddac2d25b58333982010608
 payload/home/.config/niri/conf.d/hotkey-overlay.kdl	/home/pang/.config/niri/conf.d/hotkey-overlay.kdl	644	43c6821bbb9a3d590885638c6ab188ab
 payload/home/.config/niri/conf.d/input.kdl	/home/pang/.config/niri/conf.d/input.kdl	644	945487f07ed9d4b8465e74fe194fd43a
-payload/home/.config/niri/conf.d/layer-rules.kdl	/home/pang/.config/niri/conf.d/layer-rules.kdl	644	05f552f22fd8bd36e59679f86e111a6f
+payload/home/.config/niri/conf.d/layer-rules.kdl	/home/pang/.config/niri/conf.d/layer-rules.kdl	644	10c310c6468b28df5df0e1c23da6137c
 payload/home/.config/niri/conf.d/layout.kdl	/home/pang/.config/niri/conf.d/layout.kdl	644	166e409741a0398bd1277560d57e7f8c
 payload/home/.config/niri/conf.d/outputs.kdl	/home/pang/.config/niri/conf.d/outputs.kdl	644	3bbaf9a816a2faba882bb3d08d00d187
 payload/home/.config/niri/conf.d/overview.kdl	/home/pang/.config/niri/conf.d/overview.kdl	644	3683ca24a0023b1c69a74be0dc24d565
@@ -74,7 +74,7 @@ payload/home/.config/user-dirs.dirs	/home/pang/.config/user-dirs.dirs	600	45c968
 payload/home/.config/user-dirs.locale	/home/pang/.config/user-dirs.locale	644	0d61f8370cad1d412f80b84d143e1257
 payload/home/.config/zellij/config.kdl	/home/pang/.config/zellij/config.kdl	644	c1bf1f71354532303f2fc9c7783a81c0
 payload/home/.gitconfig	/home/pang/.gitconfig	644	6a08e646af723158277fe4d52dec4bfd
-payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	a58192f52d53466047ddc53665a3dfb9
+payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	8fcd2850b69e4a85decec1dba255a091
 payload/home/.local/share/applications/qq.desktop	/home/pang/.local/share/applications/qq.desktop	644	a93b140354cb6f3ee0c6f3f86a2d9090
 payload/home/.local/share/applications/linuxqq-wayland-fix.desktop	/home/pang/.local/share/applications/linuxqq-wayland-fix.desktop	644	73afa243ba8c4f34e8426bbd1a8ae73d
 payload/home/Pictures/wallpapers/初雪.png	/home/pang/Pictures/wallpapers/初雪.png	644	6ce51e6481a10fba6ee5bcad1cf3b1fd
@@ -92,24 +92,24 @@ payload/home/noctalia-plugins/magnifier/panel.luau	/home/pang/noctalia-plugins/m
 payload/home/noctalia-plugins/magnifier/plugin.toml	/home/pang/noctalia-plugins/magnifier/plugin.toml	644	a1464b2474433f4eb6a6cf375175bb3d
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/build.sh	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/build.sh	755	40e2534122b944e1014e32af482c2d37
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	644	951449208e8747885c4ab1a8777ea571
-payload/home/noctalia-plugins/sidebar/README.md	/home/pang/noctalia-plugins/sidebar/README.md	644	45c8c19863fb545919cb622cb016ecba
-payload/home/noctalia-plugins/sidebar/panel.luau	/home/pang/noctalia-plugins/sidebar/panel.luau	644	cadf991288dce036cff58428f2a0857d
-payload/home/noctalia-plugins/sidebar/plugin.toml	/home/pang/noctalia-plugins/sidebar/plugin.toml	644	6584dd16ceb14927a248a4021371abf1
+payload/home/noctalia-plugins/sidebar/README.md	/home/pang/noctalia-plugins/sidebar/README.md	644	2db90194e5daf2bddcb433a0d6f2d733
+payload/home/noctalia-plugins/sidebar/panel.luau	/home/pang/noctalia-plugins/sidebar/panel.luau	644	e20758146d01ea45e744f8fb8acef952
+payload/home/noctalia-plugins/sidebar/plugin.toml	/home/pang/noctalia-plugins/sidebar/plugin.toml	644	d508d66da78ff2e51ccd9912a9d7917a
 payload/home/noctalia-plugins/sidebar/tests/async_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/async_spec.lua	644	90be601c6c27392302f9822bfd92fb31
 payload/home/noctalia-plugins/sidebar/tests/benchmark.lua	/home/pang/noctalia-plugins/sidebar/tests/benchmark.lua	644	a0867d001e0a2eff808896a4f1a11076
 payload/home/noctalia-plugins/sidebar/tests/regressions_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/regressions_spec.lua	644	8e78658dfa3d51012621e8c41ec8b394
-payload/home/noctalia-plugins/sidebar/tests/run_all.sh	/home/pang/noctalia-plugins/sidebar/tests/run_all.sh	755	d6fa245216601e98cff45f976848ac3e
+payload/home/noctalia-plugins/sidebar/tests/run_all.sh	/home/pang/noctalia-plugins/sidebar/tests/run_all.sh	755	5f36db12ab67040e11c276e26244bd84
 payload/home/noctalia-plugins/sidebar/tests/shell_spec.py	/home/pang/noctalia-plugins/sidebar/tests/shell_spec.py	644	da367a44a1299fe882470d9403b86cde
-payload/home/noctalia-plugins/sidebar/tests/sidebar_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/sidebar_spec.lua	644	7a3d225b841d7b6460b2e6f92b2ee569
-payload/home/noctalia-plugins/sidebar/translations/en.json	/home/pang/noctalia-plugins/sidebar/translations/en.json	644	2d72cf26d44dac71ab5f317203237fc7
-payload/home/noctalia-plugins/sidebar/translations/zh-Hans.json	/home/pang/noctalia-plugins/sidebar/translations/zh-Hans.json	644	89bb65c2c184e4ed0dbe55170f2309ae
+payload/home/noctalia-plugins/sidebar/tests/sidebar_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/sidebar_spec.lua	644	21cd6fea2957183dc593113ed97b7a16
+payload/home/noctalia-plugins/sidebar/translations/en.json	/home/pang/noctalia-plugins/sidebar/translations/en.json	644	fad26d5187534c2654fc927ae9d415bb
+payload/home/noctalia-plugins/sidebar/translations/zh-Hans.json	/home/pang/noctalia-plugins/sidebar/translations/zh-Hans.json	644	099ea32dbf6646eb8b2a5d3e855719d9
 payload/home/scripts/desktop/fuzzel-askpass	/home/pang/scripts/desktop/fuzzel-askpass	755	f7f9570174741c06b78589b8eade07bc
 payload/home/scripts/desktop/gsudo	/home/pang/scripts/desktop/gsudo	755	7e2ac2fa9516a3335c138319417ea8d7
 payload/home/scripts/desktop/rice-aur	/home/pang/scripts/desktop/rice-aur	755	b23985db28773b90be190f0abcad89eb
 payload/home/scripts/desktop/rice-dnd-auto	/home/pang/scripts/desktop/rice-dnd-auto	755	25cf89309f7c7f353ba775acb8374135
 payload/home/scripts/desktop/rice-doctor	/home/pang/scripts/desktop/rice-doctor	711	9d1c43e1ff86f75b046c060940004973
 payload/home/scripts/desktop/rice-fix-wallpaper	/home/pang/scripts/desktop/rice-fix-wallpaper	711	d5895f90482705ca652e06a8d4cb7d71
-payload/home/scripts/desktop/rice-login-bg	/home/pang/scripts/desktop/rice-login-bg	755	238867a0da2f911d77d2d0a8ff6ec339
+payload/home/scripts/desktop/rice-login-bg	/home/pang/scripts/desktop/rice-login-bg	755	6ec10928568b4abee33fd3f814b53370
 payload/home/scripts/desktop/rice-record	/home/pang/scripts/desktop/rice-record	755	0455b2bd8128fd5aafcbc30fe22ed0cc
 payload/home/scripts/desktop/rice-wallpaper	/home/pang/scripts/desktop/rice-wallpaper	711	bf66df04ad8d87aef72ca70c4b490bdf
 payload/home/scripts/desktop/screenshot-clipboard	/home/pang/scripts/desktop/screenshot-clipboard	755	8a40ec2c9441cf7ffe5d8d35b2378c18
@@ -208,7 +208,7 @@ payload/system/usr/share/fonts/resource-han-rounded/ResourceHanRoundedCN-Medium.
 payload/system/usr/share/fonts/resource-han-rounded/ResourceHanRoundedCN-Regular.ttf	/usr/share/fonts/resource-han-rounded/ResourceHanRoundedCN-Regular.ttf	644	29f6b531a9ca7ad5df1f05137d545ce0
 payload/system/var/lib/avatars/pang/.face	/var/lib/avatars/pang/.face	644	fd95e09a15d3d0d03d4fe85a8c2335a6
 # ——— 2026-10-05 审计补齐：旧样本（VM）中已有、此前未入仓的文件 ———
-payload/home/.local/bin/niri-keys	/home/pang/.local/bin/niri-keys	755	f9540de6fa0c9e886fe565838a74c41b
+payload/home/.local/bin/niri-keys	/home/pang/.local/bin/niri-keys	755	f81a38b1238aa1353afe3206f81fcdc0
 payload/home/.local/share/applications/yazi.desktop	/home/pang/.local/share/applications/yazi.desktop	644	8b82cfe4b627e27940c027bfbb0b44e1
 payload/home/.local/share/nautilus-python/extensions/rice-menu.py	/home/pang/.local/share/nautilus-python/extensions/rice-menu.py	644	77dd6c5ea8dee5366de35b161beee98a
 payload/home/Documents/notes/便签-2.md	/home/pang/Documents/notes/便签-2.md	644	d41d8cd98f00b204e9800998ecf8427e
@@ -333,6 +333,16 @@ payload/system/etc/shells	/etc/shells	644	89346d49249948011890efa5f75cc253
 payload/system/etc/systemd/zram-generator.conf	/etc/systemd/zram-generator.conf	644	6061c86d045443c3b52b560e73adb3af
 payload/system/etc/vconsole.conf	/etc/vconsole.conf	644	d7cdb5bf660d946c3499c971055dad20
 # ——— 2026-10-05 btop 主题跟随色板：rice-btop-theme（系统现有 scripts 行在文首段） ———
-payload/home/scripts/desktop/rice-btop-theme	/home/pang/scripts/desktop/rice-btop-theme	755	5b55fc4a01e559b91917b857e1e68eac
+payload/home/scripts/desktop/rice-btop-theme	/home/pang/scripts/desktop/rice-btop-theme	755	18a5f112a419b779d3fd4dc478ca2b0e
 # ——— 2026-10-07 snapper timeline 每周一次（/etc drop-in 覆盖上游 hourly） ———
 payload/system/etc/systemd/system/snapper-timeline.timer.d/override.conf	/etc/systemd/system/snapper-timeline.timer.d/override.conf	644	38604bf84421d73b154ff25415b2376d
+# ——— 2026-10-09 Mission Center（Super+M「任务中心」）外观：窗口毛玻璃等样式随 gtk.css 部署；
+#     显示默认值（平滑曲线/120 点/隐藏虚拟网卡）用 GSettings vendor override 给出，
+#     07-config 部署后自动 glib-compile-schemas 生效；用户在程序里改过的值（dconf）优先。 ———
+payload/system/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	644	023c9b849ff70ce6f5af443f276d1ced
+payload/home/noctalia-plugins/sidebar/notes.py	/home/pang/noctalia-plugins/sidebar/notes.py	755	61dfdc9e577d7d3ec5c9a11e96c6a642
+payload/home/noctalia-plugins/sidebar/CHANGELOG.md	/home/pang/noctalia-plugins/sidebar/CHANGELOG.md	644	2a2121bcefea227d9b681cb13c1bb547
+payload/home/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	/home/pang/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	644	fdb03ca32c1d0299df918f37b47420f1
+payload/home/noctalia-plugins/sidebar/tests/notes_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.lua	644	ede96e079b954e0b991816e160fa954c
+payload/home/noctalia-plugins/sidebar/tests/notes_spec.py	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.py	644	fa2342780591353aeb6b108a1d9457ad
+payload/home/noctalia-plugins/sidebar/tests/experience_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/experience_spec.lua	644	29c3a9d1071d4731ba64250c45f10bba

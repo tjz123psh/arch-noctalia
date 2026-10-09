@@ -2,6 +2,7 @@
 # 运行 sidebar 插件的全部离线检查：不启动桌面程序、不播放媒体、不写入用户数据。
 # 用法：bash sidebar/tests/run_all.sh
 set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1
 cd -- "$(dirname -- "$0")/../.."
 
 echo "== 语法检查 =="
@@ -13,7 +14,11 @@ echo "== 离线回归 =="
 lua sidebar/tests/sidebar_spec.lua
 lua sidebar/tests/regressions_spec.lua
 lua sidebar/tests/async_spec.lua
+lua sidebar/tests/notes_spec.lua
+lua sidebar/tests/experience_spec.lua
+python3 sidebar/tests/notes_spec.py
 python3 sidebar/tests/shell_spec.py
+python3 sidebar/tests/timer_tasks_spec.py
 
 echo
 echo "== 性能基准（仅打印，不与基线比较）=="

@@ -3,6 +3,7 @@
 # channel: 同步库名（如 archlinuxcn）=有二进制、优先 pacman 装；aur=需 AUR 构建（paru）
 # role: explicit | dependency
 dbx-bin	aur	explicit	
+google-chrome	aur	explicit	官方 Chrome 稳定版（用户当前安装版）
 linuxqq-wayland-fix	aur	explicit	Wayland 修复版（屏幕共享/剪贴板/截图；替换 linuxqq-nt-bwrap）
 obsidian-bin	aur	explicit	
 opencode-bin	aur	explicit	

@@ -38,6 +38,7 @@ local function harness(motion, layout)
   env.noctalia = {
     getConfig = function(k) if k == "motion" then return motion or "light" end return nil end,
     pluginDataDir = function() return "/data" end,
+    pluginDir = function() return "/plugin" end,
     nowMs = function() return h.now end,
     setUpdateInterval = function() end,
     formatTime = function(pattern) return pattern == "%H:%M" and "12:00" or "10 / 06 · 12:00" end,
@@ -207,7 +208,7 @@ test("legacy and malformed layout migration is complete and unique", function()
   assert(h:height("search") == 0)
   local seen, count = {}, 0
   visit(h.tree, function(n) local k = n.props.key if k and k:match("^card%-") then assert(not seen[k]) seen[k] = true count = count + 1 end end)
-  assert(count == 5)
+  assert(count == 6)
 end)
 
 test("stable idle update does not rebuild unrelated cards", function()

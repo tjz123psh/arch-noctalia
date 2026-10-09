@@ -39,7 +39,7 @@ layer-rule {
     }
 }
 
-// fuzzel 启动器（Mod+D）：毛玻璃。实测 namespace = "launcher"，overlay 层。
+// fuzzel 备用启动器（Ctrl+M）：毛玻璃；主入口 Super+O 使用 Noctalia。
 layer-rule {
     match namespace="^launcher$"
 

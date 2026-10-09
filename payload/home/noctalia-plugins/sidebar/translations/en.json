@@ -8,6 +8,10 @@
       "label": "Recent files shown",
       "description": "How many recent files the card lists (3-15)."
     },
+    "notes_dir": {
+      "label": "Notes directory",
+      "description": "Create and edit Markdown notes in this directory, autosave their text, and check off tasks or start focus timers."
+    },
     "motion": {
       "label": "Card motion",
       "description": "Light expands content immediately with brief arrow feedback, avoiding repeated scroll resizing. Soft keeps a short reveal. Off only disables card motion, not the panel animation.",

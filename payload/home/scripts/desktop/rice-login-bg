@@ -1,21 +1,248 @@
-#!/bin/bash
-# rice-login-bg — 把当前壁纸同步为登录界面背景（Noctalia [hooks] wallpaper_changed 调用）
-# 依赖：/etc/nwg-hello/background.png 已通过 ACL 允许本用户写入（见 rice-log §41）
-# 也可手动运行；没有 hook 环境变量时回退到 noctalia msg wallpaper-get
-set -euo pipefail
+#!/usr/bin/python3 -I
+"""Validate and synchronize the Noctalia wallpaper_changed login background."""
+import argparse
+import errno
+import fcntl
+import os
+from pathlib import Path
+import shutil
+import stat
+import subprocess
+import sys
+import time
 
-export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}"
-export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/1000}"
+DEST = '/etc/nwg-hello/background.png'
+MAX_BYTES = 64 * 1024 * 1024
 
-dest=/etc/nwg-hello/background.png
-src="${NOCTALIA_WALLPAPER_PATH:-}"
-if [ -z "$src" ]; then
-	src="$(noctalia msg wallpaper-get 2>/dev/null || true)"
-fi
-if [ -z "$src" ] || [ ! -f "$src" ]; then
-	echo "rice-login-bg: 没有可用的壁纸路径，跳过" >&2
-	exit 0
-fi
+class Rejected(Exception):
+    pass
 
-cp -f -- "$src" "$dest"
-echo "rice-login-bg: 登录背景已同步 <- $(basename "$src")"
+
+def secure_open(path, flags):
+    """Absolute, regular, single-link file; reject symlinks in every component."""
+    if not os.path.isabs(path) or os.path.normpath(path) != path or '\x00' in path:
+        raise Rejected('路径必须是无歧义的绝对路径')
+    parts = path.split('/')[1:]
+    if not parts or any(p in ('', '.', '..') for p in parts):
+        raise Rejected('路径不安全')
+    directory = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+    try:
+        for part in parts[:-1]:
+            nxt = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=directory)
+            os.close(directory)
+            directory = nxt
+        fd = os.open(parts[-1], flags | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, dir_fd=directory)
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            os.close(fd)
+            raise Rejected('只接受单硬链接的普通文件')
+        return fd
+    finally:
+        os.close(directory)
+
+
+def signature(info):
+    return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns,
+            info.st_uid, info.st_gid, info.st_mode, info.st_nlink)
+
+
+def snapshot(fd):
+    before = os.fstat(fd)
+    if before.st_size > MAX_BYTES:
+        raise Rejected('图像文件超过 64 MiB 限制')
+    os.lseek(fd, 0, os.SEEK_SET)
+    chunks, size = [], 0
+    while True:
+        block = os.read(fd, min(1024 * 1024, MAX_BYTES + 1 - size))
+        if not block:
+            break
+        chunks.append(block)
+        size += len(block)
+        if size > MAX_BYTES:
+            raise Rejected('文件读取期间超出大小限制')
+    after = os.fstat(fd)
+    if signature(before) != signature(after) or size != before.st_size:
+        raise Rejected('文件读取期间发生变化，拒绝发布')
+    return b''.join(chunks), after
+
+
+def validate(data):
+    # Explicit raster coders: never interpret paths, URLs, SVG, PDF or ImageMagick scripts.
+    if data.startswith(b'\xff\xd8\xff'):
+        coder = 'jpeg'
+    elif data.startswith(b'\x89PNG\r\n\x1a\n'):
+        coder = 'png'
+    elif data.startswith((b'GIF87a', b'GIF89a')):
+        coder = 'gif'
+    elif len(data) >= 12 and data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+        coder = 'webp'
+    else:
+        raise Rejected('不支持或损坏的图像；只接受 JPEG/PNG/GIF/WebP')
+    decoder = shutil.which('magick')
+    if not decoder:
+        raise Rejected('没有可用的 ImageMagick 解码器；不绕过验证')
+    env = dict(os.environ)
+    env['MAGICK_TEMPORARY_PATH'] = '/nonexistent/rice-login-bg-no-disk-cache'
+    try:
+        result = subprocess.run([
+            decoder, '-regard-warnings', '-limit', 'memory', '512MiB',
+            '-limit', 'map', '0', '-limit', 'disk', '0', '-limit', 'thread', '1',
+            '-limit', 'time', '15', '-limit', 'width', '32768',
+            '-limit', 'height', '32768', '-limit', 'list-length', '32',
+            coder + ':-', 'null:'
+        ], input=data, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            timeout=20, env=env, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        raise Rejected('本地图像解码失败或超时') from None
+    if result.returncode:
+        raise Rejected('完整图像解码失败，原背景不变')
+
+
+def acl(fd):
+    try:
+        return os.getxattr(fd, 'system.posix_acl_access')
+    except OSError as exc:
+        if exc.errno in (errno.ENODATA, errno.ENOTSUP):
+            return None
+        raise
+
+
+def write_all(fd, data, fail_after=None):
+    os.lseek(fd, 0, os.SEEK_SET)
+    offset = 0
+    while offset < len(data):
+        if fail_after is not None and offset >= fail_after:
+            raise OSError(errno.EIO, 'isolated injected write failure')
+        count = min(1024 * 1024, len(data) - offset)
+        if fail_after is not None:
+            count = min(count, fail_after - offset)
+        written = os.write(fd, data[offset:offset + count])
+        if written <= 0:
+            raise OSError(errno.EIO, 'short write')
+        offset += written
+    os.ftruncate(fd, len(data))
+    os.fsync(fd)
+
+
+def locked_update(src, dest, fail_after=None, hold=0):
+    target = secure_open(dest, os.O_RDWR)  # Never O_TRUNC/O_CREAT; locking does not change bytes.
+    try:
+        deadline = time.monotonic() + 30
+        while True:
+            try:
+                fcntl.flock(target, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    raise Rejected('等待背景写锁超时；未写入')
+                time.sleep(0.05)
+        # Read and decode only after taking the publication lock: a slow old decode
+        # must not overtake a later fast decode that has already published.
+        source = secure_open(src, os.O_RDONLY)
+        try:
+            data, _ = snapshot(source)
+        finally:
+            os.close(source)
+        validate(data)  # Exactly the immutable bytes that will be copied; no re-encoding.
+        if hold:
+            print('test: lock held', flush=True)
+            time.sleep(hold)
+        old, old_info = snapshot(target)
+        old_acl = acl(target)
+        # Ensure fd still names the intended target and nobody changed it during preflight.
+        check = secure_open(dest, os.O_RDONLY)
+        try:
+            if signature(os.fstat(check)) != signature(old_info) or signature(os.fstat(target)) != signature(old_info):
+                raise Rejected('目标在预检期间发生变化；未写入')
+        finally:
+            os.close(check)
+        # Files with set-id bits could lose mode bits on write; do not silently change them.
+        if old_info.st_mode & (stat.S_ISUID | stat.S_ISGID):
+            raise Rejected('目标有特殊权限位；拒绝修改')
+        if old == data:
+            print('rice-login-bg: 背景内容相同，无需写入')
+            return
+        try:
+            write_all(target, data, fail_after)
+            actual, current = snapshot(target)
+            if actual != data or (current.st_dev, current.st_ino) != (old_info.st_dev, old_info.st_ino):
+                raise OSError(errno.EIO, 'post-write verification failed')
+            if (current.st_uid, current.st_gid, current.st_mode) != (old_info.st_uid, old_info.st_gid, old_info.st_mode) or acl(target) != old_acl:
+                raise OSError(errno.EIO, 'target metadata changed')
+        except BaseException:
+            try:
+                write_all(target, old)
+                restored, _ = snapshot(target)
+                if restored != old:
+                    raise OSError(errno.EIO, 'restore verification failed')
+                print('rice-login-bg: 写入失败，已恢复原背景字节', file=sys.stderr)
+            except BaseException:
+                print('rice-login-bg: 严重：写入与恢复均失败，目标可能不完整', file=sys.stderr)
+            raise
+        print('rice-login-bg: 登录背景已同步（保留源编码与目标 inode）')
+    finally:
+        os.close(target)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--test-root', help='隔离测试根目录；目标固定为该目录的 target/background.png')
+    parser.add_argument('--source', help='仅测试模式允许；不会回退到 Noctalia')
+    parser.add_argument('--test-fail-after', type=int)
+    parser.add_argument('--test-hold-lock', type=float, default=0)
+    args = parser.parse_args()
+    if args.test_root:
+        root = Path(args.test_root)
+        if not root.is_absolute() or root.resolve() != root or str(root) in ('/', '/etc', '/etc/nwg-hello'):
+            raise Rejected('测试根目录不安全')
+        info = root.stat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.geteuid() or stat.S_IMODE(info.st_mode) != 0o700:
+            raise Rejected('测试根目录必须由当前用户拥有且权限为 0700')
+        marker = secure_open(str(root / '.rice-login-bg-fixture'), os.O_RDONLY)
+        try:
+            if os.read(marker, 128) != b'rice-login-bg isolated fixture v1\n':
+                raise Rejected('不是明确创建的测试 fixture')
+        finally:
+            os.close(marker)
+        dest = str(root / 'target' / 'background.png')
+        src = args.source or ''
+        if src and not Path(src).is_relative_to(root):
+            raise Rejected('测试源必须位于测试根目录内')
+        if args.test_fail_after is not None and args.test_fail_after < 0:
+            raise Rejected('失败注入位置必须非负')
+        if not 0 <= args.test_hold_lock <= 5:
+            raise Rejected('测试锁等待必须在 0–5 秒范围内')
+    else:
+        if args.source is not None or args.test_fail_after is not None or args.test_hold_lock:
+            parser.error('测试参数必须与 --test-root 一起使用')
+        dest = DEST
+        src = os.environ.get('NOCTALIA_WALLPAPER_PATH', '')
+        if not src:
+            env = dict(os.environ)
+            env.setdefault('XDG_RUNTIME_DIR', '/run/user/' + str(os.geteuid()))
+            env.setdefault('WAYLAND_DISPLAY', 'wayland-1')
+            try:
+                result = subprocess.run(['noctalia', 'msg', 'wallpaper-get'],
+                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=5, env=env, check=False)
+                src = result.stdout.decode('utf-8').rstrip('\n') if result.returncode == 0 else ''
+            except (OSError, UnicodeError, subprocess.TimeoutExpired):
+                src = ''
+    if not src:
+        print('rice-login-bg: 没有可用的壁纸路径，跳过', file=sys.stderr)
+        return 0
+    try:
+        locked_update(src, dest, args.test_fail_after, args.test_hold_lock)
+    except FileNotFoundError:
+        print('rice-login-bg: 源、目标或路径组件不存在，未同步', file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == '__main__':
+    try:
+        sys.exit(main())
+    except (Rejected, OSError) as exc:
+        # Do not log paths, image names/content, environment values or decoder diagnostics.
+        message = str(exc) if isinstance(exc, Rejected) else '文件操作失败（errno=' + str(exc.errno) + '）'
+        print('rice-login-bg: ' + message, file=sys.stderr)
+        sys.exit(1)

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# niri 快捷键速查（美化版）：解析 conf.d/binds.kdl 分组着色，kitty + fzf 交互搜索。
-# 由 Super+/ 呼出；原版 hotkey-overlay 保留在 Super+Shift+/。
+# niri 快捷键速查（美化版）：解析 binds.kdl 与 recent-windows.kdl，kitty + fzf 交互搜索。
+# 由 Super+Shift+/ 呼出。
 
 set -euo pipefail
 
@@ -13,6 +13,7 @@ Options:
   -h, --help     显示帮助并退出
 
 默认行为:
+  桌面快捷键：Super+Shift+/。
   如果不在 kitty 中运行，会自动打开一个 kitty 窗口，再用 fzf 搜索快捷键。
 EOF
 }
@@ -27,6 +28,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 FILE="$HOME/.config/niri/conf.d/binds.kdl"
+RECENT_FILE="$HOME/.config/niri/conf.d/recent-windows.kdl"
 
 if [[ ! -f "$FILE" ]]; then
   printf '找不到 %s\n' "$FILE" >&2
@@ -102,6 +104,140 @@ parse_keybinds() {
   ' "$FILE"
 }
 
+# 只追加 recent-windows > binds 的真实子节点；键名来自配置，描述来自动作与属性。
+parse_recent_keybinds() {
+  [[ -f "$RECENT_FILE" ]] || return 0
+  python3 - "$RECENT_FILE" <<'PY'
+import re, sys
+from pathlib import Path
+
+# 先分词再看层级：字符串内的括号/注释符不影响结构，支持嵌套块注释与 /-。
+TOKEN = re.compile(
+    r'[^\S\n]+|//[^\n]*|\\[^\S\n]*(?://[^\n]*)?\n|'
+    r'/-|r(?P<hash>\#*)".*?"(?P=hash)|"(?:\\.|[^"\\])*"|'
+    r'[{};=\n]|[^\s{};="/\\]+', re.S)
+
+def lex(text):
+    tokens, pos = [], 0
+    while pos < len(text):
+        if text.startswith("/*", pos):
+            depth, pos = 1, pos + 2
+            while depth and pos < len(text):
+                if text.startswith("/*", pos):
+                    depth, pos = depth + 1, pos + 2
+                elif text.startswith("*/", pos):
+                    depth, pos = depth - 1, pos + 2
+                else:
+                    pos += 1
+            if depth:
+                raise ValueError("未闭合的块注释")
+            continue
+        match = TOKEN.match(text, pos)
+        if not match:
+            raise ValueError("无法识别的 KDL 字符或未闭合的字符串")
+        token, pos = match[0], match.end()
+        if ((token.isspace() and token != "\n")
+                or token.startswith("//") or token.startswith("\\")):
+            continue
+        tokens.append(token)
+    return tokens
+
+def unquote(token):
+    raw = re.fullmatch(r'r(\#*)"(.*)"\1', token, re.S)
+    if raw:
+        return raw[2]
+    if token.startswith('"'):
+        escapes = {'"': '"', "\\": "\\", "/": "/", "n": "\n", "r": "\r",
+                   "t": "\t", "b": "\b", "f": "\f"}
+        return re.sub(r'\\(?:u\{([0-9a-fA-F]{1,6})\}|(.))',
+                      lambda m: chr(int(m[1], 16)) if m[1] else escapes[m[2]],
+                      token[1:-1], flags=re.S)
+    return token
+
+def properties(header):
+    props, i = {}, 0
+    while i < len(header):
+        disabled = header[i] == "/-"
+        i += int(disabled)
+        if i >= len(header):
+            break
+        name, i = unquote(header[i]), i + 1
+        if i < len(header) and header[i] == "=":
+            if i + 1 >= len(header):
+                raise ValueError("属性缺少值")
+            if not disabled:
+                props[name] = unquote(header[i + 1])
+            i += 2
+    return props
+
+def parse(tokens):
+    i = 0
+    def nodes(nested=False):
+        nonlocal i
+        result = []
+        while i < len(tokens):
+            if tokens[i] in ("\n", ";"):
+                i += 1
+                continue
+            if tokens[i] == "}":
+                if not nested:
+                    raise ValueError("多余的右花括号")
+                i += 1
+                return result
+            disabled = tokens[i] == "/-"
+            i += int(disabled)
+            while i < len(tokens) and tokens[i] == "\n":
+                i += 1
+            if i >= len(tokens):
+                raise ValueError("/- 后缺少节点")
+            name, i = unquote(tokens[i]), i + 1
+            header, children = [], []
+            while i < len(tokens) and tokens[i] not in ("{", "}", "\n", ";"):
+                header.append(tokens[i])
+                i += 1
+            if i < len(tokens) and tokens[i] == "{":
+                i += 1
+                children = nodes(True)
+                if header[-1:] == ["/-"]:
+                    header.pop()
+                    children = []
+            if not disabled:
+                result.append((name, properties(header), children))
+        if nested:
+            raise ValueError("未闭合的子节点")
+        return result
+    return nodes()
+
+def describe(action, props):
+    title = {"next-window": "切换到下一个最近窗口",
+             "previous-window": "切换到上一个最近窗口"}.get(action, action)
+    qualifiers = []
+    for prop, labels in (("scope", {"output": "当前显示器", "workspace": "当前工作区", "all": "所有窗口"}),
+                         ("filter", {"app-id": "同应用"})):
+        if prop in props:
+            qualifiers.append(labels.get(props[prop], prop + "=" + props[prop]))
+    return title + ("（" + "，".join(qualifiers) + "）" if qualifiers else "")
+
+try:
+    tree = parse(lex(Path(sys.argv[1]).read_text(encoding="utf-8")))
+    for root, _, children in tree:
+        if root != "recent-windows":
+            continue
+        for section, _, bindings in children:
+            if section != "binds":
+                continue
+            for key, props, actions in bindings:
+                if not actions:
+                    continue
+                title = props.get("hotkey-overlay-title") or "；".join(
+                    describe(action, attrs) for action, attrs, _ in actions)
+                print("最近窗口切换\t" + re.sub(r"[\t\r\n]", " ", key)
+                      + "\t" + re.sub(r"[\t\r\n]", " ", title))
+except (OSError, ValueError, KeyError) as error:
+    sys.exit("niri-keys: recent-windows.kdl: " + str(error))
+PY
+}
+
 # 美化渲染：键名替换 + 按显示宽度对齐（CJK 双宽），一次 python 调用完成
 RENDER_PY=$(cat <<'PY'
 import re, sys, unicodedata
@@ -119,10 +255,9 @@ PAIRS = [
     ("XF86AudioPause", "暂停"), ("XF86AudioPlay", "播放"),
     ("XF86MonBrightnessDown", "亮度↓"), ("XF86MonBrightnessUp", "亮度↑"),
 ]
+ALIASES = dict(PAIRS)
 def fix(k):
-    for a, b in PAIRS:
-        k = k.replace(a, b)
-    return k
+    return "+".join(ALIASES.get(part, part) for part in k.split("+"))
 def wid(s):
     return sum(2 if unicodedata.east_asian_width(c) in "WF" else 1 for c in s)
 def pad(s, n):
@@ -148,7 +283,7 @@ while i < len(rows):
         while j < len(rows):
             c2, k2, d2 = rows[j]
             m2 = re.match(r"^(.*?)(\d+)$", k2)
-            if m2 and m2.group(1) == prefix and int(m2.group(2)) == start + (j - i) and d2 == desc:
+            if c2 == cat and m2 and m2.group(1) == prefix and int(m2.group(2)) == start + (j - i) and d2 == desc:
                 j += 1
             else:
                 break
@@ -171,7 +306,9 @@ sys.stdout.write("\n".join(out) + "\n")
 PY
 )
 
-rawdata="$(parse_keybinds)"
+rawdata="$(
+  { parse_keybinds; parse_recent_keybinds; } | awk -F '\t' '!seen[$2]++'
+)"
 if [[ -z "$rawdata" ]]; then
   printf '没有找到快捷键数据\n' >&2
   [[ -t 0 ]] && read -r -p "按回车关闭"

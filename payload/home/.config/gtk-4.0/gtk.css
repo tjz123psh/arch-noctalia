@@ -106,3 +106,172 @@ window > .background { background-color: @window_bg_color; background-image: non
 
 headerbar,
 headerbar > windowhandle { background-color: @headerbar_bg_color; background-image: none; color: @headerbar_fg_color; }
+/* ══════════════════════════════════════════════════════════════════════
+   Mission Center（Super+M「任务中心」）美化
+   · 只作用于 .mission-center-window：这是程序自己挂在窗口上的样式类，
+     所以其它 GTK 程序完全不受影响。
+   · 颜色全部取自 Noctalia 调色板（@window_bg_color / @accent_bg_color /
+     @window_fg_color），换壁纸换主题时自动跟着变。
+   · 配套显示设置（gsettings io.missioncenter.MissionCenter）：
+       performance-smooth-graphs true           曲线平滑
+       performance-sliding-graphs true          图表滚动动画
+       performance-page-data-points 120         曲线保留更长的历史
+       performance-show-network-virtual false   隐藏 docker0 / veth / br-* 虚拟网卡
+       performance-show-network-other false
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* 顶栏与窗口融为一体，只留一条发丝分隔线 */
+.mission-center-window headerbar {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  border-bottom: 1px solid alpha(@window_fg_color, 0.07);
+}
+.mission-center-window headerbar windowtitle { font-weight: 600; }
+
+/* 列表行：更柔和的圆角；悬停给一点反馈 */
+.mission-center-window listview row,
+.mission-center-window columnview row { border-radius: 10px; }
+.mission-center-window row:hover { background-color: alpha(@window_fg_color, 0.05); }
+
+/* 选中：不再整条刷成实心强调色，改成淡强调色底 + 左侧一条细边 */
+.mission-center-window listview row:selected,
+.mission-center-window columnview row:selected,
+.mission-center-window row:selected {
+  background-color: alpha(@accent_bg_color, 0.16);
+  background-image: none;
+  color: @window_fg_color;
+  box-shadow: inset 3px 0 0 0 alpha(@accent_bg_color, 0.9);
+}
+
+/* 分组标题行（用户服务 / 系统服务 / 应用 / 进程）：比选中态更安静。
+   必须写在选中规则之后 —— 同优先级时后写者胜 */
+.mission-center-window row.section-header,
+.mission-center-window row.section-header:selected {
+  background-color: alpha(@accent_bg_color, 0.09);
+  background-image: none;
+  color: alpha(@window_fg_color, 0.92);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+/* 表头安静下来：去掉按钮底色，弱化颜色 */
+.mission-center-window columnview > header { background: none; border: none; box-shadow: none; }
+.mission-center-window columnview > header > button,
+.mission-center-window columnview > header > button:hover {
+  background: none;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+  color: alpha(@window_fg_color, 0.5);
+  font-weight: 600;
+  font-size: 0.85em;
+}
+.mission-center-window columnview > header > button:hover { color: @window_fg_color; }
+
+/* 上部页签：选中的那个是柔和的强调色药丸，而不是描边 */
+.mission-center-window viewswitcher button { border-radius: 9999px; padding: 4px 12px; }
+.mission-center-window viewswitcher button:checked {
+  background-color: alpha(@accent_bg_color, 0.18);
+  background-image: none;
+  color: @accent_color;
+  box-shadow: none;
+}
+
+/* 滚动条：细、淡、不抢视线 */
+.mission-center-window scrollbar { background: transparent; border: none; }
+.mission-center-window scrollbar slider {
+  background-color: alpha(@window_fg_color, 0.16);
+  border-radius: 9999px;
+  min-width: 6px;
+  min-height: 6px;
+  margin: 3px;
+}
+.mission-center-window scrollbar slider:hover { background-color: alpha(@window_fg_color, 0.3); }
+
+/* 分隔线柔化 */
+.mission-center-window separator { background-color: alpha(@window_fg_color, 0.08); }
+/* ── 毛玻璃 ──────────────────────────────────────────────────────────────
+   niri 的全局窗口规则（window-rules.kdl 第一条）已经对所有窗口做了
+   background-effect { xray true; blur true } —— 也就是"把背后的壁纸模糊好放在窗口后面"。
+   GTK 程序默认自己画一层不透明底色，把那层模糊挡掉了；kitty 之所以通透，
+   是因为它设了 background_opacity 0.78。下面几条就是让 Mission Center 的底色也半透明。 */
+
+/* ① 窗口底色：0.78 与 kitty 的 background_opacity 对齐（调小更透，1 = 完全不透） */
+.mission-center-window,
+.mission-center-window.background {
+  background-color: alpha(@window_bg_color, 0.78);
+  background-image: none;
+}
+
+/* ② 侧边栏那一栏：libadwaita 给 overlay-split-view 的 .sidebar-pane 默认刷了不透明的
+   var(--sidebar-bg-color)，这就是它看起来像一块实心黑板、和右边不是一层的原因。
+   改成只剩一丝亮度做层次，整扇窗就是同一层毛玻璃。 */
+.mission-center-window .sidebar-pane {
+  background-color: alpha(@window_fg_color, 0.02);
+  color: @window_fg_color;
+  box-shadow: inset -1px 0 alpha(@window_fg_color, 0.07);
+}
+.mission-center-window .navigation-sidebar { background-color: transparent; }
+
+/* ③ 顶部那条栏（Adw.HeaderBar 的 windowhandle 节点）是单独刷不透明底色的，
+   这就是之前顶部一条死黑的原因 —— 也让它透出来 */
+.mission-center-window windowhandle {
+  background-color: transparent;
+  background-image: none;
+}
+.mission-center-window headerbar {
+  background-color: transparent;
+  background-image: none;
+  border-bottom: 1px solid alpha(@window_fg_color, 0.07);
+  box-shadow: none;
+}
+
+/* ④ 侧边栏与内容之间的渐变阴影淡一点，避免一条突兀的暗带 */
+.mission-center-window overlay-split-view > shadow { opacity: 0.35; }
+
+/* ── 表格那一块（服务 / 应用页的列表） ────────────────────────────────────
+   桥接规则把 .view / listview / columnview 刷成了不透明的 @view_bg_color，
+   于是表格成了整扇窗里唯一没透的地方（也是你圈出来的两处）。
+   这里改成半透明的同色，既露出背后的模糊壁纸，又比窗口底色实一点，保证密集小字可读。 */
+.mission-center-window columnview,
+.mission-center-window listview,
+.mission-center-window gridview,
+.mission-center-window .view,
+.mission-center-window textview > text {
+  background-color: transparent;
+  color: @view_fg_color;
+}
+.mission-center-window frame > border {
+  border-color: alpha(@window_fg_color, 0.10);
+  border-radius: 12px;
+}
+
+/* ── 操作/筛选药丸（启动·停止·重启·详情 / Running·Failed·…） ─────────────
+   Adwaita 默认是"半透明白色浮层"，壁纸一亮就发白、文字发灰。
+   改成与窗口一致的半透明深色 + 发丝描边，悬停/选中才亮起来；
+   顶部栏的图标按钮（.flat / image-button）不动。 */
+.mission-center-window button:not(.flat):not(.image-button) {
+  background-color: alpha(@window_fg_color, 0.06);
+  background-image: none;
+  border: 1px solid alpha(@window_fg_color, 0.09);
+  box-shadow: none;
+}
+.mission-center-window button:not(.flat):not(.image-button):hover {
+  background-color: alpha(@window_fg_color, 0.12);
+  border-color: alpha(@window_fg_color, 0.16);
+}
+.mission-center-window button:not(.flat):not(.image-button):active,
+.mission-center-window button:not(.flat):not(.image-button):checked {
+  background-color: alpha(@accent_bg_color, 0.20);
+  border-color: alpha(@accent_bg_color, 0.45);
+  color: @accent_color;
+}
+
+
+/* 表头里的列分隔线（separator 节点）之前被桥接规则刷成了实心深色，
+   在透亮背景上会变成一根根黑线 —— 淡化成发丝线 */
+.mission-center-window columnview > header separator {
+  background-color: alpha(@window_fg_color, 0.10);
+  min-width: 1px;
+}
