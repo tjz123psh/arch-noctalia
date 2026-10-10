@@ -30,7 +30,7 @@ package	vmware-keymaps	主动排除：随 vmware-workstation 一并排除（2026
 file	/home/pang/rice-log.md	VM 过程记录（rice 日志；重装形态不复刻）
 file	/home/pang/installed-software.md	VM 过程记录（软件清单快照）
 pattern	an-run*.log	VM 验收过程日志（an-compare 输出）
-dir	/home/pang/.rustup	Rust 工具链（重装后按需 rustup 重建）
+dir	/home/pang/.cargo/registry	Cargo 下载缓存（重装后按需重新拉取，不入仓）
 dir	/home/pang/.grok	Grok CLI 工具数据
 file	/home/pang/.bash_history	shell 历史
 file	/home/pang/.local/share/fish/fish_history	shell 历史（fish）

@@ -127,7 +127,7 @@ reflector	extra
 ripgrep	extra		
 rog-control-center	extra	drivers	
 rsync	extra		
-rustup	extra		
+rust	extra		
 seatd	extra		
 shellcheck	extra		
 slurp	extra		
