@@ -329,7 +329,7 @@ payload/system/etc/systemd/zram-generator.conf	/etc/systemd/zram-generator.conf	
 payload/system/etc/vconsole.conf	/etc/vconsole.conf	644	d7cdb5bf660d946c3499c971055dad20
 # ——— 2026-10-05 btop 主题跟随色板：rice-btop-theme（系统现有 scripts 行在文首段） ———
 payload/home/scripts/desktop/rice-btop-theme	/home/pang/scripts/desktop/rice-btop-theme	755	18a5f112a419b779d3fd4dc478ca2b0e
-payload/home/scripts/desktop/rice-fcitx5-glass	/home/pang/scripts/desktop/rice-fcitx5-glass	755	aaeff8417c37ccdf71cf15f06d1b6a20
+payload/home/scripts/desktop/rice-fcitx5-glass	/home/pang/scripts/desktop/rice-fcitx5-glass	755	d57bc86e1900f7da8326a9a8da7e5649
 payload/home/scripts/desktop/rice-theme-hooks	/home/pang/scripts/desktop/rice-theme-hooks	755	f360d0dba36e63559c76555ee51e9a3a
 # ——— 2026-10-07 snapper timeline 每周一次（/etc drop-in 覆盖上游 hourly） ———
 payload/system/etc/systemd/system/snapper-timeline.timer.d/override.conf	/etc/systemd/system/snapper-timeline.timer.d/override.conf	644	38604bf84421d73b154ff25415b2376d

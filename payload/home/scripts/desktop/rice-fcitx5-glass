@@ -1,46 +1,93 @@
 #!/usr/bin/env bash
-# rice-fcitx5-glass — 让 fcitx5 候选窗跟随桌面色板，并带半透明圆角背板。
+# rice-fcitx5-glass — 让 fcitx5 候选窗跟随桌面色板，做成「浅色半透明玻璃」外观。
 #
-# 背景：Noctalia 每次换壁纸/切深浅都会重写 ~/.local/share/fcitx5/themes/noctalia/theme.conf，
-#       任何手改都会被冲掉。所以这里作为 Noctalia 的 colors_changed 钩子运行：
-#       1) 从刚生成的主题里读当前配色（背景色/边框色）；
-#       2) 用**纯 Python 标准库**（无 Pillow）画一张圆角、半透明、带描边的背板 PNG；
-#       3) 幂等地把 Image=/EnableBlur/BlurMargin 打进主题（Noctalia 重写后需要重打）。
-# 只读主题、只写主题目录与一行日志；失败不阻塞其它钩子（退出码仍如实返回）。
+# 为什么需要它：Noctalia 每次换壁纸/切深浅都会重写 ~/.local/share/fcitx5/themes/noctalia/theme.conf，
+# 手改会被冲掉；所以挂到 Noctalia 的 colors_changed 钩子上，每次重画背板 + 重打补丁。
+#
+# 设计（2026-10-10 按用户反馈定版）：
+#   · 面板：调色板浅色（kitty foreground）@78% 不透明 → 浅色玻璃，不再发黑
+#   · 文字：调色板深色（kitty background）→ 与浅面板对比充足
+#   · 高亮：强调色 55% + 浅底 45% 混合成柔和粉（不刺眼），字色按亮度自动取
+#   · 无圆角（用户要求），1px 强调色描边
+#   · 用「按段解析 → 改 → 整文件写回」而不是正则插段：早期版本把主段的键插错段，导致
+#     NormalColor/HighlightColor 落到 [InputPanel/BlurMargin] 里被忽略
 set -Eeuo pipefail
 
 THEME_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/fcitx5/themes/noctalia"
 THEME_CONF="$THEME_DIR/theme.conf"
+KITTY="$HOME/.config/kitty/themes/noctalia.conf"
 LOG="${XDG_CACHE_HOME:-$HOME/.cache}/rice-fcitx5-glass.log"
-
 log() { printf '%s %s\n' "$(date '+%F %T')" "$*" >>"$LOG" 2>/dev/null || true; }
 
 [[ -f "$THEME_CONF" ]] || { log "theme.conf 不存在，跳过"; exit 0; }
 command -v python3 >/dev/null 2>&1 || { log "没有 python3，跳过"; exit 0; }
 
-python3 - "$THEME_CONF" <<'PY'
+python3 - "$THEME_CONF" "$KITTY" <<'PY'
 import pathlib, re, struct, sys, zlib
 
-conf = pathlib.Path(sys.argv[1])
-txt = conf.read_text()
+conf, kitty = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
 
-def section(name):
-    m = re.search(rf'^\[{re.escape(name)}\]\s*$([\s\S]*?)(?=^\[|\Z)', txt, re.M)
-    return m.group(1) if m else ''
+def parse(text):
+    order, secs, cur = [], {}, None
+    for line in text.splitlines():
+        m = re.match(r'^\[([^\]]+)\]\s*$', line)
+        if m:
+            cur = m.group(1)
+            if cur not in secs:
+                secs[cur] = []
+                order.append(cur)
+            continue
+        if cur is not None:
+            secs[cur].append(line)
+    return order, secs
 
-def colour(sec, key, default):
-    m = re.search(rf'^{re.escape(key)}=(#?[0-9a-fA-F]{{6}})\s*$', section(sec), re.M)
-    return m.group(1) if m else default
+def render(order, secs):
+    out = []
+    for name in order:
+        out.append(f'[{name}]')
+        out.extend(secs[name])
+        out.append('')
+    return '\n'.join(out).rstrip('\n') + '\n'
 
-base = colour('InputPanel/Background', 'Color', '#272a2f')
-edge = colour('InputPanel/Background', 'BorderColor', '#9ecafc')
+def get(secs, sec, key):
+    for line in secs.get(sec, []):
+        m = re.match(rf'^{re.escape(key)}=(#?[0-9a-fA-F]{{6}})\s*$', line)
+        if m:
+            return m.group(1)
+    return None
+
+def set_key(order, secs, sec, key, value):
+    if sec not in secs:
+        secs[sec] = []
+        order.append(sec)
+    for i, line in enumerate(secs[sec]):
+        if re.match(rf'^{re.escape(key)}=', line):
+            secs[sec][i] = f'{key}={value}'
+            return
+    secs[sec].append(f'{key}={value}')
+
+def kitty_colour(key, default):
+    try:
+        for line in kitty.read_text().splitlines():
+            parts = line.split()
+            if len(parts) >= 2 and parts[0] == key and re.fullmatch(r'#[0-9a-fA-F]{6}', parts[1]):
+                return parts[1]
+    except OSError:
+        pass
+    return default
+
 rgb = lambda c: tuple(int(c[i:i+2], 16) for i in (1, 3, 5))
-b, e = rgb(base), rgb(edge)
+hexs = lambda t: '#%02x%02x%02x' % t
+mix = lambda a, b, k: tuple(int(round(a[i]*k + b[i]*(1-k))) for i in range(3))
+lum = lambda c: (0.299*c[0] + 0.587*c[1] + 0.114*c[2]) / 255
 
-# 背板：不再额外压暗（之前 0.80 + 91% 不透明显得"太黑"），改成"接近色板原色 + 76% 不透明"，
-# 既保留玻璃感（背后内容若隐若现），浅色候选字的对比也还够。
-ALPHA, DARKEN, RADIUS, BORDER = 195, 1.00, 12, 2
-fill = tuple(min(255, max(0, int(v * DARKEN))) for v in b)
+order, secs = parse(conf.read_text())
+light = rgb(kitty_colour('foreground', '#f0dede'))
+dark = rgb(kitty_colour('background', '#1a1111'))
+accent = rgb(get(secs, 'InputPanel/Background', 'BorderColor') or kitty_colour('color2', '#ffb3b5'))
+highlight = mix(accent, light, 0.55)
+hl_text = dark if lum(highlight) > 0.5 else light
+ALPHA, BORDER = 200, 1
 
 def png(w, h, rows):
     def chunk(tag, data):
@@ -52,76 +99,62 @@ def png(w, h, rows):
             + chunk(b'IDAT', zlib.compress(raw, 9))
             + chunk(b'IEND', b''))
 
-def plate(w=64, h=64):
+def plate(fill, alpha, border=None, bw=0, w=64, h=64):
     rows = []
     for y in range(h):
         row = bytearray()
         for x in range(w):
-            # 到最近圆角圆心的距离（只在四个角生效）
-            dx = RADIUS - x if x < RADIUS else (x - (w - 1 - RADIUS) if x > w - 1 - RADIUS else 0)
-            dy = RADIUS - y if y < RADIUS else (y - (h - 1 - RADIUS) if y > h - 1 - RADIUS else 0)
-            if dx > 0 and dy > 0:
-                d = (dx * dx + dy * dy) ** 0.5
-                if d > RADIUS:
-                    row += bytes((0, 0, 0, 0)); continue
-                inset = RADIUS - d
+            if border is not None and bw and (x < bw or y < bw or x >= w-bw or y >= h-bw):
+                row += bytes((*border, 255))
             else:
-                inset = min(x, y, w - 1 - x, h - 1 - y)
-            if inset < BORDER:
-                row += bytes((*e, 255))
-            else:
-                row += bytes((*fill, ALPHA))
+                row += bytes((*fill, alpha))
         rows.append(bytes(row))
     return png(w, h, rows)
 
-for name in ('panel', 'menu'):
-    (conf.parent / f'{name}.png').write_bytes(plate())
+(conf.parent/'panel.png').write_bytes(plate(light, ALPHA, accent, BORDER))
+(conf.parent/'menu.png').write_bytes(plate(light, ALPHA, accent, BORDER))
+(conf.parent/'highlight.png').write_bytes(plate(highlight, 255))
+(conf.parent/'mask.png').unlink(missing_ok=True)
 
-# 幂等打补丁：Image / Margins / Blur（Noctalia 重写后会丢，需要每次补）
-def ensure_section(name, body, after):
-    global txt
-    if f'[{name}]' in txt:
-        return
-    txt = txt.replace(after, after + body, 1)
+# ---- 修复早期版本插错段的键：主段键只允许待在 InputPanel / Menu ----
+stray = {'NormalColor', 'HighlightColor', 'HighlightCandidateColor',
+         'HighlightBackgroundColor', 'FullWidthHighlight', 'PageButtonAlignment'}
+if 'InputPanel/BlurMargin' in secs:
+    keep = []
+    for line in secs['InputPanel/BlurMargin']:
+        key, _, val = line.partition('=')
+        if key in stray:
+            set_key(order, secs, 'InputPanel', key, val)
+        else:
+            keep.append(line)
+    secs['InputPanel/BlurMargin'] = keep
 
-if 'EnableBlur=True' not in section('InputPanel'):
-    txt = txt.replace('[InputPanel]\n', '[InputPanel]\nEnableBlur=True\n', 1)
-ensure_section('InputPanel/BlurMargin',
-               '\n[InputPanel/BlurMargin]\nLeft=10\nRight=10\nTop=10\nBottom=10\n',
-               '[InputPanel]\nEnableBlur=True\n')
-if not re.search(r'^Image=panel\.png$', section('InputPanel/Background'), re.M):
-    txt = txt.replace('[InputPanel/Background]\n', '[InputPanel/Background]\nImage=panel.png\n', 1)
-if '[InputPanel/Background/Margin]' not in txt:
-    txt = txt.replace('[InputPanel/Background]\nImage=panel.png\n',
-                      '[InputPanel/Background]\nImage=panel.png\n\n[InputPanel/Background/Margin]\n'
-                      'Left=12\nRight=12\nTop=12\nBottom=12\n', 1)
-if '[Menu/Background/Margin]' not in txt:
-    txt = txt.replace('[Menu/Background]\n', '[Menu/Background]\nImage=menu.png\n', 1)
-    txt = txt.replace('[Menu/Background]\nImage=menu.png\n',
-                      '[Menu/Background]\nImage=menu.png\n\n[Menu/Background/Margin]\n'
-                      'Left=12\nRight=12\nTop=12\nBottom=12\n', 1)
-# 高亮候选字的对比：色板有时给出「浅底浅字」（选中项糊成一片），按高亮底色亮度自动选深/浅字色。
-def luminance(c):
-    return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255
+for sec in ('InputPanel', 'Menu'):
+    set_key(order, secs, sec, 'NormalColor', hexs(dark))
+    set_key(order, secs, sec, 'HighlightColor', hexs(hl_text))
+    set_key(order, secs, sec, 'HighlightCandidateColor', hexs(hl_text))
 
-hl_bg = rgb(colour('InputPanel/Highlight', 'Color', edge))
-want = '#1b1b1b' if luminance(hl_bg) > 0.5 else '#ffffff'
+set_key(order, secs, 'InputPanel', 'EnableBlur', 'True')
+set_key(order, secs, 'InputPanel/Background', 'Image', 'panel.png')
+set_key(order, secs, 'InputPanel/Highlight', 'Image', 'highlight.png')
+set_key(order, secs, 'Menu/Background', 'Image', 'menu.png')
 
-def set_in_section(sec, key, value):
-    global txt
-    m = re.search(rf'^(\[{re.escape(sec)}\]\s*$)([\s\S]*?)(?=^\[|\Z)', txt, re.M)
-    if not m:
-        return
-    body = re.sub(rf'^{re.escape(key)}=.*$', f'{key}={value}', m.group(2), count=1, flags=re.M)
-    txt = txt[:m.start(2)] + body + txt[m.end(2):]
+for sec in list(order):
+    secs[sec] = [l for l in secs[sec] if not l.startswith('BlurMask=')]
 
-for sec_name in ('InputPanel', 'Menu'):
-    for key in ('HighlightColor', 'HighlightCandidateColor'):
-        set_in_section(sec_name, key, want)
+def ensure_section(name, body):
+    if name not in secs:
+        secs[name] = body
+        order.append(name)
 
-conf.write_text(txt)
-print(f'glass: base={base} fill={fill} alpha={ALPHA} border={edge} radius={RADIUS} 高亮字色={want}')
+ensure_section('InputPanel/BlurMargin', ['Left=10', 'Right=10', 'Top=10', 'Bottom=10'])
+ensure_section('InputPanel/Background/Margin', ['Left=8', 'Right=8', 'Top=8', 'Bottom=8'])
+ensure_section('InputPanel/Highlight/Margin', ['Left=6', 'Right=6', 'Top=6', 'Bottom=6'])
+ensure_section('Menu/Background/Margin', ['Left=8', 'Right=8', 'Top=8', 'Bottom=8'])
+
+conf.write_text(render(order, secs))
+print(f'glass: 面板 {hexs(light)}@{ALPHA} 文字 {hexs(dark)} 高亮 {hexs(highlight)}/{hexs(hl_text)} 描边 {hexs(accent)} 无圆角')
 PY
 rc=$?
-if (( rc == 0 )); then log "背板已重画并打补丁（$THEME_CONF）"; else log "渲染失败 rc=$rc"; fi
+if (( rc == 0 )); then log "背板已重画并打补丁（浅色玻璃 / 无圆角）"; else log "渲染失败 rc=$rc"; fi
 exit $rc
