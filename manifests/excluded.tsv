@@ -37,8 +37,6 @@ file	/home/pang/.local/share/fish/fish_history	shell 历史（fish）
 file	/etc/sudoers.d/99-pang-nopasswd	安全：免密 sudo（安装期便利，不属于形态）
 file	/etc/pam.d/greetd	调试期冗余改动（默认 PAM 栈即可登录；2026-10-05 审计确认）
 file	/etc/systemd/system/ydotoold.service	agent 键盘注入工具残留（ydotool 已不在样本）
-dir	/boot/grub/themes/rice	未激活的候选主题（旧自制，留 VM 备用）
-dir	/boot/grub/themes/starfield	未激活的候选主题（早前候选）
 dir	/etc/vmware	VMware Workstation 应用数据（安装器不装 VM 软件）
 dir	/etc/vmware-installer	VMware Workstation 应用数据
 dir	/etc/vmware-vix	VMware Workstation 应用数据
@@ -75,3 +73,5 @@ package	snapd-xdg-open-git	旧 QQ 包 linuxqq-nt-bwrap 的依赖；QQ 换 linuxq
 # ——— 2026-10-10 Go 工具链的数据目录（按需重建，不入仓） ———
 dir	/home/pang/go	Go 工作区（GOPATH：模块缓存与自建二进制，重装后按需重建）
 dir	/home/pang/.config/go	Go 工具配置与遥测计数（运行时生成）
+# ——— 2026-10-10 GRUB 主题只留现役一套：starfield（2.9M/31 文件）已删除、rice 早已不存在；现役 Elegant-wave-blur-left-dark 在册。
+#     需要候选主题时的恢复来源：grub 包自带 /usr/share/grub/themes/starfield。 ———
