@@ -75,21 +75,26 @@ dir	/home/pang/go	Go 工作区（GOPATH：模块缓存与自建二进制，重�
 dir	/home/pang/.config/go	Go 工具配置与遥测计数（运行时生成）
 # ——— 2026-10-10 GRUB 主题只留现役一套：starfield（2.9M/31 文件）已删除、rice 早已不存在；现役 Elegant-wave-blur-left-dark 在册。
 #     需要候选主题时的恢复来源：grub 包自带 /usr/share/grub/themes/starfield。 ———
-# ——— 2026-10-10 用户决定：本轮只把 zenity 与 musicfree-desktop-wayland-bin 纳入安装器，
-#     其余未纳管的包/脚本一律记为"暂不纳入"（重装后按需手动装或拷贝，不再逐次询问）。 ———
-package	deepseek-harness-desktop	暂不纳入（AUR；本机日常在用，重装后按需 paru -S）
-package	visual-studio-code-bin	暂不纳入（AUR；约 979MB，重装后按需）
-package	pnpm	暂不纳入（官方仓库；Node 工具链，按需手动装）
-package	tesseract	暂不纳入（OCR 引擎）
-package	tesseract-data-chi_sim	暂不纳入（OCR 中文语言包，约 42MB）
-package	tesseract-data-eng	暂不纳入（OCR 英文语言包，约 22MB）
-package	unzip	暂不纳入（通用小工具，按需手动装）
-package	net-tools	暂不纳入（ifconfig/netstat；rjsupplicant-gui 脚本/文档涉及，按需手动装）
+# ——— 2026-10-10 手动安装项（用户决定：安装器不代装） ———
+#     原因统一说明：这些项目需要用户手动安装/配置，安装器带上会出问题（体积、AUR 交互构建、
+#     按机器定制、需要登录/许可、开发工具链等）。重装后按备注手动装；不再逐次询问。
+package	deepseek-harness-desktop	手动安装（AUR；重装后 paru -S deepseek-harness-desktop）
+package	visual-studio-code-bin	手动安装（AUR；约 979MB）
+package	pnpm	手动安装（官方仓库；Node 工具链，按需手动装）
+package	tesseract	手动安装（OCR 引擎）
+package	tesseract-data-chi_sim	手动安装（OCR 中文语言包，约 42MB）
+package	tesseract-data-eng	手动安装（OCR 英文语言包，约 22MB）
+package	unzip	手动安装（通用小工具，按需手动装）
+package	net-tools	手动安装（ifconfig/netstat；rjsupplicant-gui 脚本/文档涉及，按需手动装）
 package	libpulse	无需显式声明：ffmpeg/firefox/mpv/gpu-screen-recorder/微信/WPS 等会自动依赖带入
-package	gtk4-layer-shell	暂不纳入：实测为 Vellum 的运行时依赖；Vellum 本体亦未纳管，二者一起再定
-dir	/home/pang/scripts/dsh	暂不纳管（DSH 辅助脚本 13 个文件：会话修复/迁移、AnyRouter 代理服务、图标修补）
-dir	/home/pang/scripts/package	暂不纳管（pacman 三件套 pac/pacd/pacr + lib/ + 7 个测试 + 文档）
-dir	/home/pang/scripts/media	暂不纳管（b23 播放器，由另一会话维护中）
+package	gtk4-layer-shell	手动安装：是 Vellum 的运行时依赖，随 Vellum 一起手动装
+dir	/home/pang/scripts/dsh	手动拷贝（DSH 辅助脚本 13 个文件：会话修复/迁移、AnyRouter 代理服务、图标修补）
+dir	/home/pang/scripts/package	手动拷贝（pacman 三件套 pac/pacd/pacr + lib/ + 7 个测试 + 文档）
+dir	/home/pang/scripts/media	手动拷贝（b23 播放器，由另一会话维护中）
 #     随之未纳管的 ~/bin 软链共 10 个（astra-watcher.sh、b23、dsh-session-*.mjs ×3、
 #     install-anyrouter-proxy.sh、pac/pacd/pacr、patch-plugin-icon-renames.sh）；
 #     ~/bin/cursor-track 是构建产物，由 09 步重建，不入仓。
+# ——— 2026-10-10 Vellum（用户决定：不纳入管理，由自带安装器维护） ———
+dir	/home/pang/.local/lib/vellum	手动安装：Vellum 自带安装器的安装目录（版本化 releases + current 软链）
+dir	/home/pang/.config/vellum	Vellum 应用配置（其安装器/首次运行生成）
+pattern	/home/pang/.local/bin/vellum*	Vellum 安装器放入 ~/bin 的命令（vellumctl / vellum-ui / vellum-tray）
