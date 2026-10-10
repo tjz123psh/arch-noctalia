@@ -4,6 +4,7 @@
 # role: explicit | dependency
 dbx-bin	aur	explicit	
 google-chrome	aur	explicit	官方 Chrome 稳定版（用户当前安装版）
+linuxqq	aur	dependency	官方 QQ 本体（由 linuxqq-wayland-fix 依赖引入，不单独安装）
 linuxqq-wayland-fix	aur	explicit	Wayland 修复版（屏幕共享/剪贴板/截图；替换 linuxqq-nt-bwrap）
 obsidian-bin	aur	explicit	
 opencode-bin	aur	explicit	
