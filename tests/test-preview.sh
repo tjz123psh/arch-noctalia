@@ -8,7 +8,11 @@ out1="$(mktemp)"
 out2="$(mktemp)"
 out3="$(mktemp)"
 out4="$(mktemp)"
-trap 'rm -f "$out1" "$out2" "$out3" "$out4"' EXIT
+sandbox="$(mktemp -d)"
+trap 'rm -f "$out1" "$out2" "$out3" "$out4"; rm -rf "$sandbox"' EXIT
+# 状态目录现在落在用户 XDG state 下，所以给沙箱 HOME，顺便把「预览不写状态」断言精确到位置上。
+export HOME="$sandbox/home"
+mkdir -p "$HOME"
 
 if ! bash "$ROOT/install.sh" --preview > "$out1" 2>&1; then
   echo "preview exited non-zero:"
@@ -29,6 +33,10 @@ for s in sources system packages drivers aur desktop config scripts noctalia ser
 done
 if [ -e "$ROOT/.state" ]; then
   echo ".state was created by a preview run"
+  exit 1
+fi
+if [ -e "$HOME/.local/state/arch-noctalia" ]; then
+  echo "preview created the state directory under HOME"
   exit 1
 fi
 

@@ -62,7 +62,7 @@ grep -q 'USER EDIT' "$home/.cache/an-note.md" || { echo "[FAIL] seed note was ov
 printf '%s\n' "$out1" | grep -q 'kept (seed' || { echo "[FAIL] kept message missing"; exit 1; }
 # 2) 普通文件覆盖 + 旧内容备份
 [[ "$(cat "$home/.cache/an-conf.txt")" == "conf repo content" ]] || { echo "[FAIL] conf not restored to repo content"; exit 1; }
-bk="$(find "$repo/.state/overwritten" -name an-conf.txt 2>/dev/null | head -1)"
+bk="$(find "$home/.local/state/arch-noctalia/overwritten" -name an-conf.txt 2>/dev/null | head -1)"
 if [[ -z "$bk" || "$(cat "$bk")" != "USER MODIFIED" ]]; then
   echo "[FAIL] backup missing or does not contain the old content"
   exit 1

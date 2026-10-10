@@ -27,3 +27,11 @@ payload/home/Templates/文本文档.txt	个人数据种子（便签/模板）
 payload/home/Templates/空白文件	个人数据种子（便签/模板）
 payload/home/Templates/配置.ini	个人数据种子（便签/模板）
 payload/home/Templates/配置文件.conf	个人数据种子（便签/模板）
+payload/home/.local/state/noctalia/settings.toml	用户态：Noctalia GUI 实时改写（存在即保持，避免重跑回退设置）
+payload/home/.config/mimeapps.list	用户态：默认应用关联（程序会自行改写）
+payload/home/.config/gtk-3.0/bookmarks	用户态：文件管理器书签
+payload/home/.config/user-dirs.dirs	用户态：XDG 目录映射
+payload/home/.config/nomacs/Image Lounge.conf	用户态：看图程序设置
+payload/home/.config/fcitx5/conf/notifications.conf	用户态：输入法通知设置
+payload/home/.config/fcitx5/conf/punctuation.conf	用户态：输入法标点转换设置
+payload/home/.config/fastfetch/config.jsonc	用户态：fastfetch 主配置（Noctalia 只另写 themes/noctalia.jsonc）

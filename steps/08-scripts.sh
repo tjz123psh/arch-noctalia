@@ -57,6 +57,18 @@ while IFS=$'\t' read -r name target; do
     info "replacing existing entry: ${lib}"
   fi
 
+  # 覆盖前备份：lib 位置原本若是**真实文件**（用户自己写的脚本，不是软链），先按 07 的同一套约定
+  # 存到 ${AN_STATE_DIR}/overwritten/<时间戳>/，避免 ln -sfn 把它静默吃掉。
+  if [[ -e "$lib" && ! -L "$lib" ]]; then
+    RUN_TS="${RUN_TS:-$(date +%Y%m%d-%H%M%S)}"
+    backup_path="${AN_STATE_DIR}/overwritten/${RUN_TS}${lib}"
+    if mkdir -p -- "$(dirname -- "$backup_path")" && cp -p -- "$lib" "$backup_path"; then
+      info "backed up replaced file: ${lib} -> ${backup_path}"
+    else
+      warn "backup failed for ${lib} (continuing)"
+    fi
+  fi
+
   if ! ln -sfn "$tgt" "$lib"; then
     warn "ln failed: ${lib}"
     failed=$((failed + 1))

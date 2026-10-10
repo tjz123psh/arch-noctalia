@@ -2,6 +2,8 @@
 # tools/selfcheck.sh — 仓库轻量自检（全部只读）：
 #   1) 语法：全部 *.sh 的 bash -n（有 shellcheck 则逐个跑）
 #   2) 映射一致性：files.tsv ↔ payload（存在 + md5）、bin-links.tsv 目标在 payload 内
+#   2b) 清单约束：target 白名单/唯一性、mode 为八进制、seed/runtime 名单引用存在的行、
+#      packages/aur 的词表与重叠、excluded 的 kind 与重复
 #   3) 密钥卫生：tracked 文件中不得有凭据类文件名 / token 模式；
 #      excluded.tsv(kind=file) 声明的文件不得出现在 payload
 # 任何一节失败 → 非零退出。
@@ -106,9 +108,113 @@ if [[ "$tracked_payload" -ne "$rows" ]]; then
 fi
 info "mapping: tracked payload files = ${tracked_payload}"
 
+# ---------- 2b) 清单约束 ----------
+# 只校验『形状与交叉引用』，不碰内容：target 必须绝对且在允许的顶层目录内、repo/target 不许重复、
+# mode 必须是八进制；seed/runtime 名单必须引用 files.tsv 里存在的行；packages/aur 的词表与重叠；
+# excluded 的 kind 词表与重复行。这些正是变异实验里『怎么改都全绿』的空洞。
+PKGS="${ROOT_DIR}/manifests/packages.tsv"
+AUR="${ROOT_DIR}/manifests/aur.tsv"
+RUNTIME="${ROOT_DIR}/manifests/runtime-regenerated.tsv"
+EXCL="${ROOT_DIR}/manifests/excluded.tsv"
+
+if [[ -f "$FILES" ]]; then
+  declare -A seen_repo=() seen_target=()
+  frows=0
+  while IFS=$'\t' read -r repo target mode _md5; do
+    [[ -z "$repo" || "$repo" == "#"* ]] && continue
+    frows=$((frows + 1))
+    if [[ -n "${seen_repo[$repo]:-}" ]]; then bad "duplicate repo path in files.tsv: $repo"; fi
+    seen_repo["$repo"]=1
+    if [[ -n "${seen_target[$target]:-}" ]]; then bad "duplicate target in files.tsv: $target"; fi
+    seen_target["$target"]=1
+    case "$target" in
+      /home/*|/etc/*|/usr/share/*|/usr/local/*|/var/lib/*|/var/cache/*|/boot/*|/opt/*) ;;
+      *) bad "files.tsv target outside the allowed prefixes (or not absolute): $target" ;;
+    esac
+    if [[ ! "$mode" =~ ^[0-7]{3,4}$ ]]; then bad "files.tsv mode is not octal: $repo -> '$mode'"; fi
+  done < <(manifest_rows "$FILES")
+  info "constraints: files.tsv ${frows} rows (target whitelist / uniqueness / mode) checked"
+fi
+
+for spec in "seed:${SEED:-}" "runtime:${RUNTIME}"; do
+  label="${spec%%:*}"
+  mf="${spec#*:}"
+  [[ -n "$mf" && -f "$mf" ]] || continue
+  n=0
+  while IFS=$'\t' read -r p _note; do
+    [[ -z "$p" || "$p" == "#"* ]] && continue
+    n=$((n + 1))
+    awk -F'\t' -v p="$p" '$1==p {found=1} END{exit !found}' "$FILES" || bad "${label} list references a path not in files.tsv: $p"
+  done < <(manifest_rows "$mf")
+  info "constraints: ${label} list rows checked (${n})"
+done
+
+if [[ -f "$PKGS" ]]; then
+  declare -A seen_pkg=()
+  pk=0
+  while IFS=$'\t' read -r pkg repo module _purpose; do
+    [[ -z "$pkg" || "$pkg" == "#"* ]] && continue
+    pk=$((pk + 1))
+    [[ -n "${seen_pkg[$pkg]:-}" ]] && bad "duplicate package in packages.tsv: $pkg"
+    seen_pkg["$pkg"]=1
+    [[ -n "$repo" ]] || bad "packages.tsv row without repo: $pkg"
+    # 注意：IFS 折叠会把「空的 module 列」挪位（read 把连续 TAB 当一个分隔符），所以这里只在
+    # 值**长得像一个模块 token**（纯小写字母/数字/连字符）时才判定为未知模块；中文说明文字跳过。
+    if [[ "$module" =~ ^[a-z][a-z0-9-]*$ ]]; then
+      case "$module" in
+        drivers|desktop|audio|vmware-guest|physical-only) ;;
+        *) bad "packages.tsv unknown module '${module}': $pkg" ;;
+      esac
+    fi
+  done < <(manifest_rows "$PKGS")
+  info "constraints: packages.tsv ${pk} rows (repo/module/uniqueness) checked"
+  # 字段数（用 awk，避免 read 的空列折叠）
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    bad "packages.tsv row is not 4 fields: $line"
+  done < <(awk -F'\t' '!/^#/ && NF && NF != 4 {print}' "$PKGS")
+
+  if [[ -f "$AUR" ]]; then
+    declare -A seen_aur=()
+    an=0
+    while IFS=$'\t' read -r pkg channel role _purpose; do
+      [[ -z "$pkg" || "$pkg" == "#"* ]] && continue
+      an=$((an + 1))
+      [[ -n "${seen_aur[$pkg]:-}" ]] && bad "duplicate package in aur.tsv: $pkg"
+      seen_aur["$pkg"]=1
+      case "$channel" in aur|archlinuxcn) ;; *) bad "aur.tsv unknown channel '$channel': $pkg" ;; esac
+      case "${role:-}" in explicit|dependency) ;; *) bad "aur.tsv unknown role '${role}': $pkg" ;; esac
+    done < <(manifest_rows "$AUR")
+    for p in "${!seen_aur[@]}"; do
+      [[ -n "${seen_pkg[$p]:-}" ]] && bad "package listed in both packages.tsv and aur.tsv: $p"
+    done
+    info "constraints: aur.tsv ${an} rows (channel/role/uniqueness/overlap) checked"
+  fi
+fi
+
+if [[ -f "$EXCL" ]]; then
+  declare -A seen_ex=()
+  ex=0
+  while IFS=$'\t' read -r kind item _reason; do
+    [[ -z "$kind" || "$kind" == "#"* ]] && continue
+    ex=$((ex + 1))
+    case "$kind" in
+      package|file|dir|pattern) ;;
+      *) bad "excluded.tsv unknown kind '${kind}': $item" ;;
+    esac
+    [[ -n "$item" ]] || bad "excluded.tsv row without item (kind=${kind})"
+    [[ -n "${seen_ex[${kind}|${item}]:-}" ]] && bad "duplicate excluded row: ${kind} ${item}"
+    seen_ex["${kind}|${item}"]=1
+  done < <(manifest_rows "$EXCL")
+  info "constraints: excluded.tsv ${ex} rows (kind vocabulary / duplicates) checked"
+fi
+
+
 # ---------- 3) 密钥卫生 ----------
 cred_re='(^|/)(proxy-env|age-env|anyrouter-env)\.fish$|(^|/)hosts\.yml$|(^|/)cookie$|(^|/)id_(rsa|ed25519)$|\.pem$'
-tok_re='ghp_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9]{20,}|BEGIN (RSA|OPENSSH|EC|PGP) PRIVATE KEY|xox[bpas]-[A-Za-z0-9-]{10,}'
+# 现代 token 格式一并覆盖：GitHub 细粒度 PAT、OpenAI/Anthropic 系 sk-/sk-proj-/sk-ant-、
+# AWS AKIA/ASIA、Google AIza、Slack xox*（含 xoxc/xoxd）、JWT、PEM/PKCS#8 私钥头。
+tok_re='ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|sk-ant-[A-Za-z0-9_-]{20,}|sk-proj-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|xox[bpasrcd]-[A-Za-z0-9-]{10,}|eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{5,}|BEGIN (RSA|OPENSSH|EC|PGP|PRIVATE) (PRIVATE )?KEY'
 tracked_n=0
 while IFS= read -r f; do
   tracked_n=$((tracked_n + 1))

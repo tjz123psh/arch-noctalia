@@ -23,6 +23,7 @@ PACKAGES="${AN_ROOT_DIR}/manifests/packages.tsv"
 [[ -f "$PACKAGES" ]] || die "missing manifest: ${PACKAGES}"
 
 load_seed_targets
+load_runtime_targets
 
 info "Stage 12 verify: checking deployed files against files.tsv"
 checked=0
@@ -30,6 +31,7 @@ okc=0
 bad=0
 miss=0
 seeded=0
+runtime=0
 while IFS=$'\t' read -r repo_path raw_target _mode md5; do
   if [[ -z "$raw_target" || "$raw_target" == "#"* ]]; then
     continue
@@ -47,6 +49,17 @@ while IFS=$'\t' read -r repo_path raw_target _mode md5; do
       warn "missing (seed): ${target}"
     else
       seeded=$((seeded + 1))
+    fi
+    continue
+  fi
+  # 运行时重写文件（Noctalia 主题产物、登录背景同步 hook 等）：机器用过之后内容必然变，
+  # 只核对存在性；否则 --redo 12 / 自检会永远报"安装失败"。
+  if [[ -n "${AN_RUNTIME[$repo_path]:-}" ]]; then
+    if [[ -z "$ftype" ]]; then
+      miss=$((miss + 1))
+      warn "missing (runtime-managed): ${target}"
+    else
+      runtime=$((runtime + 1))
     fi
     continue
   fi
@@ -72,6 +85,9 @@ done < "$FILES"
 printf '[info]  files: %d checked, %d ok, %d mismatched, %d missing\n' "$checked" "$okc" "$bad" "$miss"
 if (( seeded > 0 )); then
   info "seed files (user data): existence checked, content skipped: ${seeded}"
+fi
+if (( runtime > 0 )); then
+  info "runtime-regenerated files (themed by the desktop): existence checked, content skipped: ${runtime}"
 fi
 
 info "Stage 12 verify: checking packages against packages.tsv"

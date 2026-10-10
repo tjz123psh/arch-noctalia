@@ -33,6 +33,19 @@ done
 (( missing == 0 )) || die "greeter assets incomplete — stage 07 should have deployed them; re-run ./install.sh --run"
 info "greeter assets: present"
 
+# 1b) 用户头像软链：桌面与登录界面按 ~/.face 取头像（样本机即软链到 /var/lib/avatars/pang/.face，
+#     真实文件由 07 部署）。补这一步，新机器才会有一模一样的头像入口。
+face_link="${HOME}/.face"
+face_target="/var/lib/avatars/pang/.face"
+if [[ "$(readlink "$face_link" 2>/dev/null || true)" == "$face_target" ]]; then
+  info "avatar symlink already present: ~/.face"
+elif [[ -e "$face_link" && ! -L "$face_link" ]]; then
+  warn "avatar path exists as a real file — left unchanged: ${face_link}"
+else
+  ln -sfn "$face_target" "$face_link"
+  ok "avatar symlink created: ~/.face -> ${face_target}"
+fi
+
 # --- 2) background.png 的 ACL（hook 写入权限） ---
 if ! have getfacl || ! have setfacl; then
   die "getfacl/setfacl not found (acl package — expected from the base system)"

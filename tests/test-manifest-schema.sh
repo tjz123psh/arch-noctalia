@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tests/test-manifest-schema.sh — 六份清单的「形状与规模」回归（只读、无副作用）。
+# tests/test-manifest-schema.sh — 七份清单的「形状与规模」回归（只读、无副作用）。
 # 目的：清单是安装器的唯一事实来源，形状错了（列错位、TAB 变空格、md5 截断、目标路径写歪）
 # 在部署前就该红。这里逐列做格式校验，并对规模做**精确锁定**：
 #   规模数字 = 刻意加的锁。清单增减条目时必须同步改这里（防止「删一行 + 删文件」式的静默缩表）。
@@ -22,8 +22,9 @@ count_lock "$M/files.tsv" 341 "files.tsv"
 count_lock "$M/packages.tsv" 169 "packages.tsv"
 count_lock "$M/aur.tsv" 12 "aur.tsv"
 count_lock "$M/bin-links.tsv" 17 "bin-links.tsv"
-count_lock "$M/seed.tsv" 25 "seed.tsv"
-count_lock "$M/excluded.tsv" 120 "excluded.tsv"
+count_lock "$M/seed.tsv" 33 "seed.tsv"
+count_lock "$M/excluded.tsv" 135 "excluded.tsv"
+count_lock "$M/runtime-regenerated.tsv" 11 "runtime-regenerated.tsv"
 
 # --- 通用逐列规则 ---
 nf_rule() { # $1=file $2=fields $3=label
@@ -72,6 +73,13 @@ awk -F'\t' 'NR == FNR { if ($1 !~ /^[[:space:]]*#/ && NF) have[$1] = 1; next }
   "$M/files.tsv" "$M/seed.tsv" >> "$errs"
 uniq_rule "$M/seed.tsv" 1 "seed.tsv col1"
 
+# --- runtime-regenerated.tsv：2 列，且每行必须引用 files.tsv 里存在的 repo 路径 ---
+nf_rule "$M/runtime-regenerated.tsv" 2 "runtime-regenerated.tsv"
+awk -F'\t' 'NR == FNR { if ($1 !~ /^[[:space:]]*#/ && NF) have[$1] = 1; next }
+           !/^[[:space:]]*#/ && NF && !($1 in have) { printf "runtime-regenerated.tsv: line %d path not in files.tsv: [%s]\n", FNR, $1 }' \
+  "$M/files.tsv" "$M/runtime-regenerated.tsv" >> "$errs"
+uniq_rule "$M/runtime-regenerated.tsv" 1 "runtime-regenerated.tsv col1"
+
 # --- excluded.tsv ---
 nf_rule "$M/excluded.tsv" 3 "excluded.tsv"
 col_rule "$M/excluded.tsv" 1 '^(dir|file|package|pattern)$' "excluded.tsv col1 must be dir|file|package|pattern"
@@ -81,4 +89,4 @@ if [[ -s "$errs" ]]; then
   echo "test-manifest-schema: FAIL ($(wc -l < "$errs") problem(s))"
   exit 1
 fi
-echo "ok: 6 manifests (341/169/12/17/25/120 rows) match the column/format/value/whitelist rules"
+echo "ok: 7 manifests (341/169/12/17/33/135/11 rows) match the column/format/value/whitelist rules"

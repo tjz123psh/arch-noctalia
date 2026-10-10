@@ -28,7 +28,7 @@ cn_host() {
 cn_probe_servers() {
   local tmp s probe t idx=0
   tmp="$(mktemp)"
-  while IFS= read -r s; do
+  while IFS= read -r s || [[ -n "$s" ]]; do
     [[ -n "$s" ]] || continue
     idx=$((idx + 1))
     probe="${s/\$arch/x86_64}/archlinuxcn.files"
@@ -53,10 +53,10 @@ cn_order_servers() {
 cn_rewrite_conf() {
   local conf="$1" line in_cn=0 u
   local -a new_servers=()
-  while IFS= read -r line; do
+  while IFS= read -r line || [[ -n "$line" ]]; do
     [[ -n "$line" ]] && new_servers+=("$line")
   done
-  while IFS= read -r line; do
+  while IFS= read -r line || [[ -n "$line" ]]; do
     if (( in_cn == 0 )) && [[ "$line" =~ ^[[:space:]]*\[archlinuxcn\][[:space:]]*$ ]]; then
       in_cn=1
       printf '%s\n' "$line"
@@ -82,10 +82,10 @@ cn_rewrite_conf() {
 cn_replace_section() {
   local conf="$1" line found=0 in_cn=0
   local -a block=()
-  while IFS= read -r line; do
+  while IFS= read -r line || [[ -n "$line" ]]; do
     block+=("$line")
   done
-  while IFS= read -r line; do
+  while IFS= read -r line || [[ -n "$line" ]]; do
     if (( in_cn == 0 )) && [[ "$line" =~ ^[[:space:]]*\[archlinuxcn\][[:space:]]*$ ]]; then
       in_cn=1
       found=1

@@ -8,7 +8,16 @@ _AN_COMMON_LOADED=1
 
 AN_ROOT_DIR="${AN_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 # shellcheck disable=SC2034  # AN_STATE_DIR 供 install.sh（source 本文件）使用
-AN_STATE_DIR="${AN_ROOT_DIR}/.state"
+# 状态目录（续装记录 steps.done + 覆盖备份 overwritten/）：**不放仓库里**——否则删掉/重克隆仓库，
+# 备份和续装记录就一起没了。旧布局（clone 内 .state）若已存在则沿用，避免打断进行中的安装；
+# 需要时可用 AN_STATE_DIR 显式覆盖。
+if [[ -n "${AN_STATE_DIR:-}" ]]; then
+  :
+elif [[ -d "${AN_ROOT_DIR}/.state" ]]; then
+  AN_STATE_DIR="${AN_ROOT_DIR}/.state"
+else
+  AN_STATE_DIR="${XDG_STATE_HOME:-${HOME}/.local/state}/arch-noctalia"
+fi
 
 # --- 输出 ---
 info()  { printf '[info]  %s\n' "$*"; }
@@ -164,4 +173,20 @@ load_seed_targets() { # 填充全局关联数组 AN_SEED[]（键 = files.tsv 的
     fi
     AN_SEED["$p"]=1
   done < "${AN_ROOT_DIR}/manifests/seed.tsv"
+}
+
+# 运行时重写名单：这些文件由桌面/程序在安装后自行改写（Noctalia 主题产物、登录背景同步 hook 等），
+# 12-verify 对它们只核对「存在」、不核对内容（否则机器用过一段时间后自检必然报失败）。
+# 键 = files.tsv 的 repo 路径列。
+# shellcheck disable=SC2034  # AN_RUNTIME 由 steps/12-verify.sh 消费
+load_runtime_targets() {
+  declare -gA AN_RUNTIME=()
+  local p _note
+  [[ -f "${AN_ROOT_DIR}/manifests/runtime-regenerated.tsv" ]] || return 0
+  while IFS=$'\t' read -r p _note; do
+    if [[ -z "$p" || "$p" == "#"* ]]; then
+      continue
+    fi
+    AN_RUNTIME["$p"]=1
+  done < "${AN_ROOT_DIR}/manifests/runtime-regenerated.tsv"
 }

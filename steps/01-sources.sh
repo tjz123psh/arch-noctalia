@@ -114,9 +114,15 @@ if grep -qE '^[[:space:]]*\[multilib\]' "$PACMAN_CONF"; then
   ok "[multilib]: present"
 else
   confirm "Enable [multilib] in ${PACMAN_CONF}?" || die "multilib is required for lib32 packages (stages 03/06)."
-  as_root sed -i -e 's/^#\[multilib\][[:space:]]*$/[multilib]/' \
-                   -e 's/^#Include = \/etc\/pacman\.d\/mirrorlist[[:space:]]*$/Include = \/etc\/pacman.d\/mirrorlist/' \
-                   "$PACMAN_CONF"
+  as_root sed -i -e 's/^#\[multilib\][[:space:]]*$/[multilib]/' "$PACMAN_CONF"
+  # Include 行只在 [multilib] 段内放开——原先的全文件替换会把 core/extra 等段落里注释掉的同名行
+  # 一起放开，导致 pacman 每次运行都刷 warning（实测 5 条）。
+  as_root sed -i '/^\[multilib\]/,/^\[/ s/^#Include = \/etc\/pacman\.d\/mirrorlist[[:space:]]*$/Include = \/etc\/pacman.d\/mirrorlist/' "$PACMAN_CONF"
+  # 段内若本来没有这一行（模板差异），补一条，保证 multilib 也走镜像表。
+  if ! awk '/^\[multilib\]/{f=1; next} f && /^\[/{exit} f && /^Include[[:space:]]*=[[:space:]]*\/etc\/pacman\.d\/mirrorlist/{found=1} END{exit !found}' "$PACMAN_CONF"; then
+    as_root sed -i '/^\[multilib\]/a Include = /etc/pacman.d/mirrorlist' "$PACMAN_CONF"
+    info "added the Include line to the [multilib] section"
+  fi
   grep -qE '^[[:space:]]*\[multilib\]' "$PACMAN_CONF" || die "failed to enable [multilib] — please edit ${PACMAN_CONF} manually."
   ok "[multilib] enabled"
 fi

@@ -131,3 +131,19 @@ file	/home/pang/.config/systemd/user/obsidian-sync.service	自行安装的服务
 file	/home/pang/.config/systemd/user/obsidian-sync.timer	自行安装的服务单元，不入仓
 file	/home/pang/.config/systemd/user/wb2api-guard.service	自行安装的服务单元，不入仓
 file	/home/pang/.config/systemd/user/wb2api-guard.timer	自行安装的服务单元，不入仓
+# ——— 2026-10-10 审查补账 2（此前『三处都没账』的项；用户决定：均为不纳入管理）———
+dir	/home/pang/.config/niri/animation-trials	niri 动画调试痕迹（自建，不入仓）
+dir	/home/pang/scripts/share	自建脚本共享目录（prompts/README，自行维护）
+file	/home/pang/.local/bin/rjsupplicant-gui	自行安装（锐捷认证 GUI，约 2.9M）
+file	/home/pang/.local/bin/anyrouter-proxy.mjs	自行安装（AnyRouter 代理脚本）
+file	/home/pang/.local/share/applications/io.github.pang.RjSupplicantGui.desktop	自行安装（自建项目的桌面项）
+file	/home/pang/.local/share/applications/ai.vellum.desktop	Vellum 自带安装器生成
+file	/home/pang/.local/share/applications/ai.vellum-panel.desktop	Vellum 自带安装器生成
+file	/home/pang/.config/systemd/user/vellum.service	Vellum 自带安装器生成（软链）
+file	/home/pang/.config/systemd/user/vellum-shortcuts.service	Vellum 自带安装器生成（软链）
+file	/home/pang/.config/systemd/user/vellum-tray.service	Vellum 自带安装器生成（软链）
+dir	/home/pang/md	个人文档目录（自行维护）
+dir	/home/pang/obsidian	个人笔记库（云同步；应用数据在 .config/obsidian）
+file	/home/pang/.bashrc	未自定义（与 /etc/skel 同 md5）
+file	/home/pang/.bash_logout	未自定义（与 /etc/skel 同 md5）
+pattern	/home/pang/.{cache,npm,m2,gradle}/**	各工具自管的缓存与依赖目录（不入仓）

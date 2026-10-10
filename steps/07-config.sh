@@ -218,9 +218,15 @@ else
 fi
 
 # d) GRUB：/etc/default/grub 与主题已部署，重建菜单让主题生效（BIOS/UEFI 同一配置路径）。
-if have grub-mkconfig && [[ -d /boot/grub ]]; then
-  as_root grub-mkconfig -o /boot/grub/grub.cfg >/dev/null || die "grub-mkconfig failed"
-  ok "GRUB menu regenerated (theme applied)"
+# /boot 通常是 drwx------ root：普通用户 [[ -d /boot/grub ]] 恒为假，原先这条会被静默跳过，
+# 于是 07/12 都报成功而主题从未生效。改用 root 探测，并在探测失败时明确告警。
+if have grub-mkconfig; then
+  if as_root test -d /boot/grub; then
+    as_root grub-mkconfig -o /boot/grub/grub.cfg >/dev/null || die "grub-mkconfig failed"
+    ok "GRUB menu regenerated (theme applied)"
+  else
+    warn "/boot/grub not found or not readable — GRUB menu NOT regenerated; the boot theme will not apply"
+  fi
 fi
 
 # e) GSettings vendor override：/usr/share/glib-2.0/schemas/*.gschema.override 已随文件部署，

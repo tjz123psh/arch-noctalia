@@ -28,7 +28,11 @@ for c in sudo pacman git; do
   chmod +x "$sandbox/stub-bin/$c"
 done
 
-DONE="$sandbox/repo/.state/steps.done"
+# 状态目录自 2026-10-10 起放在用户 XDG state 下（不再落在 clone 里），所以这里必须给沙箱 HOME，
+# 否则会把 steps.done 写到真机的 ~/.local/state/arch-noctalia。
+export HOME="$sandbox/home"
+mkdir -p "$HOME"
+DONE="$HOME/.local/state/arch-noctalia/steps.done"
 run() { PATH="$sandbox/stub-bin:$PATH" bash "$sandbox/repo/install.sh" --run --yes --machine vm "$@" 2>&1; }
 
 # ---- 第一轮：--no-aur ----
