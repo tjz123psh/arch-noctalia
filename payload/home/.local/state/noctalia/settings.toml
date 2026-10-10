@@ -59,7 +59,7 @@ order = [ "default" ]
         [[bar.default.capsule_group]]
         fill = "on_secondary"
         id = "status"
-        members = [ "tray", "network", "volume", "battery", "bluetooth" ]
+        members = [ "tray", "network", "volume", "brightness", "battery", "bluetooth" ]
         opacity = 0.36999999172985554
         padding = 8.0
         widget_spacing = 8
@@ -546,3 +546,8 @@ type = "weather"
 [widget.workspaces]
 capsule = false
 type = "workspaces"
+
+[widget.brightness]
+capsule = false
+show_label = false
+type = "brightness"
