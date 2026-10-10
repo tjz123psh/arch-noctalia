@@ -1,8 +1,4 @@
-# Noctalia hooks（2026-10-03；2026-10-10 起 colors_changed 走统一入口）
-#   wallpaper_changed：壁纸变化后把登录界面背景同步过去
-#   colors_changed   ：色板变化后依次跑各应用的主题同步（btop、fcitx5 候选窗玻璃背板…）
+# Noctalia hooks（2026-10-03）：壁纸变化后把登录界面背景同步过去
 [hooks]
-# 两个钩子都走统一入口：换壁纸与换配色都会重画各应用主题（含 fcitx5 候选窗背板）。
-# 原因：实测换壁纸时 Noctalia 会重写 fcitx5 主题，但 colors_changed 不一定触发（配色可能没变）。
-wallpaper_changed = "/home/pang/scripts/desktop/rice-theme-hooks"
-colors_changed = "/home/pang/scripts/desktop/rice-theme-hooks"
+wallpaper_changed = "/home/pang/bin/rice-login-bg"
+colors_changed = "/home/pang/scripts/desktop/rice-btop-theme"

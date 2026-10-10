@@ -15,7 +15,7 @@ payload/home/.config/fastfetch/config.jsonc	/home/pang/.config/fastfetch/config.
 payload/home/.config/fastfetch/logo.png	/home/pang/.config/fastfetch/logo.png	644	a4176ae1a403ab05d82eadd1333a9273
 payload/home/.config/fastfetch/themes/noctalia.jsonc	/home/pang/.config/fastfetch/themes/noctalia.jsonc	644	6ad9c1d26d258b4cef7cca47e3a07de5
 payload/home/.config/fcitx5/conf/chttrans.conf	/home/pang/.config/fcitx5/conf/chttrans.conf	600	ffda3fa22413dd8cc96019742a47783d
-payload/home/.config/fcitx5/conf/classicui.conf	/home/pang/.config/fcitx5/conf/classicui.conf	644	feef7a79dad21b66f11b5c087bc9ed98
+payload/home/.config/fcitx5/conf/classicui.conf	/home/pang/.config/fcitx5/conf/classicui.conf	644	1e3ebc4c7db283a29f047f3b3be98567
 payload/home/.config/fcitx5/conf/notifications.conf	/home/pang/.config/fcitx5/conf/notifications.conf	600	4d6c030467ef9811e92daa5aaaff362d
 payload/home/.config/fcitx5/conf/pinyin.conf	/home/pang/.config/fcitx5/conf/pinyin.conf	600	26e2e305b62bc886e3c61fb9fa148eb5
 payload/home/.config/fcitx5/conf/punctuation.conf	/home/pang/.config/fcitx5/conf/punctuation.conf	600	c524f85ab97a43fdaf90e56d73a0b715
@@ -57,7 +57,7 @@ payload/home/.config/niri/scripts/niri-force-kill-window	/home/pang/.config/niri
 payload/home/.config/niri/scripts/niri-quit	/home/pang/.config/niri/scripts/niri-quit	755	b07b12985da06d5c9ff62487b6a3bcf0
 payload/home/.config/niri/scripts/niri-touchpad-toggle	/home/pang/.config/niri/scripts/niri-touchpad-toggle	755	675269243c9bf08cc11a4f7f9c7e00fe
 payload/home/.config/niri/scripts/niri-vmtest-gen	/home/pang/.config/niri/scripts/niri-vmtest-gen	755	56f32cfbc990146539830314ff7ad146
-payload/home/.config/noctalia/hooks.toml	/home/pang/.config/noctalia/hooks.toml	644	b14aeb1a4fb926ab75e5bc696bc926fe
+payload/home/.config/noctalia/hooks.toml	/home/pang/.config/noctalia/hooks.toml	644	949788850bc98a9878df6d6e80bd9edf
 payload/home/.config/nomacs/Image Lounge.conf	/home/pang/.config/nomacs/Image Lounge.conf	644	8d4a0f214e9bf402c48be6f5b7002b9e
 payload/home/.config/nwg-look/config	/home/pang/.config/nwg-look/config	644	1d7532f1af614a510283dc0b46520eee
 payload/home/.config/papirus-folders/keep	/home/pang/.config/papirus-folders/keep	644	54ede524b231ba359a3a461fd6aa5197
@@ -329,8 +329,6 @@ payload/system/etc/systemd/zram-generator.conf	/etc/systemd/zram-generator.conf	
 payload/system/etc/vconsole.conf	/etc/vconsole.conf	644	d7cdb5bf660d946c3499c971055dad20
 # ——— 2026-10-05 btop 主题跟随色板：rice-btop-theme（系统现有 scripts 行在文首段） ———
 payload/home/scripts/desktop/rice-btop-theme	/home/pang/scripts/desktop/rice-btop-theme	755	18a5f112a419b779d3fd4dc478ca2b0e
-payload/home/scripts/desktop/rice-fcitx5-glass	/home/pang/scripts/desktop/rice-fcitx5-glass	755	d57bc86e1900f7da8326a9a8da7e5649
-payload/home/scripts/desktop/rice-theme-hooks	/home/pang/scripts/desktop/rice-theme-hooks	755	d3cb7fa9062d0e39016c0b32f6f43feb
 # ——— 2026-10-07 snapper timeline 每周一次（/etc drop-in 覆盖上游 hourly） ———
 payload/system/etc/systemd/system/snapper-timeline.timer.d/override.conf	/etc/systemd/system/snapper-timeline.timer.d/override.conf	644	38604bf84421d73b154ff25415b2376d
 # ——— 2026-10-09 Mission Center（Super+M「任务中心」）外观：窗口毛玻璃等样式随 gtk.css 部署；
