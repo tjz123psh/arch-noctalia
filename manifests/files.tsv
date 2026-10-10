@@ -72,7 +72,7 @@ payload/home/.config/zellij/config.kdl	/home/pang/.config/zellij/config.kdl	644	
 payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	b1c070fe98dec992bdbffec2e37e144a
 payload/home/.local/share/applications/qq.desktop	/home/pang/.local/share/applications/qq.desktop	644	a93b140354cb6f3ee0c6f3f86a2d9090
 payload/home/.local/share/applications/linuxqq-wayland-fix.desktop	/home/pang/.local/share/applications/linuxqq-wayland-fix.desktop	644	73afa243ba8c4f34e8426bbd1a8ae73d
-payload/home/Pictures/wallpapers/初雪.png	/home/pang/Pictures/wallpapers/初雪.png	644	6ce51e6481a10fba6ee5bcad1cf3b1fd
+payload/home/Pictures/wallpapers/初雪.png	/home/pang/Pictures/wallpapers/初雪.png	600	6ce51e6481a10fba6ee5bcad1cf3b1fd
 payload/home/Pictures/wallpapers/圣剑.png	/home/pang/Pictures/wallpapers/圣剑.png	644	f76dbf3abbe4321dddf0a4397e5f9d0c
 payload/home/Pictures/wallpapers/守望.png	/home/pang/Pictures/wallpapers/守望.png	644	81971dfbb5cf3e1fc524c95119cfad05
 payload/home/Pictures/wallpapers/斑斓.png	/home/pang/Pictures/wallpapers/斑斓.png	644	19fa1a7e7a4c21485574e1d46692e9b8
@@ -335,12 +335,12 @@ payload/system/etc/systemd/system/snapper-timeline.timer.d/override.conf	/etc/sy
 #     显示默认值（平滑曲线/120 点/隐藏虚拟网卡）用 GSettings vendor override 给出，
 #     07-config 部署后自动 glib-compile-schemas 生效；用户在程序里改过的值（dconf）优先。 ———
 payload/system/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	644	023c9b849ff70ce6f5af443f276d1ced
-payload/home/noctalia-plugins/sidebar/notes.py	/home/pang/noctalia-plugins/sidebar/notes.py	755	61dfdc9e577d7d3ec5c9a11e96c6a642
+payload/home/noctalia-plugins/sidebar/notes.py	/home/pang/noctalia-plugins/sidebar/notes.py	600	61dfdc9e577d7d3ec5c9a11e96c6a642
 payload/home/noctalia-plugins/sidebar/CHANGELOG.md	/home/pang/noctalia-plugins/sidebar/CHANGELOG.md	644	51e77ff32215666f355e3a38126475c4
-payload/home/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	/home/pang/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	644	fdb03ca32c1d0299df918f37b47420f1
+payload/home/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	/home/pang/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	600	fdb03ca32c1d0299df918f37b47420f1
 payload/home/noctalia-plugins/sidebar/tests/notes_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.lua	644	de1274938509e476433d5bff909c9833
-payload/home/noctalia-plugins/sidebar/tests/notes_spec.py	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.py	644	fa2342780591353aeb6b108a1d9457ad
-payload/home/noctalia-plugins/sidebar/tests/experience_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/experience_spec.lua	644	29c3a9d1071d4731ba64250c45f10bba
+payload/home/noctalia-plugins/sidebar/tests/notes_spec.py	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.py	600	fa2342780591353aeb6b108a1d9457ad
+payload/home/noctalia-plugins/sidebar/tests/experience_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/experience_spec.lua	600	29c3a9d1071d4731ba64250c45f10bba
 # ——— 2026-10-10 侧栏 2.3.3 / 放大镜 1.1.0（本机试样经验收后纳入）：新增文件 ———
 payload/home/noctalia-plugins/sidebar/tests/local_motion_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/local_motion_spec.lua	644	66b3a6e5c680670d41a2254c0bc0830b
 payload/home/noctalia-plugins/magnifier/README.md	/home/pang/noctalia-plugins/magnifier/README.md	644	a12bc14794b5e0d654b26d6a2e7e1e00
