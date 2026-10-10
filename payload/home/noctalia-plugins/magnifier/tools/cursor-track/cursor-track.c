@@ -26,6 +26,20 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+/* Independent of pointer activity: a busy event stream must never keep a stale input shield alive. */
+static int tracker_should_exit(const char *output, const char *heartbeat,
+                               time_t now, time_t started) {
+  struct stat st;
+  if (difftime(now, started) > 2 * 3600) return 1;
+  if (output && *output && (stat(output, &st) != 0 || !S_ISREG(st.st_mode))) return 1;
+  if (heartbeat && *heartbeat) {
+    if (stat(heartbeat, &st) != 0 || !S_ISREG(st.st_mode)) return 1;
+    if (difftime(now, st.st_mtime) > 2.5) return 1;
+  }
+  return 0;
+}
+
+#ifndef CURSOR_TRACK_HEARTBEAT_TEST
 #include <wayland-client.h>
 #include "wlr-layer-shell-unstable-v1.h"
 
@@ -175,10 +189,15 @@ int main(int argc, char **argv) {
     else if (!path) path = argv[i];
     else hb = argv[i];
   }
+  time_t t0 = time(NULL);
+  if (!path) { fprintf(stderr, "usage: cursor-track <output> [heartbeat]\n"); return 64; }
   if (hb) snprintf(hb_path, sizeof hb_path, "%s", hb);
+  /* The panel may have closed while the detached startup command was queued. */
+  if (tracker_should_exit(NULL, hb_path, t0, t0)) return 0;
   if (path) {
     snprintf(out_path, sizeof out_path, "%s", path);
-    outfd = open(path, O_RDWR | O_CREAT, 0644);
+    outfd = open(path, O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
+    if (outfd < 0) { perror("cursor-track: output"); return 2; }
     if (outfd >= 0) {
       char init[128];
       memset(init, ' ', sizeof init);
@@ -205,35 +224,29 @@ int main(int argc, char **argv) {
   zwlr_layer_surface_v1_set_size(lsurf, 0, 0);
   /* 首次 commit 不带 buffer：必须先拿到 configure 并 ack 之后才能 attach */
   wl_surface_commit(surf);
-  /* 事件循环：每轮带 1 秒超时，顺便做两个安全检查——
-     (1) 输出文件被删（调用方退出）→ 自己也退出，避免残留 surface 把桌面点死；
-     (2) 寿命上限 2 小时。 */
-  time_t t0 = time(NULL);
-  int idle_ms = 0;
+  /* Check leases on every event-loop turn, not just when the mouse is idle.
+     A 100ms poll bounds normal close latency; click records remain available to the panel. */
+  time_t last_alive = t0;
   while (!want_exit) {
-    if (wl_display_dispatch_pending(dpy) < 0) break;
+    if (tracker_should_exit(out_path, hb_path, time(NULL), t0)) break;
+    if (wl_display_dispatch_pending(dpy) < 0 || want_exit) break;
     wl_display_flush(dpy);
     struct pollfd pfd = { .fd = wl_display_get_fd(dpy), .events = POLLIN };
-    int pr = poll(&pfd, 1, 1000);
+    int pr = poll(&pfd, 1, 100);
+    if (pr < 0) { if (errno == EINTR) continue; break; }
+    if (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) break;
     if (pr > 0 && (pfd.revents & POLLIN)) {
       if (wl_display_dispatch(dpy) < 0) break;
-    } else {
-      idle_ms += 1000;
-      /* 每 2 秒报一次活：插件靠它判断"指针没动"还是"追踪器已死" */
-      if (idle_ms % 2000 == 0) rec("alive", last_x, last_y);
-      struct stat st;
-      if (out_path[0] && stat(out_path, &st) != 0 && errno == ENOENT) break;
-      /* 心跳超时（默认 2.5 秒）→ 调用方不在或已退出，自己收摊 */
-      if (hb_path[0]) {
-        struct stat hbst;
-        if (stat(hb_path, &hbst) != 0) {
-          if (errno == ENOENT) break;
-        } else if (time(NULL) - hbst.st_mtime > 2) {
-          break;
-        }
-      }
-      if (time(NULL) - t0 > 2 * 3600) break;
+    }
+    time_t now = time(NULL);
+    if (tracker_should_exit(out_path, hb_path, now, t0)) break;
+    if (difftime(now, last_alive) >= 2) {
+      rec("alive", last_x, last_y);
+      last_alive = now;
     }
   }
+  if (outfd >= 0) close(outfd);
+  wl_display_disconnect(dpy);
   return 0;
 }
+#endif /* CURSOR_TRACK_HEARTBEAT_TEST */

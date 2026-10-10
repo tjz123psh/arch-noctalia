@@ -1,6 +1,6 @@
 id = "pang/magnifier"
 name = "Magnifier（屏幕放大镜）"
-version = "1.0.0"
+version = "1.1.0"
 plugin_api = 32
 author = "pang"
 license = "MIT"

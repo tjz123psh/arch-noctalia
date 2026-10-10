@@ -79,10 +79,56 @@ local layoutSaveAt = nil
 local bootQueue, bootAt, bootReady = {}, 0, false
 local motionMs = MOTION == "soft" and 220 or 0
 local feedback = {} -- 轻量模式只淡入箭头；正文一次布局。
+local localMotions = {} -- 只管局部展示，不进入 folds，不阻挡保存。
+local notesReadyView = nil
 -- ease-out 首帧即可看到响应；不使用先慢后快的长缓入。
 local function ease(x) return 1 - (1 - x) ^ 3 end
 local function wake() if panelVisible then panel.setNeedsFrameTick(true) end end
 local function markDirty(key) dirtyCards[key] = true stateDirty = true wake() end
+
+local function localOpacity(m, now)
+  local x = math.min(1, math.max(0, (now - m.started) / m.duration))
+  return m.from + (1 - m.from) * ease(x), x >= 1
+end
+local function clearLocalMotion(key)
+  local m = localMotions[key]
+  if m and m.node then m.node.props.opacity = 1 end
+  localMotions[key] = nil
+end
+local function clearLocalMotions()
+  for key in pairs(localMotions) do clearLocalMotion(key) end
+  notesReadyView = nil
+end
+local function pulseLocal(key, from, duration)
+  if MOTION == "off" or not panelVisible then clearLocalMotion(key) return end
+  local now, previous = noctalia.nowMs(), localMotions[key]
+  if previous and now - previous.started < previous.duration then
+    from = localOpacity(previous, now) -- 连点从当前亮度接续，不反复闪暗。
+  end
+  localMotions[key] = { started = now, duration = duration, from = from }
+  wake()
+end
+local function bindLocal(key, node)
+  local m = localMotions[key]
+  if m then
+    local opacity, done = localOpacity(m, noctalia.nowMs())
+    node.props.opacity = opacity
+    m.node = node
+    if done then localMotions[key] = nil end
+  else
+    node.props.opacity = 1
+  end
+  return node
+end
+local function advanceLocal(now)
+  local changed = false
+  for key, m in pairs(localMotions) do
+    local opacity, done = localOpacity(m, now)
+    if m.node and m.node.props.opacity ~= opacity then m.node.props.opacity = opacity changed = true end
+    if done then localMotions[key] = nil end
+  end
+  return changed
+end
 -- 每个数据源最多一个在途请求；关闭/重开后旧回调不能污染新状态。
 local function query(key, command, callback)
   if inFlight[key] == generation then return true end
@@ -179,8 +225,23 @@ local function persistLayout()
   wake()
 end
 
+local function togglePinned(key)
+  if not panelVisible or not CARD_KEYS[key] then return end
+  pinned[key] = not pinned[key]
+  pulseLocal("card:" .. key, 0.55, MOTION == "soft" and 160 or 120)
+  render()
+  persistLayout()
+end
+local function setCustomizing(value)
+  if not panelVisible or customizing == value then return end
+  customizing = value
+  pulseLocal("customize", 0.65, MOTION == "soft" and 160 or 120)
+  render()
+end
+
 -- 拖拽落下：payload = 被拖的卡片 key；value = "before|<key>" 或 "end"
 function onCardDrop(payload, value)
+  if not panelVisible then return end
   if type(payload) ~= "string" or type(value) ~= "string" then return end
   if value ~= "end" and not value:match("^before|[^|]+$") then return end
   local anchor = nil
@@ -211,6 +272,7 @@ function onCardDrop(payload, value)
       table.insert(order, 1, payload)
     end
   end
+  pulseLocal("card:" .. payload, 0.55, MOTION == "soft" and 160 or 120)
   render()
   persistLayout()
 end
@@ -241,7 +303,7 @@ end
 local function cardHeader(key, glyphName, title, extras, onToggle)
   local icon = ui.row({ width = 28, height = 28, radius = 8,
     fill = open[key] and "primary/0.12" or "surface_variant/0.30", align = "center", justify = "center" }, {
-    ui.glyph({ name = glyphName, size = 16, color = open[key] and "primary" or CL.muted }),
+    bindLocal("card:" .. key, ui.glyph({ key = "header-icon-" .. key, name = glyphName, size = 16, color = open[key] and "primary" or CL.muted })),
   })
   local iconBody = icon
   if customizing then
@@ -256,7 +318,7 @@ local function cardHeader(key, glyphName, title, extras, onToggle)
   if customizing then
     kids[#kids + 1] = ui.button({ glyph = "pin", height = 26, width = 26,
       variant = pinned[key] and "secondary" or "ghost", tooltip = pinned[key] and "取消置顶" or "置顶这张卡片",
-      onClick = function() pinned[key] = not pinned[key] render() persistLayout() end })
+      onClick = function() togglePinned(key) end })
   elseif pinned[key] then
     kids[#kids + 1] = ui.glyph({ name = "pin", size = 10, color = "primary" })
   end
@@ -1597,6 +1659,26 @@ function notes.card()
       children[#children + 1] = ui.button({ key = "notes-save-copy", text = "将当前输入另存为新便签", variant = "secondary", controlSize = "sm", onClick = function() onNoteNew(true) end })
     end
   end
+  -- 只保留当前页面；不保留旧编辑树交叉淡出，导航/保存队列仍是唯一状态来源。
+  if #children > 2 then
+    local ready = not notes.creating and (not notes.selected or notes.note ~= nil)
+    local view = ready and (notes.selected and ("edit:" .. notes.selected) or "list") or nil
+    if view then
+      if notesReadyView ~= nil and notesReadyView ~= view then
+        pulseLocal("notes-page", MOTION == "soft" and 0.62 or 0.78, MOTION == "soft" and 200 or 140)
+      end
+      notesReadyView = view
+    else
+      clearLocalMotion("notes-page") -- 真实内容回来后再开始，不动画加载占位。
+    end
+    local body = {}
+    for i = 3, #children do body[#body + 1] = children[i] end
+    local page = bindLocal("notes-page", ui.column({ key = "notes-page", gap = SP.block, align = "stretch" }, body))
+    children = { children[1], children[2], page }
+  else
+    clearLocalMotion("notes-page")
+    notesReadyView = nil
+  end
   notes.wantFocus = false
   local tasks = notes.note and #notes.note.tasks or 0
   return cardShell("notes", children, notes.selected and math.min(520, 380 + tasks * 48) or math.min(330, math.max(100, #notes.list * 46 + 46)))
@@ -1895,6 +1977,10 @@ end
 local function toolbar()
   local subtitle = focusMode and "一次只做一件事" or "把常用的事，放在手边"
   toolbarStatusProps = { key = "toolbar-status", text = toolbarStatus(), fontSize = FS.small, color = "primary" }
+  local customizeButton = bindLocal("customize", ui.button({ key = "customize",
+    glyph = customizing and "check" or "adjustments-horizontal", controlSize = "sm",
+    variant = customizing and "secondary" or "ghost", tooltip = customizing and "完成整理" or "整理卡片：置顶、排序、动效",
+    onClick = function() setCustomizing(not customizing) end }))
   local children = {
     ui.row({ align = "center", gap = 10 }, {
       ui.row({ width = 38, height = 38, fill = "primary/0.14", radius = 12, align = "center", justify = "center" }, {
@@ -1904,9 +1990,7 @@ local function toolbar()
         ui.label({ text = "随手工作台", fontSize = 19, fontWeight = "bold" }),
         ui.label({ text = subtitle, fontSize = FS.caption, color = CL.muted }),
       }),
-      ui.button({ key = "customize", glyph = customizing and "check" or "adjustments-horizontal", controlSize = "sm",
-        variant = customizing and "secondary" or "ghost", tooltip = customizing and "完成整理" or "整理卡片：置顶、排序、动效",
-        onClick = function() customizing = not customizing render() end }),
+      customizeButton,
     }),
     ui.row({ gap = 6, align = "center" }, {
       ui.button({ key = "daily", text = "常用", glyph = "layout-grid", controlSize = "sm", flexGrow = 1,
@@ -2020,7 +2104,8 @@ end
 function onFrameTick(_deltaMs)
   if not panelVisible or not cachedTree then panel.setNeedsFrameTick(false) return end
   local now, changed = noctalia.nowMs(), false
-  if (next(folds) ~= nil or next(feedback) ~= nil) and now - lastMotionSubmit < 16 then return end
+  if (next(folds) ~= nil or next(feedback) ~= nil or next(localMotions) ~= nil) and now - lastMotionSubmit < 16 then return end
+  local paintChanged = advanceLocal(now)
   for key, t0 in pairs(feedback) do
     local header = headerNodes[key]
     local x = math.min(1, (now - t0) / 120)
@@ -2065,15 +2150,17 @@ function onFrameTick(_deltaMs)
       submitTree()
       settleAt = now + 24 -- 之后再把攒下的数据更新并进一次重建，别和动画终点抢同一帧
     elseif stateDirty and now >= settleAt then
-      render("pending")
+      render("pending") -- 输入/数据优先，局部装饰不延迟脏卡重建。
+    elseif paintChanged then
+      submitTree()
     end
     if layoutSaveAt and now >= layoutSaveAt then flushLayout() end
     if notes.saveAt and now >= notes.saveAt then notes.flush() end
-  elseif changed then
+  elseif changed or paintChanged then
     submitTree()
   end
-  if changed then lastMotionSubmit = now end
-  panel.setNeedsFrameTick(next(folds) ~= nil or next(feedback) ~= nil or stateDirty or #bootQueue > 0 or layoutSaveAt ~= nil
+  if changed or paintChanged then lastMotionSubmit = now end
+  panel.setNeedsFrameTick(next(folds) ~= nil or next(feedback) ~= nil or next(localMotions) ~= nil or stateDirty or #bootQueue > 0 or layoutSaveAt ~= nil
     or (notes.saveAt ~= nil and notes.saving == nil and notes.request == nil))
 end
 
@@ -2085,6 +2172,7 @@ function onOpen(_context)
   panelVisible = true
   clockMinute = noctalia.formatTime("%H:%M")
   focusEdges = {}
+  clearLocalMotions()
   folds, feedback = {}, {}
   lastMotionSubmit, settleAt = 0, 0
   if customizing then for key in pairs(CARD_KEYS) do dirtyCards[key] = true end end
@@ -2125,6 +2213,7 @@ function onClose()
   panelVisible = false
   generation = generation + 1
   focusEdges = {}
+  clearLocalMotions()
   folds, feedback = {}, {}
   for key, node in pairs(motionNodes) do
     node.viewport.props.height = open[key] and node.height or 0.1
@@ -2168,11 +2257,11 @@ function onIpc(event, payload)
   if event == "toggle" and CARD_KEYS[payload] then toggleCard(payload)
   elseif event == "layout" and (payload == "daily" or payload == "all" or payload == "none") then setLayout(payload)
   elseif event == "focus" then setFocusMode(not focusMode)
-  elseif event == "customize" then customizing = not customizing render()
+  elseif event == "customize" then setCustomizing(not customizing)
   elseif event == "notes" and payload == "refresh" then notes.refresh(true)
   elseif event == "notes" and payload == "new" then onNoteNew(false)
   elseif event == "notes" and type(payload) == "string" and payload:sub(1, 7) == "select:" then notes.select(payload:sub(8))
-  elseif event == "pin" and CARD_KEYS[payload] then pinned[payload] = not pinned[payload] render() persistLayout()
+  elseif event == "pin" and CARD_KEYS[payload] then togglePinned(payload)
   end
 end
 

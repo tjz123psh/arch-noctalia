@@ -1,10 +1,11 @@
 --!nonstrict
--- pang/magnifier — 屏幕放大镜（Noctalia v5 插件） v0.5
+-- pang/magnifier — 屏幕放大镜（Noctalia v5 插件） v1.1
+-- 键盘缩放/平移短过渡，鼠标跟随不加延迟；每轮截图/心跳独立命名，旧回调只清理自己的帧。
 -- 方案与边界：/home/pang/noctalia-work/experiments/2026-10-04-magnifier-plugin-spec.md
 --
 -- 形态（用户定稿）：按快捷键 → 面板开在鼠标处 → 鼠标移动，画面实时跟着移动。
 -- 光标来源：本地小工具 cursor-track（~/bin，源码 ~/dev/cursor-track）——它铺一层全屏透明
---   layer surface 直接收 wl_pointer 事件，把位置写进 $XDG_RUNTIME_DIR/pang-magnifier/cursor.pos。
+--   layer surface 直接收 wl_pointer 事件，位置/心跳文件按面板轮次隔离。当前路径见 state.txt。
 --   （niri 没有任何光标查询接口；XWayland 的 xdotool 查询在指针位于 Wayland 原生表面时是死值。）
 --   代价：cursor-track 在 overlay 层、输入区全屏 → 放大镜打开期间桌面点击被它接走（点击=退出）。
 -- 放大倍率 = 显示框(640×414) / 视口；视口一变就重抓（ui.image 无裁剪/偏移）。
@@ -30,9 +31,12 @@ local TICK_MS = 16         -- 每个显示帧读取最新光标位置
 local IDLE_MS = 33         -- 跟随模式下持续刷新动态内容；抓帧串行，不积压任务
 local PANEL_TOP = 44
 local MARGIN = 24
+local VIEW_MOTION_MS = 140 -- 只平滑离散键盘操作，连续鼠标跟随仍立即更新视口。
 
 -- ============ 状态 ============
 local alive, gen = false, 0
+local session = nil
+local viewMotion = nil
 local follow = true
 local zoom = 2.0
 local seq = 0
@@ -67,6 +71,7 @@ local lastViewSave = 0
 -- ============ 小工具 ============
 local function clamp(v, lo, hi) return math.max(lo, math.min(hi, v)) end
 local function rnd(v) return math.floor(v + 0.5) end
+local function shq(s) return "'" .. tostring(s):gsub("'", "'\\''") .. "'" end
 
 local function pick_output()
   local outs = noctalia.outputs() or {}
@@ -112,6 +117,61 @@ end
 
 local function center() return vx + vw / 2, vy + vh / 2 end
 
+local function advance_view(now)
+  local m = viewMotion
+  if not m then return false end
+  local t = clamp((now - m.started) / VIEW_MOTION_MS, 0, 1)
+  local e = 1 - (1 - t) ^ 3
+  zoom = m.fromZ + (m.toZ - m.fromZ) * e
+  size_for(zoom)
+  if m.pan and not follow then
+    place(m.fromX + (m.toX - m.fromX) * e, m.fromY + (m.toY - m.fromY) * e)
+  else
+    place(m.anchorX, m.anchorY)
+  end
+  if t >= 1 then viewMotion = nil end
+  return true
+end
+
+local function begin_view(z, cx, cy, pan)
+  local now, previous = noctalia.nowMs(), viewMotion
+  advance_view(now) -- 反向或重复输入从当前已显示的进度接续。
+  local fromX, fromY = center()
+  local toZ = clamp(z or (previous and previous.toZ) or zoom, ZOOM_MIN, ZOOM_MAX)
+  local moving = pan or (previous and previous.pan and not follow) or false
+  local anchorX = previous and not previous.pan and previous.anchorX or fromX
+  local anchorY = previous and not previous.pan and previous.anchorY or fromY
+  local toX = cx or (moving and previous and previous.toX) or anchorX
+  local toY = cy or (moving and previous and previous.toY) or anchorY
+  -- 只计算合法终点，然后恢复当前视口；避免重复按键把目标推到屏幕外而空转。
+  local oldX, oldY, oldW, oldH = vx, vy, vw, vh
+  size_for(toZ)
+  place(toX, toY)
+  toX, toY = center()
+  vx, vy, vw, vh = oldX, oldY, oldW, oldH
+  if not alive then
+    zoom = toZ; size_for(zoom); place(toX, toY); viewMotion = nil
+    return
+  end
+  viewMotion = { fromZ = zoom, toZ = toZ, fromX = fromX, fromY = fromY,
+    toX = toX, toY = toY, anchorX = anchorX, anchorY = anchorY,
+    pan = moving, started = now }
+  panel.setNeedsFrameTick(true)
+end
+
+local function requested_center()
+  if viewMotion and viewMotion.pan then return viewMotion.toX, viewMotion.toY end
+  return center()
+end
+
+local function finish_view()
+  local m = viewMotion
+  if not m then return end
+  zoom = m.toZ; size_for(zoom)
+  if m.pan and not follow then place(m.toX, m.toY) else place(m.anchorX, m.anchorY) end
+  viewMotion = nil
+end
+
 local function status_text()
   local cx, cy = center()
   return string.format("%s · %d%% · 视口 %d×%d",
@@ -138,7 +198,7 @@ local function write_state()
     "mode=%s\nzoom=%.2f\nview=%d,%d %dx%d\ncenter=%d,%d\npanel=%d,%d %dx%d\nout=%d,%d %dx%d\nseq=%d\nnote=%s\ncursor=%s\nsrc=%s\nclicks=%d\npath=%s\n",
     follow and "follow" or "freeze", zoom, vx, vy, vw, vh, rnd(cx), rnd(cy),
     px0, py0, px1 - px0, py1 - py0, ox, oy, ow, oh, seq, lastNote,
-    lastCursor, cursorSrc, clicks, curPath or ""))
+    lastCursor, cursorSrc, clicks, curPath or "") .. "tracker=" .. (trackerPath or "") .. "\n")
   noctalia.writeFile(dir .. "/diag.txt", string.format(
     "inflight=%s ms=%d ticks=%d capfail=%d lastrec=%d\n",
     tostring(inflight), inflight and (rnd(noctalia.nowMs()) - inflightSince) or 0, ticks, capfail,
@@ -164,7 +224,7 @@ end
 
 local function save_view()
   local cx, cy = center()
-  local enc = noctalia.json.encode({ zoom = zoom, cx = rnd(cx), cy = rnd(cy) })
+  local enc = noctalia.json.encode({ zoom = zoom, cx = cx, cy = cy }) -- 保留半像素中心，避免奇数视口每次重开漂移。
   if enc then noctalia.writeFile((noctalia.pluginDataDir() or "/tmp") .. "/view.json", enc) end
 end
 
@@ -179,31 +239,47 @@ local function load_view()
 end
 
 -- ============ 光标：cursor-track 优先，X 查询兜底 ============
+-- 只删除本轮亲自创建的精确帧路径；不使用通配符，不清理别的面板轮次。
+local function remove_frame(owner, index)
+  if not owner or not index or index < 1 then return end
+  local path = owner.prefix .. tostring(index) .. ".png"
+  noctalia.removeFile(path)
+  owner.frames[index] = nil
+end
+
+local function release_frames(owner)
+  if not owner then return end
+  for index in pairs(owner.frames) do remove_frame(owner, index) end
+end
+
 local function start_tracker()
-  trackerPath = dir .. "/cursor.pos"
-  heartbeatPath = dir .. "/heartbeat.txt"
+  if not alive or not session then return end
+  -- 唯一心跳让旧追踪器自行退出，不能异步 pkill 杀到刚打开的新追踪器。
+  if heartbeatPath then noctalia.removeFile(heartbeatPath) end
+  if trackerPath then noctalia.removeFile(trackerPath) end
+  session.trackerRun = session.trackerRun + 1
+  local suffix = session.id .. "-" .. session.trackerRun
+  trackerPath = dir .. "/cursor-" .. suffix .. ".pos"
+  heartbeatPath = dir .. "/heartbeat-" .. suffix .. ".txt"
   trackerSeq = 0
   trackerStart = noctalia.nowMs()
   lastHeartbeat = 0
+  lastRecordMs = 0
   noctalia.writeFile(heartbeatPath, tostring(rnd(noctalia.nowMs())))
-  -- 同步清空（不能用 runAsync("rm")：它和下面的 spawn 是竞争关系，
-  -- 曾经 rm 后到、把追踪器的第一条记录删掉，追踪器随即因"文件消失"自我保护退出）
   noctalia.writeFile(trackerPath, "")
-  -- 杀旧 + 清文件 + 起新，放在同一条命令里按顺序执行（避免自愈重启时越积越多）
   local bin = noctalia.expandPath("~/bin/cursor-track")
-  noctalia.runAsync("pkill -x cursor-track; rm -f '" .. trackerPath .. "'; ("
-    .. bin .. " '" .. trackerPath .. "' '" .. heartbeatPath .. "' || cursor-track '" .. trackerPath .. "' '" .. heartbeatPath .. "') &")
+  local args = shq(trackerPath) .. " " .. shq(heartbeatPath)
+  local lease = "[ -e " .. shq(heartbeatPath) .. " ]"
+  -- 迟到的启动命令先检查自己的心跳；已关闭的轮次不再创建输入层。
+  noctalia.runAsync("if " .. lease .. "; then (" .. shq(bin) .. " " .. args
+    .. " || { if " .. lease .. "; then cursor-track " .. args .. "; fi; }) & fi")
 end
 
 local function stop_tracker()
-  if heartbeatPath then
-    -- 同步删心跳：追踪器对"心跳消失"是立即退出的（onClose 里的 runAsync spawn 会被丢弃，
-    -- 只有同步的 writeFile/removeFile 可靠），这样点击被接走的窗口从 ~3s 缩到 ~1s
-    noctalia.removeFile(heartbeatPath)
-  end
-  if trackerPath then
-    noctalia.runAsync("rm -f '" .. trackerPath .. "' ; pkill -x cursor-track")
-  end
+  -- 同步移除自己的租约；不依赖关闭后可能被宿主丢弃的异步命令。
+  if heartbeatPath then noctalia.removeFile(heartbeatPath) end
+  if trackerPath then noctalia.removeFile(trackerPath) end
+  heartbeatPath, trackerPath = nil, nil
 end
 
 -- 读追踪器文件：有新事件则返回 type,x,y
@@ -241,7 +317,7 @@ end
 
 -- ============ 抓帧 ============
 local function capture()
-  if not alive or vw <= 0 or vh <= 0 then return end
+  if not alive or not session or session.closed or vw <= 0 or vh <= 0 then return end
   -- 看门狗：任何回调丢失都别让管道卡死（用户反馈"乱按后画面冻住"的兜底）
   if inflight and noctalia.nowMs() - inflightSince > 2000 then
     inflight = false
@@ -253,14 +329,18 @@ local function capture()
   inflightSince = noctalia.nowMs()
   lastStart = noctalia.nowMs()
   seq = seq + 1
-  local path = string.format("%s/frame-%d.png", dir, seq)
-  local g, mine = gen, seq
+  local owner, g, mine = session, gen, seq
+  local path = owner.prefix .. tostring(mine) .. ".png"
+  owner.frames[mine] = path
   -- argv 直启 + 无损 PNG 不压缩，减少每帧编码耗时
   local geo = string.format("%d,%d %dx%d", vx, vy, vw, vh)
   local ok = noctalia.runAsync({ "grim", "-c", "-l", "0", "-g", geo, path }, function(res)
     guard("capture", function()
-    if alive then panel.setNeedsFrameTick(true) end   -- 重申订阅（重启运行时后订阅会丢）
-    if not alive or g ~= gen or mine ~= seq then return end
+    if not alive or owner.closed or owner ~= session or g ~= gen or mine ~= seq then
+      remove_frame(owner, mine) -- 迟到的进程可能刚写完，只清理它自己的独立文件。
+      return
+    end
+    panel.setNeedsFrameTick(true)
     inflight = false
     if res.exitCode == 0 then
       curPath = path
@@ -268,9 +348,10 @@ local function capture()
       -- 仅回收本轮已过时的截图，保留最近三帧给图片加载；不再启动清理进程。
       -- 旧方案每八帧只清两张，持续刷新时会不断占用内存盘。
       if mine > 3 then
-        noctalia.removeFile(string.format("%s/frame-%d.png", dir, mine - 3))
+        remove_frame(owner, mine - 3)
       end
     else
+      remove_frame(owner, mine)
       note("抓帧失败")
     end
     local now = noctalia.nowMs()
@@ -286,6 +367,7 @@ local function capture()
     end)
   end, 3000)
   if ok == false then
+    remove_frame(owner, mine)
     inflight = false
     capfail = capfail + 1
     note("抓帧启动失败")
@@ -294,19 +376,17 @@ local function capture()
 end
 
 local function set_center(cx, cy, shot)
-  place(cx, cy)
-  if shot then capture() else render() end
+  if shot then begin_view(nil, cx, cy, true)
+  else place(cx, cy); if alive then render() end end
 end
 
 local function set_zoom(z)
-  zoom = clamp(z, ZOOM_MIN, ZOOM_MAX)
-  local cx, cy = center()
-  size_for(zoom)
-  place(cx, cy)
-  capture()
+  begin_view(z, nil, nil, false)
 end
 
-local function bump_zoom(factor) set_zoom(zoom * factor) end
+local function bump_zoom(factor)
+  set_zoom((viewMotion and viewMotion.toZ or zoom) * factor)
+end
 
 local function freeze(reason)
   if follow then
@@ -318,9 +398,14 @@ end
 local function recenter()
   local x, y = tracker_peek()
   if x and y then
-    place(x, y)
+    if follow then
+      if viewMotion then viewMotion.pan = false; viewMotion.anchorX, viewMotion.anchorY = x, y end
+      place(x, y)
+      capture()
+    else
+      set_center(x, y, true)
+    end
     note("回到鼠标")
-    capture()
     return
   end
   note("无光标数据（cursor-track 未运行？）")
@@ -331,7 +416,7 @@ end
 render = function()
   local hint1, hint2 = hint_text()
   local body = curPath
-    and ui.image({ path = curPath, width = IMG_W, height = IMG_H, fit = "stretch", radius = 8, border = "outline", borderWidth = 1 })
+    and ui.image({ key = "magnifier-image", path = curPath, width = IMG_W, height = IMG_H, fit = "stretch", radius = 8, border = "outline", borderWidth = 1 })
     or ui.box({ width = IMG_W, height = IMG_H, radius = 8, fill = "surface_variant" })
   panel.render(ui.column({ width = PANEL_W, height = PANEL_H, padding = PAD, gap = GAP }, {
     ui.row({ height = HEAD_H, justify = "space_between", align = "center" }, {
@@ -353,21 +438,27 @@ end
 
 -- ============ 生命周期 ============
 function onOpen(context)
+  if session then session.closed = true; stop_tracker(); release_frames(session) end
   alive = true
   gen = gen + 1
   follow = true
   seq = 0
   inflight = false
   pendingShot = false
+  viewMotion = nil
   lastPoll = 0
   lastStateWrite = 0
   lastViewSave = 0
   curPath = nil
   lastNote = ""
   clicks = 0
-  dir = (noctalia.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/pang-magnifier"
+  local runtime = noctalia.getenv("XDG_RUNTIME_DIR")
+  if type(runtime) ~= "string" or runtime == "" or runtime == "/" or runtime:sub(1, 1) ~= "/" then runtime = "/tmp" end
+  dir = runtime:gsub("/+$", "") .. "/pang-magnifier"
   noctalia.mkdirAll(dir)
-  noctalia.runAsync("rm -f " .. dir .. "/frame-*.png")
+  local id = string.format("%.0f-%d-%08x", noctalia.nowMs(), gen, math.random(0, 2147483647))
+  session = { id = id, prefix = dir .. "/frame-" .. id .. "-", frames = {}, trackerRun = 0, closed = false }
+  trackerPath, heartbeatPath = nil, nil
   local o = pick_output()
   if o then
     ox, oy, ow, oh = o.x or 0, o.y or 0, o.width or 1920, o.height or 1080
@@ -387,11 +478,16 @@ function onOpen(context)
 end
 
 function onClose()
+  finish_view() -- 保存最后一次明确操作的目标，不把动画半途的倍率当成偏好。
   alive = false
+  gen = gen + 1
   panel.setNeedsFrameTick(false)
   save_view()
-  noctalia.runAsync("rm -f " .. dir .. "/frame-*.png")
-  stop_tracker()   -- 尽力而为：这里发出的 spawn 可能被丢弃，兜底靠心跳超时
+  if session then session.closed = true end
+  stop_tracker()
+  release_frames(session)
+  session = nil
+  inflight, pendingShot = false, false
 end
 
 -- 心跳：面板开着就一直发；停发会让追踪器（拿不到心跳）自我保护退出
@@ -411,6 +507,7 @@ function onFrameTick(deltaMs)
   local now = noctalia.nowMs()
   if now - lastPoll < TICK_MS then return end -- 只读取最新位置，不排队处理历史移动
   lastPoll = now
+  local viewChanged = advance_view(now)
   -- 追踪器失联（>5s 没任何记录，含 2s 一次的 alive）→ 自动重启，免得"画面冻住"要手动重开面板
   if now - trackerStart > 8000 and (lastRecordMs == 0 or now - lastRecordMs > 8000) then
     note("追踪器失联，已重启")
@@ -424,15 +521,16 @@ function onFrameTick(deltaMs)
     if follow and not over_panel(x, y) then
       local cx, cy = center()
       if math.abs(x - cx) > 2 or math.abs(y - cy) > 2 then
+        if viewMotion and not viewMotion.pan then viewMotion.anchorX, viewMotion.anchorY = x, y end
         place(x, y)
         capture()
         return
       end
     end
-    if follow and now - lastStart >= IDLE_MS then capture() end
+    if viewChanged or (follow and now - lastStart >= IDLE_MS) then capture() end
     return
   end
-  if follow and now - lastStart >= IDLE_MS then capture() end
+  if viewChanged or (follow and now - lastStart >= IDLE_MS) then capture() end
 end
 
 -- ============ 按键（键盘是主控；光标被追踪器接走，不设可点按钮） ============
@@ -457,10 +555,10 @@ function onKey(chord, pressed)
   elseif c == "l" or c == "space" then
     follow = not follow
     if follow then recenter() else note("定格"); capture() end
-  elseif c == "up" then freeze("手动平移"); local cx, cy = center(); set_center(cx, cy - vh * 0.25, true)
-  elseif c == "down" then freeze("手动平移"); local cx, cy = center(); set_center(cx, cy + vh * 0.25, true)
-  elseif c == "left" then freeze("手动平移"); local cx, cy = center(); set_center(cx - vw * 0.25, cy, true)
-  elseif c == "right" then freeze("手动平移"); local cx, cy = center(); set_center(cx + vw * 0.25, cy, true)
+  elseif c == "up" then freeze("手动平移"); local cx, cy = requested_center(); set_center(cx, cy - vh * 0.25, true)
+  elseif c == "down" then freeze("手动平移"); local cx, cy = requested_center(); set_center(cx, cy + vh * 0.25, true)
+  elseif c == "left" then freeze("手动平移"); local cx, cy = requested_center(); set_center(cx - vw * 0.25, cy, true)
+  elseif c == "right" then freeze("手动平移"); local cx, cy = requested_center(); set_center(cx + vw * 0.25, cy, true)
   end
 end
 

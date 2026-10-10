@@ -31,8 +31,8 @@ local function document(text,revision,filename)
   if filename then n.name=filename;n.title=filename end
   return n
 end
-local function new()
-  local h=H.harness("off"); h.env.onOpen(); h:settle(); h.deliver=function() end
+local function new(motion)
+  local h=H.harness(motion or "off"); h.env.onOpen(); h:settle(); h.deliver=function() end
   h.env.onIpc("toggle","notes"); frames(h)
   reply(h,"list",{ok=true,notes={{name=name,title="今日计划",taskCount=2,doneCount=1},{name="另一份.md",title="另一份",taskCount=0,doneCount=0}},truncated=false})
   h.env.onIpc("notes","select:"..name); frames(h)

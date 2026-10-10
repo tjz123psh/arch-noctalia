@@ -16,6 +16,7 @@ lua sidebar/tests/regressions_spec.lua
 lua sidebar/tests/async_spec.lua
 lua sidebar/tests/notes_spec.lua
 lua sidebar/tests/experience_spec.lua
+lua sidebar/tests/local_motion_spec.lua
 python3 sidebar/tests/notes_spec.py
 python3 sidebar/tests/shell_spec.py
 python3 sidebar/tests/timer_tasks_spec.py

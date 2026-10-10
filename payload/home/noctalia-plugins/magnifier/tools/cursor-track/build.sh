@@ -6,13 +6,15 @@
 set -e
 cd "$(dirname "$0")"
 OUT=build
-mkdir -p "$OUT"
-if [ ! -f "$OUT/wlr-layer-shell-unstable-v1.xml" ]; then
-  curl -sL -o "$OUT/wlr-layer-shell-unstable-v1.xml" \
-    https://raw.githubusercontent.com/swaywm/wlroots/master/protocol/wlr-layer-shell-unstable-v1.xml
+PROTOCOL=protocols/wlr-layer-shell-unstable-v1.xml
+# 协议随仓库提供，build/ 仅放可再生的构建产物；不在构建时联网下载。
+if [ ! -r "$PROTOCOL" ]; then
+  printf '缺少协议源码：%s；请恢复完整的 protocols/ 目录。\n' "$PROTOCOL" >&2
+  exit 1
 fi
-wayland-scanner client-header "$OUT/wlr-layer-shell-unstable-v1.xml" "$OUT/wlr-layer-shell-unstable-v1.h"
-wayland-scanner private-code  "$OUT/wlr-layer-shell-unstable-v1.xml" "$OUT/wlr-layer-shell-unstable-v1.c"
+mkdir -p "$OUT"
+wayland-scanner client-header "$PROTOCOL" "$OUT/wlr-layer-shell-unstable-v1.h"
+wayland-scanner private-code  "$PROTOCOL" "$OUT/wlr-layer-shell-unstable-v1.c"
 wayland-scanner client-header /usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml "$OUT/xdg-shell.h"
 wayland-scanner private-code  /usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml "$OUT/xdg-shell.c"
 gcc -O2 -Wall -I"$OUT" -o "$OUT/cursor-track" cursor-track.c \
