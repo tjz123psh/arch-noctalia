@@ -37,9 +37,10 @@ edge = colour('InputPanel/Background', 'BorderColor', '#9ecafc')
 rgb = lambda c: tuple(int(c[i:i+2], 16) for i in (1, 3, 5))
 b, e = rgb(base), rgb(edge)
 
-# 背板比色板底色再暗一点 + 91% 不透明：既保留玻璃感，又保证候选字够清楚
-ALPHA, DARKEN, RADIUS, BORDER = 232, 0.80, 12, 2
-fill = tuple(max(0, int(v * DARKEN)) for v in b)
+# 背板：不再额外压暗（之前 0.80 + 91% 不透明显得"太黑"），改成"接近色板原色 + 76% 不透明"，
+# 既保留玻璃感（背后内容若隐若现），浅色候选字的对比也还够。
+ALPHA, DARKEN, RADIUS, BORDER = 195, 1.00, 12, 2
+fill = tuple(min(255, max(0, int(v * DARKEN))) for v in b)
 
 def png(w, h, rows):
     def chunk(tag, data):
@@ -99,8 +100,27 @@ if '[Menu/Background/Margin]' not in txt:
     txt = txt.replace('[Menu/Background]\nImage=menu.png\n',
                       '[Menu/Background]\nImage=menu.png\n\n[Menu/Background/Margin]\n'
                       'Left=12\nRight=12\nTop=12\nBottom=12\n', 1)
+# 高亮候选字的对比：色板有时给出「浅底浅字」（选中项糊成一片），按高亮底色亮度自动选深/浅字色。
+def luminance(c):
+    return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255
+
+hl_bg = rgb(colour('InputPanel/Highlight', 'Color', edge))
+want = '#1b1b1b' if luminance(hl_bg) > 0.5 else '#ffffff'
+
+def set_in_section(sec, key, value):
+    global txt
+    m = re.search(rf'^(\[{re.escape(sec)}\]\s*$)([\s\S]*?)(?=^\[|\Z)', txt, re.M)
+    if not m:
+        return
+    body = re.sub(rf'^{re.escape(key)}=.*$', f'{key}={value}', m.group(2), count=1, flags=re.M)
+    txt = txt[:m.start(2)] + body + txt[m.end(2):]
+
+for sec_name in ('InputPanel', 'Menu'):
+    for key in ('HighlightColor', 'HighlightCandidateColor'):
+        set_in_section(sec_name, key, want)
+
 conf.write_text(txt)
-print(f'glass: base={base} fill={fill} alpha={ALPHA} border={edge} radius={RADIUS}')
+print(f'glass: base={base} fill={fill} alpha={ALPHA} border={edge} radius={RADIUS} 高亮字色={want}')
 PY
 rc=$?
 if (( rc == 0 )); then log "背板已重画并打补丁（$THEME_CONF）"; else log "渲染失败 rc=$rc"; fi
