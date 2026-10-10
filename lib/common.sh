@@ -113,6 +113,28 @@ t_type()  { _target_probe type "$1"; }
 t_perms() { _target_probe perms "$1"; }
 t_md5()   { _target_probe md5 "$1"; }
 
+# --- 目标路径解析：沙箱重写 + 顶层目录白名单 ---
+# AN_TARGET_ROOT：非空时把清单里的目标重写到该前缀之下（测试/演练用；真实安装留空 = 原样写系统）。
+# 白名单 AN_TARGET_ALLOW：目标必须落在这些顶层目录之一，防止清单笔误（相对路径、/tmp/…、漏前导斜杠）
+# 把文件丢到意外位置。两者都只作用于「清单 → 实际路径」这一步。
+# 用法：an_resolve_target "/home/pang/.bash_profile" → stdout 实际路径；非绝对/不在白名单 → rc=1
+an_resolve_target() {
+  local t="$1" allow p
+  if [[ "$t" != /* ]]; then
+    warn "manifest target is not an absolute path: ${t}"
+    return 1
+  fi
+  allow="${AN_TARGET_ALLOW:-/home/ /etc/ /usr/share/ /usr/local/ /var/lib/ /var/cache/ /boot/ /opt/}"
+  # shellcheck disable=SC2086  # allow 是空格分隔的前缀列表，这里就是要按词展开
+  for p in $allow; do
+    if [[ "$t" == "$p"* ]]; then
+      printf '%s%s' "${AN_TARGET_ROOT:-}" "$t"
+      return 0
+    fi
+  done
+  warn "manifest target outside the allowed prefixes (AN_TARGET_ALLOW='${allow}'): ${t}"
+  return 1
+}
 # 目标所在文件系统的类型（沿路径向上找到第一个对当前用户可见的位置）。
 fs_of_target() {
   local p="$1"

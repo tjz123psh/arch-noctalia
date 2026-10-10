@@ -44,7 +44,10 @@ printf '#!/bin/sh\nexit 0\n' > "$stub/sudo"
 chmod +x "$stub/sudo"
 
 run07() {
-  HOME="$home" PATH="$stub:$PATH" AN_RUN=1 AN_ROOT_DIR="$repo" bash "$repo/steps/07-config.sh"
+  # AN_TARGET_ALLOW=/：本测试的夹具清单里 target 已经全部写在 $sandbox 内的绝对路径上，
+  # 不需要 07 的目标白名单/沙箱重写（那两者由 test-07-deploy-sandbox.sh 专门覆盖）。
+  HOME="$home" PATH="$stub:$PATH" AN_RUN=1 AN_ROOT_DIR="$repo" AN_TARGET_ALLOW=/ \
+    bash "$repo/steps/07-config.sh"
 }
 
 if ! out1="$(run07 2>&1)"; then

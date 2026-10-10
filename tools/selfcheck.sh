@@ -119,7 +119,8 @@ while IFS= read -r f; do
   if [[ -f "$ROOT_DIR/$f" ]] && grep -qIE "$tok_re" "$ROOT_DIR/$f" 2>/dev/null; then
     bad "token pattern in tracked file: $f"
   fi
-done < <(git -C "$ROOT_DIR" ls-files)
+  # core.quotePath=false：非 ASCII 路径默认会被 git 做 C 转义，导致 [[ -f ]] 判定失败、该文件被静默跳过扫描。
+done < <(git -C "$ROOT_DIR" -c core.quotePath=false ls-files)
 info "secrets: ${tracked_n} tracked files scanned"
 
 if [[ -f "${ROOT_DIR}/manifests/excluded.tsv" ]]; then

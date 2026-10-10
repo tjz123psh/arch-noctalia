@@ -30,8 +30,13 @@ okc=0
 bad=0
 miss=0
 seeded=0
-while IFS=$'\t' read -r repo_path target _mode md5; do
-  if [[ -z "$target" || "$target" == "#"* ]]; then
+while IFS=$'\t' read -r repo_path raw_target _mode md5; do
+  if [[ -z "$raw_target" || "$raw_target" == "#"* ]]; then
+    continue
+  fi
+  # 与 07 用同一条解析（白名单 + 可选 AN_TARGET_ROOT 沙箱重写），保证沙箱演练两端一致。
+  if ! target="$(an_resolve_target "$raw_target")"; then
+    bad=$((bad + 1))
     continue
   fi
   ftype="$(t_type "$target")"

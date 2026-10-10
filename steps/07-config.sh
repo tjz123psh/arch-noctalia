@@ -9,7 +9,9 @@
 #   6) 覆盖"内容不同"的文件前，先把旧内容备份到 .state/overwritten/<时间戳>/；
 #   7) 两种环境适配（不改挂载设置）：FAT 系（vfat/exfat，如 ESP）没有 Unix 权限位——权限由挂载选项
 #      决定，这类文件系统跳过权限位校验；系统文件普通用户读不到时，校验改用 root 读；
-#   8) 部署后收尾：建标准用户目录、locale-gen、登录 shell（fish）、GRUB 菜单重建、
+#   8) 目标路径护栏：清单第 2 列必须是绝对路径且落在 AN_TARGET_ALLOW 的顶层目录内；
+#      AN_TARGET_ROOT 非空时整棵目标树重写到该前缀下（测试/演练用，真实安装留空）。
+#   9) 部署后收尾：建标准用户目录、locale-gen、登录 shell（fish）、GRUB 菜单重建、
 #      GSettings vendor override 重编译（*.gschema.override → glib-compile-schemas）。
 set -Eeuo pipefail
 AN_ROOT_DIR="${AN_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
@@ -23,14 +25,18 @@ MANIFEST="${AN_ROOT_DIR}/manifests/files.tsv"
 
 md5_of() { local f="$1"; md5sum "$f" 2>/dev/null | awk '{print $1}'; }
 
-# --- 1) 预检：payload 完整性（存在 + md5） ---
+# --- 1) 预检：payload 完整性（存在 + md5）+ 目标路径合法性（绝对路径 & 顶层白名单） ---
 rows=0
 payload_bad=0
-while IFS=$'\t' read -r repo_path _target _mode md5; do
+target_bad=0
+while IFS=$'\t' read -r repo_path raw_target _mode md5; do
   if [[ -z "$repo_path" || "$repo_path" == "#"* ]]; then
     continue
   fi
   rows=$((rows + 1))
+  if ! an_resolve_target "$raw_target" >/dev/null; then
+    target_bad=$((target_bad + 1))
+  fi
   src="${AN_ROOT_DIR}/${repo_path}"
   if [[ ! -f "$src" ]]; then
     payload_bad=$((payload_bad + 1))
@@ -47,7 +53,13 @@ done < "$MANIFEST"
 if (( payload_bad > 0 )); then
   die "payload incomplete — the repository copy is broken; re-clone it"
 fi
+if (( target_bad > 0 )); then
+  die "${target_bad} manifest target(s) rejected — they must be absolute and under AN_TARGET_ALLOW"
+fi
 info "Stage 07 config: ${rows} files to deploy; payload verified"
+if [[ -n "${AN_TARGET_ROOT:-}" ]]; then
+  info "Stage 07 config: SANDBOX — all targets are rewritten under ${AN_TARGET_ROOT} (nothing touches the real system)"
+fi
 
 # --- 2) 部署 + 3) 逐行复核 ---
 load_seed_targets
@@ -87,11 +99,16 @@ unchanged=0
 kept=0
 failed=0
 mode_skipped=0
-while IFS=$'\t' read -r repo_path target mode md5; do
+while IFS=$'\t' read -r repo_path raw_target mode md5; do
   if [[ -z "$repo_path" || "$repo_path" == "#"* ]]; then
     continue
   fi
   checked=$((checked + 1))
+  # 清单目标 → 实际路径（白名单校验 + 可选的 AN_TARGET_ROOT 沙箱重写）。
+  if ! target="$(an_resolve_target "$raw_target")"; then
+    failed=$((failed + 1))
+    continue
+  fi
   src="${AN_ROOT_DIR}/${repo_path}"
 
   # 现状读取（读不到且为系统目标时自动回退 root 读，见 lib/common.sh 的 _target_probe）。
