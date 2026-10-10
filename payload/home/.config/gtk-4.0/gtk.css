@@ -275,3 +275,68 @@ headerbar > windowhandle { background-color: @headerbar_bg_color; background-ima
   background-color: alpha(@window_fg_color, 0.10);
   min-width: 1px;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   文件管理器（Nautilus / 文件）—— 和任务中心同一套毛玻璃
+   · 作用域 .nautilus-window，只影响文件管理器，别的 GTK 程序不受影响。
+   · niri 全局窗口规则已有 background-effect { xray true; blur true }，
+     这里只是把 Nautilus 自己画的不透明底色改成半透明。
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ① 窗口底色：与任务中心、kitty 同一通透度（调小更透） */
+window.nautilus-window,
+window.nautilus-window.background,
+.nautilus-window.background {
+  background-color: alpha(@window_bg_color, 0.78);
+  background-image: none;
+}
+
+/* ② 文件列表 / 网格：不画底，露出同一层模糊壁纸 */
+.nautilus-window .view,
+.nautilus-window listview,
+.nautilus-window columnview,
+.nautilus-window gridview { background-color: transparent; }
+
+/* ③ 左侧栏：libadwaita 的 .sidebar-pane 默认刷不透明侧栏色（和任务中心同样的坑） */
+.nautilus-window .sidebar-pane {
+  background-color: alpha(@window_fg_color, 0.02);
+  color: @window_fg_color;
+  box-shadow: inset -1px 0 alpha(@window_fg_color, 0.07);
+}
+.nautilus-window .navigation-sidebar { background-color: transparent; }
+
+/* ④ 顶栏（窗口按钮挂在 windowhandle 上，那才是真正刷底色的节点） */
+.nautilus-window windowhandle,
+.nautilus-window headerbar {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+
+/* ⑤ 选中 / 悬停：与任务中心一致 —— 淡强调色底 + 左侧细边，而不是整条实心 */
+.nautilus-window row:hover { background-color: alpha(@window_fg_color, 0.05); }
+.nautilus-window .view row:selected,
+.nautilus-window listview row:selected,
+.nautilus-window columnview row:selected {
+  background-color: alpha(@accent_bg_color, 0.16);
+  color: @window_fg_color;
+  box-shadow: inset 3px 0 0 0 alpha(@accent_bg_color, 0.9);
+}
+.nautilus-window .navigation-sidebar row:selected {
+  background-color: alpha(@accent_bg_color, 0.20);
+  color: @accent_color;
+  box-shadow: none;
+}
+
+/* ⑥ 滚动条与分隔线：细、淡 */
+.nautilus-window scrollbar { background: transparent; border: none; }
+.nautilus-window scrollbar slider {
+  background-color: alpha(@window_fg_color, 0.16);
+  border-radius: 9999px;
+  min-width: 6px;
+  min-height: 6px;
+  margin: 3px;
+}
+.nautilus-window scrollbar slider:hover { background-color: alpha(@window_fg_color, 0.3); }
+.nautilus-window separator { background-color: alpha(@window_fg_color, 0.08); }
+
