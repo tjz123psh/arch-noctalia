@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # tests/test-07-deploy-sandbox.sh — 07 的端到端沙箱回归（不碰真机）。
 #   1) 全量部署：真实 manifests/files.tsv 的 341 行全部落到 <沙箱 root> 之下，
-#      逐个核对「存在 + 权限位 == 清单 mode + md5 == 清单 md5」，且部署循环零 warn；
+#      逐个核对「存在 + 权限位 == 清单 mode + md5 == 清单 md5」（预置的 seed 目标只核存在性），
+#      且部署循环零 warn；
 #   2) seed：预置用户内容的种子文件必须保持原样（kept (seed)）；
 #   3) 幂等：第二次运行全 unchanged；
 #   4) 失败路径：目标目录不可写 → 必须 rc≠0 且摘要行体现 failed（守住「装坏了要报错」）；
@@ -9,6 +10,9 @@
 # 安全：所有写入都发生在 mktemp 沙箱内（AN_TARGET_ROOT + HOME 都在沙箱里，
 #       且 sandbox-sudo 只放行沙箱内的绝对路径）；脚本开头有自检，沙箱路径异常直接退出。
 set -Eeuo pipefail
+# 夹具权限必须确定：调用方 umask 可能是 077，会让"预置的 seed 文件"变成 600 而与清单的 644 冲突
+# （seed 是用户数据，部署时保持原样，权限由用户/夹具决定，不该当成部署失败）。
+umask 022
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fail=0
 bad() { echo "[FAIL] $*"; fail=1; }
@@ -82,9 +86,10 @@ while IFS=$'\t' read -r rp tp mode md5; do
   n=$((n + 1))
   t="$aroot$tp"
   if [[ ! -f "$t" ]]; then bad "not deployed: $tp"; nbad=$((nbad + 1)); continue; fi
-  am="$(stat -c '%a' -- "$t")"
-  [[ "$am" == "$mode" ]] || { bad "mode mismatch (on disk $am, manifest $mode): $tp"; nbad=$((nbad + 1)); }
   if [[ "$tp" != "$seed_target" ]]; then
+    # seed 目标是"存在即保持"的用户数据：权限与内容都由用户决定，不参与部署断言。
+    am="$(stat -c '%a' -- "$t")"
+    [[ "$am" == "$mode" ]] || { bad "mode mismatch (on disk $am, manifest $mode): $tp"; nbad=$((nbad + 1)); }
     amd5="$(md5sum -- "$t" | awk '{print $1}')"
     [[ "$amd5" == "$md5" ]] || { bad "md5 mismatch: $tp"; nbad=$((nbad + 1)); }
   fi
