@@ -154,7 +154,17 @@ magnification_scale = 1.3500000000000001
 main_axis_padding = 14
 margin_edge = 12
 margin_ends = 16
-pinned = [ "kitty", "google-chrome", "md.obsidian.Obsidian", "org.gnome.Nautilus", "wps-office-prometheus", "transmission-gtk", "wechat", "linuxqq-wayland-fix", "com.follow.clash" ]
+pinned = [
+    "kitty",
+    "google-chrome",
+    "org.gnome.Nautilus",
+    "wps-office-prometheus",
+    "transmission-gtk",
+    "md.obsidian.Obsidian",
+    "wechat",
+    "linuxqq-wayland-fix",
+    "com.follow.clash"
+]
 position = "right"
 radius = 18
 reserve_space = false
@@ -248,6 +258,7 @@ frame_rate = 144
 video_qp = 15
 
 [plugins]
+auto_update = "all"
 enabled = [ "noctalia/screen_recorder", "oldirtty/color_picker", "pang/magnifier", "8bury/mini-docker", "pang/sidebar" ]
 
     [[plugins.source]]
@@ -285,7 +296,7 @@ settings_window_translucent = true
     borders = true
     clipboard_placement = "floating"
     clipboard_position = "auto"
-    control_center_placement = "floating"
+    control_center_placement = "attached"
     control_center_position = "auto"
     floating_offset = 10
     launcher_placement = "floating"
@@ -307,7 +318,6 @@ settings_window_translucent = true
     copy_to_clipboard = true
     directory = "/home/pang/Pictures/Screenshots"
     freeze_screen = true
-    remember_last_region = true
     save_to_file = true
     show_cursor = false
 
@@ -377,13 +387,17 @@ transition_duration = 1100.0
     enabled = true
 
     [wallpaper.default]
-    path = "/home/pang/Pictures/wallpapers/初雪.png"
+    path = "/home/pang/Pictures/wallpapers/斑斓.png"
 
     [wallpaper.last]
-    path = "/home/pang/Pictures/wallpapers/初雪.png"
+    path = "/home/pang/Pictures/wallpapers/斑斓.png"
 
     [wallpaper.monitors.eDP-1]
-    path = "/home/pang/Pictures/wallpapers/初雪.png"
+    path = "/home/pang/Pictures/wallpapers/斑斓.png"
+
+[widget."8bury/mini-docker:mini-docker"]
+show_count = false
+status_mode = "hidden"
 
 [widget.active_window]
 color = "#f0dedecc"
@@ -410,6 +424,11 @@ capsule = false
 color = "#f0dedecc"
 show_label = false
 type = "bluetooth"
+
+[widget.brightness]
+capsule = false
+show_label = false
+type = "brightness"
 
 [widget.clipboard]
 capsule = false
@@ -472,10 +491,6 @@ hide_when_no_media = true
 max_length = 170
 min_length = 60
 type = "media"
-
-[widget."8bury/mini-docker:mini-docker"]
-show_count = false
-status_mode = "hidden"
 
 [widget.network]
 capsule = false
@@ -546,8 +561,3 @@ type = "weather"
 [widget.workspaces]
 capsule = false
 type = "workspaces"
-
-[widget.brightness]
-capsule = false
-show_label = false
-type = "brightness"

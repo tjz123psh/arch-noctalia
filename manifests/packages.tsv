@@ -104,7 +104,7 @@ nvidia-settings	extra	drivers
 nvidia-utils	extra	drivers	
 nwg-hello	extra	desktop	
 nwg-look	extra		
-open-vm-tools	extra	vmware-guest	
+open-vm-tools	extra	vmware-guest	仅 VMware 客户机（module 触发；物理机不装，VM 验收测试用）
 opencv	extra		
 openssh	core		
 os-prober	extra		

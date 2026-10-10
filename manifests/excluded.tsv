@@ -92,10 +92,42 @@ package	gtk4-layer-shell	手动安装：是 Vellum 的运行时依赖，随 Vell
 dir	/home/pang/scripts/dsh	手动拷贝（DSH 辅助脚本 13 个文件：会话修复/迁移、AnyRouter 代理服务、图标修补）
 dir	/home/pang/scripts/package	手动拷贝（pacman 三件套 pac/pacd/pacr + lib/ + 7 个测试 + 文档）
 dir	/home/pang/scripts/media	手动拷贝（b23 播放器，由另一会话维护中）
-#     随之未纳管的 ~/bin 软链共 10 个（astra-watcher.sh、b23、dsh-session-*.mjs ×3、
-#     install-anyrouter-proxy.sh、pac/pacd/pacr、patch-plugin-icon-renames.sh）；
-#     ~/bin/cursor-track 是构建产物，由 09 步重建，不入仓。
 # ——— 2026-10-10 Vellum（用户决定：不纳入管理，由自带安装器维护） ———
 dir	/home/pang/.local/lib/vellum	手动安装：Vellum 自带安装器的安装目录（版本化 releases + current 软链）
 dir	/home/pang/.config/vellum	Vellum 应用配置（其安装器/首次运行生成）
 pattern	/home/pang/.local/bin/vellum*	Vellum 安装器放入 ~/bin 的命令（vellumctl / vellum-ui / vellum-tray）
+# ——— 2026-10-10 审计补账（用户决定：以下均为不纳入管理项）———
+file	/home/pang/.gitconfig	个人身份信息（user.name/email），不入公开仓库
+dir	/home/pang/.config/Code	自行安装（VS Code 用户资料，约 420M）
+dir	/home/pang/.config/google-chrome	自行安装（Chrome 用户资料，约 258M）
+dir	/home/pang/.config/QQ	自行安装（QQ 用户资料，约 399M）
+dir	/home/pang/.config/MusicFree	自行安装（MusicFree 数据，约 1.2G）
+dir	/home/pang/.config/@deepseek-ai	自行安装（DSH 工具链数据，约 31M）
+dir	/home/pang/.config/nvim	自行安装（Neovim 配置；用户明确不纳入）
+dir	/home/pang/scripts/MusicFree-歌单和插件	自行安装的数据（歌单/插件），不入仓
+dir	/home/pang/.config/autostart	包安装后自动生成或自行安装的配置，不入仓
+dir	/home/pang/.config/lazygit	包安装后自动生成或自行安装的配置，不入仓
+dir	/home/pang/.config/rog	包安装后自动生成或自行安装的配置，不入仓
+dir	/home/pang/.config/procps	包安装后自动生成或自行安装的配置，不入仓
+dir	/home/pang/.config/pac	包安装后自动生成或自行安装的配置，不入仓
+dir	/home/pang/.config/rjsupplicant-gui	包安装后自动生成或自行安装的配置，不入仓
+dir	/home/pang/.config/gpu-screen-recorder	包安装后自动生成或自行安装的配置，不入仓
+dir	/home/pang/.config/dbx	包安装后自动生成或自行安装的配置，不入仓
+dir	/home/pang/.config/com.dbx.app	包安装后自动生成或自行安装的配置，不入仓
+dir	/home/pang/.config/antigravity-proxy	包安装后自动生成或自行安装的配置，不入仓
+file	/home/pang/bin/astra-watcher.sh	自行安装或手动拷贝，不入仓
+file	/home/pang/bin/b23	自行安装或手动拷贝，不入仓
+file	/home/pang/bin/cursor-track	自行安装或手动拷贝，不入仓（构建产物，由 09 步重建）
+file	/home/pang/bin/dsh-session-expand-ranges.mjs	自行安装或手动拷贝，不入仓
+file	/home/pang/bin/dsh-session-migrate.mjs	自行安装或手动拷贝，不入仓
+file	/home/pang/bin/dsh-session-repair.mjs	自行安装或手动拷贝，不入仓
+file	/home/pang/bin/install-anyrouter-proxy.sh	自行安装或手动拷贝，不入仓
+file	/home/pang/bin/pac	自行安装或手动拷贝，不入仓
+file	/home/pang/bin/pacd	自行安装或手动拷贝，不入仓
+file	/home/pang/bin/pacr	自行安装或手动拷贝，不入仓
+file	/home/pang/bin/patch-plugin-icon-renames.sh	自行安装或手动拷贝，不入仓
+file	/home/pang/.config/systemd/user/anyrouter-proxy.service	自行安装的服务单元，不入仓
+file	/home/pang/.config/systemd/user/obsidian-sync.service	自行安装的服务单元，不入仓
+file	/home/pang/.config/systemd/user/obsidian-sync.timer	自行安装的服务单元，不入仓
+file	/home/pang/.config/systemd/user/wb2api-guard.service	自行安装的服务单元，不入仓
+file	/home/pang/.config/systemd/user/wb2api-guard.timer	自行安装的服务单元，不入仓
