@@ -8,7 +8,6 @@ payload/home/.config/Kingsoft/default.ini	/home/pang/.config/Kingsoft/default.in
 payload/home/.config/Kingsoft/proxy.conf	/home/pang/.config/Kingsoft/proxy.conf	644	9d56e8669806b7dea684a1492b1872d5
 payload/home/.config/Kingsoft/qing.conf	/home/pang/.config/Kingsoft/qing.conf	644	ff2b7ea1982a4a2b9c7071516fca1a70
 payload/home/.config/Kingsoft/roamingdevice.conf	/home/pang/.config/Kingsoft/roamingdevice.conf	644	7cd4fe62b3fe4d98f1068f7aebb36f92
-payload/home/.config/QtProject.conf	/home/pang/.config/QtProject.conf	644	ba18c5e38f5dd134f75c7dc42a6165f9
 payload/home/.config/btop/btop.conf	/home/pang/.config/btop/btop.conf	644	a6a98a47cbc4c27905de9545985b4739
 payload/home/.config/btop/themes/noctalia.theme	/home/pang/.config/btop/themes/noctalia.theme	644	84c837becc82f7c04be755478fa89ef2
 payload/home/.config/environment.d/10-desktop.conf	/home/pang/.config/environment.d/10-desktop.conf	644	de80ab11ba03ebb877451060254bca23
@@ -62,8 +61,6 @@ payload/home/.config/noctalia/hooks.toml	/home/pang/.config/noctalia/hooks.toml	
 payload/home/.config/nomacs/Image Lounge.conf	/home/pang/.config/nomacs/Image Lounge.conf	644	8d4a0f214e9bf402c48be6f5b7002b9e
 payload/home/.config/nwg-look/config	/home/pang/.config/nwg-look/config	644	1d7532f1af614a510283dc0b46520eee
 payload/home/.config/papirus-folders/keep	/home/pang/.config/papirus-folders/keep	644	54ede524b231ba359a3a461fd6aa5197
-payload/home/.config/qt5ct/colors/noctalia.conf	/home/pang/.config/qt5ct/colors/noctalia.conf	644	1fb8c4ac305f3ad7b7da75d5acc741a5
-payload/home/.config/qt5ct/qt5ct.conf	/home/pang/.config/qt5ct/qt5ct.conf	600	7ea98702e9fb6254b9d8d2c23c04599b
 payload/home/.config/qt6ct/colors/noctalia.conf	/home/pang/.config/qt6ct/colors/noctalia.conf	644	1fb8c4ac305f3ad7b7da75d5acc741a5
 payload/home/.config/qt6ct/qt6ct.conf	/home/pang/.config/qt6ct/qt6ct.conf	600	362f4e216c51aae75c19c0ceed4f9e42
 payload/home/.config/starship.toml	/home/pang/.config/starship.toml	600	a14e9faa3c93414c78174e49cde3e91e

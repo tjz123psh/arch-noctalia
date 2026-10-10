@@ -4,7 +4,8 @@
 # 说明：本清单 = 声明的排除项（样本采集与包对账共用）。任何"未解释"的差异都应该在这里被解释。
 file	/home/pang/.config/fish/conf.d/proxy-env.fish	凭据：代理环境变量文件（不入公开仓库）
 file	/home/pang/.config/pulse/cookie	安全：PulseAudio cookie
-dir	/home/pang/.config/keepassxc	安全：密码库配置
+dir	/home/pang/.config/qt5ct	说明：Qt5 已随 KeePassXC 卸载（本机无 Qt5 应用、无 qt5ct 工具）；此处由 Noctalia 主题模板按需再生，不纳入
+file	/home/pang/.config/QtProject.conf	说明：Qt5 文件对话框历史；随 Qt5 卸载一并清除，若被旧程序再生则不纳入
 dir	/home/pang/.config/rclone	安全：云同步凭据目录
 dir	/home/pang/.config/gh	安全：GitHub token（hosts.yml）
 dir	/home/pang/.ssh	安全：SSH 私钥
