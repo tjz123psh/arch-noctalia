@@ -147,3 +147,32 @@ dir	/home/pang/obsidian	个人笔记库（云同步；应用数据在 .config/ob
 file	/home/pang/.bashrc	未自定义（与 /etc/skel 同 md5）
 file	/home/pang/.bash_logout	未自定义（与 /etc/skel 同 md5）
 pattern	/home/pang/.{cache,npm,m2,gradle}/**	各工具自管的缓存与依赖目录（不入仓）
+# ——— 2026-10-10 家目录余项补账（用户决定：均为不纳入管理 / 自行安装）———
+dir	/home/pang/.copilot	自行安装（GitHub Copilot CLI 数据）
+dir	/home/pang/.dbx	自行安装（DBX 应用数据，约 106M）
+dir	/home/pang/.dotnet	运行时数据（.NET，工具自管）
+dir	/home/pang/.nv	NVIDIA 工具目录（驱动/工具自建）
+dir	/home/pang/.redhat	Red Hat 兼容目录（工具生成，空壳）
+dir	/home/pang/.sts4	自行安装（Spring Tool Suite 4 数据）
+dir	/home/pang/.vscode	自行安装（VS Code 扩展，约 366M；重装后按需再装）
+dir	/home/pang/.vscode-shared	自行安装（VS Code 共享数据）
+dir	/home/pang/.xwechat	自行安装（微信数据，约 267M）
+dir	/home/pang/.dsh	安全：DSH 会话与附件数据（约 1.6G，含会话内容与凭据，绝不入公开仓库）
+file	/home/pang/.sys1og.conf	来源不明（疑似工具把 syslog 误写成 sys1og；内容是 UUID+二进制），不入仓
+dir	/home/pang/Downloads	个人数据目录（自行维护）
+dir	/home/pang/Projects	个人项目目录（约 3.2G，自行维护；本安装器源码就在其中）
+dir	/home/pang/Videos	个人视频目录（约 51M）
+dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.done 续装记录 + overwritten/ 覆盖备份；安装器自管，不入仓）
+
+# ——— 2026-10-10 决定记录（用户拍板：以后再看到这些，不用再问）———
+# · Office.conf:20 的 keys\priv（1699 字符高熵块）：WPS SDK 自带的设备级 blob，用户确认本人从未配置过 WPS 账号
+#   → 保留在 payload，不视为泄露。该文件本身是纳管项，故这里只写注释、不列 file 行（否则会与 payload 冲突）。
+# · 机型识别不扩展 KVM/QEMU：用户只用 VMware，lib/detect.sh 保持 vmware-only。
+# · 不再补的测试：11-greeter 脚本体的沙箱测试、bootstrap 只测已提交 HEAD（用户判定性价比低）。
+# · selfcheck 不加『包必须在 pacman sync db 里存在』：会让自检依赖本机数据库环境。
+# · 12 个 manifest mode=600 的文件在 git 里只能是 644（git 只存可执行位）——已知且不可避免。
+# · excluded 的 kind=file 行有若干条指向软链（Vellum 三个单元等）——已知，接受。
+# · ~/.face 是指向已纳管 /var/lib/avatars/pang/.face 的软链，由 steps/11-greeter.sh 创建（属纳管，不是未纳管项）。
+# · 2026-10-10 事故回退：fcitx5/conf/{notifications,punctuation}.conf、gtk-3.0/bookmarks、mimeapps.list、
+#   user-dirs.dirs、nomacs『Image Lounge.conf』被 07 步回退成仓库版本；用户决定不还原。这 8 个文件已在 seed.tsv 里
+#   （重跑不再覆盖）；若哪天想还原，/home/.snapshots/25（10-07 快照，普通用户可读）仍可用。
