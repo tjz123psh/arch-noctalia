@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# rice-theme-hooks — Noctalia colors_changed 的统一入口。
+# 色板一变就按顺序把各应用的主题同步脚本跑一遍；单个脚本失败不影响其它，
+# 但整体退出码如实反映"是否有失败"（Noctalia 只记日志，不会因此中断）。
+set -uo pipefail
+
+hooks=(
+  "${HOME}/scripts/desktop/rice-btop-theme"     # btop 主题
+  "${HOME}/scripts/desktop/rice-fcitx5-glass"   # fcitx5 候选窗半透明圆角背板
+)
+
+fail=0
+for h in "${hooks[@]}"; do
+  if [[ ! -x "$h" ]]; then
+    printf '[rice-theme-hooks] skip (not executable): %s\n' "$h" >&2
+    continue
+  fi
+  "$h" || { printf '[rice-theme-hooks] FAILED: %s\n' "$h" >&2; fail=1; }
+done
+exit "$fail"

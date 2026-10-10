@@ -74,7 +74,7 @@ if ! out1="$(run_a 2>&1)"; then
   printf '%s\n' "$out1" | tail -20
   bad "first full sandbox deploy exited non-zero"
 fi
-grep -q '^\[info\]  files: 341 checked, 340 deployed, 0 unchanged, 1 kept (seed), 0 failed$' <<<"$out1" \
+grep -q '^\[info\]  files: 343 checked, 342 deployed, 0 unchanged, 1 kept (seed), 0 failed$' <<<"$out1" \
   || bad "unexpected summary: $(grep 'files:' <<<"$out1" | tail -1)"
 
 deploy_warn="$(grep -cE '^\[warn\].*(install failed|post-install verify failed|payload md5 mismatch|payload missing)' <<<"$out1" || true)"
@@ -94,14 +94,14 @@ while IFS=$'\t' read -r rp tp mode md5; do
     [[ "$amd5" == "$md5" ]] || { bad "md5 mismatch: $tp"; nbad=$((nbad + 1)); }
   fi
 done < "$arepo/manifests/files.tsv"
-[[ "$n" == 341 ]] || bad "iterated $n rows, expected 341"
+[[ "$n" == 343 ]] || bad "iterated $n rows, expected 343"
 
 [[ "$(cat "$aroot$seed_target")" == "USER EDIT" ]] || bad "seed file was overwritten"
 grep -q 'kept (seed' <<<"$out1" || bad "kept (seed) message missing"
 
 if ! out2="$(run_a 2>&1)"; then bad "second (idempotent) run exited non-zero"; fi
 # 第二次：32 个新初始化的种子 + 预置的那个 = 33 个 seed 目标都已存在 → 全部 kept，其余 unchanged。
-grep -q '^\[info\]  files: 341 checked, 0 deployed, 308 unchanged, 33 kept (seed), 0 failed$' <<<"$out2" \
+grep -q '^\[info\]  files: 343 checked, 0 deployed, 310 unchanged, 33 kept (seed), 0 failed$' <<<"$out2" \
   || bad "second run is not idempotent: $(grep 'files:' <<<"$out2" | tail -1)"
 
 # ---------- B. 失败路径：目标目录不可写 ----------
