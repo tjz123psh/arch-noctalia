@@ -9,7 +9,6 @@ payload/home/.config/Kingsoft/proxy.conf	/home/pang/.config/Kingsoft/proxy.conf	
 payload/home/.config/Kingsoft/qing.conf	/home/pang/.config/Kingsoft/qing.conf	644	ff2b7ea1982a4a2b9c7071516fca1a70
 payload/home/.config/Kingsoft/roamingdevice.conf	/home/pang/.config/Kingsoft/roamingdevice.conf	644	7cd4fe62b3fe4d98f1068f7aebb36f92
 payload/home/.config/QtProject.conf	/home/pang/.config/QtProject.conf	644	ba18c5e38f5dd134f75c7dc42a6165f9
-payload/home/.config/arkrc	/home/pang/.config/arkrc	600	4a97cd4e889ddea7fc33329fa2b25635
 payload/home/.config/btop/btop.conf	/home/pang/.config/btop/btop.conf	644	a6a98a47cbc4c27905de9545985b4739
 payload/home/.config/btop/themes/noctalia.theme	/home/pang/.config/btop/themes/noctalia.theme	644	84c837becc82f7c04be755478fa89ef2
 payload/home/.config/environment.d/10-desktop.conf	/home/pang/.config/environment.d/10-desktop.conf	644	de80ab11ba03ebb877451060254bca23

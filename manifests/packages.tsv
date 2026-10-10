@@ -5,7 +5,6 @@
 alsa-firmware	extra	audio	
 amd-ucode	core	drivers	
 archlinuxcn-keyring	archlinuxcn		
-ark	extra		
 asusctl	extra	drivers	
 baobab	extra		
 base	core		
@@ -67,7 +66,6 @@ inotify-tools	extra
 jdk21-openjdk	extra		
 jdk8-openjdk	extra		
 jq	extra		
-keepassxc	extra		
 kitty	extra	desktop	
 lazygit	extra		
 lib32-mesa	multilib	drivers	
