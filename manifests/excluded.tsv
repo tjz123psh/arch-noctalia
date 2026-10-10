@@ -72,3 +72,6 @@ dir	/home/pang/.config/celluloid	空目录残留（celluloid 已删）
 dir	/home/pang/.config/cef_user_data	空目录残留（WPS cef）
 package	linuxqq-nt-bwrap	替换为 linuxqq-wayland-fix（2026-10-05 用户决定：更稳定、Wayland 修复更多）
 package	snapd-xdg-open-git	旧 QQ 包 linuxqq-nt-bwrap 的依赖；QQ 换 linuxqq-wayland-fix 后无人引用（2026-10-05 用户确认移除 aur.tsv 检查行）
+# ——— 2026-10-10 Go 工具链的数据目录（按需重建，不入仓） ———
+dir	/home/pang/go	Go 工作区（GOPATH：模块缓存与自建二进制，重装后按需重建）
+dir	/home/pang/.config/go	Go 工具配置与遥测计数（运行时生成）
