@@ -19,6 +19,7 @@ btrfs-progs	core
 capitaine-cursors	extra		
 cargo-audit	extra		
 dkms	extra	drivers	
+dnsmasq	extra		Wi-Fi 热点（NetworkManager ipv4.method shared 的 DHCP/DNS）需要
 docker	extra		
 docker-compose	extra		
 efibootmgr	core		

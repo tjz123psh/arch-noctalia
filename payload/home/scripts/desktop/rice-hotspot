@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+# rice-hotspot — 一键开关 Wi-Fi 热点（NetworkManager 的 AP 模式 + shared NAT）。
+#
+# 用法：rice-hotspot [on|off|toggle|status|password]     默认 toggle
+#
+# 配置（可选）：~/.config/rice-hotspot.conf
+#   RICE_HOTSPOT_SSID="..."       默认 <主机名>-hotspot
+#   RICE_HOTSPOT_PASSWORD="..."   默认首次自动生成（12 位十六进制）并存到状态目录（600）
+#   RICE_HOTSPOT_BAND="bg"|"a"    默认 bg（2.4GHz，兼容性最好）
+#   RICE_HOTSPOT_IFACE="wlp3s0"   默认自动选第一个 Wi-Fi 设备
+#
+# 依赖：NetworkManager（nmcli）+ dnsmasq（shared 模式的 DHCP/DNS，安装器已带）。
+# 注意：一块网卡不能同时既连 Wi-Fi 又发热点——开热点会顶掉当前 Wi-Fi 客户端连接
+#       （关掉后会尽量把原来那条连回来）；有线连接不受影响。
+set -Eeuo pipefail
+
+CONN="rice-hotspot"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/rice-hotspot"
+PW_FILE="${STATE_DIR}/password"
+PREV_FILE="${STATE_DIR}/prev-wifi"
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}/rice-hotspot.conf"
+
+info()   { printf '[info]  %s\n' "$*"; }
+warn()   { printf '[warn]  %s\n' "$*" >&2; }
+die()    { printf '[error] %s\n' "$*" >&2; exit 1; }
+have()   { command -v "$1" >/dev/null 2>&1; }
+notify() { have notify-send && notify-send -a rice-hotspot -i network-wireless "$@" >/dev/null 2>&1 || true; }
+
+usage() {
+  cat <<'EOF'
+rice-hotspot — Wi-Fi 热点开关（NetworkManager AP + shared NAT）
+
+用法:
+  rice-hotspot            切换（开着就关，关着就开）
+  rice-hotspot on         打开热点
+  rice-hotspot off        关闭热点
+  rice-hotspot status     查看状态（SSID / 密码 / 网关）
+  rice-hotspot password   只打印当前密码
+
+配置（可选，~/.config/rice-hotspot.conf）:
+  RICE_HOTSPOT_SSID="..."       默认 <主机名>-hotspot
+  RICE_HOTSPOT_PASSWORD="..."   默认首次自动生成并存到 ~/.local/state/rice-hotspot/password
+  RICE_HOTSPOT_BAND="bg"|"a"    默认 bg（2.4GHz）
+  RICE_HOTSPOT_IFACE="wlp3s0"   默认自动挑第一个 Wi-Fi 设备
+EOF
+}
+
+have nmcli || die "nmcli 未找到：本脚本需要 NetworkManager"
+
+# 用户配置（可覆盖默认值）
+if [[ -f "$CONF" ]]; then
+  # shellcheck disable=SC1090
+  source "$CONF"
+fi
+
+SSID="${RICE_HOTSPOT_SSID:-$(cat /etc/hostname 2>/dev/null || echo arch)-hotspot}"
+BAND="${RICE_HOTSPOT_BAND:-bg}"
+IFACE="${RICE_HOTSPOT_IFACE:-}"
+
+pick_iface() {
+  if [[ -n "$IFACE" ]]; then printf '%s' "$IFACE"; return 0; fi
+  local d
+  d="$(LC_ALL=C nmcli -t -f DEVICE,TYPE device status 2>/dev/null | awk -F: '$2=="wifi"{print $1; exit}')"
+  [[ -n "$d" ]] || die "没找到 Wi-Fi 设备（nmcli device status）"
+  printf '%s' "$d"
+}
+
+is_up()        { LC_ALL=C nmcli -t -f NAME connection show --active 2>/dev/null | grep -Fxq "$CONN"; }
+conn_exists()  { LC_ALL=C nmcli -t -f NAME connection show 2>/dev/null | grep -Fxq "$CONN"; }
+radio_on()     { LC_ALL=C nmcli -t -f WIFI radio 2>/dev/null | grep -qx 'enabled'; }
+active_wifi()  { LC_ALL=C nmcli -t -f NAME,TYPE connection show --active 2>/dev/null | awk -F: '$2=="802-11-wireless"{print $1; exit}'; }
+
+# 生成/读取密码（会落地保存）
+ensure_password() {
+  if [[ -n "${RICE_HOTSPOT_PASSWORD:-}" ]]; then printf '%s' "$RICE_HOTSPOT_PASSWORD"; return 0; fi
+  if [[ -s "$PW_FILE" ]]; then cat "$PW_FILE"; return 0; fi
+  mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
+  local pw
+  pw="$(od -An -tx1 -N24 /dev/urandom | tr -d ' \n' | cut -c1-12)"
+  printf '%s' "$pw" > "$PW_FILE"
+  chmod 600 "$PW_FILE"
+  printf '%s' "$pw"
+}
+
+# 只读：密码已知就显示，不知道就留空（不会因此生成新密码）
+peek_password() {
+  if [[ -n "${RICE_HOTSPOT_PASSWORD:-}" ]]; then printf '%s' "$RICE_HOTSPOT_PASSWORD"; return 0; fi
+  [[ -s "$PW_FILE" ]] && cat "$PW_FILE" || true
+}
+
+ensure_radio() {
+  if ! radio_on; then
+    info "Wi-Fi 无线电当前是关的，先打开"
+    LC_ALL=C nmcli radio wifi on >/dev/null 2>&1 || rfkill unblock wifi >/dev/null 2>&1 || true
+    sleep 1
+  fi
+  radio_on || die "Wi-Fi 打不开（可能被 rfkill 软锁）：试 sudo rfkill unblock wifi，或看 nmcli radio"
+}
+
+show_status() {
+  if is_up; then
+    local iface ip pw
+    iface="$(pick_iface)"
+    ip="$(LC_ALL=C nmcli -t -f IP4.ADDRESS device show "$iface" 2>/dev/null | awk -F: 'NR==1{print $2}')"
+    pw="$(peek_password)"
+    printf '热点: 已开启\nSSID: %s\n' "$SSID"
+    [[ -n "$pw" ]] && printf '密码: %s\n' "$pw"
+    printf '网关: %s\n设备: %s\n' "${ip:-未知}" "$iface"
+  else
+    printf '热点: 未开启\nSSID: %s（开的时候用）\n' "$SSID"
+  fi
+}
+
+do_on() {
+  local iface pw rc=0 prev
+  iface="$(pick_iface)"
+  pw="$(ensure_password)"
+  ensure_radio
+
+  if is_up; then
+    info "热点已经开着"
+    show_status
+    return 0
+  fi
+
+  # 记下当前 Wi-Fi 客户端连接，关热点时连回来
+  prev="$(active_wifi || true)"
+  if [[ -n "$prev" ]]; then
+    mkdir -p "$STATE_DIR"
+    printf '%s' "$prev" > "$PREV_FILE"
+    info "开热点会断开当前的 Wi-Fi 连接「${prev}」（有线不受影响）"
+  fi
+
+  if conn_exists; then
+    LC_ALL=C nmcli connection modify "$CONN" \
+      802-11-wireless.ssid "$SSID" \
+      802-11-wireless.band "$BAND" \
+      802-11-wireless-security.key-mgmt wpa-psk \
+      802-11-wireless-security.psk "$pw" >/dev/null 2>&1 || true
+    nmcli connection up "$CONN" >/dev/null || rc=$?
+  else
+    nmcli device wifi hotspot con-name "$CONN" ifname "$iface" ssid "$SSID" band "$BAND" password "$pw" >/dev/null || rc=$?
+    LC_ALL=C nmcli connection modify "$CONN" connection.autoconnect no >/dev/null 2>&1 || true
+  fi
+  (( rc == 0 )) || die "打开热点失败（rc=${rc}）：journalctl -u NetworkManager -n 50 看原因"
+
+  is_up || die "热点没起来（networkmanager 报成功但连接未激活）"
+  info "热点已开启：SSID=${SSID} 密码=${pw}"
+  notify "热点已开启" "SSID ${SSID} · 密码 ${pw}"
+  show_status
+}
+
+do_off() {
+  local prev
+  if is_up; then
+    nmcli connection down "$CONN" >/dev/null || die "关闭热点失败"
+    info "热点已关闭"
+    notify "热点已关闭" "SSID ${SSID}"
+  else
+    info "热点本来就没开"
+  fi
+  # 把开热点前的那条 Wi-Fi 连回来（尽力而为）
+  if [[ -s "$PREV_FILE" ]]; then
+    prev="$(cat "$PREV_FILE")"
+    rm -f "$PREV_FILE"
+    if [[ -n "$prev" ]] && LC_ALL=C nmcli -t -f NAME connection show | grep -Fxq "$prev"; then
+      if LC_ALL=C nmcli connection up "$prev" >/dev/null 2>&1; then
+        info "已连回 Wi-Fi：「${prev}」"
+      else
+        warn "没能自动连回「${prev}」（可能需要密码/认证），在控制中心点一下即可"
+      fi
+    fi
+  fi
+}
+
+case "${1:-toggle}" in
+  on|up|start)     do_on ;;
+  off|down|stop)   do_off ;;
+  toggle)          if is_up; then do_off; else do_on; fi ;;
+  status|st)       show_status ;;
+  password|pw)     ensure_password; printf '\n' ;;
+  -h|--help|help)  usage ;;
+  *) usage >&2; die "未知参数：${1}" ;;
+esac

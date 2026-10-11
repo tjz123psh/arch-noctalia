@@ -350,3 +350,5 @@ payload/home/noctalia-plugins/magnifier/tests/run_all.sh	/home/pang/noctalia-plu
 payload/home/noctalia-plugins/magnifier/tests/tracker_lease_spec.c	/home/pang/noctalia-plugins/magnifier/tests/tracker_lease_spec.c	644	c49ad5059b792f338fb16d3605937831
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/protocols/wlr-layer-shell-unstable-v1.xml	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/protocols/wlr-layer-shell-unstable-v1.xml	644	ea389ea26a9629cc052b1a4dc750e073
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/README.md	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/README.md	644	6b93fc5b5c5860d2dbac5f58225b4dca
+# ——— 2026-10-11 Wi-Fi 热点：Noctalia 5.2.1 没有热点 UI，自带 rice-hotspot 兜底（AP 模式 + shared，依赖 dnsmasq）———
+payload/home/scripts/desktop/rice-hotspot	/home/pang/scripts/desktop/rice-hotspot	755	5b29123111f1478c9d66cd1bb3cd74a8
