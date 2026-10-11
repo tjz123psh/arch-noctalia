@@ -135,6 +135,19 @@ else
   missing_units+=("docker(group)")
 fi
 
+# --- 热点转发自动补：挂到 docker.service（Docker 每次启动会重建 FORWARD 链、清掉 DOCKER-USER，
+#     正在跑的热点会突然"连上没网"）。oneshot，跑完即退，所以这里只 enable、不看 active。 ---
+hotspot_sync="rice-hotspot-net-sync.service"
+if systemctl cat docker.service >/dev/null 2>&1 && systemctl cat "$hotspot_sync" >/dev/null 2>&1; then
+  if systemctl is-enabled "$hotspot_sync" >/dev/null 2>&1; then
+    info "already enabled: ${hotspot_sync}"
+  else
+    as_root systemctl enable "$hotspot_sync" >/dev/null && ok "enabled: ${hotspot_sync} (跟随 docker.service)"
+  fi
+else
+  warn "${hotspot_sync} 或 docker.service 不在，跳过热点转发自动补"
+fi
+
 # --- 用户级：rice-dnd.timer ---
 TIMER_FILE="${HOME}/.config/systemd/user/rice-dnd.timer"
 if [[ ! -f "$TIMER_FILE" ]]; then

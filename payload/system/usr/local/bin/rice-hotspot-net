@@ -6,7 +6,7 @@
 # 不是跨基链的最终裁决 —— 包照样被 Docker 那条 drop 吃掉。结果就是：手机能连上、能拿到
 # DHCP，但上不了网。Docker 官方留了 DOCKER-USER 链专门给用户放行，这里就用它。
 #
-# 用法：rice-hotspot-net up|down|status [iface] [subnet]
+# 用法：rice-hotspot-net up|down|status [iface] [subnet]   |   sync（自动探测，给 systemd 用）
 #   默认 iface=wlp3s0 subnet=10.42.0.0/24（NetworkManager shared 的默认网段）
 set -Eeuo pipefail
 
@@ -14,9 +14,11 @@ action="${1:-}"
 iface="${2:-wlp3s0}"
 subnet="${3:-10.42.0.0/24}"
 
-# 参数白名单：这个脚本可能被 sudoers 放行，参数必须严格校验
-[[ "$iface" =~ ^[a-zA-Z0-9._-]{1,15}$ ]] || { echo "bad iface: $iface" >&2; exit 64; }
-[[ "$subnet" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]] || { echo "bad subnet: $subnet" >&2; exit 64; }
+if [[ "$action" == "up" || "$action" == "down" ]]; then
+  # 参数白名单：这两个动作会被 sudoers 放行，参数必须严格校验
+  [[ "$iface" =~ ^[a-zA-Z0-9._-]{1,15}$ ]] || { echo "bad iface: $iface" >&2; exit 64; }
+  [[ "$subnet" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]] || { echo "bad subnet: $subnet" >&2; exit 64; }
+fi
 
 command -v iptables >/dev/null 2>&1 || exit 0
 # 没有 DOCKER-USER 链 = 没装/没跑 Docker：什么都不用做（NetworkManager 自己的规则够用）
@@ -33,7 +35,28 @@ del_rule() { # 可能重复插过：删干净
   while iptables -C DOCKER-USER "$@" 2>/dev/null; do iptables -D DOCKER-USER "$@" || break; done
 }
 
+# 自动探测：热点在跑就用它的网段/网卡，否则什么都不做（Docker 重启时由 systemd 调）
+sync_detect() {
+  command -v nmcli >/dev/null 2>&1 || return 1
+  LC_ALL=C nmcli -t -f NAME connection show --active 2>/dev/null | grep -Fxq "rice-hotspot" || return 1
+  local dev addr
+  dev="$(LC_ALL=C nmcli -t -f DEVICE,TYPE device status 2>/dev/null | awk -F: '$2=="wifi"{print $1; exit}')"
+  [[ -n "$dev" ]] || return 1
+  addr="$(LC_ALL=C ip -o -4 addr show dev "$dev" 2>/dev/null | awk '{print $4; exit}')"
+  [[ -n "$addr" ]] || return 1
+  iface="$dev"
+  subnet="${addr%.*}.0/24"
+  return 0
+}
+
 case "$action" in
+  sync)
+    # Docker 每次启动都会清掉 DOCKER-USER；这里只在热点确实在跑时补一次
+    sync_detect || exit 0
+    add_rule "${rule_out[@]}"
+    add_rule "${rule_in[@]}"
+    echo "ok: 热点在跑，已补放行 ${subnet} @ ${iface}（Docker 重启后自动补）"
+    ;;
   up)
     add_rule "${rule_out[@]}"
     add_rule "${rule_in[@]}"
@@ -48,7 +71,7 @@ case "$action" in
     iptables -S DOCKER-USER
     ;;
   *)
-    echo "usage: rice-hotspot-net up|down|status [iface] [subnet]" >&2
+    echo "usage: rice-hotspot-net up|down|status [iface] [subnet] | sync" >&2
     exit 64
     ;;
 esac

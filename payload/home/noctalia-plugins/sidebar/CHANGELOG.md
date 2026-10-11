@@ -1,5 +1,14 @@
 # 更新记录
 
+## Sidebar 2.4.5（Docker 重启后自动补回热点放行，2026-10-11）
+
+- 新增 `rice-hotspot-net-sync.service`（oneshot，`WantedBy=docker.service`）：Docker 每次启动/重启都会重建
+  FORWARD 链、清掉 `DOCKER-USER`，正在跑的热点会突然「连上没网」；该单元在此时自动补回 `10.42.0.0/24` 的放行。
+  热点没在跑时它什么都不做（helper 自己探测）。
+- helper 新增 `sync` 动作（自动探测网卡与网段）；参数白名单校验只对会被 sudoers 放行的 `up|down` 生效。
+- 10-services 步在 `docker.service` 存在时启用该单元（oneshot 只看 enable、不看 active，避免误报）。
+- 实测：撤掉规则 → `systemctl start rice-hotspot-net-sync.service` → 两条规则自动回来，单元 exit 0。
+
 ## Sidebar 2.4.4（热点客户端「连上但没网」：与 Docker 共存，2026-10-11）
 
 现象：手机连上热点、拿到 10.42.0.25，但上不了网。

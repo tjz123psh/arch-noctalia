@@ -1,6 +1,6 @@
 id = "pang/sidebar"
 name = "Sidebar · 随手工作台"
-version = "2.4.4"
+version = "2.4.5"
 plugin_api = 32
 author = "pang"
 license = "MIT"

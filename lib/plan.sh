@@ -17,7 +17,7 @@ AN_STAGES=(
   "07|config|deploy payload files (files.tsv) + user dirs / locale / login shell / GRUB"
   "08|scripts|deploy scripts and create the ~/bin symlink layer"
   "09|noctalia|Noctalia settings + plugin source + cursor-track build + enable"
-  "10|services|enable services (docker/bluetooth/snapper/scrub/rice-dnd...)"
+  "10|services|enable services (docker/bluetooth/snapper/scrub/rice-dnd/hotspot-net-sync...)"
   "11|greeter|greetd + nwg-hello + wallpaper/avatar/login background"
   "12|verify|post-install self check against manifests/files.tsv"
 )

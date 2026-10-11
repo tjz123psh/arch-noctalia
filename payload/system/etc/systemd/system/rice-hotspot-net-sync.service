@@ -1,0 +1,13 @@
+[Unit]
+Description=arch-noctalia: re-apply Wi-Fi hotspot forward rules after Docker (re)starts
+Documentation=file:/usr/local/bin/rice-hotspot-net
+After=docker.service
+
+[Service]
+Type=oneshot
+# 热点在跑才动手，不在跑就什么都不做（脚本自己探测）
+ExecStart=/usr/local/bin/rice-hotspot-net sync
+
+[Install]
+# 挂到 docker.service 上：Docker 每次启动（含 restart）都会拉起本单元，补回 DOCKER-USER 放行
+WantedBy=docker.service
