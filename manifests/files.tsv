@@ -20,6 +20,7 @@ payload/home/.config/fcitx5/conf/notifications.conf	/home/pang/.config/fcitx5/co
 payload/home/.config/fcitx5/conf/pinyin.conf	/home/pang/.config/fcitx5/conf/pinyin.conf	600	26e2e305b62bc886e3c61fb9fa148eb5
 payload/home/.config/fcitx5/conf/punctuation.conf	/home/pang/.config/fcitx5/conf/punctuation.conf	600	c524f85ab97a43fdaf90e56d73a0b715
 payload/home/.config/fcitx5/profile	/home/pang/.config/fcitx5/profile	600	99e210abb5a1e02b0495983d865d0f65
+payload/home/.config/fish/completions/pi.fish	/home/pang/.config/fish/completions/pi.fish	600	6045ea1658a4c7c69c90d47bd0e5bb81
 payload/home/.config/fish/config.fish	/home/pang/.config/fish/config.fish	600	75cbc310dfe5b8e62b23d20ae6dd7848
 payload/home/.config/fontconfig/fonts.conf	/home/pang/.config/fontconfig/fonts.conf	644	d6acc253adc8ef5bd1e678014aa49097
 payload/home/.config/fuzzel/fuzzel.ini	/home/pang/.config/fuzzel/fuzzel.ini	644	d1a19effee7b476ddda72cea4b46751b

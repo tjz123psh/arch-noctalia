@@ -32,7 +32,7 @@ file	/home/pang/rice-log.md	VM 过程记录（rice 日志；重装形态不复�
 file	/home/pang/installed-software.md	VM 过程记录（软件清单快照）
 pattern	an-run*.log	VM 验收过程日志（an-compare 输出）
 dir	/home/pang/.cargo/registry	Cargo 下载缓存（重装后按需重新拉取，不入仓）
-dir	/home/pang/.grok	Grok CLI 工具数据
+dir	/home/pang/.pi	pi 编码代理的配置与密钥目录（安装器只装包，配置不入仓——与 grok 同一策略）
 file	/home/pang/.bash_history	shell 历史
 file	/home/pang/.local/share/fish/fish_history	shell 历史（fish）
 file	/etc/sudoers.d/99-pang-nopasswd	安全：免密 sudo（安装期便利，不属于形态）
@@ -176,3 +176,10 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 # · 2026-10-10 事故回退：fcitx5/conf/{notifications,punctuation}.conf、gtk-3.0/bookmarks、mimeapps.list、
 #   user-dirs.dirs、nomacs『Image Lounge.conf』被 07 步回退成仓库版本；用户决定不还原。这 8 个文件已在 seed.tsv 里
 #   （重跑不再覆盖）；若哪天想还原，/home/.snapshots/25（10-07 快照，普通用户可读）仍可用。
+
+# ——— 2026-10-11 决定记录（grok → pi 迁移，用户拍板）———
+# · grok 从样本机彻底清除、不留档：包 grok-build-git（archlinuxcn）、~/.grok（2.6G 会话/记忆/下载）、
+#   ~/.local/share/grok（含 secrets 里的明文 API key）、fish 补全 grok.fish、回收站中的 grok-config。
+#   安装器侧同步：packages.tsv 移除该包；payload 与清单本来就没有 grok 文件（只有上面那行 dir 账）。
+# · pi 取代 grok：只装包（aur.tsv 的 pi-coding-agent-bin），~/.pi 的配置与密钥不入仓（dir 行已列）；
+#   唯一的文件纳管项 = fish 补全 ~/.config/fish/completions/pi.fish（用户要求随安装器部署；mode 600 取样本原件）。
