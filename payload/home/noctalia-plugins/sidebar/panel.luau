@@ -1711,6 +1711,23 @@ end
 local hotspot = { up = false, ssid = "", busy = false, loaded = false }
 local HOTSPOT_CMD = '"$HOME/bin/rice-hotspot"'
 
+-- 插件设置（Settings → 插件 → Sidebar：热点名称/密码/频段）。留空 = 用 rice-hotspot
+-- 自己记住的值；填了就以此为准——以环境变量传给它，它会把生效值记下来供命令行沿用。
+local function hotspotSetting(key)
+  local v = tostring(noctalia.getConfig(key) or "")
+  return (v:gsub("^%s+", ""):gsub("%s+$", ""))
+end
+
+local function hotspotEnv()
+  local parts = {}
+  local ssid, pw, band = hotspotSetting("hotspot_ssid"), hotspotSetting("hotspot_password"), hotspotSetting("hotspot_band")
+  if ssid ~= "" then parts[#parts + 1] = "RICE_HOTSPOT_SSID=" .. shq(ssid) end
+  if pw ~= "" then parts[#parts + 1] = "RICE_HOTSPOT_PASSWORD=" .. shq(pw) end
+  if band ~= "" then parts[#parts + 1] = "RICE_HOTSPOT_BAND=" .. shq(band) end
+  if #parts == 0 then return "" end
+  return table.concat(parts, " ") .. " "
+end
+
 local function refreshHotspot()
   query("hotspot", HOTSPOT_CMD .. " state 2>/dev/null", function(res)
     hotspot.loaded = true
@@ -1730,7 +1747,7 @@ local function toggleHotspot()
   if hotspot.busy then return end
   hotspot.busy = true
   markDirty("sysmon")
-  local started = noctalia.runAsync(HOTSPOT_CMD .. (hotspot.up and " off" or " on"), function(res)
+  local started = noctalia.runAsync(hotspotEnv() .. HOTSPOT_CMD .. (hotspot.up and " off" or " on"), function(res)
     hotspot.busy = false
     if res.exitCode ~= 0 then
       local err = tostring(res.stderr or ""):gsub("%s+$", "")
@@ -1779,14 +1796,20 @@ local function sysCard()
   }
   if bodyVisible("sysmon") then
     -- 热点入口（rice-hotspot）：Noctalia 本体没有热点 UI，这里一键开关；放最上面，展开即见
-    local hsText, hsAction
+    local hsText, hsAction, hsTip
+    local cfgSsid = hotspotSetting("hotspot_ssid")
+    local effSsid = cfgSsid ~= "" and cfgSsid or hotspot.ssid
     if hotspot.busy then
       hsText, hsAction = "热点 处理中…", "…"
+      hsTip = "正在调用 rice-hotspot…"
     elseif hotspot.up then
       hsText = "热点 " .. (hotspot.ssid ~= "" and hotspot.ssid or "已开启")
       hsAction = "关闭"
+      hsTip = "关闭 Wi-Fi 热点（关掉后自动连回原 Wi-Fi）"
     else
       hsText, hsAction = "热点 未开启", "开启"
+      hsTip = "开启 Wi-Fi 热点" .. (effSsid ~= "" and ("：" .. effSsid) or "")
+        .. "（会断开当前 Wi-Fi 客户端连接；名称/密码见插件设置）"
     end
     table.insert(children, ui.row({ align = "center", gap = SP.row }, {
       ui.glyph({ name = "wifi", size = 13, color = hotspot.up and "primary" or CL.muted }),
@@ -1794,7 +1817,7 @@ local function sysCard()
       ui.button({
         text = hsAction, controlSize = "sm",
         variant = hotspot.up and "secondary" or "ghost",
-        tooltip = hotspot.up and "关闭 Wi-Fi 热点（关掉后自动连回原 Wi-Fi）" or "开启 Wi-Fi 热点（会断开当前 Wi-Fi 客户端连接）",
+        tooltip = hsTip,
         onClick = function() toggleHotspot() end,
       }),
     }))

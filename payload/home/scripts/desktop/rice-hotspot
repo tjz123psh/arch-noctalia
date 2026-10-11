@@ -43,20 +43,34 @@ rice-hotspot — Wi-Fi 热点开关（NetworkManager AP + shared NAT）
   RICE_HOTSPOT_PASSWORD="..."   默认首次自动生成并存到 ~/.local/state/rice-hotspot/password
   RICE_HOTSPOT_BAND="bg"|"a"    默认 bg（2.4GHz）
   RICE_HOTSPOT_IFACE="wlp3s0"   默认自动挑第一个 Wi-Fi 设备
+
+优先级：环境变量（Noctalia 插件「Sidebar · 随手工作台」的热点设置会以环境变量传进来）
+        > ~/.config/rice-hotspot.conf > 上次开热点时记住的值（~/.local/state/rice-hotspot/）
+        > 内置默认（<主机名>-hotspot / 首次自动生成的密码）。
 EOF
 }
 
 have nmcli || die "nmcli 未找到：本脚本需要 NetworkManager"
 
-# 用户配置（可覆盖默认值）
+# 取值优先级：环境变量（Noctalia 插件设置传进来）> ~/.config/rice-hotspot.conf
+# > 状态目录里记住的值 > 内置默认。插件里改过 SSID/密码后，命令行也沿用同一套。
+ENV_SSID="${RICE_HOTSPOT_SSID:-}"
+ENV_PW="${RICE_HOTSPOT_PASSWORD:-}"
+ENV_BAND="${RICE_HOTSPOT_BAND:-}"
+ENV_IFACE="${RICE_HOTSPOT_IFACE:-}"
+
 if [[ -f "$CONF" ]]; then
   # shellcheck disable=SC1090
   source "$CONF"
 fi
 
-SSID="${RICE_HOTSPOT_SSID:-$(cat /etc/hostname 2>/dev/null || echo arch)-hotspot}"
-BAND="${RICE_HOTSPOT_BAND:-bg}"
-IFACE="${RICE_HOTSPOT_IFACE:-}"
+STATE_SSID="$(cat "${STATE_DIR}/ssid" 2>/dev/null || true)"
+SSID="${ENV_SSID:-${RICE_HOTSPOT_SSID:-${STATE_SSID:-$(cat /etc/hostname 2>/dev/null || echo arch)-hotspot}}}"
+BAND="${ENV_BAND:-${RICE_HOTSPOT_BAND:-bg}}"
+IFACE="${ENV_IFACE:-${RICE_HOTSPOT_IFACE:-}}"
+
+# 配置里给的密码（环境变量优先）——空 = 用/生成状态目录里的
+cfg_password() { printf '%s' "${ENV_PW:-${RICE_HOTSPOT_PASSWORD:-}}"; }
 
 pick_iface() {
   if [[ -n "$IFACE" ]]; then printf '%s' "$IFACE"; return 0; fi
@@ -73,7 +87,9 @@ active_wifi()  { LC_ALL=C nmcli -t -f NAME,TYPE connection show --active 2>/dev/
 
 # 生成/读取密码（会落地保存）
 ensure_password() {
-  if [[ -n "${RICE_HOTSPOT_PASSWORD:-}" ]]; then printf '%s' "$RICE_HOTSPOT_PASSWORD"; return 0; fi
+  local p
+  p="$(cfg_password)"
+  if [[ -n "$p" ]]; then printf '%s' "$p"; return 0; fi
   if [[ -s "$PW_FILE" ]]; then cat "$PW_FILE"; return 0; fi
   mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
   local pw
@@ -85,7 +101,9 @@ ensure_password() {
 
 # 只读：密码已知就显示，不知道就留空（不会因此生成新密码）
 peek_password() {
-  if [[ -n "${RICE_HOTSPOT_PASSWORD:-}" ]]; then printf '%s' "$RICE_HOTSPOT_PASSWORD"; return 0; fi
+  local p
+  p="$(cfg_password)"
+  if [[ -n "$p" ]]; then printf '%s' "$p"; return 0; fi
   [[ -s "$PW_FILE" ]] && cat "$PW_FILE" || true
 }
 
@@ -116,6 +134,7 @@ do_on() {
   local iface pw rc=0 prev
   iface="$(pick_iface)"
   pw="$(ensure_password)"
+  (( ${#pw} >= 8 )) || die "热点密码至少 8 位（WPA2 要求），当前 ${#pw} 位"
   ensure_radio
 
   if is_up; then
@@ -146,6 +165,11 @@ do_on() {
   (( rc == 0 )) || die "打开热点失败（rc=${rc}）：journalctl -u NetworkManager -n 50 看原因"
 
   is_up || die "热点没起来（networkmanager 报成功但连接未激活）"
+  # 记住这次实际生效的 SSID / 密码：命令行下次直接沿用（Noctalia 插件设置里改过也一致）
+  mkdir -p "$STATE_DIR"
+  printf '%s' "$SSID" > "${STATE_DIR}/ssid"
+  printf '%s' "$pw" > "$PW_FILE"
+  chmod 600 "$PW_FILE"
   info "热点已开启：SSID=${SSID} 密码=${pw}"
   notify "热点已开启" "SSID ${SSID} · 密码 ${pw}"
   show_status

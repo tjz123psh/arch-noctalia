@@ -18,6 +18,20 @@
       "light": "轻量 · 即时展开（推荐）",
       "soft": "柔和 · 220 ms",
       "off": "关闭卡片动效"
+    },
+    "hotspot_ssid": {
+      "label": "热点名称（SSID）",
+      "description": "系统卡里热点开关广播的名字。留空 = 沿用 rice-hotspot 记住的名字（默认 <主机名>-hotspot）。"
+    },
+    "hotspot_password": {
+      "label": "热点密码",
+      "description": "至少 8 位（WPA2）。留空 = 用 rice-hotspot 首次自动生成的密码；填了会明文存在 Noctalia 设置里，并由 rice-hotspot 记住、命令行也沿用。"
+    },
+    "hotspot_band": {
+      "label": "热点频段",
+      "description": "2.4GHz 兼容性最好；5GHz 更快但老设备可能搜不到。",
+      "bg": "2.4 GHz（兼容优先）",
+      "a": "5 GHz（速度优先）"
     }
   }
 }

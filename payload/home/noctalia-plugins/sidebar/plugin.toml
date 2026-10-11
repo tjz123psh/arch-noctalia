@@ -1,6 +1,6 @@
 id = "pang/sidebar"
 name = "Sidebar · 随手工作台"
-version = "2.4.0"
+version = "2.4.1"
 plugin_api = 32
 author = "pang"
 license = "MIT"
@@ -44,6 +44,31 @@ options = [
   { value = "light", label_key = "settings.motion.light" },
   { value = "soft", label_key = "settings.motion.soft" },
   { value = "off", label_key = "settings.motion.off" },
+]
+
+[[setting]]
+key = "hotspot_ssid"
+type = "string"
+label_key = "settings.hotspot_ssid.label"
+description_key = "settings.hotspot_ssid.description"
+default = ""
+
+[[setting]]
+key = "hotspot_password"
+type = "string"
+label_key = "settings.hotspot_password.label"
+description_key = "settings.hotspot_password.description"
+default = ""
+
+[[setting]]
+key = "hotspot_band"
+type = "select"
+label_key = "settings.hotspot_band.label"
+description_key = "settings.hotspot_band.description"
+default = "bg"
+options = [
+  { value = "bg", label_key = "settings.hotspot_band.bg" },
+  { value = "a", label_key = "settings.hotspot_band.a" },
 ]
 
 [[panel]]
