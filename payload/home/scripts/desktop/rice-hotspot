@@ -36,6 +36,7 @@ rice-hotspot — Wi-Fi 热点开关（NetworkManager AP + shared NAT）
   rice-hotspot off        关闭热点
   rice-hotspot status     查看状态（SSID / 密码 / 网关）
   rice-hotspot password   只打印当前密码
+  rice-hotspot state      单行机器可读状态（on|SSID|设备|网关 / off|SSID||，给插件用）
 
 配置（可选，~/.config/rice-hotspot.conf）:
   RICE_HOTSPOT_SSID="..."       默认 <主机名>-hotspot
@@ -178,6 +179,13 @@ case "${1:-toggle}" in
   off|down|stop)   do_off ;;
   toggle)          if is_up; then do_off; else do_on; fi ;;
   status|st)       show_status ;;
+  state)           # 单行机器可读（给插件用）：on|SSID|设备|网关  或  off|SSID||
+                   if is_up; then
+                     local_gw="$(LC_ALL=C nmcli -t -f IP4.ADDRESS device show "$(pick_iface)" 2>/dev/null | awk -F: 'NR==1{print $2}')"
+                     printf 'on|%s|%s|%s\n' "$SSID" "$(pick_iface)" "${local_gw:-}"
+                   else
+                     printf 'off|%s||\n' "$SSID"
+                   fi ;;
   password|pw)     ensure_password; printf '\n' ;;
   -h|--help|help)  usage ;;
   *) usage >&2; die "未知参数：${1}" ;;

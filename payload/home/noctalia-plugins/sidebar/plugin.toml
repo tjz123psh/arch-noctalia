@@ -1,13 +1,13 @@
 id = "pang/sidebar"
 name = "Sidebar · 随手工作台"
-version = "2.3.3"
+version = "2.4.0"
 plugin_api = 32
 author = "pang"
 license = "MIT"
-description = "轻量侧边工作台：新建便签、多行正文编辑、自动保存、待办勾选与 25 分钟任务专注；保留搜索、窗口、系统、最近文件及卡片整理。"
+description = "轻量侧边工作台：新建便签、多行正文编辑、自动保存、待办勾选与 25 分钟任务专注；保留搜索、窗口、系统（含 Wi-Fi 热点开关）、最近文件及卡片整理。"
 icon = "layout-sidebar-left"
 tags = ["custom", "utility", "panel"]
-dependencies = ["niri", "libnotify", "xdg-utils", "glib2", "util-linux", "findutils", "python"]
+dependencies = ["niri", "networkmanager", "libnotify", "xdg-utils", "glib2", "util-linux", "findutils", "python"]
 
 [[setting]]
 key = "search_limit"

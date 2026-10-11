@@ -1,5 +1,13 @@
 # 更新记录
 
+## Sidebar 2.4.0（系统卡里的 Wi-Fi 热点开关，2026-10-11）
+
+- 「系统」卡底部新增热点一行：显示热点 SSID 或「未开启」，右侧按钮一键开/关；展开时立刻取一次状态，之后每 15 秒对齐（用命令行改热点也能反映出来）。
+- 动作交给 `~/bin/rice-hotspot`（NetworkManager 的 AP 模式 + `ipv4.method shared`），插件不直接调 nmcli、不接触密码；密码由脚本管理（`~/.local/state/rice-hotspot/password`，600）。
+- 不做乐观态：只有脚本返回才改状态；失败经 `noctalia.notifyError` 报出。开/关会断开或连回 Wi-Fi 客户端连接属预期（一块网卡不能同时既连又发），脚本侧已处理连回。
+- 背景：Noctalia 5.2.1 本身没有热点 UI（网络页只有 有线/Wi-Fi/已保存/VPN/蜂窝），这里是插件侧兜底入口；真机验收：SSID `archlinux-hotspot`、网关 10.42.0.1/24。
+- 依赖声明补 `networkmanager`；离线回归（30 项 Python + 3 项计时 + 全部 Luau 断言）与宿主静态检查 0 error / 0 warning。
+
 ## Sidebar 2.3.3（本机动效试样，2026-10-09）
 
 - 列表与编辑页只对当前新内容做局部渐显，不保留旧输入框，不改 2.3.2 的保存、冲突和导航状态机。

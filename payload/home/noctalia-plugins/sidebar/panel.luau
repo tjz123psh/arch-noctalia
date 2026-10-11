@@ -1706,6 +1706,46 @@ local function refreshProcs()
   end)
 end
 
+-- 热点开关：Noctalia 本体没有热点 UI，这里给「系统」卡补一个入口。
+-- 真正的动作交给 ~/bin/rice-hotspot（NetworkManager 的 AP + shared，由 arch-noctalia 部署）。
+local hotspot = { up = false, ssid = "", busy = false, loaded = false }
+local HOTSPOT_CMD = '"$HOME/bin/rice-hotspot"'
+
+local function refreshHotspot()
+  query("hotspot", HOTSPOT_CMD .. " state 2>/dev/null", function(res)
+    hotspot.loaded = true
+    local line = tostring(res.stdout or ""):gsub("%s+$", "")
+    local state, ssid = line:match("^([a-z]+)|([^|]*)")
+    if state == "on" or state == "off" then
+      hotspot.up = state == "on"
+      if ssid and ssid ~= "" then hotspot.ssid = ssid end
+    else
+      hotspot.up = false
+    end
+    markDirty("sysmon")
+  end)
+end
+
+local function toggleHotspot()
+  if hotspot.busy then return end
+  hotspot.busy = true
+  markDirty("sysmon")
+  local started = noctalia.runAsync(HOTSPOT_CMD .. (hotspot.up and " off" or " on"), function(res)
+    hotspot.busy = false
+    if res.exitCode ~= 0 then
+      local err = tostring(res.stderr or ""):gsub("%s+$", "")
+      if err == "" then err = string.format("rice-hotspot 失败（退出码 %s）", tostring(res.exitCode)) end
+      noctalia.notifyError("Wi-Fi 热点", err)
+    end
+    refreshHotspot()
+  end)
+  if not started then
+    hotspot.busy = false
+    noctalia.notifyError("Wi-Fi 热点", "无法执行 rice-hotspot（确认 ~/bin/rice-hotspot 已部署）")
+    markDirty("sysmon")
+  end
+end
+
 -- 曲线悬停读数：只有索引变化才重绘（宿主已对指针事件做合并）
 function onGraphMove(normX)
   local n = #sysmon.cpuHist
@@ -1738,6 +1778,26 @@ local function sysCard()
     }),
   }
   if bodyVisible("sysmon") then
+    -- 热点入口（rice-hotspot）：Noctalia 本体没有热点 UI，这里一键开关；放最上面，展开即见
+    local hsText, hsAction
+    if hotspot.busy then
+      hsText, hsAction = "热点 处理中…", "…"
+    elseif hotspot.up then
+      hsText = "热点 " .. (hotspot.ssid ~= "" and hotspot.ssid or "已开启")
+      hsAction = "关闭"
+    else
+      hsText, hsAction = "热点 未开启", "开启"
+    end
+    table.insert(children, ui.row({ align = "center", gap = SP.row }, {
+      ui.glyph({ name = "wifi", size = 13, color = hotspot.up and "primary" or CL.muted }),
+      ui.label({ text = hsText, fontSize = FS.caption, color = CL.muted, flexGrow = 1, maxLines = 1 }),
+      ui.button({
+        text = hsAction, controlSize = "sm",
+        variant = hotspot.up and "secondary" or "ghost",
+        tooltip = hotspot.up and "关闭 Wi-Fi 热点（关掉后自动连回原 Wi-Fi）" or "开启 Wi-Fi 热点（会断开当前 Wi-Fi 客户端连接）",
+        onClick = function() toggleHotspot() end,
+      }),
+    }))
     if not st then
       table.insert(children, emptyState("alert-triangle", "系统监控不可用"))
     else
@@ -2314,6 +2374,8 @@ function update()
     end
   end
   if open.sysmon and sysmon.tick % 5 == 1 then refreshProcs() end
+  -- 热点状态：首次展开立刻查一次，之后每 15 秒对齐一次（外部用命令行开关也能反映出来）
+  if open.sysmon and (not hotspot.loaded or sysmon.tick % 15 == 1) then refreshHotspot() end
   if open.sysmon and (sysmon.disk == nil or sysmon.tick % 30 == 1) and noctalia.diskStats then
     sysmon.disk = noctalia.diskStats(noctalia.expandPath("~/"))
     markDirty("sysmon")

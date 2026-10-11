@@ -88,9 +88,9 @@ payload/home/noctalia-plugins/magnifier/panel.luau	/home/pang/noctalia-plugins/m
 payload/home/noctalia-plugins/magnifier/plugin.toml	/home/pang/noctalia-plugins/magnifier/plugin.toml	644	b8ab8d4d5be23b1b02db0bff4223c5bf
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/build.sh	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/build.sh	755	3c2ec34fa6873d3ad3557e67c0866149
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	644	976ac9caa82a52499cd9ae210d804744
-payload/home/noctalia-plugins/sidebar/README.md	/home/pang/noctalia-plugins/sidebar/README.md	644	7dfeea7d9ad775fc0a6034430825c038
-payload/home/noctalia-plugins/sidebar/panel.luau	/home/pang/noctalia-plugins/sidebar/panel.luau	644	0836ae0449921d594eca4a0df76575e1
-payload/home/noctalia-plugins/sidebar/plugin.toml	/home/pang/noctalia-plugins/sidebar/plugin.toml	644	b321e98ddcc6beffb2580c959c700417
+payload/home/noctalia-plugins/sidebar/README.md	/home/pang/noctalia-plugins/sidebar/README.md	644	442d713cd811fddc94ce270f90b4fbbc
+payload/home/noctalia-plugins/sidebar/panel.luau	/home/pang/noctalia-plugins/sidebar/panel.luau	644	3b75ed52f3e2871882ae8596f9e524fa
+payload/home/noctalia-plugins/sidebar/plugin.toml	/home/pang/noctalia-plugins/sidebar/plugin.toml	644	15c35cd5f8f616cd4e1d4b5873c05920
 payload/home/noctalia-plugins/sidebar/tests/async_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/async_spec.lua	644	90be601c6c27392302f9822bfd92fb31
 payload/home/noctalia-plugins/sidebar/tests/benchmark.lua	/home/pang/noctalia-plugins/sidebar/tests/benchmark.lua	644	a0867d001e0a2eff808896a4f1a11076
 payload/home/noctalia-plugins/sidebar/tests/regressions_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/regressions_spec.lua	644	8e78658dfa3d51012621e8c41ec8b394
@@ -337,7 +337,7 @@ payload/system/etc/systemd/system/snapper-timeline.timer.d/override.conf	/etc/sy
 #     07-config 部署后自动 glib-compile-schemas 生效；用户在程序里改过的值（dconf）优先。 ———
 payload/system/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	644	023c9b849ff70ce6f5af443f276d1ced
 payload/home/noctalia-plugins/sidebar/notes.py	/home/pang/noctalia-plugins/sidebar/notes.py	600	61dfdc9e577d7d3ec5c9a11e96c6a642
-payload/home/noctalia-plugins/sidebar/CHANGELOG.md	/home/pang/noctalia-plugins/sidebar/CHANGELOG.md	644	51e77ff32215666f355e3a38126475c4
+payload/home/noctalia-plugins/sidebar/CHANGELOG.md	/home/pang/noctalia-plugins/sidebar/CHANGELOG.md	644	e734829173e7271ec492deb116618687
 payload/home/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	/home/pang/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	600	fdb03ca32c1d0299df918f37b47420f1
 payload/home/noctalia-plugins/sidebar/tests/notes_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.lua	644	de1274938509e476433d5bff909c9833
 payload/home/noctalia-plugins/sidebar/tests/notes_spec.py	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.py	600	fa2342780591353aeb6b108a1d9457ad
@@ -351,4 +351,4 @@ payload/home/noctalia-plugins/magnifier/tests/tracker_lease_spec.c	/home/pang/no
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/protocols/wlr-layer-shell-unstable-v1.xml	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/protocols/wlr-layer-shell-unstable-v1.xml	644	ea389ea26a9629cc052b1a4dc750e073
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/README.md	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/README.md	644	6b93fc5b5c5860d2dbac5f58225b4dca
 # ——— 2026-10-11 Wi-Fi 热点：Noctalia 5.2.1 没有热点 UI，自带 rice-hotspot 兜底（AP 模式 + shared，依赖 dnsmasq）———
-payload/home/scripts/desktop/rice-hotspot	/home/pang/scripts/desktop/rice-hotspot	755	5b29123111f1478c9d66cd1bb3cd74a8
+payload/home/scripts/desktop/rice-hotspot	/home/pang/scripts/desktop/rice-hotspot	755	3544baa1530435497b1d9ea95d7f56f3
