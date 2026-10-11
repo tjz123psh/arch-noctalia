@@ -1,10 +1,10 @@
 --!nonstrict
 -- pang/magnifier — 屏幕放大镜（Noctalia v5 插件） v1.1
 -- 键盘缩放/平移短过渡，鼠标跟随不加延迟；每轮截图/心跳独立命名，旧回调只清理自己的帧。
--- 方案与边界：/home/pang/noctalia-work/experiments/2026-10-04-magnifier-plugin-spec.md
+-- 方案与边界：见本插件 README（~/noctalia-plugins/magnifier/README.md）
 --
 -- 形态（用户定稿）：按快捷键 → 面板开在鼠标处 → 鼠标移动，画面实时跟着移动。
--- 光标来源：本地小工具 cursor-track（~/bin，源码 ~/dev/cursor-track）——它铺一层全屏透明
+-- 光标来源：本地小工具 cursor-track（~/bin，源码 ~/noctalia-plugins/magnifier/tools/cursor-track）——它铺一层全屏透明
 --   layer surface 直接收 wl_pointer 事件，位置/心跳文件按面板轮次隔离。当前路径见 state.txt。
 --   （niri 没有任何光标查询接口；XWayland 的 xdotool 查询在指针位于 Wayland 原生表面时是死值。）
 --   代价：cursor-track 在 overlay 层、输入区全屏 → 放大镜打开期间桌面点击被它接走（点击=退出）。
