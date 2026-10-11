@@ -29,7 +29,7 @@
     },
     "hotspot_band": {
       "label": "Hotspot band",
-      "description": "2.4GHz is most compatible; 5GHz is faster but older devices may not see it.",
+      "description": "2.4GHz is the most compatible (default); 5GHz is faster, but some cards (RTL8852BE here) cannot start an AP on it - rice-hotspot falls back to 2.4GHz automatically.",
       "bg": "2.4 GHz (compatibility)",
       "a": "5 GHz (speed)"
     }

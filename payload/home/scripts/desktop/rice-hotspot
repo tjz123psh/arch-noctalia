@@ -36,7 +36,10 @@ rice-hotspot — Wi-Fi 热点开关（NetworkManager AP + shared NAT）
   rice-hotspot off        关闭热点
   rice-hotspot status     查看状态（SSID / 密码 / 网关）
   rice-hotspot password   只打印当前密码
-  rice-hotspot state      单行机器可读状态（on|SSID|设备|网关 / off|SSID||，给插件用）
+  rice-hotspot state      单行机器可读状态（on|在用SSID|设备|网关|期望SSID|待应用 / off|期望SSID|||期望SSID|0）
+
+改设置（SSID/密码/频段）后：正在跑的热点不会自己变——再跑一次 on 会重启它并应用新值
+（侧栏面板上的按钮会显示「应用」）。
 
 配置（可选，~/.config/rice-hotspot.conf）:
   RICE_HOTSPOT_SSID="..."       默认 <主机名>-hotspot
@@ -52,6 +55,13 @@ EOF
 
 have nmcli || die "nmcli 未找到：本脚本需要 NetworkManager"
 
+# 并发锁：面板按钮/命令行/IPC 同时来两下时，第二个直接退，别让两次操作互相打架
+mkdir -p "$STATE_DIR"
+exec 9>"$STATE_DIR/lock"
+if ! flock -n 9; then
+  die "上一次热点操作还在进行，稍等几秒再试（rice-hotspot state 可看进度）"
+fi
+
 # 取值优先级：环境变量（Noctalia 插件设置传进来）> ~/.config/rice-hotspot.conf
 # > 状态目录里记住的值 > 内置默认。插件里改过 SSID/密码后，命令行也沿用同一套。
 ENV_SSID="${RICE_HOTSPOT_SSID:-}"
@@ -64,6 +74,8 @@ if [[ -f "$CONF" ]]; then
   source "$CONF"
 fi
 
+BAND_EXPLICIT=0
+if [[ -n "${ENV_BAND:-}${RICE_HOTSPOT_BAND:-}" ]]; then BAND_EXPLICIT=1; fi
 STATE_SSID="$(cat "${STATE_DIR}/ssid" 2>/dev/null || true)"
 SSID="${ENV_SSID:-${RICE_HOTSPOT_SSID:-${STATE_SSID:-$(cat /etc/hostname 2>/dev/null || echo arch)-hotspot}}}"
 BAND="${ENV_BAND:-${RICE_HOTSPOT_BAND:-bg}}"
@@ -81,6 +93,28 @@ pick_iface() {
 }
 
 is_up()        { LC_ALL=C nmcli -t -f NAME connection show --active 2>/dev/null | grep -Fxq "$CONN"; }
+
+# profile 里现在存着的值（用来判断"改了设置但热点还在用旧值"）
+profile_ssid() { LC_ALL=C nmcli -t -f 802-11-wireless.ssid connection show "$CONN" 2>/dev/null | cut -d: -f2-; }
+profile_band() { LC_ALL=C nmcli -t -f 802-11-wireless.band connection show "$CONN" 2>/dev/null | cut -d: -f2-; }
+
+# 这次的配置跟"上次成功应用的值"不一致？1 = 要重启热点才能生效。
+# 注意：跟"记住的期望值"比，而不是跟 profile 的实际频段比——因为 5G 起不来会回落到
+# 2.4G，那是已生效状态，不该永远显示"待应用"。
+hotspot_pending() {
+  conn_exists || { printf 0; return 0; }
+  local want_pw
+  want_pw="$(ensure_password)"
+  [[ -s "${STATE_DIR}/ssid" && "$(cat "${STATE_DIR}/ssid")" == "$SSID" ]] || { printf 1; return 0; }
+  [[ -s "$PW_FILE" && "$(cat "$PW_FILE")" == "$want_pw" ]] || { printf 1; return 0; }
+  # 频段只有被显式指定（环境变量/配置文件）时才比较；裸命令行调用不该报「待应用」
+  if [[ "${BAND_EXPLICIT:-0}" == "1" ]]; then
+    [[ -f "${STATE_DIR}/band_desired" && "$(cat "${STATE_DIR}/band_desired")" == "$BAND" ]] || { printf 1; return 0; }
+  fi
+  # 顺手防外部把 profile 改了
+  [[ "$(profile_ssid)" == "$SSID" ]] || { printf 1; return 0; }
+  printf 0
+}
 conn_exists()  { LC_ALL=C nmcli -t -f NAME connection show 2>/dev/null | grep -Fxq "$CONN"; }
 radio_on()     { LC_ALL=C nmcli -t -f WIFI radio 2>/dev/null | grep -qx 'enabled'; }
 active_wifi()  { LC_ALL=C nmcli -t -f NAME,TYPE connection show --active 2>/dev/null | awk -F: '$2=="802-11-wireless"{print $1; exit}'; }
@@ -118,29 +152,72 @@ ensure_radio() {
 
 show_status() {
   if is_up; then
-    local iface ip pw
+    local iface ip pw actual
     iface="$(pick_iface)"
     ip="$(LC_ALL=C nmcli -t -f IP4.ADDRESS device show "$iface" 2>/dev/null | awk -F: 'NR==1{print $2}')"
     pw="$(peek_password)"
-    printf '热点: 已开启\nSSID: %s\n' "$SSID"
-    [[ -n "$pw" ]] && printf '密码: %s\n' "$pw"
+    actual="$(profile_ssid)"
+    printf '热点: 已开启\nSSID: %s\n' "${actual:-$SSID}"
+    if [[ -n "$pw" ]]; then printf '密码: %s\n' "$pw"; fi
     printf '网关: %s\n设备: %s\n' "${ip:-未知}" "$iface"
+    if [[ "$(hotspot_pending)" == "1" ]]; then
+      printf '注意: 设置改了但还没生效（期望 SSID=%s 频段=%s）——重跑 on，或点侧栏面板上的「应用」\n' "$SSID" "$BAND"
+    fi
   else
     printf '热点: 未开启\nSSID: %s（开的时候用）\n' "$SSID"
   fi
 }
 
+# 按当前 SSID/BAND/密码 建或改 profile，并试着拉起来。成功 0，失败 1（不 die，交给调用方决定回落/回滚）。
+start_ap() { # $1=iface $2=密码 $3=频段
+  local iface="$1" pw="$2" band="${3:-$BAND}" rc=0
+  if conn_exists; then
+    LC_ALL=C nmcli connection modify "$CONN" \
+      802-11-wireless.ssid "$SSID" \
+      802-11-wireless.band "$band" \
+      802-11-wireless-security.key-mgmt wpa-psk \
+      802-11-wireless-security.psk "$pw" >/dev/null 2>&1 || true
+    # 单次拉起最多等 12s：AP 起不来时 NM 自己要等 ~26s（802.1X 请求方超时），
+    # 等太久会把整条命令拖到调用方（面板/命令行）的超时里去。
+    LC_ALL=C timeout 12 nmcli connection up "$CONN" >/dev/null 2>&1 || rc=$?
+    if (( rc != 0 )); then
+      LC_ALL=C nmcli connection down "$CONN" >/dev/null 2>&1 || true   # 取消这次没起来的激活
+      sleep 1
+    fi
+  else
+    nmcli device wifi hotspot con-name "$CONN" ifname "$iface" ssid "$SSID" band "$band" password "$pw" >/dev/null 2>&1 || rc=$?
+    if (( rc != 0 )); then
+      nmcli connection delete "$CONN" >/dev/null 2>&1 || true   # 清掉半成品，免得下次踩到
+    else
+      LC_ALL=C nmcli connection modify "$CONN" connection.autoconnect no >/dev/null 2>&1 || true
+    fi
+  fi
+  (( rc == 0 )) && is_up && return 0
+  return 1
+}
+
 do_on() {
-  local iface pw rc=0 prev
+  local iface pw prev had_old=0 old_ssid="" old_band="" old_pw="" want_band
+  want_band="$BAND"          # 用户请求的频段（回落只改实际值，不改这个）
   iface="$(pick_iface)"
   pw="$(ensure_password)"
   (( ${#pw} >= 8 )) || die "热点密码至少 8 位（WPA2 要求），当前 ${#pw} 位"
   ensure_radio
 
   if is_up; then
-    info "热点已经开着"
-    show_status
-    return 0
+    if [[ "$(hotspot_pending)" == "0" ]]; then
+      info "热点已经开着，配置一致"
+      show_status
+      return 0
+    fi
+    # 改了 SSID/密码/频段后，正在跑的热点不会自己变：先记下旧值（失败要能回滚），再停掉重建。
+    had_old=1
+    old_ssid="$(profile_ssid)"
+    old_band="$(profile_band)"
+    old_pw="$(cat "$PW_FILE" 2>/dev/null || true)"
+    info "热点在跑但配置变了（SSID/密码/频段）——重启一次让它生效"
+    nmcli connection down "$CONN" >/dev/null || die "停掉旧热点失败，无法应用新配置"
+    sleep 1
   fi
 
   # 记下当前 Wi-Fi 客户端连接，关热点时连回来
@@ -151,28 +228,46 @@ do_on() {
     info "开热点会断开当前的 Wi-Fi 连接「${prev}」（有线不受影响）"
   fi
 
-  if conn_exists; then
-    LC_ALL=C nmcli connection modify "$CONN" \
-      802-11-wireless.ssid "$SSID" \
-      802-11-wireless.band "$BAND" \
-      802-11-wireless-security.key-mgmt wpa-psk \
-      802-11-wireless-security.psk "$pw" >/dev/null 2>&1 || true
-    nmcli connection up "$CONN" >/dev/null || rc=$?
-  else
-    nmcli device wifi hotspot con-name "$CONN" ifname "$iface" ssid "$SSID" band "$BAND" password "$pw" >/dev/null || rc=$?
-    LC_ALL=C nmcli connection modify "$CONN" connection.autoconnect no >/dev/null 2>&1 || true
+  # 先按请求的频段起；起不来且不是 2.4G，就自动回落到 2.4G（部分网卡/驱动的 AP 只能 2.4G）。
+  # 注意：回落只影响"实际用哪个频段"，BAND（= 用户请求值）保持不变，否则待应用状态会一直亮着。
+  local eff_band="$BAND"
+  if ! start_ap "$iface" "$pw" "$eff_band"; then
+    if [[ "$eff_band" != "bg" ]]; then
+      warn "按 ${eff_band} 频段起不来（网卡/驱动的 AP 模式不支持或超时），自动回落到 2.4GHz"
+      eff_band="bg"
+      if ! start_ap "$iface" "$pw" "$eff_band"; then
+        rollback_old_ap "$had_old" "$old_ssid" "$old_band" "$old_pw"
+        die "打开热点失败：journalctl -u NetworkManager -n 50 看原因"
+      fi
+      notify "热点已回落 2.4GHz" "SSID ${SSID}"
+    else
+      rollback_old_ap "$had_old" "$old_ssid" "$old_band" "$old_pw"
+      die "打开热点失败：journalctl -u NetworkManager -n 50 看原因"
+    fi
   fi
-  (( rc == 0 )) || die "打开热点失败（rc=${rc}）：journalctl -u NetworkManager -n 50 看原因"
 
-  is_up || die "热点没起来（networkmanager 报成功但连接未激活）"
-  # 记住这次实际生效的 SSID / 密码：命令行下次直接沿用（Noctalia 插件设置里改过也一致）
+  is_up || { rollback_old_ap "$had_old" "$old_ssid" "$old_band" "$old_pw"; die "热点没起来（NetworkManager 报成功但连接未激活）"; }
+  # 记住这次实际生效的 SSID / 密码 / 频段：命令行与面板下次直接沿用
   mkdir -p "$STATE_DIR"
   printf '%s' "$SSID" > "${STATE_DIR}/ssid"
   printf '%s' "$pw" > "$PW_FILE"
   chmod 600 "$PW_FILE"
-  info "热点已开启：SSID=${SSID} 密码=${pw}"
+  printf '%s' "$want_band" > "${STATE_DIR}/band_desired"
+  info "热点已开启：SSID=${SSID} 密码=${pw} 频段=${eff_band}$( [[ "$want_band" != "$eff_band" ]] && printf '（请求 %s，已回落）' "$want_band" )"
   notify "热点已开启" "SSID ${SSID} · 密码 ${pw}"
   show_status
+}
+
+# 新配置起不来、而之前本来就有一个能用的热点：把旧值写回去尽量恢复，别让手机那边直接断网。
+rollback_old_ap() { # $1=had_old $2=旧SSID $3=旧band $4=旧密码
+  [[ "$1" == "1" && -n "$2" ]] || return 0
+  warn "尝试回滚到原来的热点（SSID=${2}）"
+  SSID="$2"
+  if start_ap "$(pick_iface)" "${4:-$(ensure_password)}" "${3:-bg}"; then
+    info "已回滚：热点仍是 ${2}"
+  else
+    warn "回滚也没起来——热点现在是关的"
+  fi
 }
 
 do_off() {
@@ -203,12 +298,13 @@ case "${1:-toggle}" in
   off|down|stop)   do_off ;;
   toggle)          if is_up; then do_off; else do_on; fi ;;
   status|st)       show_status ;;
-  state)           # 单行机器可读（给插件用）：on|SSID|设备|网关  或  off|SSID||
+  state)           # 单行机器可读（给插件用）：
+                   #   on|在用SSID|设备|网关|期望SSID|待应用(0/1)      off|期望SSID|||期望SSID|0
                    if is_up; then
                      local_gw="$(LC_ALL=C nmcli -t -f IP4.ADDRESS device show "$(pick_iface)" 2>/dev/null | awk -F: 'NR==1{print $2}')"
-                     printf 'on|%s|%s|%s\n' "$SSID" "$(pick_iface)" "${local_gw:-}"
+                     printf 'on|%s|%s|%s|%s|%s|%s\n' "$(profile_ssid)" "$(pick_iface)" "${local_gw:-}" "$SSID" "$(hotspot_pending)" "$(profile_band)"
                    else
-                     printf 'off|%s||\n' "$SSID"
+                     printf 'off|%s|||%s|0\n' "$SSID" "$SSID"
                    fi ;;
   password|pw)     ensure_password; printf '\n' ;;
   -h|--help|help)  usage ;;

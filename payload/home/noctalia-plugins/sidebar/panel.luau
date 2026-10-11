@@ -1708,7 +1708,8 @@ end
 
 -- 热点开关：Noctalia 本体没有热点 UI，这里给「系统」卡补一个入口。
 -- 真正的动作交给 ~/bin/rice-hotspot（NetworkManager 的 AP + shared，由 arch-noctalia 部署）。
-local hotspot = { up = false, ssid = "", busy = false, loaded = false }
+local hotspot = { up = false, ssid = "", desired = "", pending = false, band = "",
+  busy = false, loaded = false, intent = nil, firedAt = 0, deadline = 0 }
 local HOTSPOT_CMD = '"$HOME/bin/rice-hotspot"'
 
 -- 插件设置（Settings → 插件 → Sidebar：热点名称/密码/频段）。留空 = 用 rice-hotspot
@@ -1729,13 +1730,18 @@ local function hotspotEnv()
 end
 
 local function refreshHotspot()
-  query("hotspot", HOTSPOT_CMD .. " state 2>/dev/null", function(res)
+  -- 带上设置里的值：这样 state 才能算出"设置与在跑的是否一致"（pending）
+  query("hotspot", hotspotEnv() .. HOTSPOT_CMD .. " state 2>/dev/null", function(res)
     hotspot.loaded = true
     local line = tostring(res.stdout or ""):gsub("%s+$", "")
-    local state, ssid = line:match("^([a-z]+)|([^|]*)")
-    if state == "on" or state == "off" then
-      hotspot.up = state == "on"
-      if ssid and ssid ~= "" then hotspot.ssid = ssid end
+    local f = {}
+    for part in (line .. "|"):gmatch("([^|]*)|") do f[#f + 1] = part end
+    if f[1] == "on" or f[1] == "off" then
+      hotspot.up = (f[1] == "on")
+      hotspot.ssid = f[2] or ""
+      hotspot.desired = (f[5] ~= "" and f[5]) or f[2] or ""
+      hotspot.pending = (f[6] == "1")
+      hotspot.band = f[7] or ""
     else
       hotspot.up = false
     end
@@ -1743,24 +1749,50 @@ local function refreshHotspot()
   end)
 end
 
-local function toggleHotspot()
+-- action = "on"（确保按当前设置开着；配置变了会重启对齐）| "off"
+-- 分离运行、不等输出：AP 起不来时 NM 自己要等 ~26s，同步等会把命令拖进宿主的超时里
+-- （实测被 SIGTERM 打断 = 退出码 143，留下半套配置）。结果靠轮询 state 判断，见 pollHotspotRun。
+local function hotspotRun(action)
   if hotspot.busy then return end
   hotspot.busy = true
+  hotspot.intent = action
+  hotspot.firedAt = noctalia.nowMs()
+  hotspot.deadline = hotspot.firedAt + 60000
   markDirty("sysmon")
-  local started = noctalia.runAsync(hotspotEnv() .. HOTSPOT_CMD .. (hotspot.up and " off" or " on"), function(res)
-    hotspot.busy = false
-    if res.exitCode ~= 0 then
-      local err = tostring(res.stderr or ""):gsub("%s+$", "")
-      if err == "" then err = string.format("rice-hotspot 失败（退出码 %s）", tostring(res.exitCode)) end
-      noctalia.notifyError("Wi-Fi 热点", err)
-    end
-    refreshHotspot()
-  end)
+  local started = noctalia.runAsync(hotspotEnv() .. HOTSPOT_CMD .. " " .. action)
   if not started then
     hotspot.busy = false
     noctalia.notifyError("Wi-Fi 热点", "无法执行 rice-hotspot（确认 ~/bin/rice-hotspot 已部署）")
-    markDirty("sysmon")
   end
+  markDirty("sysmon")
+  refreshHotspot()
+end
+
+local function toggleHotspot()
+  hotspotRun(hotspot.up and "off" or "on")
+end
+
+-- 分离运行后的收尾：达到目标 → 收起「处理中」；超时 → 明确报错，不装作成功。
+local function pollHotspotRun()
+  refreshHotspot()
+  if noctalia.nowMs() - (hotspot.firedAt or 0) < 2500 then return end
+  local goal
+  if hotspot.intent == "off" then
+    goal = not hotspot.up
+  else
+    goal = hotspot.up and not hotspot.pending
+  end
+  if goal then
+    hotspot.busy = false
+  elseif noctalia.nowMs() > (hotspot.deadline or 0) then
+    hotspot.busy = false
+    if hotspot.intent == "on" then
+      noctalia.notifyError("Wi-Fi 热点", hotspot.up
+        and "新设置没能应用：跑一次 rice-hotspot on 看具体原因"
+        or "热点没起来：看 rice-hotspot status，或 journalctl -u NetworkManager -n 50")
+    end
+  end
+  markDirty("sysmon")
 end
 
 -- 曲线悬停读数：只有索引变化才重绘（宿主已对指针事件做合并）
@@ -1798,14 +1830,26 @@ local function sysCard()
     -- 热点入口（rice-hotspot）：Noctalia 本体没有热点 UI，这里一键开关；放最上面，展开即见
     local hsText, hsAction, hsTip
     local cfgSsid = hotspotSetting("hotspot_ssid")
+    local cfgBand = hotspotSetting("hotspot_band")
     local effSsid = cfgSsid ~= "" and cfgSsid or hotspot.ssid
+    local bandLabel = (hotspot.band == "a" and "5G") or (hotspot.band ~= "" and "2.4G") or ""
     if hotspot.busy then
       hsText, hsAction = "热点 处理中…", "…"
       hsTip = "正在调用 rice-hotspot…"
+    elseif hotspot.up and hotspot.pending then
+      -- 设置改了但正在跑的热点还是旧值：给一个明确的"应用"，而不是只让你关掉重开
+      hsText = "热点 " .. (hotspot.ssid ~= "" and hotspot.ssid or "已开启") .. " · 待应用"
+      hsAction = "应用"
+      hsTip = "设置里的 SSID/密码/频段与正在跑的不一致：点一下重启热点并应用（客户端会短暂断开）"
     elseif hotspot.up then
       hsText = "热点 " .. (hotspot.ssid ~= "" and hotspot.ssid or "已开启")
+      if bandLabel ~= "" then hsText = hsText .. " · " .. bandLabel end
       hsAction = "关闭"
-      hsTip = "关闭 Wi-Fi 热点（关掉后自动连回原 Wi-Fi）"
+      if cfgBand ~= "" and hotspot.band ~= "" and cfgBand ~= hotspot.band then
+        hsTip = string.format("关闭 Wi-Fi 热点（关掉后自动连回原 Wi-Fi）；实际频段 %s——设置里要的是 %s，网卡起不来已自动回落", bandLabel, cfgBand == "a" and "5G" or "2.4G")
+      else
+        hsTip = "关闭 Wi-Fi 热点（关掉后自动连回原 Wi-Fi）"
+      end
     else
       hsText, hsAction = "热点 未开启", "开启"
       hsTip = "开启 Wi-Fi 热点" .. (effSsid ~= "" and ("：" .. effSsid) or "")
@@ -1818,7 +1862,7 @@ local function sysCard()
         text = hsAction, controlSize = "sm",
         variant = hotspot.up and "secondary" or "ghost",
         tooltip = hsTip,
-        onClick = function() toggleHotspot() end,
+        onClick = function() hotspotRun(hotspot.up and (hotspot.pending and "on" or "off") or "on") end,
       }),
     }))
     if not st then
@@ -2341,6 +2385,17 @@ function onIpc(event, payload)
   elseif event == "layout" and (payload == "daily" or payload == "all" or payload == "none") then setLayout(payload)
   elseif event == "focus" then setFocusMode(not focusMode)
   elseif event == "customize" then setCustomizing(not customizing)
+  elseif event == "hotspot" then
+    -- 与面板按钮同一条代码路径：可脚本化（niri 键位也能直接调），也方便离线验证
+    if payload == "on" or payload == "apply" then
+      hotspotRun("on")          -- 收敛：没开就开，配置变了就重启对齐
+    elseif payload == "off" then
+      hotspotRun("off")
+    elseif payload == "toggle" then
+      toggleHotspot()
+    elseif payload == "status" then
+      refreshHotspot()
+    end
   elseif event == "notes" and payload == "refresh" then notes.refresh(true)
   elseif event == "notes" and payload == "new" then onNoteNew(false)
   elseif event == "notes" and type(payload) == "string" and payload:sub(1, 7) == "select:" then notes.select(payload:sub(8))
@@ -2397,8 +2452,12 @@ function update()
     end
   end
   if open.sysmon and sysmon.tick % 5 == 1 then refreshProcs() end
-  -- 热点状态：首次展开立刻查一次，之后每 15 秒对齐一次（外部用命令行开关也能反映出来）
-  if open.sysmon and (not hotspot.loaded or sysmon.tick % 15 == 1) then refreshHotspot() end
+  -- 热点状态：有操作在跑时每秒跟进（分离运行的收尾靠它）；平时首次展开查一次 + 每 15 秒对齐
+  if hotspot.busy then
+    pollHotspotRun()
+  elseif open.sysmon and (not hotspot.loaded or sysmon.tick % 15 == 1) then
+    refreshHotspot()
+  end
   if open.sysmon and (sysmon.disk == nil or sysmon.tick % 30 == 1) and noctalia.diskStats then
     sysmon.disk = noctalia.diskStats(noctalia.expandPath("~/"))
     markDirty("sysmon")
