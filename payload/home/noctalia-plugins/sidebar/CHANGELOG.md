@@ -1,5 +1,24 @@
 # 更新记录
 
+## Sidebar 2.4.4（热点客户端「连上但没网」：与 Docker 共存，2026-10-11）
+
+现象：手机连上热点、拿到 10.42.0.25，但上不了网。
+
+根因（靠 nftables 规则链与计数定位）：装了 Docker 的机器上，Docker 把 nftables 的 **FORWARD 基链策略设成 drop**；
+NetworkManager 的 shared 模式虽然在自己的表（nm-shared-wlp3s0）里 accept 了 10.42.0.0/24，但 nftables 里 accept
+不是跨基链的最终裁决 —— 包随后被 Docker 那条 drop 吃掉。手工加两条放行规则后手机流量立刻开始转发
+（计数 0 → 2757 包 / 1.65 MB），根因确认。
+
+修法（都在 rice-hotspot 与安装器侧；插件本体无逻辑改动，版本号一起走）：
+
+- 新增 root 助手 /usr/local/bin/rice-hotspot-net：只做「往 DOCKER-USER 链放行/撤销 10.42.0.0/24 @ 网卡」，
+  参数白名单校验；没有 DOCKER-USER（没装/没跑 Docker）时直接退出，零副作用。
+- 新增 /etc/sudoers.d/rice-hotspot：只放行这一个 root 助手（NOPASSWD），其它操作照旧要密码。
+- rice-hotspot：起完热点自动放行；`on` 在「配置一致」的空转路径上也幂等补一次（Docker 重启会清 DOCKER-USER）；
+  `off` 时撤销；拿不到 root 权限时明确提示手动补一次，不静默糊过去。
+- 安装器：两个文件进 files.tsv（755 / 440 root:root）；07 步部署前用 visudo -cf 预检，语法不合法直接中止
+  （避免把 sudo 写坏）；tools/selfcheck.sh 加了同一道校验。
+
 ## Sidebar 2.4.3（热点「改了设置不生效」的根因修复，2026-10-11）
 
 用户实测：在设置页改了名字，手机搜到的还是老名字。查下来是三个真 bug 叠在一起：

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# rice-hotspot-net — 给 Wi-Fi 热点的转发放行（只做这一件事，供 rice-hotspot 以 root 调用）。
+#
+# 为什么需要它：装了 Docker 的机器上，Docker 会把 nftables 的 FORWARD 链策略设成 drop；
+# NetworkManager 的 shared 模式虽然在自己的表里 accept 了热点子网，但 nftables 里 accept
+# 不是跨基链的最终裁决 —— 包照样被 Docker 那条 drop 吃掉。结果就是：手机能连上、能拿到
+# DHCP，但上不了网。Docker 官方留了 DOCKER-USER 链专门给用户放行，这里就用它。
+#
+# 用法：rice-hotspot-net up|down|status [iface] [subnet]
+#   默认 iface=wlp3s0 subnet=10.42.0.0/24（NetworkManager shared 的默认网段）
+set -Eeuo pipefail
+
+action="${1:-}"
+iface="${2:-wlp3s0}"
+subnet="${3:-10.42.0.0/24}"
+
+# 参数白名单：这个脚本可能被 sudoers 放行，参数必须严格校验
+[[ "$iface" =~ ^[a-zA-Z0-9._-]{1,15}$ ]] || { echo "bad iface: $iface" >&2; exit 64; }
+[[ "$subnet" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}/[0-9]{1,2}$ ]] || { echo "bad subnet: $subnet" >&2; exit 64; }
+
+command -v iptables >/dev/null 2>&1 || exit 0
+# 没有 DOCKER-USER 链 = 没装/没跑 Docker：什么都不用做（NetworkManager 自己的规则够用）
+iptables -n -L DOCKER-USER >/dev/null 2>&1 || exit 0
+
+rule_in=( -i "$iface" -s "$subnet" -j ACCEPT )
+rule_out=( -o "$iface" -d "$subnet" -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT )
+
+add_rule() { # 幂等：已经在了就跳过
+  iptables -C DOCKER-USER "$@" 2>/dev/null && return 0
+  iptables -I DOCKER-USER 1 "$@"
+}
+del_rule() { # 可能重复插过：删干净
+  while iptables -C DOCKER-USER "$@" 2>/dev/null; do iptables -D DOCKER-USER "$@" || break; done
+}
+
+case "$action" in
+  up)
+    add_rule "${rule_out[@]}"
+    add_rule "${rule_in[@]}"
+    echo "ok: 已放行 ${subnet} @ ${iface} 的转发（DOCKER-USER）"
+    ;;
+  down)
+    del_rule "${rule_in[@]}"
+    del_rule "${rule_out[@]}"
+    echo "ok: 已撤掉 ${subnet} @ ${iface} 的转发放行"
+    ;;
+  status)
+    iptables -S DOCKER-USER
+    ;;
+  *)
+    echo "usage: rice-hotspot-net up|down|status [iface] [subnet]" >&2
+    exit 64
+    ;;
+esac

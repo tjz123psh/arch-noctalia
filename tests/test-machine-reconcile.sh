@@ -31,6 +31,7 @@ exempt() { # $1=target → 0=豁免（不计入对账）
   case "$1" in
     /etc/nwg-hello/background.png) return 0 ;;   # 壁纸同步 hook 通过 ACL 持续改写（守卫见 11-greeter.sh）
     /boot/*) [[ -d /boot/grub ]] || return 0 ;;  # ESP 未挂载时 /boot 内容不在场
+    /etc/sudoers.d/*) return 0 ;;                 # 目录 750 root:root，普通用户按设计看不到（12-verify 走 root 读）
   esac
   return 1
 }

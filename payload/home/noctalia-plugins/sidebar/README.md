@@ -1,4 +1,4 @@
-# Sidebar 2.4.3 · 本机动效试样
+# Sidebar 2.4.4 · 本机动效试样
 
 随手工作台：搜索、便签、窗口、计时器、系统与最近文件，支持卡片收展、置顶、排序和专注模式。
 
@@ -18,6 +18,7 @@
 - 「系统」卡顶部有 Wi-Fi 热点开关：显示**在用**的 SSID 与实际频段，按钮三态 —— 未开启「开启」/ 设置改了「热点 <SSID> · 待应用」+「应用」/ 正常「关闭」；有操作在跑时每秒跟进，平时每 15 秒对齐。
 - 改了**名称 / 密码 / 频段**要点一下「应用」才会生效（正在跑的热点不会自己变），客户端会短暂断开。
 - 5GHz 在部分网卡（本机 RTL8852BE）起不来，脚本会自动回落到 2.4GHz，并在面板上标出实际频段。
+- 装了 Docker 的机器上，Docker 的 FORWARD 策略是 drop，会挡掉热点客户端（表现为「连上但没网」）；rice-hotspot 会通过 root 助手 /usr/local/bin/rice-hotspot-net 往 DOCKER-USER 链放行，两个文件都由安装器管理。
 - 同一套逻辑也能命令行 / 键位触发：rice-hotspot on|off|toggle|status，或 noctalia msg plugin pang/sidebar:panel all hotspot toggle。
 - 以下计时快捷命令在侧栏关闭时也会处理，不会强制打开面板：
 

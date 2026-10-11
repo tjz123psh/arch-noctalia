@@ -41,6 +41,10 @@ rice-hotspot — Wi-Fi 热点开关（NetworkManager AP + shared NAT）
 改设置（SSID/密码/频段）后：正在跑的热点不会自己变——再跑一次 on 会重启它并应用新值
 （侧栏面板上的按钮会显示「应用」）。
 
+装了 Docker 的机器：Docker 的 FORWARD 策略是 drop，会挡掉热点客户端的转发（表现为"连上但
+没网"）。本脚本会调 /usr/local/bin/rice-hotspot-net 往 DOCKER-USER 链放行；没有 root 权限时
+会明确提示手动补一次。
+
 配置（可选，~/.config/rice-hotspot.conf）:
   RICE_HOTSPOT_SSID="..."       默认 <主机名>-hotspot
   RICE_HOTSPOT_PASSWORD="..."   默认首次自动生成并存到 ~/.local/state/rice-hotspot/password
@@ -168,6 +172,41 @@ show_status() {
   fi
 }
 
+# --- Docker 共存：放行热点子网的转发 -------------------------------------------------
+# 装了 Docker 的机器上，Docker 把 nftables 的 FORWARD 链策略设成 drop；NetworkManager 的
+# shared 规则虽然 accept 了热点子网，但 nftables 里 accept 不是跨基链的最终裁决，包照样被
+# Docker 那条 drop 吃掉 —— 现象就是「手机连上了、拿到 IP，但上不了网」。Docker 官方留了
+# DOCKER-USER 链给用户放行，这里调用 root 助手（/usr/local/bin/rice-hotspot-net）去做。
+NET_HELPER="${RICE_HOTSPOT_NET_HELPER:-/usr/local/bin/rice-hotspot-net}"
+
+net_subnet() { # 从 AP 接口地址推网段（NetworkManager shared 默认 /24）
+  local iface="$1" addr
+  addr="$(LC_ALL=C ip -o -4 addr show dev "$iface" 2>/dev/null | awk '{print $4; exit}')"
+  [[ -n "$addr" ]] || return 0
+  printf '%s.0/24' "${addr%.*}"
+}
+
+net_up() {
+  local iface="$1" subnet
+  subnet="$(net_subnet "$iface")"
+  [[ -n "$subnet" ]] || { warn "拿不到 ${iface} 的网段，跳过转发放行"; return 0; }
+  mkdir -p "$STATE_DIR"; printf '%s' "$subnet" > "${STATE_DIR}/net_subnet"
+  [[ -x "$NET_HELPER" ]] || { warn "缺 ${NET_HELPER}：装了 Docker 的机器上热点客户端可能上不了网"; return 0; }
+  if sudo -n "$NET_HELPER" up "$iface" "$subnet" >/dev/null 2>&1; then
+    return 0
+  fi
+  warn "转发放行没成功（需要 root，且本机装了 Docker 的 FORWARD policy=drop）——手机可能上不了网"
+  warn "手动补一次： ~/scripts/desktop/gsudo $NET_HELPER up $iface $subnet"
+}
+
+net_down() {
+  local iface="$1" subnet
+  subnet="$(cat "${STATE_DIR}/net_subnet" 2>/dev/null || net_subnet "$iface")"
+  [[ -n "$subnet" && -x "$NET_HELPER" ]] || return 0
+  sudo -n "$NET_HELPER" down "$iface" "$subnet" >/dev/null 2>&1 || true
+  rm -f "${STATE_DIR}/net_subnet"
+}
+
 # 按当前 SSID/BAND/密码 建或改 profile，并试着拉起来。成功 0，失败 1（不 die，交给调用方决定回落/回滚）。
 start_ap() { # $1=iface $2=密码 $3=频段
   local iface="$1" pw="$2" band="${3:-$BAND}" rc=0
@@ -207,6 +246,7 @@ do_on() {
   if is_up; then
     if [[ "$(hotspot_pending)" == "0" ]]; then
       info "热点已经开着，配置一致"
+      net_up "$iface"        # 幂等补一次转发放行（Docker 重启后会清掉 DOCKER-USER）
       show_status
       return 0
     fi
@@ -247,6 +287,7 @@ do_on() {
   fi
 
   is_up || { rollback_old_ap "$had_old" "$old_ssid" "$old_band" "$old_pw"; die "热点没起来（NetworkManager 报成功但连接未激活）"; }
+  net_up "$iface"      # 让客户端真的能上网（Docker 的 FORWARD drop 会挡住）
   # 记住这次实际生效的 SSID / 密码 / 频段：命令行与面板下次直接沿用
   mkdir -p "$STATE_DIR"
   printf '%s' "$SSID" > "${STATE_DIR}/ssid"
@@ -273,6 +314,7 @@ rollback_old_ap() { # $1=had_old $2=旧SSID $3=旧band $4=旧密码
 do_off() {
   local prev
   if is_up; then
+    net_down "$(pick_iface)"     # 先撤放行（撤不掉也不影响关闭）
     nmcli connection down "$CONN" >/dev/null || die "关闭热点失败"
     info "热点已关闭"
     notify "热点已关闭" "SSID ${SSID}"

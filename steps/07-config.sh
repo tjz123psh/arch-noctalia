@@ -56,6 +56,15 @@ fi
 if (( target_bad > 0 )); then
   die "${target_bad} manifest target(s) rejected — they must be absolute and under AN_TARGET_ALLOW"
 fi
+# sudoers 这类"部署错了会锁死 sudo"的文件，先在预检里验语法（不合格直接中止，不冒险写 /etc）。
+if have visudo && [[ -d "${AN_ROOT_DIR}/payload/system/etc/sudoers.d" ]]; then
+  for f in "${AN_ROOT_DIR}"/payload/system/etc/sudoers.d/*; do
+    [[ -e "$f" ]] || continue
+    visudo -cf "$f" >/dev/null 2>&1 || die "invalid sudoers payload: $(basename "$f") — refusing to deploy (a broken sudoers locks out sudo)"
+  done
+  ok "sudoers payload: syntax verified"
+fi
+
 info "Stage 07 config: ${rows} files to deploy; payload verified"
 if [[ -n "${AN_TARGET_ROOT:-}" ]]; then
   info "Stage 07 config: SANDBOX — all targets are rewritten under ${AN_TARGET_ROOT} (nothing touches the real system)"

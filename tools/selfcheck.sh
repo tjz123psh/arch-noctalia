@@ -42,6 +42,20 @@ else
   warn "shellcheck not available — skipped"
 fi
 
+# ---------- 1b) sudoers payload 语法（部署错了会锁死 sudo） ----------
+sudoers_dir="${ROOT_DIR}/payload/system/etc/sudoers.d"
+if [[ -d "$sudoers_dir" ]]; then
+  if have visudo; then
+    for f in "$sudoers_dir"/*; do
+      [[ -e "$f" ]] || continue
+      visudo -cf "$f" >/dev/null 2>&1 || bad "invalid sudoers payload (would break sudo): ${f#"$ROOT_DIR"/}"
+    done
+    info "sudoers: payload files checked with visudo -c"
+  else
+    warn "visudo not available — sudoers payload not validated"
+  fi
+fi
+
 # ---------- 2) 映射一致性 ----------
 FILES="${ROOT_DIR}/manifests/files.tsv"
 LINKS="${ROOT_DIR}/manifests/bin-links.tsv"
