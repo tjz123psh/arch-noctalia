@@ -1,5 +1,9 @@
 {
   "settings": {
+    "notes_dir": {
+      "label": "便签目录",
+      "description": "Markdown 便签存放目录，点右侧可浏览选择。"
+    },
     "search_limit": {
       "label": "搜索结果上限",
       "description": "应用搜索最多显示多少条（3–20）。"
@@ -8,28 +12,24 @@
       "label": "最近文件条数",
       "description": "「最近文件」卡片列出多少条（3–15）。"
     },
-    "notes_dir": {
-      "label": "便签目录",
-      "description": "直接在此目录新建和编辑 Markdown 便签；正文自动保存，待办可勾选并启动专注计时。"
-    },
     "motion": {
       "label": "卡片动效",
-      "description": "轻量模式立即展开正文，仅对箭头做短反馈，避免滚动区反复布局；柔和模式保留短收展过渡。关闭只取消卡片动效，不影响面板动画。",
+      "description": "轻量＝立即展开（推荐）；柔和＝220 ms 短过渡；关闭＝卡片不动，面板照旧。",
       "light": "轻量 · 即时展开（推荐）",
       "soft": "柔和 · 220 ms",
       "off": "关闭卡片动效"
     },
     "hotspot_ssid": {
       "label": "热点名称（SSID）",
-      "description": "系统卡里热点开关广播的名字。留空 = 沿用 rice-hotspot 记住的名字（默认 <主机名>-hotspot）。"
+      "description": "留空＝用 rice-hotspot 记住的名字（默认 <主机名>-hotspot）。"
     },
     "hotspot_password": {
       "label": "热点密码",
-      "description": "至少 8 位（WPA2）。留空 = 用 rice-hotspot 首次自动生成的密码；填了会明文存在 Noctalia 设置里，并由 rice-hotspot 记住、命令行也沿用。"
+      "description": "至少 8 位；留空＝用自动生成的密码（rice-hotspot password 可查）。"
     },
     "hotspot_band": {
       "label": "热点频段",
-      "description": "2.4GHz 兼容性最好；5GHz 更快但老设备可能搜不到。",
+      "description": "2.4G 兼容最好；5G 更快，但老设备可能搜不到。",
       "bg": "2.4 GHz（兼容优先）",
       "a": "5 GHz（速度优先）"
     }

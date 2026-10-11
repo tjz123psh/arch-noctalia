@@ -1,5 +1,9 @@
 {
   "settings": {
+    "notes_dir": {
+      "label": "Notes directory",
+      "description": "Folder holding your Markdown notes; use the browse button to pick one."
+    },
     "search_limit": {
       "label": "Search result limit",
       "description": "Maximum number of app search results (3-20)."
@@ -8,28 +12,24 @@
       "label": "Recent files shown",
       "description": "How many recent files the card lists (3-15)."
     },
-    "notes_dir": {
-      "label": "Notes directory",
-      "description": "Create and edit Markdown notes in this directory, autosave their text, and check off tasks or start focus timers."
-    },
     "motion": {
       "label": "Card motion",
-      "description": "Light expands content immediately with brief arrow feedback, avoiding repeated scroll resizing. Soft keeps a short reveal. Off only disables card motion, not the panel animation.",
+      "description": "Light = instant (recommended); Soft = 220 ms reveal; Off = cards stay still, the panel is unchanged.",
       "light": "Light · instant layout (recommended)",
       "soft": "Soft · 220 ms",
       "off": "Off"
     },
     "hotspot_ssid": {
       "label": "Hotspot name (SSID)",
-      "description": "Name broadcast by the hotspot toggle in the System card. Empty = keep the name rice-hotspot remembers (<hostname>-hotspot by default)."
+      "description": "Empty = reuse the name rice-hotspot remembers (<hostname>-hotspot by default)."
     },
     "hotspot_password": {
       "label": "Hotspot password",
-      "description": "At least 8 characters (WPA2). Empty = use the password rice-hotspot generated; if set it is stored in plain text in Noctalia settings and remembered by rice-hotspot for CLI use."
+      "description": "At least 8 characters; empty = use the generated password (see: rice-hotspot password)."
     },
     "hotspot_band": {
       "label": "Hotspot band",
-      "description": "2.4GHz is the most compatible; 5GHz is faster but older devices may not see it.",
+      "description": "2.4GHz is most compatible; 5GHz is faster but older devices may not see it.",
       "bg": "2.4 GHz (compatibility)",
       "a": "5 GHz (speed)"
     }

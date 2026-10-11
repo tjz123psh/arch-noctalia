@@ -1,6 +1,6 @@
 id = "pang/sidebar"
 name = "Sidebar · 随手工作台"
-version = "2.4.1"
+version = "2.4.2"
 plugin_api = 32
 author = "pang"
 license = "MIT"
@@ -8,6 +8,16 @@ description = "轻量侧边工作台：新建便签、多行正文编辑、自�
 icon = "layout-sidebar-left"
 tags = ["custom", "utility", "panel"]
 dependencies = ["niri", "networkmanager", "libnotify", "xdg-utils", "glib2", "util-linux", "findutils", "python"]
+
+# 设置分三段：便签 → 搜索/外观 → 热点（热点三项挨着放；频段属"设一次"的进阶项）。
+# 面板相关的「panel · 显示模式/屏幕位置/层级」由宿主追加在本表之后，不在这里声明。
+
+[[setting]]
+key = "notes_dir"
+type = "folder"
+label_key = "settings.notes_dir.label"
+description_key = "settings.notes_dir.description"
+default = "~/Documents/notes"
 
 [[setting]]
 key = "search_limit"
@@ -26,13 +36,6 @@ description_key = "settings.recent_count.description"
 default = 8
 min = 3
 max = 15
-
-[[setting]]
-key = "notes_dir"
-type = "string"
-label_key = "settings.notes_dir.label"
-description_key = "settings.notes_dir.description"
-default = "~/Documents/notes"
 
 [[setting]]
 key = "motion"
@@ -66,6 +69,7 @@ type = "select"
 label_key = "settings.hotspot_band.label"
 description_key = "settings.hotspot_band.description"
 default = "bg"
+advanced = true
 options = [
   { value = "bg", label_key = "settings.hotspot_band.bg" },
   { value = "a", label_key = "settings.hotspot_band.a" },

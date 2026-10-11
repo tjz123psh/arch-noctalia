@@ -88,17 +88,17 @@ payload/home/noctalia-plugins/magnifier/panel.luau	/home/pang/noctalia-plugins/m
 payload/home/noctalia-plugins/magnifier/plugin.toml	/home/pang/noctalia-plugins/magnifier/plugin.toml	644	b8ab8d4d5be23b1b02db0bff4223c5bf
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/build.sh	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/build.sh	755	3c2ec34fa6873d3ad3557e67c0866149
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	644	976ac9caa82a52499cd9ae210d804744
-payload/home/noctalia-plugins/sidebar/README.md	/home/pang/noctalia-plugins/sidebar/README.md	644	6abcbdf47d3e951637aed769650300d5
+payload/home/noctalia-plugins/sidebar/README.md	/home/pang/noctalia-plugins/sidebar/README.md	644	cbfc713e8f463398a117b0d574d8627f
 payload/home/noctalia-plugins/sidebar/panel.luau	/home/pang/noctalia-plugins/sidebar/panel.luau	644	fee1c41de0d980d255c83cbd95383c4a
-payload/home/noctalia-plugins/sidebar/plugin.toml	/home/pang/noctalia-plugins/sidebar/plugin.toml	644	712f9934b15b176a635af1c631554221
+payload/home/noctalia-plugins/sidebar/plugin.toml	/home/pang/noctalia-plugins/sidebar/plugin.toml	644	a606ca3f62244cd6faf31f19d4ba622f
 payload/home/noctalia-plugins/sidebar/tests/async_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/async_spec.lua	644	90be601c6c27392302f9822bfd92fb31
 payload/home/noctalia-plugins/sidebar/tests/benchmark.lua	/home/pang/noctalia-plugins/sidebar/tests/benchmark.lua	644	a0867d001e0a2eff808896a4f1a11076
 payload/home/noctalia-plugins/sidebar/tests/regressions_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/regressions_spec.lua	644	8e78658dfa3d51012621e8c41ec8b394
 payload/home/noctalia-plugins/sidebar/tests/run_all.sh	/home/pang/noctalia-plugins/sidebar/tests/run_all.sh	755	69feafa9981c8e8c69f645defc3fd2e3
 payload/home/noctalia-plugins/sidebar/tests/shell_spec.py	/home/pang/noctalia-plugins/sidebar/tests/shell_spec.py	644	da367a44a1299fe882470d9403b86cde
 payload/home/noctalia-plugins/sidebar/tests/sidebar_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/sidebar_spec.lua	644	21cd6fea2957183dc593113ed97b7a16
-payload/home/noctalia-plugins/sidebar/translations/en.json	/home/pang/noctalia-plugins/sidebar/translations/en.json	644	4c21de503ddd96adf8dca3c27a811edd
-payload/home/noctalia-plugins/sidebar/translations/zh-Hans.json	/home/pang/noctalia-plugins/sidebar/translations/zh-Hans.json	644	80146733a810315d032c25709e181855
+payload/home/noctalia-plugins/sidebar/translations/en.json	/home/pang/noctalia-plugins/sidebar/translations/en.json	644	8bd84d24211adecdde3068b6e0f5030f
+payload/home/noctalia-plugins/sidebar/translations/zh-Hans.json	/home/pang/noctalia-plugins/sidebar/translations/zh-Hans.json	644	1295ca3b8e78f7f0d21c81aaf4ec47e9
 payload/home/scripts/desktop/fuzzel-askpass	/home/pang/scripts/desktop/fuzzel-askpass	755	f7f9570174741c06b78589b8eade07bc
 payload/home/scripts/desktop/gsudo	/home/pang/scripts/desktop/gsudo	755	7e2ac2fa9516a3335c138319417ea8d7
 payload/home/scripts/desktop/rice-aur	/home/pang/scripts/desktop/rice-aur	755	b23985db28773b90be190f0abcad89eb
@@ -337,7 +337,7 @@ payload/system/etc/systemd/system/snapper-timeline.timer.d/override.conf	/etc/sy
 #     07-config 部署后自动 glib-compile-schemas 生效；用户在程序里改过的值（dconf）优先。 ———
 payload/system/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	644	023c9b849ff70ce6f5af443f276d1ced
 payload/home/noctalia-plugins/sidebar/notes.py	/home/pang/noctalia-plugins/sidebar/notes.py	600	61dfdc9e577d7d3ec5c9a11e96c6a642
-payload/home/noctalia-plugins/sidebar/CHANGELOG.md	/home/pang/noctalia-plugins/sidebar/CHANGELOG.md	644	99c5cbaee0a6d82ab59f882c6e3d29c8
+payload/home/noctalia-plugins/sidebar/CHANGELOG.md	/home/pang/noctalia-plugins/sidebar/CHANGELOG.md	644	73bad5bede2f8d0c0e51a9c4194812d9
 payload/home/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	/home/pang/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	600	fdb03ca32c1d0299df918f37b47420f1
 payload/home/noctalia-plugins/sidebar/tests/notes_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.lua	644	de1274938509e476433d5bff909c9833
 payload/home/noctalia-plugins/sidebar/tests/notes_spec.py	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.py	600	fa2342780591353aeb6b108a1d9457ad
