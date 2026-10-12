@@ -81,3 +81,18 @@ image_quality = 90
 wrap = "yes"
 # tab 显示成几个空格宽（yazi 默认 2）。
 tab_size = 4
+[plugin]
+# git 插件需要一个「抓取器」：yazi 每次列目录时调用它算出每个文件的 git 状态。
+# 不注册这段，插件不会被调用（列表右侧不会出现 git 状态符号）。插件本体见 ~/.config/yazi/plugins/git.yazi。
+# 注意写法：必须用 [[plugin.prepend_fetchers]] 这种「表数组」形式；写成 prepend_fetchers = [...] 会被
+# yazi 静默忽略（2026-10-12 实测：改成表数组后状态符号才出现）。
+
+[[plugin.prepend_fetchers]]
+url = "*"
+run = "git"
+group = "git"
+
+[[plugin.prepend_fetchers]]
+url = "*/"
+run = "git"
+group = "git"

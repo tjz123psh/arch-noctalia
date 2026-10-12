@@ -1,0 +1,4 @@
+[plugin]
+deps = [
+	{ use = "yazi-rs/plugins:git" },
+]

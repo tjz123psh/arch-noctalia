@@ -165,6 +165,10 @@ keymap = [
 	# Help
 	{ on = "~",    run = "help", desc = "打开帮助" },
 	{ on = "<F1>", run = "help", desc = "打开帮助" },
+
+	# ——— 本机自定义（升级 yazi 后若重新生成这份默认键位，请把这一段抄回来）———
+	# git 状态列：需要官方 git 插件与 yazi.toml 里的 fetcher 注册；按 m g 切换，m s 切回大小、m n 关闭。
+	{ on = [ "m", "g" ], run = "linemode git", desc = "行模式：git 状态" },
 ]
 
 [tasks]
