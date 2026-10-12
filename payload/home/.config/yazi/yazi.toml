@@ -1,0 +1,33 @@
+# yazi 行为配置（手工维护）
+#
+# 【配色不在这里】颜色与语法高亮由 Noctalia 的「Yazi」模板生成，在本文件写颜色会被覆盖：
+#   ~/.config/yazi/theme.toml                ← 模板写：[flavor] dark/light = "noctalia"
+#   ~/.config/yazi/flavors/noctalia.yazi/    ← flavor.toml（界面配色）+ tmtheme.xml（语法高亮）
+#   换壁纸 / 换调色板后 Noctalia 自动重渲染，不需要手动同步。
+#
+# 【键位】说明文字已整份汉化：~/.config/yazi/keymap.toml（来自 yazi v26.9.1 默认键位，行为一致）。
+# 本文件只放"行为"相关的少量设置，其余全部沿用 yazi 默认值。
+
+[opener]
+# 文本 / 代码：直接用 nvim 打开。
+# 这里写死 nvim 而不用 $EDITOR —— 从启动器（desktop 项 → kitty）拉起时，环境里没有 fish 设的
+# 变量，默认 opener 会因为 $EDITOR 为空而打不开文件。
+edit = [
+	{ run = 'nvim %s', desc = "用 nvim 编辑", block = true, for = "unix" },
+]
+# 视频 / 音频：交给 mpv 单独跑（orphan = yazi 退出后继续播放，也不占住终端）。
+play = [
+	{ run = 'mpv %s', desc = "用 mpv 播放", orphan = true, for = "unix" },
+]
+# 图片 / PDF / 其他仍然走系统默认程序（当前是 nomacs / WPS PDF），由 [open] 的默认规则决定。
+
+[mgr]
+# 默认不显示隐藏文件；想默认显示就取消下一行注释（运行时按 . 也能随时切换）。
+# show_hidden = true
+# 三栏宽度比例（父目录 : 当前目录 : 预览），按需调整。
+# ratio = [1, 4, 3]
+
+[preview]
+# 预览面板里图片 / 视频缩略图的最大像素尺寸。
+# max_width  = 600
+# max_height = 900

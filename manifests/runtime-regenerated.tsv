@@ -14,3 +14,6 @@ payload/home/.config/fuzzel/themes/noctalia	Noctalia 主题模板生成
 payload/home/.config/papirus-folders/keep	Noctalia 图标主题步骤改写
 payload/home/.config/starship.toml	Noctalia 主题模板生成
 payload/system/etc/nwg-hello/background.png	壁纸→登录背景同步 hook（rice-login-bg）改写
+payload/home/.config/yazi/theme.toml	Noctalia 主题模板生成（Yazi 社区模板，只写 [flavor] 指针）
+payload/home/.config/yazi/flavors/noctalia.yazi/flavor.toml	Noctalia 主题模板生成（界面配色）
+payload/home/.config/yazi/flavors/noctalia.yazi/tmtheme.xml	Noctalia 主题模板生成（语法高亮）

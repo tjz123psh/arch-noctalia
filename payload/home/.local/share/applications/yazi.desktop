@@ -1,12 +1,12 @@
 [Desktop Entry]
-NoDisplay=true
-Name=Yazi File Manager
+Name=Yazi 文件管理器
+Comment=终端文件管理器（在 kitty 里打开）
 Icon=yazi
-Comment=Blazing fast terminal file manager written in Rust, based on async I/O
-Terminal=true
+Terminal=false
 TryExec=yazi
-Exec=yazi %f
+Exec=kitty --class yazi -e yazi %f
+StartupWMClass=yazi
 Type=Application
 MimeType=inode/directory
-Categories=System;FileManager;FileTools;ConsoleOnly
-Keywords=File;Manager;Explorer;Browser;Launcher
+Categories=System;FileManager;FileTools;ConsoleOnly;
+Keywords=File;Manager;Explorer;Browser;Launcher;文件;管理器;浏览;

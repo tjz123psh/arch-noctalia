@@ -70,7 +70,7 @@ payload/home/.config/systemd/user/rice-dnd.timer	/home/pang/.config/systemd/user
 payload/home/.config/user-dirs.dirs	/home/pang/.config/user-dirs.dirs	600	45c96841bc79b35d0d7b60cc328e11b2
 payload/home/.config/user-dirs.locale	/home/pang/.config/user-dirs.locale	644	0d61f8370cad1d412f80b84d143e1257
 payload/home/.config/zellij/config.kdl	/home/pang/.config/zellij/config.kdl	644	c1bf1f71354532303f2fc9c7783a81c0
-payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	b1c070fe98dec992bdbffec2e37e144a
+payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	f5aee3ea25fd5c923df5d8fef64f2f91
 payload/home/.local/share/applications/qq.desktop	/home/pang/.local/share/applications/qq.desktop	644	a93b140354cb6f3ee0c6f3f86a2d9090
 payload/home/.local/share/applications/linuxqq-wayland-fix.desktop	/home/pang/.local/share/applications/linuxqq-wayland-fix.desktop	644	73afa243ba8c4f34e8426bbd1a8ae73d
 payload/home/Pictures/wallpapers/初雪.png	/home/pang/Pictures/wallpapers/初雪.png	600	6ce51e6481a10fba6ee5bcad1cf3b1fd
@@ -205,7 +205,7 @@ payload/system/usr/share/fonts/resource-han-rounded/ResourceHanRoundedCN-Regular
 payload/system/var/lib/avatars/pang/.face	/var/lib/avatars/pang/.face	644	fd95e09a15d3d0d03d4fe85a8c2335a6
 # ——— 2026-10-05 审计补齐：旧样本（VM）中已有、此前未入仓的文件 ———
 payload/home/.local/bin/niri-keys	/home/pang/.local/bin/niri-keys	755	f81a38b1238aa1353afe3206f81fcdc0
-payload/home/.local/share/applications/yazi.desktop	/home/pang/.local/share/applications/yazi.desktop	644	8b82cfe4b627e27940c027bfbb0b44e1
+payload/home/.local/share/applications/yazi.desktop	/home/pang/.local/share/applications/yazi.desktop	644	053453ff95416c77c33e3c79e2daeb9c
 payload/home/.local/share/nautilus-python/extensions/rice-menu.py	/home/pang/.local/share/nautilus-python/extensions/rice-menu.py	644	77dd6c5ea8dee5366de35b161beee98a
 payload/home/Documents/notes/便签-2.md	/home/pang/Documents/notes/便签-2.md	644	d41d8cd98f00b204e9800998ecf8427e
 payload/home/Documents/notes/便签.md	/home/pang/Documents/notes/便签.md	644	d41d8cd98f00b204e9800998ecf8427e
@@ -357,3 +357,11 @@ payload/home/scripts/desktop/rice-hotspot	/home/pang/scripts/desktop/rice-hotspo
 payload/system/usr/local/bin/rice-hotspot-net	/usr/local/bin/rice-hotspot-net	755	0579b99443b80d62891e0ee987b4575d
 payload/system/etc/sudoers.d/rice-hotspot	/etc/sudoers.d/rice-hotspot	440	bf0ac36300ed8661364c99ae9adea380
 payload/system/etc/systemd/system/rice-hotspot-net-sync.service	/etc/systemd/system/rice-hotspot-net-sync.service	644	2b4709eaf6d5918cb57ef9cfda13e4e3
+# ——— 2026-10-12 yazi 文件管理器：手写配置（配色交给 Noctalia 的「Yazi」社区模板，见 runtime-regenerated.tsv）———
+payload/home/.config/yazi/yazi.toml	/home/pang/.config/yazi/yazi.toml	644	7b379cef7235e6eaeb48f8f78346455f
+payload/home/.config/yazi/keymap.toml	/home/pang/.config/yazi/keymap.toml	644	94d3dc423ccbed3f7b9198c3be3b5fbd
+payload/home/.config/fish/functions/y.fish	/home/pang/.config/fish/functions/y.fish	644	5c379f6f90db586936b84985aa499647
+# ——— 以下 3 个是 Noctalia「Yazi」模板的产物（换壁纸/换调色板后重生成；12-verify 只核对存在）———
+payload/home/.config/yazi/theme.toml	/home/pang/.config/yazi/theme.toml	644	aa1e0e140fae84fb79d098f0f09141e8
+payload/home/.config/yazi/flavors/noctalia.yazi/flavor.toml	/home/pang/.config/yazi/flavors/noctalia.yazi/flavor.toml	644	ec1e8fc802dd60681e730fef58115294
+payload/home/.config/yazi/flavors/noctalia.yazi/tmtheme.xml	/home/pang/.config/yazi/flavors/noctalia.yazi/tmtheme.xml	644	ca75ef26515c029b089f45186f8ee7c2
