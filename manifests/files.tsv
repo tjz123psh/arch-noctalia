@@ -84,7 +84,7 @@ payload/home/Pictures/wallpapers/落霞.png	/home/pang/Pictures/wallpapers/落�
 payload/home/Pictures/wallpapers/蓝调.png	/home/pang/Pictures/wallpapers/蓝调.png	644	b74d616694cdbe45ee808857a3dbbee7
 payload/home/Pictures/wallpapers/逐风.png	/home/pang/Pictures/wallpapers/逐风.png	644	32ab7be14ce7d4c95c3ffeda2ffafb72
 payload/home/noctalia-plugins/magnifier/panel.luau	/home/pang/noctalia-plugins/magnifier/panel.luau	644	0429de26087b3e9d86ed8b8c3ae55703
-payload/home/noctalia-plugins/magnifier/plugin.toml	/home/pang/noctalia-plugins/magnifier/plugin.toml	644	b8ab8d4d5be23b1b02db0bff4223c5bf
+payload/home/noctalia-plugins/magnifier/plugin.toml	/home/pang/noctalia-plugins/magnifier/plugin.toml	644	01775341b5fcb9d33335df0ea2eed985
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/build.sh	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/build.sh	755	3c2ec34fa6873d3ad3557e67c0866149
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	644	976ac9caa82a52499cd9ae210d804744
 payload/home/noctalia-plugins/sidebar/README.md	/home/pang/noctalia-plugins/sidebar/README.md	644	f5b196b30a203de721557facc366688b
@@ -343,7 +343,7 @@ payload/home/noctalia-plugins/sidebar/tests/notes_spec.py	/home/pang/noctalia-pl
 payload/home/noctalia-plugins/sidebar/tests/experience_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/experience_spec.lua	600	29c3a9d1071d4731ba64250c45f10bba
 # ——— 2026-10-10 侧栏 2.3.3 / 放大镜 1.1.0（本机试样经验收后纳入）：新增文件 ———
 payload/home/noctalia-plugins/sidebar/tests/local_motion_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/local_motion_spec.lua	644	66b3a6e5c680670d41a2254c0bc0830b
-payload/home/noctalia-plugins/magnifier/README.md	/home/pang/noctalia-plugins/magnifier/README.md	644	a12bc14794b5e0d654b26d6a2e7e1e00
+payload/home/noctalia-plugins/magnifier/README.md	/home/pang/noctalia-plugins/magnifier/README.md	644	a6fea59538716693dfa31e55066b3370
 payload/home/noctalia-plugins/magnifier/tests/magnifier_spec.lua	/home/pang/noctalia-plugins/magnifier/tests/magnifier_spec.lua	644	7bcef571c215f41a49f9233526d1eb0d
 payload/home/noctalia-plugins/magnifier/tests/run_all.sh	/home/pang/noctalia-plugins/magnifier/tests/run_all.sh	755	929bf7100bd7a486e235b3670902f21d
 payload/home/noctalia-plugins/magnifier/tests/tracker_lease_spec.c	/home/pang/noctalia-plugins/magnifier/tests/tracker_lease_spec.c	644	c49ad5059b792f338fb16d3605937831

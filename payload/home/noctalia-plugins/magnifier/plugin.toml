@@ -1,12 +1,15 @@
 id = "pang/magnifier"
 name = "Magnifier（屏幕放大镜）"
-version = "1.1.0"
+version = "1.1.1"
 plugin_api = 32
 author = "pang"
 license = "MIT"
 description = "屏幕放大镜：面板开在鼠标处、画面跟随鼠标实时移动；± 缩放、方向键平移、定格/跟随，点击或 Esc 退出。"
 icon = "zoom-in"
 tags = ["custom", "utility", "panel"]
+# 运行时依赖：niri（layer-shell 协议 + 合成器）、wayland（追踪器链接 libwayland-client）。
+# 编译期依赖（gcc / wayland-protocols / pkg-config）由安装器 09 步负责，装机必然具备，故不写进这里。
+dependencies = ["niri", "wayland"]
 
 [[panel]]
 id = "panel"
