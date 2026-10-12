@@ -11,7 +11,6 @@ dir	/home/pang/.config/gh	安全：GitHub token（hosts.yml）
 dir	/home/pang/.ssh	安全：SSH 私钥
 dir	/home/pang/.gnupg	安全：GnuPG 密钥环
 dir	/home/pang/.pki	安全：证书库
-dir	/home/pang/.config/mozilla	应用数据（重装后自行登录生成）
 dir	/home/pang/.config/obsidian	应用数据（笔记库在 ~/obsidian + 云同步）
 dir	/home/pang/.config/dconf	二进制 dconf 数据库（后续以 dconf load 方式另行处理）
 dir	/home/pang/.config/transmission	应用数据（torrent 状态；首用配置即可）
@@ -87,7 +86,7 @@ package	tesseract-data-chi_sim	手动安装（OCR 中文语言包，约 42MB）
 package	tesseract-data-eng	手动安装（OCR 英文语言包，约 22MB）
 package	unzip	手动安装（通用小工具，按需手动装）
 package	net-tools	手动安装（ifconfig/netstat；rjsupplicant-gui 脚本/文档涉及，按需手动装）
-package	libpulse	无需显式声明：ffmpeg/firefox/mpv/gpu-screen-recorder/微信/WPS 等会自动依赖带入
+package	libpulse	无需显式声明：ffmpeg/mpv/gpu-screen-recorder/微信/WPS 等会自动依赖带入
 package	iptables	无需显式声明：随 docker 依赖带入；热点放行助手 /usr/local/bin/rice-hotspot-net 用它（没装 docker 时助手直接退出，无副作用）
 package	gtk4-layer-shell	手动安装：是 Vellum 的运行时依赖，随 Vellum 一起手动装
 dir	/home/pang/scripts/dsh	手动拷贝（DSH 辅助脚本 13 个文件：会话修复/迁移、AnyRouter 代理服务、图标修补）
@@ -198,3 +197,7 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 #   自己从 official/community 源拉取、升级并重建（~/.local/state/noctalia/plugins/** 已有 pattern 账），安装器不代管其文件；
 #   与它们有关的包按插件逐个记在 packages.tsv 备注列：docker（mini-docker）、hyprpicker（color_picker）、
 #   gpu-screen-recorder（screen_recorder）。上游插件升级若引入新依赖，需要在 packages.tsv 补行或补备注。
+# · Firefox 从安装器移除（用户拍板，2026-10-12）：packages.tsv 删掉 firefox 行；本文件删掉
+#   /home/pang/.config/mozilla 的 dir 行（该目录随本机一并删除）。样本机的 firefox 包、~/.config/mozilla
+#   （配置 / 书签 / 密码）与 ~/.cache/mozilla（缓存）随后清除；默认浏览器本来就是 google-chrome.desktop
+#   （xdg-settings 实测），点链接的行为不变。
