@@ -31,6 +31,7 @@ payload/home/.local/state/noctalia/settings.toml	用户态：Noctalia GUI 实时
 payload/home/.config/mimeapps.list	用户态：默认应用关联（程序会自行改写）
 payload/home/.config/gtk-3.0/bookmarks	用户态：文件管理器书签
 payload/home/.config/user-dirs.dirs	用户态：XDG 目录映射
+payload/home/.config/niri/conf.d/touchpad-state.kdl	用户态：触摸板开关状态（Fn+F10 的 niri-touchpad-toggle 改写；重跑覆盖会把触摸板改回打开）
 payload/home/.config/nomacs/Image Lounge.conf	用户态：看图程序设置
 payload/home/.config/fcitx5/conf/notifications.conf	用户态：输入法通知设置
 payload/home/.config/fcitx5/conf/punctuation.conf	用户态：输入法标点转换设置

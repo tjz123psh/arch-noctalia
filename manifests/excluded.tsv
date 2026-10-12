@@ -88,6 +88,7 @@ package	tesseract-data-eng	手动安装（OCR 英文语言包，约 22MB）
 package	unzip	手动安装（通用小工具，按需手动装）
 package	net-tools	手动安装（ifconfig/netstat；rjsupplicant-gui 脚本/文档涉及，按需手动装）
 package	libpulse	无需显式声明：ffmpeg/firefox/mpv/gpu-screen-recorder/微信/WPS 等会自动依赖带入
+package	iptables	无需显式声明：随 docker 依赖带入；热点放行助手 /usr/local/bin/rice-hotspot-net 用它（没装 docker 时助手直接退出，无副作用）
 package	gtk4-layer-shell	手动安装：是 Vellum 的运行时依赖，随 Vellum 一起手动装
 dir	/home/pang/scripts/dsh	手动拷贝（DSH 辅助脚本 13 个文件：会话修复/迁移、AnyRouter 代理服务、图标修补）
 dir	/home/pang/scripts/package	手动拷贝（pacman 三件套 pac/pacd/pacr + lib/ + 7 个测试 + 文档）
@@ -183,3 +184,17 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 #   安装器侧同步：packages.tsv 移除该包；payload 与清单本来就没有 grok 文件（只有上面那行 dir 账）。
 # · pi 取代 grok：只装包（aur.tsv 的 pi-coding-agent-bin），~/.pi 的配置与密钥不入仓（dir 行已列）；
 #   唯一的文件纳管项 = fish 补全 ~/.config/fish/completions/pi.fish（用户要求随安装器部署；mode 600 取样本原件）。
+
+# ——— 2026-10-12 决定记录（用户拍板）———
+# · pi 的 fish 补全不再需要（推翻上面 10-11 记的「唯一文件纳管项」）：payload/home/.config/fish/completions/pi.fish
+#   与其 files.tsv 行已删除，样本机 ~/.config/fish/completions/pi.fish 同步删除。恢复来源：git 历史 e249e20
+#   （命令：git show e249e20:payload/home/.config/fish/completions/pi.fish）。
+#   pi 包本身（aur.tsv 的 pi-coding-agent-bin）与 ~/.pi 未动 —— 本轮只删补全文件，没有卸载程序。
+# · 真机对账把两类文件分开（tests/test-machine-reconcile.sh）：
+#   – manifests/runtime-regenerated.tsv 的行只核对存在性（新增 Kingsoft/Office.conf、WPSCloud.conf：WPS 自己改写）；
+#   – manifests/seed.tsv 的行同样只核存在性（新增 niri/conf.d/touchpad-state.kdl：Fn+F10 开关状态，重跑不得覆盖）。
+#   此后 AN_RECONCILE_STRICT=1 在样本机上应当为 0 漂移；再出现这两类之外的漂移=清单过期或用户新编辑，需要归位。
+# · Noctalia 远端插件（本机启用：noctalia/screen_recorder、oldirtty/color_picker、8bury/mini-docker）由 Noctalia
+#   自己从 official/community 源拉取、升级并重建（~/.local/state/noctalia/plugins/** 已有 pattern 账），安装器不代管其文件；
+#   与它们有关的包按插件逐个记在 packages.tsv 备注列：docker（mini-docker）、hyprpicker（color_picker）、
+#   gpu-screen-recorder（screen_recorder）。上游插件升级若引入新依赖，需要在 packages.tsv 补行或补备注。

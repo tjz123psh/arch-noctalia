@@ -20,7 +20,6 @@ payload/home/.config/fcitx5/conf/notifications.conf	/home/pang/.config/fcitx5/co
 payload/home/.config/fcitx5/conf/pinyin.conf	/home/pang/.config/fcitx5/conf/pinyin.conf	600	26e2e305b62bc886e3c61fb9fa148eb5
 payload/home/.config/fcitx5/conf/punctuation.conf	/home/pang/.config/fcitx5/conf/punctuation.conf	600	c524f85ab97a43fdaf90e56d73a0b715
 payload/home/.config/fcitx5/profile	/home/pang/.config/fcitx5/profile	600	99e210abb5a1e02b0495983d865d0f65
-payload/home/.config/fish/completions/pi.fish	/home/pang/.config/fish/completions/pi.fish	600	6045ea1658a4c7c69c90d47bd0e5bb81
 payload/home/.config/fish/config.fish	/home/pang/.config/fish/config.fish	600	75cbc310dfe5b8e62b23d20ae6dd7848
 payload/home/.config/fontconfig/fonts.conf	/home/pang/.config/fontconfig/fonts.conf	644	d6acc253adc8ef5bd1e678014aa49097
 payload/home/.config/fuzzel/fuzzel.ini	/home/pang/.config/fuzzel/fuzzel.ini	644	d1a19effee7b476ddda72cea4b46751b
@@ -88,9 +87,9 @@ payload/home/noctalia-plugins/magnifier/panel.luau	/home/pang/noctalia-plugins/m
 payload/home/noctalia-plugins/magnifier/plugin.toml	/home/pang/noctalia-plugins/magnifier/plugin.toml	644	b8ab8d4d5be23b1b02db0bff4223c5bf
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/build.sh	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/build.sh	755	3c2ec34fa6873d3ad3557e67c0866149
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	644	976ac9caa82a52499cd9ae210d804744
-payload/home/noctalia-plugins/sidebar/README.md	/home/pang/noctalia-plugins/sidebar/README.md	644	84092008fdc85c5af483a22bb81ca406
+payload/home/noctalia-plugins/sidebar/README.md	/home/pang/noctalia-plugins/sidebar/README.md	644	f5b196b30a203de721557facc366688b
 payload/home/noctalia-plugins/sidebar/panel.luau	/home/pang/noctalia-plugins/sidebar/panel.luau	644	4ce564efa83bd4b77dbf2ae1eb55557d
-payload/home/noctalia-plugins/sidebar/plugin.toml	/home/pang/noctalia-plugins/sidebar/plugin.toml	644	3182a68893bc1fb43b52644bc925e441
+payload/home/noctalia-plugins/sidebar/plugin.toml	/home/pang/noctalia-plugins/sidebar/plugin.toml	644	b08d3d8e32ffe41f6723b9b792d1b2ba
 payload/home/noctalia-plugins/sidebar/tests/async_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/async_spec.lua	644	90be601c6c27392302f9822bfd92fb31
 payload/home/noctalia-plugins/sidebar/tests/benchmark.lua	/home/pang/noctalia-plugins/sidebar/tests/benchmark.lua	644	a0867d001e0a2eff808896a4f1a11076
 payload/home/noctalia-plugins/sidebar/tests/regressions_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/regressions_spec.lua	644	8e78658dfa3d51012621e8c41ec8b394
@@ -337,7 +336,7 @@ payload/system/etc/systemd/system/snapper-timeline.timer.d/override.conf	/etc/sy
 #     07-config 部署后自动 glib-compile-schemas 生效；用户在程序里改过的值（dconf）优先。 ———
 payload/system/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	644	023c9b849ff70ce6f5af443f276d1ced
 payload/home/noctalia-plugins/sidebar/notes.py	/home/pang/noctalia-plugins/sidebar/notes.py	600	61dfdc9e577d7d3ec5c9a11e96c6a642
-payload/home/noctalia-plugins/sidebar/CHANGELOG.md	/home/pang/noctalia-plugins/sidebar/CHANGELOG.md	644	9788333aa9b324ea05a357a26e6ff6a8
+payload/home/noctalia-plugins/sidebar/CHANGELOG.md	/home/pang/noctalia-plugins/sidebar/CHANGELOG.md	644	963b1e9dc8ee97e2cc0fe35a7e01cdd6
 payload/home/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	/home/pang/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	600	fdb03ca32c1d0299df918f37b47420f1
 payload/home/noctalia-plugins/sidebar/tests/notes_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.lua	644	de1274938509e476433d5bff909c9833
 payload/home/noctalia-plugins/sidebar/tests/notes_spec.py	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.py	600	fa2342780591353aeb6b108a1d9457ad

@@ -19,8 +19,8 @@ btrfs-progs	core
 capitaine-cursors	extra		
 cargo-audit	extra		
 dkms	extra	drivers	
-dnsmasq	extra		Wi-Fi 热点（NetworkManager ipv4.method shared 的 DHCP/DNS）需要
-docker	extra		
+dnsmasq	extra		Wi-Fi 热点（NetworkManager ipv4.method shared 的 DHCP/DNS）；rice-hotspot 与侧栏插件热点开关都靠它
+docker	extra		Noctalia 社区插件 8bury/mini-docker 依赖；另供命令行 docker 与 docker.service
 docker-compose	extra		
 efibootmgr	core		
 evtest	extra		
@@ -49,7 +49,7 @@ git	extra
 git-delta	extra		
 github-cli	extra		
 go	extra		
-gpu-screen-recorder	extra		
+gpu-screen-recorder	extra		Noctalia 官方插件 noctalia/screen_recorder 依赖；~/bin/rice-record 也优先用它
 greetd	extra	desktop	
 grim	extra		
 grub	core		
@@ -60,7 +60,7 @@ gvfs-gphoto2	extra
 gvfs-mtp	extra		
 gvfs-nfs	extra		
 gvfs-smb	extra		
-hyprpicker	extra		
+hyprpicker	extra		Noctalia 社区插件 oldirtty/color_picker 依赖；niri 下 Alt+Shift+C 取色
 imagemagick	extra		
 inotify-tools	extra		
 jdk21-openjdk	extra		

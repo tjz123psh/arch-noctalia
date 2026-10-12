@@ -1,5 +1,11 @@
 # 更新记录
 
+## Sidebar 2.4.6（依赖清单补 dnsmasq，2026-10-12）
+
+- 插件清单的 `dependencies` 补上 `dnsmasq`：热点开关走 NetworkManager 的 `ipv4.method shared`，
+  客户端的 DHCP/DNS 由 dnsmasq 提供；缺了它热点能连上但上不了网。补进清单后，宿主可以在缺包时直接提示。
+  包本身仍由安装器 `manifests/packages.tsv` 负责装（本轮不改安装器安装顺序）。
+- 无代码改动：面板、便签、计时与 2.4.5 完全一致；仅版本号 + 依赖声明。
 ## Sidebar 2.4.5（Docker 重启后自动补回热点放行，2026-10-11）
 
 - 新增 `rice-hotspot-net-sync.service`（oneshot，`WantedBy=docker.service`）：Docker 每次启动/重启都会重建

@@ -3,12 +3,16 @@
 # 这台物理机就是采集样本机，所以清单里的 target 可以直接和磁盘对账；这是唯一能抓
 # 「target_path 列写错 / 清单过期 / 内容漂移」的测试。
 #
-# 语义（刻意区分「结构性错误」与「用户自己的编辑」）：
+# 语义（刻意区分「结构性错误」「设计内改写」与「用户自己的编辑」）：
 #   * 目标缺失、目标不是绝对路径  → 失败（结构性错误）；
 #   * 内容与清单 md5 不一致        → 默认只报告（用户改过自己的配置是正常的），
 #                                   加 AN_RECONCILE_STRICT=1 才判失败（当门禁用）。
-#   * seed 行只核对存在性（内容本来就可能被用户编辑）；
+#   * seed 行（manifests/seed.tsv）只核对存在性——用户会编辑，重跑不覆盖；
+#   * runtime 行（manifests/runtime-regenerated.tsv）只核对存在性——安装后由桌面/程序
+#     自己改写（Noctalia 主题产物、WPS 配置…），与快照不同是设计预期：单独计数、不判失败；
 #   * 豁免：/boot/*（ESP 未挂载时）、由 hook/ACL 管理的 /etc/nwg-hello/background.png。
+# 这两份名单要和清单同步：新出现的「设计内改写」补进 runtime 列表，否则严格模式会把
+# 预期内的变化当失败（2026-10-12 修：runtime 行此前仍按 md5 对账，严格模式必然失败）。
 # 默认只在样本机（当前用户 == 清单里的目标用户）运行；其它机器打印 [skip] 通过，
 # 需要强制跑时用 AN_RECONCILE=1。
 set -Eeuo pipefail
@@ -27,6 +31,12 @@ while IFS=$'\t' read -r p _n; do
   SEED["$p"]=1
 done < <(grep -vE '^[[:space:]]*(#|$)' "$ROOT_DIR/manifests/seed.tsv")
 
+declare -A RUNTIME=()
+while IFS=$'\t' read -r p _n; do
+  if [[ -z "$p" || "$p" == "#"* ]]; then continue; fi
+  RUNTIME["$p"]=1
+done < <(grep -vE '^[[:space:]]*(#|$)' "$ROOT_DIR/manifests/runtime-regenerated.tsv")
+
 exempt() { # $1=target → 0=豁免（不计入对账）
   case "$1" in
     /etc/nwg-hello/background.png) return 0 ;;   # 壁纸同步 hook 通过 ACL 持续改写（守卫见 11-greeter.sh）
@@ -36,15 +46,28 @@ exempt() { # $1=target → 0=豁免（不计入对账）
   return 1
 }
 
-errs="$(mktemp)"; notes="$(mktemp)"
-trap 'rm -f "$errs" "$notes"' EXIT
-ok=0; drifted=0; missing=0; skipped=0; unreadable=0; mode_drift=0
+errs="$(mktemp)"; notes="$(mktemp)"; rtnotes="$(mktemp)"
+trap 'rm -f "$errs" "$notes" "$rtnotes"' EXIT
+ok=0; drifted=0; runtime_rewritten=0; missing=0; skipped=0; unreadable=0; mode_drift=0
 while IFS=$'\t' read -r rp tp mode md5; do
   if [[ -z "$rp" || "$rp" == "#"* ]]; then continue; fi
   if exempt "$tp"; then skipped=$((skipped + 1)); continue; fi
   if [[ "$tp" != /* ]]; then printf 'not an absolute target: %s\n' "$tp" >> "$errs"; continue; fi
   if [[ ! -e "$tp" ]]; then printf 'missing target: %s\n' "$tp" >> "$errs"; missing=$((missing + 1)); continue; fi
   if [[ -n "${SEED[$rp]:-}" ]]; then ok=$((ok + 1)); continue; fi
+  if [[ -n "${RUNTIME[$rp]:-}" ]]; then
+    # 设计内改写：只核对存在性（上面已查过）。内容不同属预期，单独计数、不判失败。
+    cur="$(md5sum -- "$tp" 2>/dev/null | awk '{print $1}')"
+    if [[ -z "$cur" ]]; then
+      unreadable=$((unreadable + 1)); printf 'unreadable (skipped): %s\n' "$tp" >> "$notes"
+    elif [[ "$cur" == "$md5" ]]; then
+      ok=$((ok + 1))
+    else
+      runtime_rewritten=$((runtime_rewritten + 1))
+      printf '%s\n' "$tp" >> "$rtnotes"
+    fi
+    continue
+  fi
   cur="$(md5sum -- "$tp" 2>/dev/null | awk '{print $1}')"
   if [[ -z "$cur" ]]; then unreadable=$((unreadable + 1)); printf 'unreadable (skipped): %s\n' "$tp" >> "$notes"; continue; fi
   if [[ "$cur" == "$md5" ]]; then
@@ -60,8 +83,12 @@ while IFS=$'\t' read -r rp tp mode md5; do
   fi
 done < <(grep -vE '^[[:space:]]*(#|$)' "$ROOT_DIR/manifests/files.tsv")
 
-printf '[info]  reconcile: %d ok, %d content-drift, %d mode-drift, %d missing, %d exempt, %d unreadable\n' \
-  "$ok" "$drifted" "$mode_drift" "$missing" "$skipped" "$unreadable"
+printf '[info]  reconcile: %d ok, %d content-drift, %d runtime-rewritten (设计内), %d mode-drift, %d missing, %d exempt, %d unreadable\n' \
+  "$ok" "$drifted" "$runtime_rewritten" "$mode_drift" "$missing" "$skipped" "$unreadable"
+if [[ -s "$rtnotes" ]]; then
+  printf '%s\n' '--- 设计内改写（runtime-regenerated：安装后由桌面/程序自行写，只核对存在性）---'
+  head -20 "$rtnotes"
+fi
 if [[ -s "$notes" ]]; then
   printf '%s\n' '--- 只报告（用户自己的编辑属正常；AN_RECONCILE_STRICT=1 时才算失败）---'
   head -20 "$notes"
@@ -78,4 +105,4 @@ if [[ "$strict" == 1 && "$drifted" -gt 0 ]]; then
   rc=1
 fi
 (( rc == 0 )) || { echo "test-machine-reconcile: FAIL"; exit 1; }
-echo "ok: machine vs manifests reconciled (structure ok; content drift is reported, not gated by default)"
+echo "ok: machine vs manifests reconciled (structure ok; seed/runtime rows existence-only; other content drift reported unless strict)"

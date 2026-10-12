@@ -1,13 +1,13 @@
 id = "pang/sidebar"
 name = "Sidebar · 随手工作台"
-version = "2.4.5"
+version = "2.4.6"
 plugin_api = 32
 author = "pang"
 license = "MIT"
 description = "轻量侧边工作台：新建便签、多行正文编辑、自动保存、待办勾选与 25 分钟任务专注；保留搜索、窗口、系统（含 Wi-Fi 热点开关）、最近文件及卡片整理。"
 icon = "layout-sidebar-left"
 tags = ["custom", "utility", "panel"]
-dependencies = ["niri", "networkmanager", "libnotify", "xdg-utils", "glib2", "util-linux", "findutils", "python"]
+dependencies = ["niri", "networkmanager", "dnsmasq", "libnotify", "xdg-utils", "glib2", "util-linux", "findutils", "python"]
 
 # 设置分三段：便签 → 搜索/外观 → 热点（热点三项挨着放；频段属"设一次"的进阶项）。
 # 面板相关的「panel · 显示模式/屏幕位置/层级」由宿主追加在本表之后，不在这里声明。
