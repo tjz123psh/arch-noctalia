@@ -30,13 +30,15 @@ open = [
 reveal = [
 	{ run = 'xdg-open %d', desc = "在文件管理器里显示所在目录", for = "linux" },
 ]
-# 压缩包：第一条是 yazi 内置的（会列出可选目的地）；后两条为本机新增的一步到位写法。
-# 使用前提：选中压缩包按 O（交互式打开）能看到这三条；直接回车仍走内置那条。
-# tar 家族走 tar xf，其余走 7z；同名目录 = 去掉压缩后缀后的目录名。
+# 压缩包：只留两条，区别是「散开」还是「装进一个文件夹」。
+#   解压到当前目录   —— 内容直接散在你正在看的这个目录里（yazi 内置实现；回车走的也是这条）。
+#   解压到同名文件夹 —— 在旁边新建一个与压缩包同名的文件夹再解进去（demo.tar.gz → demo/）。
+# tar 家族走 tar xf，其余走 7z；同名文件夹 = 去掉压缩后缀后的名字。
+# （原先还有一条「解压到压缩包所在目录」，实测正常浏览时与「当前目录」完全一样，只在搜索结果里
+#   选中深处文件时才不同；为免菜单啰嗦已去掉。）
 extract = [
-	{ run = 'ya pub extract --list %s', desc = "解压（可选目的地）", for = "unix" },
-	{ run = 'f=%s1; o="$(dirname "$f")"; mkdir -p "$o" && case "$f" in *.tar|*.tar.*|*.tgz|*.txz|*.tbz2) tar xf "$f" -C "$o" ;; *) 7z x -y -o"$o" "$f" ;; esac', desc = "解压到压缩包所在目录", block = true, for = "unix" },
-	{ run = 'f=%s1; n="$(basename "$f" | sed -E "s/\.(tar|tbz2?|tgz|txz|zip|7z|rar|gz|xz|bz2|zst)$//" | sed -E "s/\.(tar|tbz2?|tgz|txz|zip|7z|rar|gz|xz|bz2|zst)$//")"; d="$(dirname "$f")/$n"; mkdir -p "$d" && case "$f" in *.tar|*.tar.*|*.tgz|*.txz|*.tbz2) tar xf "$f" -C "$d" ;; *) 7z x -y -o"$d" "$f" ;; esac', desc = "解压到同名目录", block = true, for = "unix" },
+	{ run = 'ya pub extract --list %s', desc = "解压到当前目录", for = "unix" },
+	{ run = 'f=%s1; n="$(basename "$f" | sed -E "s/\.(tar|tbz2?|tgz|txz|zip|7z|rar|gz|xz|bz2|zst)$//" | sed -E "s/\.(tar|tbz2?|tgz|txz|zip|7z|rar|gz|xz|bz2|zst)$//")"; d="$(dirname "$f")/$n"; mkdir -p "$d" && case "$f" in *.tar|*.tar.*|*.tgz|*.txz|*.tbz2) tar xf "$f" -C "$d" ;; *) 7z x -y -o"$d" "$f" ;; esac', desc = "解压到同名文件夹", block = true, for = "unix" },
 ]
 
 [open]

@@ -34,7 +34,7 @@ payload/home/.config/gtk-4.0/settings.ini	/home/pang/.config/gtk-4.0/settings.in
 payload/home/.config/kdeglobals	/home/pang/.config/kdeglobals	644	5a8213dd3359c4bf1a7c6683809ab1fb
 payload/home/.config/kitty/kitty.conf	/home/pang/.config/kitty/kitty.conf	600	b993363d74a38facb36abec3c3a1f9fd
 payload/home/.config/kitty/themes/noctalia.conf	/home/pang/.config/kitty/themes/noctalia.conf	644	5f316a7b24c98b21efe2bef057a68442
-payload/home/.config/mimeapps.list	/home/pang/.config/mimeapps.list	644	723a0486302493f6b67eccf1f8605752
+payload/home/.config/mimeapps.list	/home/pang/.config/mimeapps.list	644	6f4b60e67d76ae167397cd0a76cb4ded
 payload/home/.config/mpv/input.conf	/home/pang/.config/mpv/input.conf	644	5bcdd4458c5a51af460358f096959f20
 payload/home/.config/mpv/mpv.conf	/home/pang/.config/mpv/mpv.conf	644	9c82b939bd96210a52032fa10578e54b
 payload/home/.config/niri/conf.d/animations.kdl	/home/pang/.config/niri/conf.d/animations.kdl	644	a2bb9cd9ee2e0d137f0a160e7e769347
@@ -357,7 +357,7 @@ payload/system/usr/local/bin/rice-hotspot-net	/usr/local/bin/rice-hotspot-net	75
 payload/system/etc/sudoers.d/rice-hotspot	/etc/sudoers.d/rice-hotspot	440	bf0ac36300ed8661364c99ae9adea380
 payload/system/etc/systemd/system/rice-hotspot-net-sync.service	/etc/systemd/system/rice-hotspot-net-sync.service	644	2b4709eaf6d5918cb57ef9cfda13e4e3
 # ——— 2026-10-12 yazi 文件管理器：手写配置（配色交给 Noctalia 的「Yazi」社区模板，见 runtime-regenerated.tsv）———
-payload/home/.config/yazi/yazi.toml	/home/pang/.config/yazi/yazi.toml	644	142e792ca75200327c895dadc2d65e69
+payload/home/.config/yazi/yazi.toml	/home/pang/.config/yazi/yazi.toml	644	239ea621186e4c26e3858e9ccd09e404
 payload/home/.config/yazi/keymap.toml	/home/pang/.config/yazi/keymap.toml	644	94d3dc423ccbed3f7b9198c3be3b5fbd
 payload/home/.config/fish/functions/y.fish	/home/pang/.config/fish/functions/y.fish	644	5c379f6f90db586936b84985aa499647
 # ——— 以下 3 个是 Noctalia「Yazi」模板的产物（换壁纸/换调色板后重生成；12-verify 只核对存在）———
