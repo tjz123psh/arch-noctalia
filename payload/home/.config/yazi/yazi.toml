@@ -31,6 +31,24 @@ extract = [
 	{ run = 'f=%s1; n="$(basename "$f" | sed -E "s/\.(tar|tbz2?|tgz|txz|zip|7z|rar|gz|xz|bz2|zst)$//" | sed -E "s/\.(tar|tbz2?|tgz|txz|zip|7z|rar|gz|xz|bz2|zst)$//")"; d="$(dirname "$f")/$n"; mkdir -p "$d" && case "$f" in *.tar|*.tar.*|*.tgz|*.txz|*.tbz2) tar xf "$f" -C "$d" ;; *) 7z x -y -o"$d" "$f" ;; esac', desc = "解压到同名目录", block = true, for = "unix" },
 ]
 
+[open]
+# 兜底：有些压缩包的内容类型识别不出来（例如把 docx 改名成 .zip，会被认成 octet-stream），
+# 那时匹配不到 yazi 内置的"压缩包"规则，菜单里就没有解压选项。这里按扩展名兜在规则最前面
+# （yazi 的规则是"谁先匹配用谁"，且内置规则最后有一条全匹配兜底，所以只能 prepend 不能 append）。
+prepend_rules = [
+	{ url = "*.zip",   use = ["extract", "open", "reveal"] },
+	{ url = "*.7z",    use = ["extract", "open", "reveal"] },
+	{ url = "*.rar",   use = ["extract", "open", "reveal"] },
+	{ url = "*.tar",   use = ["extract", "open", "reveal"] },
+	{ url = "*.tar.*", use = ["extract", "open", "reveal"] },
+	{ url = "*.tgz",   use = ["extract", "open", "reveal"] },
+	{ url = "*.txz",   use = ["extract", "open", "reveal"] },
+	{ url = "*.gz",    use = ["extract", "open", "reveal"] },
+	{ url = "*.xz",    use = ["extract", "open", "reveal"] },
+	{ url = "*.bz2",   use = ["extract", "open", "reveal"] },
+	{ url = "*.zst",   use = ["extract", "open", "reveal"] },
+]
+
 [mgr]
 # 默认不显示隐藏文件；想默认显示就取消下一行注释（运行时按 . 也能随时切换）。
 # show_hidden = true
