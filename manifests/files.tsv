@@ -358,7 +358,7 @@ payload/system/etc/sudoers.d/rice-hotspot	/etc/sudoers.d/rice-hotspot	440	bf0ac3
 payload/system/etc/systemd/system/rice-hotspot-net-sync.service	/etc/systemd/system/rice-hotspot-net-sync.service	644	2b4709eaf6d5918cb57ef9cfda13e4e3
 # ——— 2026-10-12 yazi 文件管理器：手写配置（配色交给 Noctalia 的「Yazi」社区模板，见 runtime-regenerated.tsv）———
 payload/home/.config/yazi/yazi.toml	/home/pang/.config/yazi/yazi.toml	644	2c776b4e2ff212afb650b9d2c98a5e00
-payload/home/.config/yazi/keymap.toml	/home/pang/.config/yazi/keymap.toml	644	6b2c8eb4bc549b67ac2850986d8d1b27
+payload/home/.config/yazi/keymap.toml	/home/pang/.config/yazi/keymap.toml	644	2e8428082c85f99d0307c709c3729f65
 payload/home/.config/fish/functions/y.fish	/home/pang/.config/fish/functions/y.fish	644	5c379f6f90db586936b84985aa499647
 # ——— 2026-10-12 官方 git 插件（列表右侧显示 git 状态；按 m g 切换）———
 payload/home/.config/yazi/init.lua	/home/pang/.config/yazi/init.lua	644	5204ccf6abc3ef93a263b11000e4daff

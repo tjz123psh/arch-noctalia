@@ -33,7 +33,7 @@ curl -fsSL $U | bash -s -- --no-aur    # 外网不稳时先跳过 AUR；进桌�
   配色与语法高亮交给 Noctalia 的「Yazi」社区模板（`settings.toml` 的 `community_ids` 已含 `yazi`），产物是 `~/.config/yazi/{theme.toml,flavors/noctalia.yazi/*}`，换壁纸自动重渲染——这三个文件列在 `runtime-regenerated.tsv`，自检只核对存在。
   键位说明整份汉化在 `keymap.toml`（由 yazi v26.9.1 默认键位翻译而来，按键与行为完全一致；升级 yazi 后需要重新生成）；`yazi.toml` 只放行为设置（文本→nvim、视频音频→mpv；写死程序名，因为从启动器拉起时环境里没有 fish 的 `$EDITOR`）。
   fish 里加了 `y` 包装：在 yazi 里逛完按 `q` 退出，终端自动 `cd` 到那个目录（`Q` 退出则不换目录）。
-   官方 git 插件（`yazi-rs/plugins:git`，MIT）装在 `plugins/git.yazi/`，`init.lua` 做 setup、`yazi.toml` 的 `[[plugin.prepend_fetchers]]` 注册抓取器（必须用这个写法，写成 `prepend_fetchers = [...]` 会被静默忽略）；按 `m g` 切成 git 状态列，`m s` 切回大小。 `package.toml` 里记着这条依赖，供 `ya pkg` 使用。
+   官方 git 插件（`yazi-rs/plugins:git`，MIT）装在 `plugins/git.yazi/`，`init.lua` 做 setup、`yazi.toml` 的 `[[plugin.prepend_fetchers]]` 注册抓取器（必须用这个写法，写成 `prepend_fetchers = [...]` 会被静默忽略）；状态符号自动跟在大小的右边（`?` 未跟踪、图标 已修改…），不需要按键，也没有可切换的「git 列」。 `package.toml` 里记着这条依赖，供 `ya pkg` 使用。
    压缩包：`Shift+O` 菜单三条 —— 解压到当前目录 / 同名文件夹 / 指定位置（弹出 fuzzel 选择器，预填当前目录；`yazi.toml` 的 `[open] prepend_rules` 让认不出类型的 `.zip` 也能解压）。
 - 环境适配：ESP 等 vfat 挂载不做权限位校验、系统文件读取自动走 root；**不改你的挂载设置**。
 - 外观：毛玻璃等 GTK 样式以样式类限定作用域（`gtk.css` 追加段，只影响指定程序）；程序的"系统默认值"以 GSettings vendor override 随 07 部署（`/usr/share/glib-2.0/schemas/*.gschema.override`），07 末尾统一 `glib-compile-schemas` 生效——你在程序里改过的值（dconf）优先，不会被覆盖。
