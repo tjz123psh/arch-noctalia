@@ -39,6 +39,7 @@ reveal = [
 extract = [
 	{ run = 'ya pub extract --list %s', desc = "解压到当前目录", for = "unix" },
 	{ run = 'f=%s1; n="$(basename "$f" | sed -E "s/\.(tar|tbz2?|tgz|txz|zip|7z|rar|gz|xz|bz2|zst)$//" | sed -E "s/\.(tar|tbz2?|tgz|txz|zip|7z|rar|gz|xz|bz2|zst)$//")"; d="$(dirname "$f")/$n"; mkdir -p "$d" && case "$f" in *.tar|*.tar.*|*.tgz|*.txz|*.tbz2) tar xf "$f" -C "$d" ;; *) 7z x -y -o"$d" "$f" ;; esac', desc = "解压到同名文件夹", block = true, for = "unix" },
+	{ run = 'f=%s1; n="$(basename "$f" | sed -E "s/\.(tar|tbz2?|tgz|txz|zip|7z|rar|gz|xz|bz2|zst)$//" | sed -E "s/\.(tar|tbz2?|tgz|txz|zip|7z|rar|gz|xz|bz2|zst)$//")"; if command -v fuzzel >/dev/null 2>&1; then d="$({ echo "$HOME/Downloads"; echo "$HOME/Documents"; echo "$HOME/Desktop"; echo "$HOME/Pictures"; echo "$HOME/Projects"; echo "/tmp"; fd --type d --max-depth 1 . "$(dirname "$f")" 2>/dev/null; } | sort -u | fuzzel --dmenu --prompt="解压到哪里 > " --lines=12 --width=70)"; else d="$(dirname "$f")/$n"; fi; [ -n "$d" ] || exit 0; d="$(echo "$d" | sed "s|^~|$HOME|")"; mkdir -p "$d" || exit 1; case "$f" in *.tar|*.tar.*|*.tgz|*.txz|*.tbz2) tar xf "$f" -C "$d" ;; *) 7z x -y -o"$d" "$f" ;; esac', desc = "解压到指定位置…", block = true, for = "unix" },
 ]
 
 [open]
