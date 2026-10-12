@@ -357,7 +357,7 @@ payload/system/usr/local/bin/rice-hotspot-net	/usr/local/bin/rice-hotspot-net	75
 payload/system/etc/sudoers.d/rice-hotspot	/etc/sudoers.d/rice-hotspot	440	bf0ac36300ed8661364c99ae9adea380
 payload/system/etc/systemd/system/rice-hotspot-net-sync.service	/etc/systemd/system/rice-hotspot-net-sync.service	644	2b4709eaf6d5918cb57ef9cfda13e4e3
 # ——— 2026-10-12 yazi 文件管理器：手写配置（配色交给 Noctalia 的「Yazi」社区模板，见 runtime-regenerated.tsv）———
-payload/home/.config/yazi/yazi.toml	/home/pang/.config/yazi/yazi.toml	644	7adc8ca5525c92ebbc2e2ab06c472ae8
+payload/home/.config/yazi/yazi.toml	/home/pang/.config/yazi/yazi.toml	644	7aa81c00ae38c06f3625f0ff5ab26312
 payload/home/.config/yazi/keymap.toml	/home/pang/.config/yazi/keymap.toml	644	94d3dc423ccbed3f7b9198c3be3b5fbd
 payload/home/.config/fish/functions/y.fish	/home/pang/.config/fish/functions/y.fish	644	5c379f6f90db586936b84985aa499647
 # ——— 以下 3 个是 Noctalia「Yazi」模板的产物（换壁纸/换调色板后重生成；12-verify 只核对存在）———
