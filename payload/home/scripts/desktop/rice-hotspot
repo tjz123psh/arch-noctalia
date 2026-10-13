@@ -38,8 +38,7 @@ rice-hotspot — Wi-Fi 热点开关（NetworkManager AP + shared NAT）
   rice-hotspot password   只打印当前密码
   rice-hotspot state      单行机器可读状态（on|在用SSID|设备|网关|期望SSID|待应用 / off|期望SSID|||期望SSID|0）
 
-改设置（SSID/密码/频段）后：正在跑的热点不会自己变——再跑一次 on 会重启它并应用新值
-（侧栏面板上的按钮会显示「应用」）。
+改设置（SSID/密码/频段）后：正在跑的热点不会自己变——再跑一次 on 会重启它并应用新值。
 
 装了 Docker 的机器：Docker 的 FORWARD 策略是 drop，会挡掉热点客户端的转发（表现为"连上但
 没网"）。本脚本会调 /usr/local/bin/rice-hotspot-net 往 DOCKER-USER 链放行；没有 root 权限时
@@ -51,7 +50,7 @@ rice-hotspot — Wi-Fi 热点开关（NetworkManager AP + shared NAT）
   RICE_HOTSPOT_BAND="bg"|"a"    默认 bg（2.4GHz）
   RICE_HOTSPOT_IFACE="wlp3s0"   默认自动挑第一个 Wi-Fi 设备
 
-优先级：环境变量（Noctalia 插件「Sidebar · 随手工作台」的热点设置会以环境变量传进来）
+优先级：环境变量（RICE_HOTSPOT_*，方便上层脚本/程序传参）
         > ~/.config/rice-hotspot.conf > 上次开热点时记住的值（~/.local/state/rice-hotspot/）
         > 内置默认（<主机名>-hotspot / 首次自动生成的密码）。
 EOF
@@ -66,8 +65,7 @@ if ! flock -n 9; then
   die "上一次热点操作还在进行，稍等几秒再试（rice-hotspot state 可看进度）"
 fi
 
-# 取值优先级：环境变量（Noctalia 插件设置传进来）> ~/.config/rice-hotspot.conf
-# > 状态目录里记住的值 > 内置默认。插件里改过 SSID/密码后，命令行也沿用同一套。
+# 取值优先级：环境变量 > ~/.config/rice-hotspot.conf > 状态目录里记住的值 > 内置默认。
 ENV_SSID="${RICE_HOTSPOT_SSID:-}"
 ENV_PW="${RICE_HOTSPOT_PASSWORD:-}"
 ENV_BAND="${RICE_HOTSPOT_BAND:-}"
@@ -165,7 +163,7 @@ show_status() {
     if [[ -n "$pw" ]]; then printf '密码: %s\n' "$pw"; fi
     printf '网关: %s\n设备: %s\n' "${ip:-未知}" "$iface"
     if [[ "$(hotspot_pending)" == "1" ]]; then
-      printf '注意: 设置改了但还没生效（期望 SSID=%s 频段=%s）——重跑 on，或点侧栏面板上的「应用」\n' "$SSID" "$BAND"
+      printf '注意: 设置改了但还没生效（期望 SSID=%s 频段=%s）——重跑 rice-hotspot on 应用新值\n' "$SSID" "$BAND"
     fi
   else
     printf '热点: 未开启\nSSID: %s（开的时候用）\n' "$SSID"
@@ -340,7 +338,7 @@ case "${1:-toggle}" in
   off|down|stop)   do_off ;;
   toggle)          if is_up; then do_off; else do_on; fi ;;
   status|st)       show_status ;;
-  state)           # 单行机器可读（给插件用）：
+  state)           # 单行机器可读（给脚本/状态栏用）：
                    #   on|在用SSID|设备|网关|期望SSID|待应用(0/1)      off|期望SSID|||期望SSID|0
                    if is_up; then
                      local_gw="$(LC_ALL=C nmcli -t -f IP4.ADDRESS device show "$(pick_iface)" 2>/dev/null | awk -F: 'NR==1{print $2}')"

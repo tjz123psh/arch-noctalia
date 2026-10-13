@@ -32,7 +32,7 @@ payload/home/.config/gtk-4.0/gtk.css	/home/pang/.config/gtk-4.0/gtk.css	644	c876
 payload/home/.config/gtk-4.0/noctalia.css	/home/pang/.config/gtk-4.0/noctalia.css	644	6e78a06e09330ea3300e38ef9ad59239
 payload/home/.config/gtk-4.0/settings.ini	/home/pang/.config/gtk-4.0/settings.ini	644	1984efc9a529b40a060c055ffc65df31
 payload/home/.config/kdeglobals	/home/pang/.config/kdeglobals	644	5a8213dd3359c4bf1a7c6683809ab1fb
-payload/home/.config/kitty/kitty.conf	/home/pang/.config/kitty/kitty.conf	600	b993363d74a38facb36abec3c3a1f9fd
+payload/home/.config/kitty/kitty.conf	/home/pang/.config/kitty/kitty.conf	600	ef353a8bafcf55b6ec70e7641e5ab19e
 payload/home/.config/kitty/themes/noctalia.conf	/home/pang/.config/kitty/themes/noctalia.conf	644	5f316a7b24c98b21efe2bef057a68442
 payload/home/.config/mimeapps.list	/home/pang/.config/mimeapps.list	644	6f4b60e67d76ae167397cd0a76cb4ded
 payload/home/.config/mpv/input.conf	/home/pang/.config/mpv/input.conf	644	5bcdd4458c5a51af460358f096959f20
@@ -40,7 +40,7 @@ payload/home/.config/mpv/mpv.conf	/home/pang/.config/mpv/mpv.conf	644	9c82b939bd
 payload/home/.config/niri/conf.d/animations.kdl	/home/pang/.config/niri/conf.d/animations.kdl	644	a2bb9cd9ee2e0d137f0a160e7e769347
 payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	6f0bb3e21ee1b1566ab357b465065567
 payload/home/.config/niri/conf.d/cursor.kdl	/home/pang/.config/niri/conf.d/cursor.kdl	644	da3d31125409f685f2dd5ffcb3c87cb4
-payload/home/.config/niri/conf.d/environment.kdl	/home/pang/.config/niri/conf.d/environment.kdl	644	e45f34c51d19f609b89570898a0584ae
+payload/home/.config/niri/conf.d/environment.kdl	/home/pang/.config/niri/conf.d/environment.kdl	644	a911b178abca4a884dc44461659a0548
 payload/home/.config/niri/conf.d/general.kdl	/home/pang/.config/niri/conf.d/general.kdl	644	4e00543e1ddac2d25b58333982010608
 payload/home/.config/niri/conf.d/hotkey-overlay.kdl	/home/pang/.config/niri/conf.d/hotkey-overlay.kdl	644	43c6821bbb9a3d590885638c6ab188ab
 payload/home/.config/niri/conf.d/input.kdl	/home/pang/.config/niri/conf.d/input.kdl	644	945487f07ed9d4b8465e74fe194fd43a
@@ -332,7 +332,7 @@ payload/home/noctalia-plugins/magnifier/tests/tracker_lease_spec.c	/home/pang/no
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/protocols/wlr-layer-shell-unstable-v1.xml	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/protocols/wlr-layer-shell-unstable-v1.xml	644	ea389ea26a9629cc052b1a4dc750e073
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/README.md	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/README.md	644	6b93fc5b5c5860d2dbac5f58225b4dca
 # ——— 2026-10-11 Wi-Fi 热点：Noctalia 5.2.1 没有热点 UI，自带 rice-hotspot 兜底（AP 模式 + shared，依赖 dnsmasq）———
-payload/home/scripts/desktop/rice-hotspot	/home/pang/scripts/desktop/rice-hotspot	755	ee8bddd79606226ede5b2762c09165b7
+payload/home/scripts/desktop/rice-hotspot	/home/pang/scripts/desktop/rice-hotspot	755	ae2237c3a782cca92f7fcb1efb0ff725
 # ——— 2026-10-11 热点 + Docker 共存：Docker 的 FORWARD policy=drop 会挡掉热点客户端转发（手机连上没网）。
 #     root 助手只做放行/撤销，参数白名单校验；sudoers 只放行这一个脚本（NOPASSWD）。两种都属于系统文件。 ———
 payload/system/usr/local/bin/rice-hotspot-net	/usr/local/bin/rice-hotspot-net	755	0579b99443b80d62891e0ee987b4575d
@@ -342,6 +342,7 @@ payload/system/etc/systemd/system/rice-hotspot-net-sync.service	/etc/systemd/sys
 payload/home/.config/yazi/yazi.toml	/home/pang/.config/yazi/yazi.toml	644	f1471155217cb58d5b4a22deb4085ea7
 payload/home/.config/yazi/keymap.toml	/home/pang/.config/yazi/keymap.toml	644	87af875915d5ddd1c374a30209c5c4e0
 payload/home/.config/fish/functions/y.fish	/home/pang/.config/fish/functions/y.fish	644	5c379f6f90db586936b84985aa499647
+payload/home/.config/fish/completions/rice-hotspot.fish	/home/pang/.config/fish/completions/rice-hotspot.fish	644	c02beb535b41e8861da4b4b83eae97dd
 # ——— 以下 3 个是 Noctalia「Yazi」模板的产物（换壁纸/换调色板后重生成；12-verify 只核对存在）———
 payload/home/.config/yazi/theme.toml	/home/pang/.config/yazi/theme.toml	644	aa1e0e140fae84fb79d098f0f09141e8
 payload/home/.config/yazi/flavors/noctalia.yazi/flavor.toml	/home/pang/.config/yazi/flavors/noctalia.yazi/flavor.toml	644	ec1e8fc802dd60681e730fef58115294

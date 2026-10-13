@@ -10,4 +10,13 @@ environment {
     GSK_RENDERER "gl"
     // 与物理机一致：opencode 内置 websearch（Exa，免 key）
     OPENCODE_ENABLE_EXA "1"
+    // ── 编辑器 ──
+    // 这台机器只装了 nvim（没有 vi / vim / nano）。不设这些变量时，git 的
+    // "commit 不带 -m"、systemctl edit、sudoedit、crontab -e 这类要调外部编辑器的
+    // 命令会直接失败（git 会去找不存在的 vi）。放这里 = 覆盖 niri 启动的所有子进程：
+    // 终端里的 shell，以及从启动器/桌面项拉起的程序。
+    EDITOR "nvim"
+    VISUAL "nvim"
+    SUDO_EDITOR "nvim"
+    SYSTEMD_EDITOR "nvim"
 }
