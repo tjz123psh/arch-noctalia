@@ -298,6 +298,7 @@ enabled = [ "noctalia/screen_recorder", "oldirtty/color_picker", "pang/magnifier
 button_borders = true
 card_borders = true
 corner_radius_scale = 1.1499999999999999
+font_family = "Noto Sans CJK SC"
 input_borders = true
 lang = "zh_CN"
 panel_anchor_bar = "default"

@@ -69,7 +69,7 @@ payload/home/.config/systemd/user/rice-dnd.timer	/home/pang/.config/systemd/user
 payload/home/.config/user-dirs.dirs	/home/pang/.config/user-dirs.dirs	600	45c96841bc79b35d0d7b60cc328e11b2
 payload/home/.config/user-dirs.locale	/home/pang/.config/user-dirs.locale	644	0d61f8370cad1d412f80b84d143e1257
 payload/home/.config/zellij/config.kdl	/home/pang/.config/zellij/config.kdl	644	e0adb008a1d8922977ab9fc55dc4ebb7
-payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	153d2ae4829b8f3f69b00cc2bf77632a
+payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	d155329eeb2f352ef873b40e429db0f2
 payload/home/.local/share/applications/qq.desktop	/home/pang/.local/share/applications/qq.desktop	644	a93b140354cb6f3ee0c6f3f86a2d9090
 payload/home/.local/share/applications/linuxqq-wayland-fix.desktop	/home/pang/.local/share/applications/linuxqq-wayland-fix.desktop	644	73afa243ba8c4f34e8426bbd1a8ae73d
 payload/home/Pictures/wallpapers/初雪.png	/home/pang/Pictures/wallpapers/初雪.png	600	6ce51e6481a10fba6ee5bcad1cf3b1fd
