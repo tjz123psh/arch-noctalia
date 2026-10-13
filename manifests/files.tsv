@@ -38,7 +38,7 @@ payload/home/.config/mimeapps.list	/home/pang/.config/mimeapps.list	644	6f4b60e6
 payload/home/.config/mpv/input.conf	/home/pang/.config/mpv/input.conf	644	5bcdd4458c5a51af460358f096959f20
 payload/home/.config/mpv/mpv.conf	/home/pang/.config/mpv/mpv.conf	644	9c82b939bd96210a52032fa10578e54b
 payload/home/.config/niri/conf.d/animations.kdl	/home/pang/.config/niri/conf.d/animations.kdl	644	a2bb9cd9ee2e0d137f0a160e7e769347
-payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	f8d695b4c1ad60518b0148c41aeb2b12
+payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	6f0bb3e21ee1b1566ab357b465065567
 payload/home/.config/niri/conf.d/cursor.kdl	/home/pang/.config/niri/conf.d/cursor.kdl	644	da3d31125409f685f2dd5ffcb3c87cb4
 payload/home/.config/niri/conf.d/environment.kdl	/home/pang/.config/niri/conf.d/environment.kdl	644	e45f34c51d19f609b89570898a0584ae
 payload/home/.config/niri/conf.d/general.kdl	/home/pang/.config/niri/conf.d/general.kdl	644	4e00543e1ddac2d25b58333982010608
@@ -69,7 +69,7 @@ payload/home/.config/systemd/user/rice-dnd.timer	/home/pang/.config/systemd/user
 payload/home/.config/user-dirs.dirs	/home/pang/.config/user-dirs.dirs	600	45c96841bc79b35d0d7b60cc328e11b2
 payload/home/.config/user-dirs.locale	/home/pang/.config/user-dirs.locale	644	0d61f8370cad1d412f80b84d143e1257
 payload/home/.config/zellij/config.kdl	/home/pang/.config/zellij/config.kdl	644	c1bf1f71354532303f2fc9c7783a81c0
-payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	c163be8761badce725ffbdc2f048cf3d
+payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	153d2ae4829b8f3f69b00cc2bf77632a
 payload/home/.local/share/applications/qq.desktop	/home/pang/.local/share/applications/qq.desktop	644	a93b140354cb6f3ee0c6f3f86a2d9090
 payload/home/.local/share/applications/linuxqq-wayland-fix.desktop	/home/pang/.local/share/applications/linuxqq-wayland-fix.desktop	644	73afa243ba8c4f34e8426bbd1a8ae73d
 payload/home/Pictures/wallpapers/初雪.png	/home/pang/Pictures/wallpapers/初雪.png	600	6ce51e6481a10fba6ee5bcad1cf3b1fd
@@ -87,17 +87,6 @@ payload/home/noctalia-plugins/magnifier/panel.luau	/home/pang/noctalia-plugins/m
 payload/home/noctalia-plugins/magnifier/plugin.toml	/home/pang/noctalia-plugins/magnifier/plugin.toml	644	01775341b5fcb9d33335df0ea2eed985
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/build.sh	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/build.sh	755	3c2ec34fa6873d3ad3557e67c0866149
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/cursor-track.c	644	976ac9caa82a52499cd9ae210d804744
-payload/home/noctalia-plugins/sidebar/README.md	/home/pang/noctalia-plugins/sidebar/README.md	644	f5b196b30a203de721557facc366688b
-payload/home/noctalia-plugins/sidebar/panel.luau	/home/pang/noctalia-plugins/sidebar/panel.luau	644	4ce564efa83bd4b77dbf2ae1eb55557d
-payload/home/noctalia-plugins/sidebar/plugin.toml	/home/pang/noctalia-plugins/sidebar/plugin.toml	644	b08d3d8e32ffe41f6723b9b792d1b2ba
-payload/home/noctalia-plugins/sidebar/tests/async_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/async_spec.lua	644	90be601c6c27392302f9822bfd92fb31
-payload/home/noctalia-plugins/sidebar/tests/benchmark.lua	/home/pang/noctalia-plugins/sidebar/tests/benchmark.lua	644	a0867d001e0a2eff808896a4f1a11076
-payload/home/noctalia-plugins/sidebar/tests/regressions_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/regressions_spec.lua	644	8e78658dfa3d51012621e8c41ec8b394
-payload/home/noctalia-plugins/sidebar/tests/run_all.sh	/home/pang/noctalia-plugins/sidebar/tests/run_all.sh	755	69feafa9981c8e8c69f645defc3fd2e3
-payload/home/noctalia-plugins/sidebar/tests/shell_spec.py	/home/pang/noctalia-plugins/sidebar/tests/shell_spec.py	644	da367a44a1299fe882470d9403b86cde
-payload/home/noctalia-plugins/sidebar/tests/sidebar_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/sidebar_spec.lua	644	21cd6fea2957183dc593113ed97b7a16
-payload/home/noctalia-plugins/sidebar/translations/en.json	/home/pang/noctalia-plugins/sidebar/translations/en.json	644	b3feab45eb6f8800d55b8e59e08b2c2e
-payload/home/noctalia-plugins/sidebar/translations/zh-Hans.json	/home/pang/noctalia-plugins/sidebar/translations/zh-Hans.json	644	94ec1f3c9ea6932ede5fcf32157e85a7
 payload/home/scripts/desktop/fuzzel-askpass	/home/pang/scripts/desktop/fuzzel-askpass	755	f7f9570174741c06b78589b8eade07bc
 payload/home/scripts/desktop/gsudo	/home/pang/scripts/desktop/gsudo	755	7e2ac2fa9516a3335c138319417ea8d7
 payload/home/scripts/desktop/rice-aur	/home/pang/scripts/desktop/rice-aur	755	b23985db28773b90be190f0abcad89eb
@@ -335,14 +324,7 @@ payload/system/etc/systemd/system/snapper-timeline.timer.d/override.conf	/etc/sy
 #     显示默认值（平滑曲线/120 点/隐藏虚拟网卡）用 GSettings vendor override 给出，
 #     07-config 部署后自动 glib-compile-schemas 生效；用户在程序里改过的值（dconf）优先。 ———
 payload/system/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	/usr/share/glib-2.0/schemas/99-mission-center-look.gschema.override	644	023c9b849ff70ce6f5af443f276d1ced
-payload/home/noctalia-plugins/sidebar/notes.py	/home/pang/noctalia-plugins/sidebar/notes.py	600	61dfdc9e577d7d3ec5c9a11e96c6a642
-payload/home/noctalia-plugins/sidebar/CHANGELOG.md	/home/pang/noctalia-plugins/sidebar/CHANGELOG.md	644	963b1e9dc8ee97e2cc0fe35a7e01cdd6
-payload/home/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	/home/pang/noctalia-plugins/sidebar/tests/timer_tasks_spec.py	600	fdb03ca32c1d0299df918f37b47420f1
-payload/home/noctalia-plugins/sidebar/tests/notes_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.lua	644	de1274938509e476433d5bff909c9833
-payload/home/noctalia-plugins/sidebar/tests/notes_spec.py	/home/pang/noctalia-plugins/sidebar/tests/notes_spec.py	600	fa2342780591353aeb6b108a1d9457ad
-payload/home/noctalia-plugins/sidebar/tests/experience_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/experience_spec.lua	600	29c3a9d1071d4731ba64250c45f10bba
-# ——— 2026-10-10 侧栏 2.3.3 / 放大镜 1.1.0（本机试样经验收后纳入）：新增文件 ———
-payload/home/noctalia-plugins/sidebar/tests/local_motion_spec.lua	/home/pang/noctalia-plugins/sidebar/tests/local_motion_spec.lua	644	66b3a6e5c680670d41a2254c0bc0830b
+# ——— 2026-10-10 放大镜 1.1.0（本机试样经验收后纳入）：新增文件 ———
 payload/home/noctalia-plugins/magnifier/README.md	/home/pang/noctalia-plugins/magnifier/README.md	644	a6fea59538716693dfa31e55066b3370
 payload/home/noctalia-plugins/magnifier/tests/magnifier_spec.lua	/home/pang/noctalia-plugins/magnifier/tests/magnifier_spec.lua	644	7bcef571c215f41a49f9233526d1eb0d
 payload/home/noctalia-plugins/magnifier/tests/run_all.sh	/home/pang/noctalia-plugins/magnifier/tests/run_all.sh	755	929bf7100bd7a486e235b3670902f21d

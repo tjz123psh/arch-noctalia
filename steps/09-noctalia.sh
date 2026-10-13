@@ -20,8 +20,6 @@ SRC_DIR="${PLUGINS_DIR}/magnifier/tools/cursor-track"
 
 # --- 1) 插件源目录 ---
 plugin_files=(
-  "${PLUGINS_DIR}/sidebar/plugin.toml"
-  "${PLUGINS_DIR}/sidebar/panel.luau"
   "${PLUGINS_DIR}/magnifier/plugin.toml"
   "${PLUGINS_DIR}/magnifier/panel.luau"
   "${PLUGINS_DIR}/magnifier/tools/cursor-track/build.sh"
@@ -35,12 +33,11 @@ for f in "${plugin_files[@]}"; do
   fi
 done
 (( missing == 0 )) || die "plugins are not deployed under ${PLUGINS_DIR} — stage 07 must run first; re-run ./install.sh --run"
-info "plugin sources: present (sidebar + magnifier)"
+info "plugin sources: present (magnifier)"
 
 # --- 2) settings.toml 校验（插件源 + 启用列表） ---
 [[ -f "$SETTINGS" ]] || die "missing settings: ${SETTINGS} (stage 07 must deploy it)"
 settings_bad=0
-grep -q '"pang/sidebar"' "$SETTINGS" || { warn "settings: pang/sidebar not in the enabled list"; settings_bad=$((settings_bad + 1)); }
 grep -q '"pang/magnifier"' "$SETTINGS" || { warn "settings: pang/magnifier not in the enabled list"; settings_bad=$((settings_bad + 1)); }
 grep -q 'location = "/home/pang/noctalia-plugins"' "$SETTINGS" || { warn "settings: local plugin source 'pang-dev' missing"; settings_bad=$((settings_bad + 1)); }
 (( settings_bad == 0 )) || die "settings.toml does not match the payload — repository copy broken?"

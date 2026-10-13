@@ -206,5 +206,6 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 # · 锁屏（Noctalia 自带）改造：只调 [lockscreen_widgets]（时钟放大 + 新增一行日期 + 登录框尺寸/圆角/透明度，
 #   信息项全开），[lockscreen] 段（背景模糊/暗化/动画/壁纸）按用户要求保持原样。改动同步进 payload 的
 #   settings.toml 种子副本。恢复：~/.local/state/noctalia/settings.toml.bak-lockscreen-* 或 git 历史。
-# · 注意：真机 settings.toml 的 [plugin_settings."pang/sidebar"] 存着热点 SSID 与密码（明文），payload 的
-#   种子副本里没有、也不要整份覆盖同步 —— 以后改这个文件只能按段落挑着同步。
+# · 2026-10-13：侧栏插件（pang/sidebar）整体移除、准备重构 —— 已从 ~/noctalia-plugins/ 与 Noctalia 的
+#   启用列表/插件数据目录清掉，旧版源码在 git 历史与 ~/backup/sidebar-plugin-before-refactor-*.tar.zst。
+#   注意：真机 settings.toml 是用户态文件（Noctalia 实时改写），同步时只能按段落挑着改，不要整份覆盖。

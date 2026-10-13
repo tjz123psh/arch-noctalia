@@ -42,7 +42,6 @@ done < <(grep -vE '^#|^$' "$LINKS")
 grep -q '^payload/home/.config/niri/conf.d/' "$FILES" || bad "no niri conf.d mapping"
 grep -q '^payload/home/.local/state/noctalia/settings.toml' "$FILES" || bad "no Noctalia settings mapping"
 grep -q '^payload/home/noctalia-plugins/magnifier/' "$FILES" || bad "no magnifier plugin mapping"
-grep -q '^payload/home/noctalia-plugins/sidebar/' "$FILES" || bad "no sidebar plugin mapping"
 grep -q '^payload/home/scripts/desktop/' "$FILES" || bad "no scripts mapping"
 grep -q '^payload/system/usr/share/fonts/maple-mono-nf-cn/' "$FILES" || bad "no maple-mono-nf-cn mapping"
 grep -q '^payload/system/usr/share/fonts/google-sans-flex/' "$FILES" || bad "no google-sans-flex mapping"

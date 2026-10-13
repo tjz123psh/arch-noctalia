@@ -277,7 +277,7 @@ video_qp = 15
 
 [plugins]
 auto_update = "all"
-enabled = [ "noctalia/screen_recorder", "oldirtty/color_picker", "pang/magnifier", "8bury/mini-docker", "pang/sidebar" ]
+enabled = [ "noctalia/screen_recorder", "oldirtty/color_picker", "pang/magnifier", "8bury/mini-docker" ]
 
     [[plugins.source]]
     kind = "git"
