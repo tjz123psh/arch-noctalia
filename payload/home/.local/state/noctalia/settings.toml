@@ -201,8 +201,8 @@ widget_order = [ "lockscreen-clock@eDP-1", "lockscreen-date@eDP-1", "lockscreen-
     [lockscreen_widgets.widget."lockscreen-clock@eDP-1"]
     box_height = 250.0
     box_width = 820.0
-    cx = 460.0
-    cy = 205.0
+    cx = 960.0
+    cy = 310.0
     output = "eDP-1"
     placement_height = 1080.0
     placement_width = 1920.0
@@ -219,8 +219,8 @@ widget_order = [ "lockscreen-clock@eDP-1", "lockscreen-date@eDP-1", "lockscreen-
     [lockscreen_widgets.widget."lockscreen-date@eDP-1"]
     box_height = 80.0
     box_width = 820.0
-    cx = 460.0
-    cy = 375.0
+    cx = 960.0
+    cy = 450.0
     output = "eDP-1"
     placement_height = 1080.0
     placement_width = 1920.0
@@ -236,9 +236,9 @@ widget_order = [ "lockscreen-clock@eDP-1", "lockscreen-date@eDP-1", "lockscreen-
 
     [lockscreen_widgets.widget."lockscreen-login-box@eDP-1"]
     box_height = 300.0
-    box_width = 940.0
-    cx = 1400.0
-    cy = 880.0
+    box_width = 980.0
+    cx = 960.0
+    cy = 862.0
     output = "eDP-1"
     placement_height = 1080.0
     placement_width = 1920.0
@@ -260,6 +260,7 @@ widget_order = [ "lockscreen-clock@eDP-1", "lockscreen-date@eDP-1", "lockscreen-
         show_session_buttons = true
         show_unlock_hint = true
         show_weather = true
+
 [notification]
 background_opacity = 0.45000000000000001
 history_retention_hours = 72
