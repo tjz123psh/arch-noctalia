@@ -68,7 +68,7 @@ payload/home/.config/systemd/user/rice-dnd.service	/home/pang/.config/systemd/us
 payload/home/.config/systemd/user/rice-dnd.timer	/home/pang/.config/systemd/user/rice-dnd.timer	644	f938e977eed3f41554d7890cdeea04ab
 payload/home/.config/user-dirs.dirs	/home/pang/.config/user-dirs.dirs	600	45c96841bc79b35d0d7b60cc328e11b2
 payload/home/.config/user-dirs.locale	/home/pang/.config/user-dirs.locale	644	0d61f8370cad1d412f80b84d143e1257
-payload/home/.config/zellij/config.kdl	/home/pang/.config/zellij/config.kdl	644	c1bf1f71354532303f2fc9c7783a81c0
+payload/home/.config/zellij/config.kdl	/home/pang/.config/zellij/config.kdl	644	e0adb008a1d8922977ab9fc55dc4ebb7
 payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	153d2ae4829b8f3f69b00cc2bf77632a
 payload/home/.local/share/applications/qq.desktop	/home/pang/.local/share/applications/qq.desktop	644	a93b140354cb6f3ee0c6f3f86a2d9090
 payload/home/.local/share/applications/linuxqq-wayland-fix.desktop	/home/pang/.local/share/applications/linuxqq-wayland-fix.desktop	644	73afa243ba8c4f34e8426bbd1a8ae73d

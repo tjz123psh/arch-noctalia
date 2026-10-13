@@ -1,3 +1,10 @@
+// ── 剪贴板（Wayland）─────────────────────────────────────────────
+// zellij 在 Linux 的默认 copy_command 是 X11 的 `xclip -selection clipboard`，
+// 本机是 Wayland 且没装 xclip（装了 wl-copy）——不显式指定的话"复制到系统剪贴板"会失败。
+// copy_clipboard 保持默认 system（写系统剪贴板，Ctrl+V 能粘）；想改用主选区
+//（鼠标中键粘贴）再自己加一行 `copy_clipboard "primary"` —— 这是"二选一"，不是两个都写。
+copy_command "wl-copy"
+
 keybinds clear-defaults=true {
     locked {
         bind "Ctrl g" { SwitchToMode "normal"; }
@@ -87,6 +94,7 @@ keybinds clear-defaults=true {
         bind "tab" { MovePane; }
     }
     scroll {
+        bind "y" { Copy; }
         bind "c" { CopyLastCommandOutput; SwitchToMode "normal"; }
         bind "e" { EditScrollback; SwitchToMode "normal"; }
         bind "s" { SwitchToMode "entersearch"; SearchInput 0; }
