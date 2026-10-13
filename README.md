@@ -28,6 +28,7 @@ curl -fsSL $U | bash -s -- --no-aur    # 外网不稳时先跳过 AUR；进桌�
 - 数据安全：便签与 `Templates/` 只在缺失时初始化，你写的内容不会被覆盖；其余文件更新前旧内容备份到 `<状态目录>/overwritten/<时间戳>/`（08 步替换 `~/bin` 下已存在的真实文件时同样先备份）。
 - 状态目录：续装记录与覆盖备份放在 `~/.local/state/arch-noctalia/`（不再落在 clone 里，删掉/重克隆仓库不会丢备份）。
 - btrfs 机器：snapper 时间线快照**每周一次**（`/etc/systemd/system/snapper-timeline.timer.d/override.conf` 覆盖上游 hourly，随 07 部署；保留策略仍由 snapper 自身配置决定）。
+- 快照策略：**root 与 home 走同一条逻辑**——只有维护脚本成套打快照（`quicksave`，以及 `sysup` 升级前的 `quicksave-sysup`；两个配置同一批次）＋ snapper 自身的每周 timeline。`/etc/snap-pac.ini` 随 07 部署，把 `[root] snapshot` 显式设为 `False`，关掉 snap-pac 的「每次 pacman 事务自动快照」（它的默认只对 root 生效，会让 root 比 home 多出一堆零碎快照）。注意：维护脚本的深度清理（`clean all`）只保留 `before*` 节点与最近一套成套批次，timeline 快照也会被它删掉。
 - Wi-Fi 热点：Noctalia 没有热点 UI，用 `~/bin/rice-hotspot` 兜底（侧栏「系统」卡里也能开关、改名/改密码/换频段）。装了 Docker 的机器上 Docker 的 `FORWARD` 策略是 drop、会挡掉热点客户端（连上没网），脚本会通过 root 助手 `/usr/local/bin/rice-hotspot-net` 往 `DOCKER-USER` 链放行——助手与 `/etc/sudoers.d/rice-hotspot`（只放行这一个脚本）随 07 部署，部署前用 `visudo -cf` 预检。另有一个 `rice-hotspot-net-sync.service`（10 步启用、挂在 `docker.service` 上）：Docker 每次启动都会清掉 `DOCKER-USER`，该单元会自动把放行补回来（热点没在跑时什么都不做）。
 - 文件管理器 yazi：包在 `packages.tsv` 里，桌面项在启动器可见（`Exec=kitty --class yazi -e yazi %f`，同时是「打开文件夹」的候选，nautilus 仍是默认）。
   配色与语法高亮交给 Noctalia 的「Yazi」社区模板（`settings.toml` 的 `community_ids` 已含 `yazi`），产物是 `~/.config/yazi/{theme.toml,flavors/noctalia.yazi/*}`，换壁纸自动重渲染——这三个文件列在 `runtime-regenerated.tsv`，自检只核对存在。

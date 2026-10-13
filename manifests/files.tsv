@@ -364,3 +364,5 @@ payload/home/.config/fish/functions/y.fish	/home/pang/.config/fish/functions/y.f
 payload/home/.config/yazi/theme.toml	/home/pang/.config/yazi/theme.toml	644	aa1e0e140fae84fb79d098f0f09141e8
 payload/home/.config/yazi/flavors/noctalia.yazi/flavor.toml	/home/pang/.config/yazi/flavors/noctalia.yazi/flavor.toml	644	ec1e8fc802dd60681e730fef58115294
 payload/home/.config/yazi/flavors/noctalia.yazi/tmtheme.xml	/home/pang/.config/yazi/flavors/noctalia.yazi/tmtheme.xml	644	ca75ef26515c029b089f45186f8ee7c2
+# ——— 2026-10-13 snapper 快照策略：关掉 snap-pac 的「每包装包自动 root 快照」，让 root 与 home 同逻辑 ———
+payload/system/etc/snap-pac.ini	/etc/snap-pac.ini	644	c5a2db04a99d395654ffa86744d10f73
