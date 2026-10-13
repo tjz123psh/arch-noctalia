@@ -366,3 +366,5 @@ payload/home/.config/yazi/flavors/noctalia.yazi/flavor.toml	/home/pang/.config/y
 payload/home/.config/yazi/flavors/noctalia.yazi/tmtheme.xml	/home/pang/.config/yazi/flavors/noctalia.yazi/tmtheme.xml	644	ca75ef26515c029b089f45186f8ee7c2
 # ——— 2026-10-13 snapper 快照策略：关掉 snap-pac 的「每包装包自动 root 快照」，让 root 与 home 同逻辑 ———
 payload/system/etc/snap-pac.ini	/etc/snap-pac.ini	644	c5a2db04a99d395654ffa86744d10f73
+# ——— 2026-10-13 热点：无线管制域 CN（wireless-regdb + modprobe.d），5GHz AP 才稳 ———
+payload/system/etc/modprobe.d/cfg80211-regdom.conf	/etc/modprobe.d/cfg80211-regdom.conf	644	803dc314a0f16a5ac0a1eb7784435499

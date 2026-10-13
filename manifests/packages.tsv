@@ -62,6 +62,7 @@ gvfs-smb	extra
 hyprpicker	extra		Noctalia 社区插件 oldirtty/color_picker 依赖；niri 下 Alt+Shift+C 取色
 imagemagick	extra		
 inotify-tools	extra		
+iw	extra		Wi-Fi 排障：iw reg get / iw phy info（热点频段与管制域检查）
 jdk21-openjdk	extra		
 jdk8-openjdk	extra		
 jq	extra		
@@ -152,6 +153,7 @@ vulkan-tools	extra	drivers
 wayland-protocols	extra		
 wayland-utils	extra		
 wf-recorder	extra		
+wireless-regdb	extra		5GHz 热点必需：提供 /lib/firmware/regulatory.db，配合 /etc/modprobe.d/cfg80211-regdom.conf 把管制域设为 CN（缺它内核停在 world 域、5GHz 禁主动发射 → AP 随机起不来）
 wireplumber	extra		
 wl-clipboard	extra		
 wpa_supplicant	core		
