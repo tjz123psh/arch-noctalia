@@ -59,6 +59,7 @@ gvfs-gphoto2	extra
 gvfs-mtp	extra		
 gvfs-nfs	extra		
 gvfs-smb	extra		
+hardinfo2	extra		硬件信息/诊断一体化 GUI（设备树、CPU/内存/磁盘、传感器、跑分，可导出报告）；替代 KDE 信息中心（kinfocenter），自带 iperf3/sysbench/dmidecode/usbutils 后端
 hyprpicker	extra		Noctalia 社区插件 oldirtty/color_picker 依赖；niri 下 Alt+Shift+C 取色
 imagemagick	extra		
 inotify-tools	extra		

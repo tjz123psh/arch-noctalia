@@ -38,6 +38,10 @@ curl -fsSL $U | bash -s -- --no-aur    # 外网不稳时先跳过 AUR；进桌�
   键位说明整份汉化在 `keymap.toml`（由 yazi v26.9.1 默认键位翻译而来，按键与行为完全一致；升级 yazi 后需要重新生成）；`yazi.toml` 只放行为设置（文本→nvim、视频音频→mpv；写死程序名，因为从启动器拉起时环境里没有 fish 的 `$EDITOR`）。
   fish 里加了 `y` 包装：在 yazi 里逛完按 `q` 退出，终端自动 `cd` 到那个目录（`Q` 退出则不换目录）。
    压缩包：`Shift+O` 菜单三条 —— 解压到当前目录 / 同名文件夹 / 指定位置（弹出 fuzzel 选择器，预填当前目录；`yazi.toml` 的 `[open] prepend_rules` 让认不出类型的 `.zip` 也能解压）。
+- mpv 增强：`aur.tsv` 装了 `mpv-uosc`（现代 UI）、`mpv-thumbfast-git`（进度条悬停缩略图）、`anime4k-git`（画质 shader）。`mpv.conf` 里 `script=` 显式加载 uosc（本体在 `/usr/share/mpv/scripts`，而 mpv 只自动扫 `~/.config/mpv/scripts` 与 `/etc/mpv/scripts`），并设 `osd-fonts-dir`/`sub-fonts-dir` 指向 `/usr/share/mpv/fonts`——**缺这两行 uosc 的图标字体会找不到、控件条会挤成一团**（实测踩过）。uosc 主题在 `script-opts/uosc.conf`（Noctalia 配色 + 圆角 + 半透明 + 顶栏常显 + 菜单打字搜索），列 `seed.tsv`：装完你在机器上改的不会被重跑覆盖。
+  界面：右键 = uosc 菜单，`?` = 键位速查；`Ctrl+o` 打开文件/URL、`Ctrl+l` 加载字幕、`Ctrl+j/a/v` 字幕/音轨/视频轨、`Ctrl+p` 播放列表、`Ctrl+i` 章节、`Ctrl+q` 清晰度、`Ctrl+d` 输出设备、`Ctrl+t` 隐藏界面。Anime4K：`Ctrl+1/2/3` = 模式 A/B/C（1080p/720p/480p 动画），`Ctrl+0` 关闭——**默认关**，开了明显吃 GPU。
+  B 站弹幕：`scripts/bdanmaku.lua`（第三方 MIT，许可证一并纳管 `bdanmaku.LICENSE.txt`）+ `~/bin/biliass` 包装脚本（弹幕 XML → ASS）；真正的 biliass 在 `~/.local/share/mpv-danmaku/venv`（首用自动创建，机器本地不入仓）。播放 B 站链接时弹幕自动出现，`v` 即弹幕开关。
+  在线字幕：`scripts/assrt.lua` 从 assrt.net 搜字幕（按 `a` 触发）——上游没有许可证文件，为免版权问题**不入公开仓库**（见 `excluded.tsv`）；需要在 `script-opts/assrt.conf` 填自己的 API token（assrt.net 注册后免费获取）。
 - 环境适配：ESP 等 vfat 挂载不做权限位校验、系统文件读取自动走 root；**不改你的挂载设置**。
 - 外观：毛玻璃等 GTK 样式以样式类限定作用域（`gtk.css` 追加段，只影响指定程序）；程序的"系统默认值"以 GSettings vendor override 随 07 部署（`/usr/share/glib-2.0/schemas/*.gschema.override`），07 末尾统一 `glib-compile-schemas` 生效——你在程序里改过的值（dconf）优先，不会被覆盖。
 - 未纳管项有账可查：`manifests/excluded.tsv` 记录**手动安装项**（需自行安装，安装器带上会出问题，如 AUR 交互构建、按机器定制、需登录/许可）、安全排除项与各类缓存/生成目录的解释；实际纳管的内容见 `files.tsv` / `packages.tsv` / `aur.tsv`。

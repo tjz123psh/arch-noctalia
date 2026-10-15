@@ -9,20 +9,20 @@
       "left": 2
     },
     "color": {
-      "1": "#ff63b5",
-      "2": "#e663bd"
+      "1": "#63cafc",
+      "2": "#63c8db"
     }
   },
   "display": {
     "separator": "  ",
     "color": {
-      "keys": "#ffb3b5",
-      "title": "#e6bdbd"
+      "keys": "#9fcafc",
+      "title": "#bac8db"
     },
     "percent": {
       "color": {
-        "green": "#e6c08d",
-        "yellow": "#ffb3b5",
+        "green": "#d6bee5",
+        "yellow": "#9fcafc",
         "red": "#ffb4ab"
       }
     },
@@ -31,20 +31,25 @@
     }
   },
   "modules": [
-    "title",
-    "separator",
-    "os",
-    "kernel",
-    "uptime",
-    "packages",
-    "shell",
-    "wm",
-    "terminal",
-    "cpu",
-    "memory",
-    "disk",
-    "localip",
-    "break",
-    "colors"
-  ]
+      "title",
+      "separator",
+      "os",
+      "host",
+      "kernel",
+      "uptime",
+      "packages",
+      "shell",
+      "display",
+      "wm",
+      "terminal",
+      "cpu",
+      "gpu",
+      "memory",
+      "swap",
+      "disk",
+      "battery",
+      "localip",
+      "break",
+      "colors"
+    ]
 }

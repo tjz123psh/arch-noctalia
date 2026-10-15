@@ -2,10 +2,13 @@
 # package<TAB>channel<TAB>role<TAB>purpose
 # channel: 同步库名（如 archlinuxcn）=有二进制、优先 pacman 装；aur=需 AUR 构建（paru）
 # role: explicit | dependency
+anime4k-git	aur	explicit	Anime4K 画质超分 shader（装到 /usr/share/anime4k；Ctrl+1/2/3 切模式 A/B/C，Ctrl+0 关）
 dbx-bin	aur	explicit	
 google-chrome	aur	explicit	官方 Chrome 稳定版（用户当前安装版）
 linuxqq	aur	dependency	官方 QQ 本体（由 linuxqq-wayland-fix 依赖引入，不单独安装）
 linuxqq-wayland-fix	aur	explicit	Wayland 修复版（屏幕共享/剪贴板/截图；替换 linuxqq-nt-bwrap）
+mpv-thumbfast-git	aur	explicit	进度条悬停缩略图（po5/thumbfast；uosc 自动接线，装到 /etc/mpv/scripts）
+mpv-uosc	aur	explicit	mpv 现代 UI/OSC（uosc 5.13；装到 /usr/share/mpv/scripts，由 mpv.conf 的 script= 显式加载）
 musicfree-desktop-wayland-bin	aur	explicit	插件化音乐播放器（Wayland 适配预构建版）
 obsidian-bin	aur	explicit	
 opencode-bin	aur	explicit	

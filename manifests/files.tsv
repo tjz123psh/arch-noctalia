@@ -11,7 +11,7 @@ payload/home/.config/Kingsoft/roamingdevice.conf	/home/pang/.config/Kingsoft/roa
 payload/home/.config/btop/btop.conf	/home/pang/.config/btop/btop.conf	644	a6a98a47cbc4c27905de9545985b4739
 payload/home/.config/btop/themes/noctalia.theme	/home/pang/.config/btop/themes/noctalia.theme	644	84c837becc82f7c04be755478fa89ef2
 payload/home/.config/environment.d/10-desktop.conf	/home/pang/.config/environment.d/10-desktop.conf	644	de80ab11ba03ebb877451060254bca23
-payload/home/.config/fastfetch/config.jsonc	/home/pang/.config/fastfetch/config.jsonc	644	8ba60d4f3727a565a25b7b76428188bc
+payload/home/.config/fastfetch/config.jsonc	/home/pang/.config/fastfetch/config.jsonc	644	0d8b5e2d3c7212e3b3167022eb9079e2
 payload/home/.config/fastfetch/logo.png	/home/pang/.config/fastfetch/logo.png	644	a4176ae1a403ab05d82eadd1333a9273
 payload/home/.config/fastfetch/themes/noctalia.jsonc	/home/pang/.config/fastfetch/themes/noctalia.jsonc	644	6ad9c1d26d258b4cef7cca47e3a07de5
 payload/home/.config/fcitx5/conf/chttrans.conf	/home/pang/.config/fcitx5/conf/chttrans.conf	600	ffda3fa22413dd8cc96019742a47783d
@@ -35,10 +35,14 @@ payload/home/.config/kdeglobals	/home/pang/.config/kdeglobals	644	5a8213dd3359c4
 payload/home/.config/kitty/kitty.conf	/home/pang/.config/kitty/kitty.conf	600	ef353a8bafcf55b6ec70e7641e5ab19e
 payload/home/.config/kitty/themes/noctalia.conf	/home/pang/.config/kitty/themes/noctalia.conf	644	5f316a7b24c98b21efe2bef057a68442
 payload/home/.config/mimeapps.list	/home/pang/.config/mimeapps.list	644	6f4b60e67d76ae167397cd0a76cb4ded
-payload/home/.config/mpv/input.conf	/home/pang/.config/mpv/input.conf	644	5bcdd4458c5a51af460358f096959f20
-payload/home/.config/mpv/mpv.conf	/home/pang/.config/mpv/mpv.conf	644	9c82b939bd96210a52032fa10578e54b
+payload/home/.config/mpv/input.conf	/home/pang/.config/mpv/input.conf	644	604af00ad0e5fc4b6a854f114ebf6eb2
+payload/home/.config/mpv/mpv.conf	/home/pang/.config/mpv/mpv.conf	644	a0fa7e33af397e440bfd04355a0c1c82
+payload/home/.config/mpv/script-opts/uosc.conf	/home/pang/.config/mpv/script-opts/uosc.conf	644	791458e60fe45d13f0f9d8c197f08a5c
+payload/home/.config/mpv/bdanmaku.LICENSE.txt	/home/pang/.config/mpv/bdanmaku.LICENSE.txt	644	ab285fa1eebfd6e9ec186fa51eb5ca59
+payload/home/.config/mpv/scripts/bdanmaku.lua	/home/pang/.config/mpv/scripts/bdanmaku.lua	644	05e63e2413e877725e41b3b57582e6f1
+payload/home/.config/mpv/使用说明.md	/home/pang/.config/mpv/使用说明.md	644	605bbd156b1fb3512902d62c550059cd
 payload/home/.config/niri/conf.d/animations.kdl	/home/pang/.config/niri/conf.d/animations.kdl	644	a2bb9cd9ee2e0d137f0a160e7e769347
-payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	6f0bb3e21ee1b1566ab357b465065567
+payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	162ef77e4771431562e4f51e8c81ad8d
 payload/home/.config/niri/conf.d/cursor.kdl	/home/pang/.config/niri/conf.d/cursor.kdl	644	da3d31125409f685f2dd5ffcb3c87cb4
 payload/home/.config/niri/conf.d/environment.kdl	/home/pang/.config/niri/conf.d/environment.kdl	644	a911b178abca4a884dc44461659a0548
 payload/home/.config/niri/conf.d/general.kdl	/home/pang/.config/niri/conf.d/general.kdl	644	4e00543e1ddac2d25b58333982010608
@@ -69,7 +73,7 @@ payload/home/.config/systemd/user/rice-dnd.timer	/home/pang/.config/systemd/user
 payload/home/.config/user-dirs.dirs	/home/pang/.config/user-dirs.dirs	600	45c96841bc79b35d0d7b60cc328e11b2
 payload/home/.config/user-dirs.locale	/home/pang/.config/user-dirs.locale	644	0d61f8370cad1d412f80b84d143e1257
 payload/home/.config/zellij/config.kdl	/home/pang/.config/zellij/config.kdl	644	e0adb008a1d8922977ab9fc55dc4ebb7
-payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	d155329eeb2f352ef873b40e429db0f2
+payload/home/.local/state/noctalia/settings.toml	/home/pang/.local/state/noctalia/settings.toml	644	2e643365288fef6fb08ed6027631f980
 payload/home/.local/share/applications/qq.desktop	/home/pang/.local/share/applications/qq.desktop	644	a93b140354cb6f3ee0c6f3f86a2d9090
 payload/home/.local/share/applications/linuxqq-wayland-fix.desktop	/home/pang/.local/share/applications/linuxqq-wayland-fix.desktop	644	73afa243ba8c4f34e8426bbd1a8ae73d
 payload/home/Pictures/wallpapers/初雪.png	/home/pang/Pictures/wallpapers/初雪.png	600	6ce51e6481a10fba6ee5bcad1cf3b1fd
@@ -83,6 +87,7 @@ payload/home/Pictures/wallpapers/花语.png	/home/pang/Pictures/wallpapers/花�
 payload/home/Pictures/wallpapers/落霞.png	/home/pang/Pictures/wallpapers/落霞.png	644	e0434b151e30b7782b8bcc05be9e7767
 payload/home/Pictures/wallpapers/蓝调.png	/home/pang/Pictures/wallpapers/蓝调.png	644	b74d616694cdbe45ee808857a3dbbee7
 payload/home/Pictures/wallpapers/逐风.png	/home/pang/Pictures/wallpapers/逐风.png	644	32ab7be14ce7d4c95c3ffeda2ffafb72
+payload/home/bin/biliass	/home/pang/bin/biliass	755	7b96d566a881caf805748aff3f9572af
 payload/home/noctalia-plugins/magnifier/panel.luau	/home/pang/noctalia-plugins/magnifier/panel.luau	644	0429de26087b3e9d86ed8b8c3ae55703
 payload/home/noctalia-plugins/magnifier/plugin.toml	/home/pang/noctalia-plugins/magnifier/plugin.toml	644	01775341b5fcb9d33335df0ea2eed985
 payload/home/noctalia-plugins/magnifier/tools/cursor-track/build.sh	/home/pang/noctalia-plugins/magnifier/tools/cursor-track/build.sh	755	3c2ec34fa6873d3ad3557e67c0866149

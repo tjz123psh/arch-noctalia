@@ -36,3 +36,4 @@ payload/home/.config/nomacs/Image Lounge.conf	用户态：看图程序设置
 payload/home/.config/fcitx5/conf/notifications.conf	用户态：输入法通知设置
 payload/home/.config/fcitx5/conf/punctuation.conf	用户态：输入法标点转换设置
 payload/home/.config/fastfetch/config.jsonc	用户态：fastfetch 主配置（Noctalia 只另写 themes/noctalia.jsonc）
+payload/home/.config/mpv/script-opts/uosc.conf	用户态：mpv uosc 界面主题（配色/圆角/半透明；改完不会被重跑覆盖）
