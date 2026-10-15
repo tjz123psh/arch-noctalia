@@ -200,8 +200,6 @@ payload/system/var/lib/avatars/pang/.face	/var/lib/avatars/pang/.face	644	fd95e0
 payload/home/.local/bin/niri-keys	/home/pang/.local/bin/niri-keys	755	f81a38b1238aa1353afe3206f81fcdc0
 payload/home/.local/share/applications/yazi.desktop	/home/pang/.local/share/applications/yazi.desktop	644	053453ff95416c77c33e3c79e2daeb9c
 payload/home/.local/share/nautilus-python/extensions/rice-menu.py	/home/pang/.local/share/nautilus-python/extensions/rice-menu.py	644	77dd6c5ea8dee5366de35b161beee98a
-payload/home/Documents/notes/便签-2.md	/home/pang/Documents/notes/便签-2.md	644	d41d8cd98f00b204e9800998ecf8427e
-payload/home/Documents/notes/便签.md	/home/pang/Documents/notes/便签.md	644	d41d8cd98f00b204e9800998ecf8427e
 payload/home/Templates/C 源文件.c	/home/pang/Templates/C 源文件.c	644	86a0fc89a67f71ee9ed8b417735426fd
 payload/home/Templates/CSS 样式表.css	/home/pang/Templates/CSS 样式表.css	644	d41d8cd98f00b204e9800998ecf8427e
 payload/home/Templates/Dockerfile	/home/pang/Templates/Dockerfile	644	d41d8cd98f00b204e9800998ecf8427e
