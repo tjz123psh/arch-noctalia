@@ -97,10 +97,10 @@ binds {
     // Super+Ctrl+滚轮: 将当前列移到下方/上方工作区（滚轮版）
     Mod+Ctrl+WheelScrollDown cooldown-ms=150 hotkey-overlay-title="将当前列移到下方工作区" { move-column-to-workspace-down; }
     Mod+Ctrl+WheelScrollUp cooldown-ms=150 hotkey-overlay-title="将当前列移到上方工作区" { move-column-to-workspace-up; }
-    // Super+I: 切换到上方工作区
-    Mod+I hotkey-overlay-title="切换到上方工作区" { focus-workspace-up; }
-    // Super+U: 切换到下方工作区
-    Mod+U hotkey-overlay-title="切换到下方工作区" { focus-workspace-down; }
+    // Alt+U: 切换到上方工作区
+    Alt+U hotkey-overlay-title="切换到上方工作区" { focus-workspace-up; }
+    // Alt+I: 切换到下方工作区
+    Alt+I hotkey-overlay-title="切换到下方工作区" { focus-workspace-down; }
     // Super+Shift+I/U: 上下移动整个工作区（重新排序）
     Mod+Shift+I hotkey-overlay-title="上下移动整个工作区" { move-workspace-up; }
     Mod+Shift+U hotkey-overlay-title="上下移动整个工作区" { move-workspace-down; }
