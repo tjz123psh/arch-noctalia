@@ -205,6 +205,10 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 # · 本机自建 Noctalia 插件 pang/tide-sidebar（侧边栏工作台，2026-10-15 重构完成并启用）：
 #   源码在 ~/noctalia-plugins（独立 git 仓库），由 Noctalia 插件系统装进 ~/.local/state/noctalia/plugins/**（已有 pattern 账），
 #   安装器不代管插件文件；只纳管两处接口：niri 快捷键 Super+Shift+W（binds.kdl）与 settings.toml 的 enabled 列表。
+# · 显卡模式（2026-10-16）：/etc/supergfxd.conf 的 hotplug_type 由 None 改为 Asus（上游 / Arch Wiki 建议值）。
+#   原因：ASUS 的 dgpu_disable 机制下，hotplug_type≠Asus 时 supergfxd 开机看到 dgpu_disable=true 会判定状态错乱，
+#   强行把 dgpu_disable 写回 0 并回到 Hybrid —— 表现为『切集显 → 重启 → 又变混合』（journal 有对应 WARN）。
+#   该文件纳管方式：files.tsv 一行 + runtime-regenerated.tsv 一行（mode 字段由 supergfxd 自写，只核存在性，避免切模式就报漂移）。
 # · 便签（2026-10-15 澄清）：真正的便签正文由侧边栏插件 tide-sidebar 保管在
 #   ~/.local/state/noctalia/plugins/data/pang/tide-sidebar/private/notes-{a,b}.json（+ frontend/notes.json），
 #   属用户数据、非缓存（见上面 plugins/** 的 pattern 行）。安装器原先在 ~/Documents/notes/ 种的两个空模板（便签.md、便签-2.md）

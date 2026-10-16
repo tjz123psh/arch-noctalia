@@ -21,3 +21,4 @@ payload/home/.config/yazi/flavors/noctalia.yazi/flavor.toml	Noctalia 主题模�
 payload/home/.config/yazi/flavors/noctalia.yazi/tmtheme.xml	Noctalia 主题模板生成（语法高亮）
 payload/home/.config/Kingsoft/Office.conf	WPS 运行时自写（时间戳 / 插件通道时间 / 硬件上报计数）
 payload/home/.config/Kingsoft/WPSCloud.conf	WPS 运行时自写（设备键 / 引导标记 / 云端开关）
+payload/system/etc/supergfxd.conf	supergfxd 切换显卡模式时会改写 mode 字段；只核存在性（hotplug_type=Asus 见 excluded.tsv 记账）

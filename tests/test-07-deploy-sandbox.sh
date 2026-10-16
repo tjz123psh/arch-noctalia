@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # tests/test-07-deploy-sandbox.sh — 07 的端到端沙箱回归（不碰真机）。
-#   1) 全量部署：真实 manifests/files.tsv 的 339 行全部落到 <沙箱 root> 之下，
+#   1) 全量部署：真实 manifests/files.tsv 的 340 行全部落到 <沙箱 root> 之下，
 #      逐个核对「存在 + 权限位 == 清单 mode + md5 == 清单 md5」（预置的 seed 目标只核存在性），
 #      且部署循环零 warn；
 #   2) seed：预置用户内容的种子文件必须保持原样（kept (seed)）；
@@ -74,7 +74,7 @@ if ! out1="$(run_a 2>&1)"; then
   printf '%s\n' "$out1" | tail -20
   bad "first full sandbox deploy exited non-zero"
 fi
-grep -q '^\[info\]  files: 339 checked, 338 deployed, 0 unchanged, 1 kept (seed), 0 failed$' <<<"$out1" \
+grep -q '^\[info\]  files: 340 checked, 339 deployed, 0 unchanged, 1 kept (seed), 0 failed$' <<<"$out1" \
   || bad "unexpected summary: $(grep 'files:' <<<"$out1" | tail -1)"
 
 deploy_warn="$(grep -cE '^\[warn\].*(install failed|post-install verify failed|payload md5 mismatch|payload missing)' <<<"$out1" || true)"
@@ -94,14 +94,14 @@ while IFS=$'\t' read -r rp tp mode md5; do
     [[ "$amd5" == "$md5" ]] || { bad "md5 mismatch: $tp"; nbad=$((nbad + 1)); }
   fi
 done < "$arepo/manifests/files.tsv"
-[[ "$n" == 339 ]] || bad "iterated $n rows, expected 339"
+[[ "$n" == 340 ]] || bad "iterated $n rows, expected 340"
 
 [[ "$(cat "$aroot$seed_target")" == "USER EDIT" ]] || bad "seed file was overwritten"
 grep -q 'kept (seed' <<<"$out1" || bad "kept (seed) message missing"
 
 if ! out2="$(run_a 2>&1)"; then bad "second (idempotent) run exited non-zero"; fi
 # 第二次：34 个新初始化的种子 + 预置的那个 = 35 个 seed 目标都已存在 → 全部 kept，其余 unchanged。
-grep -q '^\[info\]  files: 339 checked, 0 deployed, 306 unchanged, 33 kept (seed), 0 failed$' <<<"$out2" \
+grep -q '^\[info\]  files: 340 checked, 0 deployed, 307 unchanged, 33 kept (seed), 0 failed$' <<<"$out2" \
   || bad "second run is not idempotent: $(grep 'files:' <<<"$out2" | tail -1)"
 
 # ---------- B. 失败路径：目标目录不可写 ----------
@@ -143,4 +143,4 @@ if (( fail > 0 )); then
   echo "test-07-deploy-sandbox: FAIL"
   exit 1
 fi
-echo "ok: 339-row sandbox deploy (modes+md5+seed+idempotent), failure path exits non-zero, unsafe targets rejected"
+echo "ok: 340-row sandbox deploy (modes+md5+seed+idempotent), failure path exits non-zero, unsafe targets rejected"

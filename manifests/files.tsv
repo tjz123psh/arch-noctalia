@@ -180,6 +180,7 @@ payload/system/etc/nwg-hello/background.png	/etc/nwg-hello/background.png	664	2d
 payload/system/etc/nwg-hello/niri.kdl	/etc/nwg-hello/niri.kdl	644	f190ba42fd66d323323a6d141cd61600
 payload/system/etc/nwg-hello/nwg-hello.css	/etc/nwg-hello/nwg-hello.css	644	1885e751ac7389f032ecca5497b43e84
 payload/system/etc/nwg-hello/nwg-hello.json	/etc/nwg-hello/nwg-hello.json	644	ac88a01d6e17a6d1bfc9928d7e6b1e7a
+payload/system/etc/supergfxd.conf	/etc/supergfxd.conf	644	f65a240e1242033518b37f4232d3eda0
 payload/system/usr/share/fonts/google-sans-flex/GoogleSansFlex-Rounded.ttf	/usr/share/fonts/google-sans-flex/GoogleSansFlex-Rounded.ttf	644	7291408d3d5a9777012b07a5c36bcb04
 payload/system/usr/share/fonts/google-sans-flex/OFL.txt	/usr/share/fonts/google-sans-flex/OFL.txt	644	cc296642ca0f5561d59c6c20adfa5d69
 payload/system/usr/share/fonts/google-sans-flex/README.md	/usr/share/fonts/google-sans-flex/README.md	644	11554cdd3228bc627d10f6af24626fa8
