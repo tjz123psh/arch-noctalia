@@ -117,6 +117,7 @@ dir	/home/pang/.config/com.dbx.app	包安装后自动生成或自行安装的配
 dir	/home/pang/.config/antigravity-proxy	包安装后自动生成或自行安装的配置，不入仓
 dir	/home/pang/.config/hardinfo2	包安装后自动生成或自行安装的配置，不入仓（hardinfo2 首启自建 settings.ini：版本号 + 主题号）
 dir	/home/pang/noctalia-plugins	自行安装的 Noctalia 插件源码（独立 git 仓库；不入本仓）
+dir	/home/pang/.agents	自行安装的共享技能库（Agent Skills 规范位置 ~/.agents/skills，独立 git 仓库；DSH 与 pi 都原生读取，不入本仓）
 dir	/home/pang/.local/share/mpv-danmaku	弹幕转换器 biliass 的 Python venv（首用自动创建；机器本地，不入仓）
 file	/home/pang/.config/mpv/scripts/assrt.lua	第三方脚本：上游未提供许可证，为免版权问题不入公开仓库（自行安装）
 file	/home/pang/.config/mpv/script-opts/assrt.conf	第三方脚本配置（含 assrt.net API token，不入公开仓库）
@@ -205,6 +206,10 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 # · 本机自建 Noctalia 插件 pang/tide-sidebar（侧边栏工作台，2026-10-15 重构完成并启用）：
 #   源码在 ~/noctalia-plugins（独立 git 仓库），由 Noctalia 插件系统装进 ~/.local/state/noctalia/plugins/**（已有 pattern 账），
 #   安装器不代管插件文件；只纳管两处接口：niri 快捷键 Super+Shift+W（binds.kdl）与 settings.toml 的 enabled 列表。
+# · AI agent 技能共享（2026-10-16 建立）：~/.agents/skills/ 是 Agent Skills 规范的用户级位置——
+#   DSH 的搜索根含 <agentsHome>/skills（发现深度仅一层）、pi 的 docs/skills.md 亦明确支持；
+#   故共用技能放这里，两边零配置可见（实测：DSH 会话内热更新技能清单）。工具专属技能留在
+#   ~/.dsh/skills（DSH 专属）与 ~/.pi/agent/skills（pi 专属）；库本体是独立 git 仓库，见上面的 dir 行。
 # · 显卡模式（2026-10-16）：/etc/supergfxd.conf 的 hotplug_type 由 None 改为 Asus（上游 / Arch Wiki 建议值）。
 #   原因：ASUS 的 dgpu_disable 机制下，hotplug_type≠Asus 时 supergfxd 开机看到 dgpu_disable=true 会判定状态错乱，
 #   强行把 dgpu_disable 写回 0 并回到 Hybrid —— 表现为『切集显 → 重启 → 又变混合』（journal 有对应 WARN）。
