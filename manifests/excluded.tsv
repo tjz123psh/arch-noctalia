@@ -163,7 +163,7 @@ dir	/home/pang/.sts4	自行安装（Spring Tool Suite 4 数据）
 dir	/home/pang/.vscode	自行安装（VS Code 扩展，约 366M；重装后按需再装）
 dir	/home/pang/.vscode-shared	自行安装（VS Code 共享数据）
 dir	/home/pang/.xwechat	自行安装（微信数据，约 267M）
-dir	/home/pang/.dsh	安全：DSH 会话与附件数据（约 1.6G，含会话内容与凭据，绝不入公开仓库）
+dir	/home/pang/.dsh	安全：DSH 会话与附件数据（约 1.6G，含会话内容与凭据，绝不入公开仓库）；其中 ~/.dsh/skills 放 2 个 DSH 专属技能（dsh-upgrade、dsh-plugin-management）
 file	/home/pang/.sys1og.conf	来源不明（疑似工具把 syslog 误写成 sys1og；内容是 UUID+二进制），不入仓
 dir	/home/pang/Downloads	个人数据目录（自行维护）
 dir	/home/pang/Projects	个人项目目录（约 3.2G，自行维护；本安装器源码就在其中）
