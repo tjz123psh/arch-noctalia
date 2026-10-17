@@ -2,7 +2,6 @@
 # kind<TAB>item<TAB>reason
 # kind：package | file | dir | pattern
 # 说明：本清单 = 声明的排除项（样本采集与包对账共用）。任何"未解释"的差异都应该在这里被解释。
-file	/home/pang/.config/fish/conf.d/proxy-env.fish	凭据：代理环境变量文件（不入公开仓库）
 file	/home/pang/.config/pulse/cookie	安全：PulseAudio cookie
 dir	/home/pang/.config/qt5ct	说明：Qt5 已随 KeePassXC 卸载（本机无 Qt5 应用、无 qt5ct 工具）；此处由 Noctalia 主题模板按需再生，不纳入
 file	/home/pang/.config/QtProject.conf	说明：Qt5 文件对话框历史；随 Qt5 卸载一并清除，若被旧程序再生则不纳入
@@ -210,6 +209,10 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 #   DSH 的搜索根含 <agentsHome>/skills（发现深度仅一层）、pi 的 docs/skills.md 亦明确支持；
 #   故共用技能放这里，两边零配置可见（实测：DSH 会话内热更新技能清单）。工具专属技能留在
 #   库文件已纳入本仓（payload/home/.agents/** + files.tsv），只有 ~/.agents/.git 本地历史不入仓（见上面的 dir 行）。
+# · fish 两件事（2026-10-17）：
+#   ① conf.d/proxy-env.fish 纳入安装器（files.tsv + seed.tsv）：内容只有 127.0.0.1 代理地址、无凭据，故不再是‘凭据类不入仓’。
+#   ② completions/rice-hotspot.fish 删除（payload + files.tsv 行 + 样本机文件）：热点改由侧边栏插件 pang/tide-sidebar 提供 UI；
+#      ~/bin/rice-hotspot 命令保留（插件 helper 仍调用它），恢复来源 = git 历史。
 # · 内屏刷新率（2026-10-17）：niri 输出与登录界面都钉 1920x1080@144.063，且同时写 eDP-1（核显/Hybrid）与 eDP-2（AsusMuxDgpu）两段。
 #   背景：MUX 切独显后面板接口名由 eDP-1 变 eDP-2；niri 的 mode 若不写刷新率就取驱动 preferred ——
 #   NVIDIA 的 preferred 是 60.061Hz（AMD 是 144Hz），所以切独显后才掉到 60Hz。

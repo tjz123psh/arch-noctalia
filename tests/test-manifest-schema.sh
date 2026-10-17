@@ -22,8 +22,8 @@ count_lock "$M/files.tsv" 464 "files.tsv"
 count_lock "$M/packages.tsv" 171 "packages.tsv"
 count_lock "$M/aur.tsv" 16 "aur.tsv"
 count_lock "$M/bin-links.tsv" 18 "bin-links.tsv"
-count_lock "$M/seed.tsv" 33 "seed.tsv"
-count_lock "$M/excluded.tsv" 156 "excluded.tsv"
+count_lock "$M/seed.tsv" 34 "seed.tsv"
+count_lock "$M/excluded.tsv" 155 "excluded.tsv"
 count_lock "$M/runtime-regenerated.tsv" 17 "runtime-regenerated.tsv"
 
 # --- 通用逐列规则 ---
@@ -89,4 +89,4 @@ if [[ -s "$errs" ]]; then
   echo "test-manifest-schema: FAIL ($(wc -l < "$errs") problem(s))"
   exit 1
 fi
-echo "ok: 7 manifests (464/171/16/18/33/156/17 rows) match the column/format/value/whitelist rules"
+echo "ok: 7 manifests (464/171/16/18/34/155/17 rows) match the column/format/value/whitelist rules"

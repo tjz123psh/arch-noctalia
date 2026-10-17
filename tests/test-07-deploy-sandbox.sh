@@ -101,7 +101,7 @@ grep -q 'kept (seed' <<<"$out1" || bad "kept (seed) message missing"
 
 if ! out2="$(run_a 2>&1)"; then bad "second (idempotent) run exited non-zero"; fi
 # 第二次：34 个新初始化的种子 + 预置的那个 = 35 个 seed 目标都已存在 → 全部 kept，其余 unchanged。
-grep -q '^\[info\]  files: 464 checked, 0 deployed, 431 unchanged, 33 kept (seed), 0 failed$' <<<"$out2" \
+grep -q '^\[info\]  files: 464 checked, 0 deployed, 430 unchanged, 34 kept (seed), 0 failed$' <<<"$out2" \
   || bad "second run is not idempotent: $(grep 'files:' <<<"$out2" | tail -1)"
 
 # ---------- B. 失败路径：目标目录不可写 ----------
