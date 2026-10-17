@@ -44,6 +44,7 @@ curl -fsSL $U | bash -s -- --no-aur    # 外网不稳时先跳过 AUR；进桌�
   在线字幕：`scripts/assrt.lua` 从 assrt.net 搜字幕（按 `a` 触发）——上游没有许可证文件，为免版权问题**不入公开仓库**（见 `excluded.tsv`）；需要在 `script-opts/assrt.conf` 填自己的 API token（assrt.net 注册后免费获取）。
 - 显卡模式（supergfxd）：`/etc/supergfxd.conf` 设 `hotplug_type: "Asus"`（上游 / Arch Wiki 建议值）。ASUS 的 `dgpu_disable` 机制下，若该值为 `None`，supergfxd 开机会把「集显」判成状态错乱、强行把 dgpu_disable 写回 0 并回到 Hybrid —— 表现就是「切集显 → 重启 → 又变混合」。该文件列 `files.tsv` + `runtime-regenerated.tsv`（`mode` 字段由 supergfxd 自写，只核存在性）。
 - AI agent 技能共享库：`~/.agents/skills/`（Agent Skills 规范的用户级位置，**DSH 与 pi 都原生读取**）；共用技能放这里、工具专属的留在 `~/.dsh/skills` 与 `~/.pi/agent/skills`；库本体是独立 git 仓库（见 `excluded.tsv` 记账）。共用脚本（`context.mjs` / `palette.mjs` / `pseudoloc.py`）在 `~/.agents/skills/_shared/scripts/`。当前分布：共用 18 个、DSH 专属 2 个（`~/.dsh/skills`）、pi 专属 1 个（`~/.pi/agent/skills/batch`）。
+- 内屏刷新率：niri 的 `~/.config/niri/conf.d/outputs.kdl` 与登录界面的 `/etc/nwg-hello/niri.kdl` 都**显式钉 `1920x1080@144.063`**，并**给核显（eDP-1）与 MUX 独显（eDP-2）两个接口名各写一段** —— MUX 切到独显后面板接口名会变，而 `mode` 只写「1920x1080」不带刷新率时 niri 用驱动的 preferred 模式（NVIDIA 那边 preferred 只有 60.061Hz，AMD 那边恰是 144Hz，所以以前没暴露）。
 - 环境适配：ESP 等 vfat 挂载不做权限位校验、系统文件读取自动走 root；**不改你的挂载设置**。
 - 外观：毛玻璃等 GTK 样式以样式类限定作用域（`gtk.css` 追加段，只影响指定程序）；程序的"系统默认值"以 GSettings vendor override 随 07 部署（`/usr/share/glib-2.0/schemas/*.gschema.override`），07 末尾统一 `glib-compile-schemas` 生效——你在程序里改过的值（dconf）优先，不会被覆盖。
 - 未纳管项有账可查：`manifests/excluded.tsv` 记录**手动安装项**（需自行安装，安装器带上会出问题，如 AUR 交互构建、按机器定制、需登录/许可）、安全排除项与各类缓存/生成目录的解释；实际纳管的内容见 `files.tsv` / `packages.tsv` / `aur.tsv`。

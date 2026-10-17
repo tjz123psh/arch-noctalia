@@ -210,6 +210,10 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 #   DSH 的搜索根含 <agentsHome>/skills（发现深度仅一层）、pi 的 docs/skills.md 亦明确支持；
 #   故共用技能放这里，两边零配置可见（实测：DSH 会话内热更新技能清单）。工具专属技能留在
 #   ~/.dsh/skills（DSH 专属）与 ~/.pi/agent/skills（pi 专属）；库本体是独立 git 仓库，见上面的 dir 行。
+# · 内屏刷新率（2026-10-17）：niri 输出与登录界面都钉 1920x1080@144.063，且同时写 eDP-1（核显/Hybrid）与 eDP-2（AsusMuxDgpu）两段。
+#   背景：MUX 切独显后面板接口名由 eDP-1 变 eDP-2；niri 的 mode 若不写刷新率就取驱动 preferred ——
+#   NVIDIA 的 preferred 是 60.061Hz（AMD 是 144Hz），所以切独显后才掉到 60Hz。
+#   两个文件都在 files.tsv：home/.config/niri/conf.d/outputs.kdl 与 system/etc/nwg-hello/niri.kdl —— 重装即恢复。
 # · 显卡模式（2026-10-16）：/etc/supergfxd.conf 的 hotplug_type 由 None 改为 Asus（上游 / Arch Wiki 建议值）。
 #   原因：ASUS 的 dgpu_disable 机制下，hotplug_type≠Asus 时 supergfxd 开机看到 dgpu_disable=true 会判定状态错乱，
 #   强行把 dgpu_disable 写回 0 并回到 Hybrid —— 表现为『切集显 → 重启 → 又变混合』（journal 有对应 WARN）。
