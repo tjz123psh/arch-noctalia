@@ -2,13 +2,21 @@
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
 
   // ===== 外观 =====
+  // 默认用官方内置 arch ASCII logo（不会出现图片被裁切的问题）
+  // 想要真图就把下面 logo 段换成注释里的图片版（宽高可按终端微调）
   "logo": {
-    "type": "kitty",
-    "source": "~/.config/fastfetch/arch-logo.png",
-    "width": 14,
-    "height": 8,
-    "padding": { "top": 1, "right": 3, "left": 1 }
+    "type": "builtin",
+    "source": "arch",
+    "padding": { "top": 1, "right": 4, "left": 2 },
+    "color": { "1": "#63cafc", "2": "#63c8db" }
   },
+  // "logo": {
+  //   "type": "kitty",
+  //   "source": "~/.config/fastfetch/arch-logo.png",
+  //   "width": 12,
+  //   "height": 8,
+  //   "padding": { "top": 1, "right": 3, "left": 1 }
+  // },
   "display": {
     "separator": " ",
     "key": { "width": 0 },
@@ -18,25 +26,25 @@
   },
 
   // ===== 树形分组：系统 / 桌面 / 硬件 =====
-  // 图标全部来自 Nerd Font（已用 Maple Mono NF 字体实测渲染确认）
+  // 图标与文字之间留 2 个空格，避免宽字形（鱼/终端）挤到标签上
   "modules": [
     { "type": "os", "key": "​", "keyColor": "#efe7d6" },
     "break",
-    { "type": "kernel", "key": "├─   KER  ", "keyColor": "#d8b36a" },
-    { "type": "packages", "key": "├─   PAK  ", "keyColor": "#d8b36a", "format": "{pacman}" },
-    { "type": "title", "key": "└─   USR  ", "keyColor": "#d8b36a" },
+    { "type": "kernel", "key": "├─    KER  ", "keyColor": "#d8b36a" },
+    { "type": "packages", "key": "├─    PAK  ", "keyColor": "#d8b36a", "format": "{pacman}" },
+    { "type": "title", "key": "└─    USR  ", "keyColor": "#d8b36a" },
     "break",
     { "type": "wm", "key": "WM", "keyColor": "#efe7d6" },
-    { "type": "shell", "key": "├─   SHE  ", "keyColor": "#d8b36a" },
-    { "type": "terminal", "key": "├─   TER  ", "keyColor": "#d8b36a" },
-    { "type": "command", "key": "└─   TFO  ", "keyColor": "#d8b36a", "text": "fc-match -f '%{family}' monospace" },
+    { "type": "shell", "key": "├─    SHE  ", "keyColor": "#d8b36a" },
+    { "type": "terminal", "key": "├─    TER  ", "keyColor": "#d8b36a" },
+    { "type": "command", "key": "└─    TFO  ", "keyColor": "#d8b36a", "text": "fc-match -f '%{family}' monospace" },
     "break",
     { "type": "host", "key": "PC", "keyColor": "#efe7d6" },
-    { "type": "cpu", "key": "├─   CPU  ", "keyColor": "#d8b36a" },
-    { "type": "memory", "key": "├─   MEM  ", "keyColor": "#d8b36a" },
-    { "type": "gpu", "key": "├─  󰢮 GPU  ", "keyColor": "#d8b36a" },
-    { "type": "display", "key": "├─  󰍹 MON  ", "keyColor": "#d8b36a" },
-    { "type": "disk", "key": "├─   DIS  ", "keyColor": "#d8b36a", "folders": ["/"] },
-    { "type": "battery", "key": "└─   BAT  ", "keyColor": "#d8b36a" }
+    { "type": "cpu", "key": "├─    CPU  ", "keyColor": "#d8b36a" },
+    { "type": "memory", "key": "├─    MEM  ", "keyColor": "#d8b36a" },
+    { "type": "gpu", "key": "├─  󰢮  GPU  ", "keyColor": "#d8b36a" },
+    { "type": "display", "key": "├─  󰍹  MON  ", "keyColor": "#d8b36a" },
+    { "type": "disk", "key": "├─    DIS  ", "keyColor": "#d8b36a", "folders": ["/"] },
+    { "type": "battery", "key": "└─    BAT  ", "keyColor": "#d8b36a" }
   ]
 }
