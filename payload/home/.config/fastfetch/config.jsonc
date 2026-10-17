@@ -4,47 +4,37 @@
   // ===== 外观 =====
   "logo": {
     "type": "builtin",
-    "source": "arch_small",
+    "source": "arch",
     "padding": { "top": 1, "right": 4, "left": 2 },
     "color": { "1": "#63cafc", "2": "#63c8db" }
   },
   "display": {
-    "separator": "  ",
-    "color": { "keys": "#9fcafc", "title": "#bac8db" },
+    "separator": " ",
+    "key": { "width": 0 },
     "percent": {
       "color": { "green": "#d6bee5", "yellow": "#9fcafc", "red": "#ffb4ab" }
-    },
-    "key": { "width": 4, "type": "icon" }
+    }
   },
 
-  // ===== 分组：系统 / 硬件 / 桌面 / 网络 =====
+  // ===== 树形分组：系统 / 桌面 / 硬件 =====
   "modules": [
-    "title",
-
-    { "type": "separator", "string": "── 系统 ──────" },
-    "os",
-    "host",
-    "kernel",
-    "uptime",
-    "packages",
-
-    { "type": "separator", "string": "── 硬件 ──────" },
-    "cpu",
-    "gpu",
-    "memory",
-    "swap",
-    "disk",
-    "display",
-    "battery",
-
-    { "type": "separator", "string": "── 桌面 ──────" },
-    "wm",
-    "shell",
-    "terminal",
-    "font",
-    "theme",
-
-    { "type": "separator", "string": "── 网络 ──────" },
-    "localip"
+    { "type": "os", "key": "​", "keyColor": "#bac8db" },
+    "break",
+    { "type": "kernel", "key": "├─ KER", "keyColor": "#9fcafc" },
+    { "type": "packages", "key": "├─ PAK", "keyColor": "#9fcafc", "format": "{pacman}" },
+    { "type": "title", "key": "└─ USR", "keyColor": "#9fcafc" },
+    "break",
+    { "type": "wm", "key": "WM", "keyColor": "#bac8db" },
+    { "type": "shell", "key": "├─ SHE", "keyColor": "#9fcafc" },
+    { "type": "terminal", "key": "├─ TER", "keyColor": "#9fcafc" },
+    { "type": "font", "key": "└─ TFO", "keyColor": "#9fcafc" },
+    "break",
+    { "type": "host", "key": "PC", "keyColor": "#bac8db" },
+    { "type": "cpu", "key": "├─ CPU", "keyColor": "#9fcafc" },
+    { "type": "memory", "key": "├─ MEM", "keyColor": "#9fcafc" },
+    { "type": "gpu", "key": "├─ GPU", "keyColor": "#9fcafc" },
+    { "type": "display", "key": "├─ MON", "keyColor": "#9fcafc" },
+    { "type": "disk", "key": "├─ DIS", "keyColor": "#9fcafc", "folders": ["/"] },
+    { "type": "battery", "key": "└─ BAT", "keyColor": "#9fcafc" }
   ]
 }
