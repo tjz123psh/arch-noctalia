@@ -8,7 +8,7 @@
     "type": "kitty",
     "source": "~/.config/fastfetch/arch-logo.png",
     "width": 23,
-    "height": 19,
+    "height": 18,
     "padding": { "top": 0, "right": 3, "left": 2 }
   },
   // "logo": {
@@ -28,7 +28,6 @@
   // ===== 树形分组：系统 / 桌面 / 硬件 =====
   "modules": [
     { "type": "os", "key": "​", "keyColor": "#efe7d6" },
-    "break",
     { "type": "kernel", "key": "├─    KER  ", "keyColor": "#d8b36a" },
     { "type": "packages", "key": "├─    PAK  ", "keyColor": "#d8b36a", "format": "{pacman}" },
     { "type": "title", "key": "└─    USR  ", "keyColor": "#d8b36a" },
