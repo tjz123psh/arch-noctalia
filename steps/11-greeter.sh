@@ -2,6 +2,9 @@
 # steps/11-greeter.sh — Stage 11: greetd + nwg-hello 登录界面。
 # 1) 复核资产（/etc/greetd/config.toml、/etc/nwg-hello/*、/var/lib/avatars/pang/.face）——内容由 07 部署；
 # 2) 给 /etc/nwg-hello/background.png 加 ACL u:pang:rw（壁纸→登录背景同步 hook 需要写入权限）；
+#    该文件的初始快照 = 种子里的默认壁纸（Pictures/wallpapers/斑斓.png，字节完全相同），
+#    所以装完第一次开机，登录界面与桌面壁纸就是一致的；之后每次换壁纸由 ~/bin/rice-login-bg
+#    （Noctalia 的 wallpaper_changed hook）按原字节跟随改写，本步不再参与。
 # 3) 启用 greetd（tty1 由 nwg-hello 接管；不 --now——重启后生效，避免掐断当前安装会话）；
 #    并启用 getty@tty2（应急控制台 VT2，与样本一致）。
 # 幂等：已启用 / ACL 已存在 → 跳过；重复运行安全。
