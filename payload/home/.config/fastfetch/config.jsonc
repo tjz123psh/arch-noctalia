@@ -17,25 +17,26 @@
     }
   },
 
-  // ===== 树形分组：系统 / 桌面 / 硬件（图标为 Nerd Font 字形）=====
+  // ===== 树形分组：系统 / 桌面 / 硬件 =====
+  // 图标全部来自 Nerd Font（已用 Maple Mono NF 字体实测渲染确认）
   "modules": [
     { "type": "os", "key": "​", "keyColor": "#efe7d6" },
     "break",
     { "type": "kernel", "key": "├─   KER  ", "keyColor": "#d8b36a" },
-    { "type": "packages", "key": "├─   PAK  ", "keyColor": "#d8b36a", "format": "{pacman}" },
-    { "type": "title", "key": "└─   USR  ", "keyColor": "#d8b36a" },
+    { "type": "packages", "key": "├─   PAK  ", "keyColor": "#d8b36a", "format": "{pacman}" },
+    { "type": "title", "key": "└─   USR  ", "keyColor": "#d8b36a" },
     "break",
     { "type": "wm", "key": "WM", "keyColor": "#efe7d6" },
-    { "type": "shell", "key": "├─   SHE  ", "keyColor": "#d8b36a" },
+    { "type": "shell", "key": "├─   SHE  ", "keyColor": "#d8b36a" },
     { "type": "terminal", "key": "├─   TER  ", "keyColor": "#d8b36a" },
     { "type": "command", "key": "└─   TFO  ", "keyColor": "#d8b36a", "text": "fc-match -f '%{family}' monospace" },
     "break",
     { "type": "host", "key": "PC", "keyColor": "#efe7d6" },
     { "type": "cpu", "key": "├─   CPU  ", "keyColor": "#d8b36a" },
-    { "type": "memory", "key": "├─   MEM  ", "keyColor": "#d8b36a" },
-    { "type": "gpu", "key": "├─   GPU  ", "keyColor": "#d8b36a" },
-    { "type": "display", "key": "├─   MON  ", "keyColor": "#d8b36a" },
-    { "type": "disk", "key": "├─   DIS  ", "keyColor": "#d8b36a", "folders": ["/"] },
+    { "type": "memory", "key": "├─   MEM  ", "keyColor": "#d8b36a" },
+    { "type": "gpu", "key": "├─  󰢮 GPU  ", "keyColor": "#d8b36a" },
+    { "type": "display", "key": "├─  󰍹 MON  ", "keyColor": "#d8b36a" },
+    { "type": "disk", "key": "├─   DIS  ", "keyColor": "#d8b36a", "folders": ["/"] },
     { "type": "battery", "key": "└─   BAT  ", "keyColor": "#d8b36a" }
   ]
 }
