@@ -3,8 +3,14 @@ spawn-at-startup "sh" "-c" "nwg-hello; niri msg action quit --skip-confirmation"
 hotkey-overlay { skip-at-startup; }
 gestures { hot-corners { off; }; }
 layout { background-color "#0b0b12"; }
+
+// 内屏接口名随显卡模式变化：核显/Hybrid = eDP-1，MUX 独显 = eDP-2
+// 两个都钉 144Hz；不写刷新率时 niri 用驱动 preferred（NVIDIA 那边只有 60Hz）——2026-10-17
 output "eDP-1" {
-    mode "1920x1080"
+    mode "1920x1080@144.063"
+}
+output "eDP-2" {
+    mode "1920x1080@144.063"
 }
 
 include optional=true "/etc/nwg-hello/niri_overrides.kdl"

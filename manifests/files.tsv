@@ -177,7 +177,7 @@ payload/home/scripts/maintenance/tests/DESTRUCTIVE-VM.md	/home/pang/scripts/main
 payload/home/scripts/maintenance/tests/run	/home/pang/scripts/maintenance/tests/run	755	e2301d9d0390989948087b3275a76736
 payload/system/etc/greetd/config.toml	/etc/greetd/config.toml	644	1812fea641f1c31f43936e83e4cdde83
 payload/system/etc/nwg-hello/background.png	/etc/nwg-hello/background.png	664	2dfb5f774726de3c166ab9df1d282426
-payload/system/etc/nwg-hello/niri.kdl	/etc/nwg-hello/niri.kdl	644	f190ba42fd66d323323a6d141cd61600
+payload/system/etc/nwg-hello/niri.kdl	/etc/nwg-hello/niri.kdl	644	d8973521d6ce1ba46d039c95a305f6d1
 payload/system/etc/nwg-hello/nwg-hello.css	/etc/nwg-hello/nwg-hello.css	644	1885e751ac7389f032ecca5497b43e84
 payload/system/etc/nwg-hello/nwg-hello.json	/etc/nwg-hello/nwg-hello.json	644	ac88a01d6e17a6d1bfc9928d7e6b1e7a
 payload/system/etc/supergfxd.conf	/etc/supergfxd.conf	644	f65a240e1242033518b37f4232d3eda0
