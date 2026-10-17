@@ -26,23 +26,24 @@
   },
 
   // ===== 树形分组：系统 / 桌面 / 硬件 =====
+  // 每行图标+标签用各自的浅色（暖色组/冷色组），树线随行走同色；数值保持默认前台色。
   "modules": [
     { "type": "os", "key": "​", "keyColor": "#efe7d6" },
-    { "type": "kernel", "key": "├─    KER  ", "keyColor": "#d8b36a" },
-    { "type": "packages", "key": "├─    PAK  ", "keyColor": "#d8b36a", "format": "{pacman}" },
-    { "type": "title", "key": "└─    USR  ", "keyColor": "#d8b36a" },
+    { "type": "kernel", "key": "├─    KER  ", "keyColor": "#f2c078" },
+    { "type": "packages", "key": "├─    PAK  ", "keyColor": "#e8a2b8", "format": "{pacman}" },
+    { "type": "title", "key": "└─    USR  ", "keyColor": "#d9a2e8" },
     "break",
     { "type": "wm", "key": "WM ", "keyColor": "#efe7d6" },
-    { "type": "shell", "key": "├─    SHE  ", "keyColor": "#d8b36a" },
-    { "type": "terminal", "key": "├─    TER  ", "keyColor": "#d8b36a" },
-    { "type": "command", "key": "└─    TFO  ", "keyColor": "#d8b36a", "text": "fc-match -f '%{family}' monospace" },
+    { "type": "shell", "key": "├─    SHE  ", "keyColor": "#a2b8f2" },
+    { "type": "terminal", "key": "├─    TER  ", "keyColor": "#7fc8d9" },
+    { "type": "command", "key": "└─    TFO  ", "keyColor": "#8fd9b0", "text": "fc-match -f '%{family}' monospace" },
     "break",
     { "type": "host", "key": "PC ", "keyColor": "#efe7d6" },
-    { "type": "cpu", "key": "├─    CPU  ", "keyColor": "#d8b36a" },
-    { "type": "memory", "key": "├─    MEM  ", "keyColor": "#d8b36a" },
-    { "type": "gpu", "key": "├─  󰢮  GPU  ", "keyColor": "#d8b36a" },
-    { "type": "display", "key": "├─  󰍹  MON  ", "keyColor": "#d8b36a" },
-    { "type": "disk", "key": "├─    DIS  ", "keyColor": "#d8b36a", "folders": ["/"] },
-    { "type": "battery", "key": "└─    BAT  ", "keyColor": "#d8b36a" }
+    { "type": "cpu", "key": "├─    CPU  ", "keyColor": "#f5a97f" },
+    { "type": "memory", "key": "├─    MEM  ", "keyColor": "#b8a8f0" },
+    { "type": "gpu", "key": "├─  󰢮  GPU  ", "keyColor": "#93d9a0" },
+    { "type": "display", "key": "├─  󰍹  MON  ", "keyColor": "#e8c07a" },
+    { "type": "disk", "key": "├─    DIS  ", "keyColor": "#e89a9a", "folders": ["/"] },
+    { "type": "battery", "key": "└─    BAT  ", "keyColor": "#a8d9c8" }
   ]
 }
