@@ -9,7 +9,7 @@
     "source": "~/.config/fastfetch/arch-logo.png",
     "width": 10,
     "height": 7,
-    "padding": { "top": 1, "right": 3, "left": 1 }
+    "padding": { "top": 1, "right": 4, "left": 2 }
   },
   // "logo": {
   //   "type": "builtin",
@@ -18,7 +18,7 @@
   //   "color": { "1": "#63cafc", "2": "#63c8db" }
   // },
   "display": {
-    "separator": " ",
+    "separator": "",
     "key": { "width": 0 },
     "percent": {
       "color": { "green": "#d6bee5", "yellow": "#9fcafc", "red": "#ffb4ab" }
@@ -33,12 +33,12 @@
     { "type": "packages", "key": "├─    PAK  ", "keyColor": "#d8b36a", "format": "{pacman}" },
     { "type": "title", "key": "└─    USR  ", "keyColor": "#d8b36a" },
     "break",
-    { "type": "wm", "key": "WM", "keyColor": "#efe7d6" },
+    { "type": "wm", "key": "WM ", "keyColor": "#efe7d6" },
     { "type": "shell", "key": "├─    SHE  ", "keyColor": "#d8b36a" },
     { "type": "terminal", "key": "├─    TER  ", "keyColor": "#d8b36a" },
     { "type": "command", "key": "└─    TFO  ", "keyColor": "#d8b36a", "text": "fc-match -f '%{family}' monospace" },
     "break",
-    { "type": "host", "key": "PC", "keyColor": "#efe7d6" },
+    { "type": "host", "key": "PC ", "keyColor": "#efe7d6" },
     { "type": "cpu", "key": "├─    CPU  ", "keyColor": "#d8b36a" },
     { "type": "memory", "key": "├─    MEM  ", "keyColor": "#d8b36a" },
     { "type": "gpu", "key": "├─  󰢮  GPU  ", "keyColor": "#d8b36a" },
