@@ -2,8 +2,8 @@
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
 
   // ===== 外观 =====
-  // logo：官方 Arch 标志图片（kitty 图像协议）。图片按单元格比例做了透明留白，
-  // 不会像之前那样被裁掉底部。想回内置 ASCII 版就把 logo 段换成下面注释里的。
+  // logo：取自 ~/Pictures/wallpapers/圣剑.png 的脸部特写（原图裁 987,160-1232,520，
+  // 缩到 90x132 并加 8px 圆角）。想回内置 ASCII 版就把 logo 段换成下面注释里的。
   "logo": {
     "type": "kitty",
     "source": "~/.config/fastfetch/arch-logo.png",
