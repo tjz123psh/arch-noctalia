@@ -90,7 +90,7 @@ Treesitter 和 Mason 都会在启动阶段加载。发现缺失解析器时，�
 
 ### Treesitter 解析器下载需要本机 Clash 代理
 
-`nvim-treesitter` 的 `install()` 用 curl 拉 GitHub tarball。**2026-10-16：`~/.config/fish/conf.d/proxy-env.fish` 已恢复**（只在 `127.0.0.1:7890` 有监听时才设 `HTTP(S)_PROXY` / `ALL_PROXY`，大小写都设；实测走它拉 github 返回 200）⇒ **从 fish 启动的 nvim 有代理**；但 headless 脚本、非 fish shell（含 agent 自己的 bash）**没有** ⇒ 那些场景要手动带 `HTTPS_PROXY=http://127.0.0.1:7890`（无 tun 网卡，直连 google/github 均超时），而配置启动时会自动重试 ⇒ 每次启动刷一屏 curl 错误。`treesitter.lua` 已加 6 小时节流（stamp：`~/.local/state/nvim/treesitter-install-stamp`），节流期内只留一条 INFO 不联网。手动装须带代理：
+`nvim-treesitter` 的 `install()` 用 curl 拉 GitHub tarball。**2026-10-16：`~/.config/fish/conf.d/proxy.fish` 已恢复**（只在 `127.0.0.1:7890` 有监听时才设 `HTTP(S)_PROXY` / `ALL_PROXY`，大小写都设；实测走它拉 github 返回 200）⇒ **从 fish 启动的 nvim 有代理**；但 headless 脚本、非 fish shell（含 agent 自己的 bash）**没有** ⇒ 那些场景要手动带 `HTTPS_PROXY=http://127.0.0.1:7890`（无 tun 网卡，直连 google/github 均超时），而配置启动时会自动重试 ⇒ 每次启动刷一屏 curl 错误。`treesitter.lua` 已加 6 小时节流（stamp：`~/.local/state/nvim/treesitter-install-stamp`），节流期内只留一条 INFO 不联网。手动装须带代理：
 
 ```bash
 HTTPS_PROXY=http://127.0.0.1:7890 nvim --headless \

@@ -2,7 +2,7 @@
 # seed 清单（个人数据种子，2026-10-05 起）：这些目标"已存在就保持现状、缺失才初始化"——
 # 用户在机器上的编辑绝不被覆盖；12-verify 对其跳过内容核对。
 # <repo 路径（= files.tsv 第 1 列）>\t<备注>
-payload/home/.config/fish/conf.d/proxy-env.fish	用户态：fish 代理环境变量片段（只在 127.0.0.1:7890 有监听时设置；改完不会被重跑覆盖）
+payload/home/.config/fish/conf.d/proxy.fish	用户态：fish 代理环境变量片段（只在 127.0.0.1:7890 有监听时设置；改完不会被重跑覆盖）
 payload/home/Templates/C 源文件.c	个人数据种子（便签/模板）
 payload/home/Templates/CSS 样式表.css	个人数据种子（便签/模板）
 payload/home/Templates/Dockerfile	个人数据种子（便签/模板）

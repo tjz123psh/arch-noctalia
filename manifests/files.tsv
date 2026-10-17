@@ -53,7 +53,7 @@ payload/home/.agents/skills/nvim-config/references/architecture.md	/home/pang/.a
 payload/home/.agents/skills/nvim-config/references/deprecated-apis.md	/home/pang/.agents/skills/nvim-config/references/deprecated-apis.md	644	d01473c7d9073a7aa1c3327521137f5f
 payload/home/.agents/skills/nvim-config/references/local-checklist.md	/home/pang/.agents/skills/nvim-config/references/local-checklist.md	644	f0a693500604b1a770651faa5e9910ca
 payload/home/.agents/skills/nvim-troubleshooting/SKILL.md	/home/pang/.agents/skills/nvim-troubleshooting/SKILL.md	644	1a2cd639ef5dd88e802fad5844d6bcec
-payload/home/.agents/skills/nvim-troubleshooting/references/local-patterns.md	/home/pang/.agents/skills/nvim-troubleshooting/references/local-patterns.md	644	5dda09ceb82f6ca220c52e97c1d77bef
+payload/home/.agents/skills/nvim-troubleshooting/references/local-patterns.md	/home/pang/.agents/skills/nvim-troubleshooting/references/local-patterns.md	644	550447ba5804434e1fdab213a14cbd63
 payload/home/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md	/home/pang/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md	644	3cb92bf92b4cf1d7fa49c5540d66cacc
 payload/home/.agents/skills/script-composer/SKILL.md	/home/pang/.agents/skills/script-composer/SKILL.md	644	eef7a1c9584073951e967adb81550c72
 payload/home/.agents/skills/script-composer/references/bash-style.md	/home/pang/.agents/skills/script-composer/references/bash-style.md	644	e4e1e39dab74c4ce28e1362136a0abaa
@@ -144,7 +144,7 @@ payload/home/.config/fcitx5/conf/notifications.conf	/home/pang/.config/fcitx5/co
 payload/home/.config/fcitx5/conf/pinyin.conf	/home/pang/.config/fcitx5/conf/pinyin.conf	600	26e2e305b62bc886e3c61fb9fa148eb5
 payload/home/.config/fcitx5/conf/punctuation.conf	/home/pang/.config/fcitx5/conf/punctuation.conf	600	c524f85ab97a43fdaf90e56d73a0b715
 payload/home/.config/fcitx5/profile	/home/pang/.config/fcitx5/profile	600	99e210abb5a1e02b0495983d865d0f65
-payload/home/.config/fish/conf.d/proxy-env.fish	/home/pang/.config/fish/conf.d/proxy-env.fish	644	238b4e4511c2a13785668635636cf75a
+payload/home/.config/fish/conf.d/proxy.fish	/home/pang/.config/fish/conf.d/proxy.fish	644	4dde69a591c640cfe81d44d941300882
 payload/home/.config/fish/config.fish	/home/pang/.config/fish/config.fish	600	75cbc310dfe5b8e62b23d20ae6dd7848
 payload/home/.config/fontconfig/fonts.conf	/home/pang/.config/fontconfig/fonts.conf	644	d6acc253adc8ef5bd1e678014aa49097
 payload/home/.config/fuzzel/fuzzel.ini	/home/pang/.config/fuzzel/fuzzel.ini	644	d1a19effee7b476ddda72cea4b46751b
