@@ -7,8 +7,8 @@
   "logo": {
     "type": "kitty",
     "source": "~/.config/fastfetch/arch-logo.png",
-    "width": 12,
-    "height": 8,
+    "width": 10,
+    "height": 7,
     "padding": { "top": 1, "right": 3, "left": 1 }
   },
   // "logo": {

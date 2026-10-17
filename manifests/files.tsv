@@ -135,8 +135,8 @@ payload/home/.config/Kingsoft/roamingdevice.conf	/home/pang/.config/Kingsoft/roa
 payload/home/.config/btop/btop.conf	/home/pang/.config/btop/btop.conf	644	a6a98a47cbc4c27905de9545985b4739
 payload/home/.config/btop/themes/noctalia.theme	/home/pang/.config/btop/themes/noctalia.theme	644	84c837becc82f7c04be755478fa89ef2
 payload/home/.config/environment.d/10-desktop.conf	/home/pang/.config/environment.d/10-desktop.conf	644	de80ab11ba03ebb877451060254bca23
-payload/home/.config/fastfetch/arch-logo.png	/home/pang/.config/fastfetch/arch-logo.png	644	12da6b8e586ea273733ca3b70d546383
-payload/home/.config/fastfetch/config.jsonc	/home/pang/.config/fastfetch/config.jsonc	644	ff14ae2087c0a72984a3471bc93f5b08
+payload/home/.config/fastfetch/arch-logo.png	/home/pang/.config/fastfetch/arch-logo.png	644	d19a03373f8ada85640e8efbcb6c8b76
+payload/home/.config/fastfetch/config.jsonc	/home/pang/.config/fastfetch/config.jsonc	644	3ca03b74779f42a9f4c3115d4715e1eb
 payload/home/.config/fastfetch/logo.png	/home/pang/.config/fastfetch/logo.png	644	a4176ae1a403ab05d82eadd1333a9273
 payload/home/.config/fastfetch/themes/noctalia.jsonc	/home/pang/.config/fastfetch/themes/noctalia.jsonc	644	6ad9c1d26d258b4cef7cca47e3a07de5
 payload/home/.config/fcitx5/conf/chttrans.conf	/home/pang/.config/fcitx5/conf/chttrans.conf	600	ffda3fa22413dd8cc96019742a47783d
