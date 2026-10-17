@@ -35,6 +35,7 @@ curl -fsSL $U | bash -s -- --no-aur    # 外网不稳时先跳过 AUR；进桌�
 - Noctalia 的 shell 字体固定为 `Noto Sans CJK SC`（`[shell] font_family`，随 settings 种子副本部署；提供字体的 `noto-fonts-cjk` 本来就在 `packages.tsv`）：宿主 `ui.input` 的**鼠标拖选**在"中文＋英文/符号混排"时会因字体回退在 run 边界卡住（命中测试按 Pango per-run 度量做视觉行分组；上游未修，属宿主限制），把 shell 字体设成同时覆盖中英文的字体即可绕开（键盘选区不受影响）。**以后换字体要保持"拉丁 + 中文同一字体"**，否则该缺陷复发。
 - 文件管理器 yazi：包在 `packages.tsv` 里，桌面项在启动器可见（`Exec=kitty --class yazi -e yazi %f`，同时是「打开文件夹」的候选，nautilus 仍是默认）。
   配色与语法高亮交给 Noctalia 的「Yazi」社区模板（`settings.toml` 的 `community_ids` 已含 `yazi`），产物是 `~/.config/yazi/{theme.toml,flavors/noctalia.yazi/*}`，换壁纸自动重渲染——这三个文件列在 `runtime-regenerated.tsv`，自检只核对存在。
+  整屏外框：`init.lua` 里一句 `require("full-border"):setup()`，让整个界面套一圈圆角方框、栏位分隔线接到方框上下沿。插件本体随安装器部署在 `plugins/full-border.yazi/`（上游 yazi-rs/plugins 的 MIT 版本，`main.lua` 头标 `@since 26.8.15`，许可证一并纳管），**不走 `ya pkg` 联网安装**；升级 yazi 后这里若报错，从上游拉最新 `main.lua` 覆盖即可。想换成方角外框，把那行改成 `require("full-border"):setup { type = ui.Border.PLAIN }`。
   键位说明整份汉化在 `keymap.toml`（由 yazi v26.9.1 默认键位翻译而来，按键与行为完全一致；升级 yazi 后需要重新生成）；`yazi.toml` 只放行为设置（文本→nvim、视频音频→mpv；写死程序名，因为从启动器拉起时环境里没有 fish 的 `$EDITOR`）。
   fish 里加了 `y` 包装：在 yazi 里逛完按 `q` 退出，终端自动 `cd` 到那个目录（`Q` 退出则不换目录）。
    压缩包：`Shift+O` 菜单三条 —— 解压到当前目录 / 同名文件夹 / 指定位置（弹出 fuzzel 选择器，预填当前目录；`yazi.toml` 的 `[open] prepend_rules` 让认不出类型的 `.zip` 也能解压）。
