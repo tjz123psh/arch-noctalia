@@ -1,7 +1,20 @@
 // —— 显示器输出 ——
+//
+// 内屏接口名会随显卡模式变化：
+//   · 核显 / Hybrid（amdgdpu 驱动面板）→ eDP-1
+//   · AsusMuxDgpu（MUX 切到独显）→ eDP-2
+// 两个都写，切模式后都保持 144Hz。
+// 注意：只写 "1920x1080" 不带刷新率时，niri 用驱动的 preferred 模式——
+// NVIDIA 那边 preferred 只有 60.061Hz，所以切到独显后会掉到 60Hz。
 
 output "eDP-1" {
-    mode "1920x1080"
+    mode "1920x1080@144.063"
+    scale 1.0
+    transform "normal"
+}
+
+output "eDP-2" {
+    mode "1920x1080@144.063"
     scale 1.0
     transform "normal"
 }

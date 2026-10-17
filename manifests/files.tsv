@@ -50,7 +50,7 @@ payload/home/.config/niri/conf.d/hotkey-overlay.kdl	/home/pang/.config/niri/conf
 payload/home/.config/niri/conf.d/input.kdl	/home/pang/.config/niri/conf.d/input.kdl	644	945487f07ed9d4b8465e74fe194fd43a
 payload/home/.config/niri/conf.d/layer-rules.kdl	/home/pang/.config/niri/conf.d/layer-rules.kdl	644	10c310c6468b28df5df0e1c23da6137c
 payload/home/.config/niri/conf.d/layout.kdl	/home/pang/.config/niri/conf.d/layout.kdl	644	166e409741a0398bd1277560d57e7f8c
-payload/home/.config/niri/conf.d/outputs.kdl	/home/pang/.config/niri/conf.d/outputs.kdl	644	3bbaf9a816a2faba882bb3d08d00d187
+payload/home/.config/niri/conf.d/outputs.kdl	/home/pang/.config/niri/conf.d/outputs.kdl	644	d0cbfe5a337ee9d60003873a57f9a634
 payload/home/.config/niri/conf.d/overview.kdl	/home/pang/.config/niri/conf.d/overview.kdl	644	3683ca24a0023b1c69a74be0dc24d565
 payload/home/.config/niri/conf.d/recent-windows.kdl	/home/pang/.config/niri/conf.d/recent-windows.kdl	644	679c92bd0799770ebcca35d1139167a6
 payload/home/.config/niri/conf.d/startup.kdl	/home/pang/.config/niri/conf.d/startup.kdl	644	cbfa3680cad08778ef3b19340180a37a
