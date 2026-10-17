@@ -1,55 +1,50 @@
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+
+  // ===== 外观 =====
   "logo": {
     "type": "builtin",
     "source": "arch_small",
-    "padding": {
-      "top": 1,
-      "right": 4,
-      "left": 2
-    },
-    "color": {
-      "1": "#63cafc",
-      "2": "#63c8db"
-    }
+    "padding": { "top": 1, "right": 4, "left": 2 },
+    "color": { "1": "#63cafc", "2": "#63c8db" }
   },
   "display": {
     "separator": "  ",
-    "color": {
-      "keys": "#9fcafc",
-      "title": "#bac8db"
-    },
+    "color": { "keys": "#9fcafc", "title": "#bac8db" },
     "percent": {
-      "color": {
-        "green": "#d6bee5",
-        "yellow": "#9fcafc",
-        "red": "#ffb4ab"
-      }
+      "color": { "green": "#d6bee5", "yellow": "#9fcafc", "red": "#ffb4ab" }
     },
-    "key": {
-      "width": 10
-    }
+    "key": { "width": 4, "type": "icon" }
   },
+
+  // ===== 分组：系统 / 硬件 / 桌面 / 网络 =====
   "modules": [
-      "title",
-      "separator",
-      "os",
-      "host",
-      "kernel",
-      "uptime",
-      "packages",
-      "shell",
-      "display",
-      "wm",
-      "terminal",
-      "cpu",
-      "gpu",
-      "memory",
-      "swap",
-      "disk",
-      "battery",
-      "localip",
-      "break",
-      "colors"
-    ]
+    "title",
+
+    { "type": "separator", "string": "── 系统 ──────" },
+    "os",
+    "host",
+    "kernel",
+    "uptime",
+    "packages",
+
+    { "type": "separator", "string": "── 硬件 ──────" },
+    "cpu",
+    "gpu",
+    "memory",
+    "swap",
+    "disk",
+    "display",
+    "battery",
+
+    { "type": "separator", "string": "── 桌面 ──────" },
+    "wm",
+    "shell",
+    "terminal",
+    "font",
+    "theme",
+
+    { "type": "separator", "string": "── 网络 ──────" },
+    "localip"
+  ]
 }
