@@ -269,8 +269,9 @@ binds {
 
     // Super+Shift+E: 退出确认菜单（niri-quit，默认选中“取消”）
     Mod+Shift+E hotkey-overlay-title="退出 Niri 会话" { spawn-sh "$HOME/.config/niri/scripts/niri-quit"; }
-    // Super+Shift+D: 测试模式开关（加载快捷键全禁的测试配置，再按一次返回）
-    Mod+Shift+D hotkey-overlay-title="测试模式（禁全部快捷键）" { spawn "niri" "msg" "action" "load-config-file" "--path" "/home/pang/.config/niri/config.kdl.vmtest"; }
+    // Super+Shift+D: 先重新生成测试配置（niri-vmtest-gen，快捷键全禁的 vmtest），生成并校验通过后立刻载入；
+    // 测试模式里再按一次同一个键就回到正常配置。生成/载入失败时不切换，并弹出通知（不会静默）。
+    Mod+Shift+D hotkey-overlay-title="测试模式（重新生成并进入）" { spawn-sh "$HOME/.config/niri/scripts/niri-vmtest-gen && niri msg action load-config-file --path $HOME/.config/niri/config.kdl.vmtest || notify-send -u critical 'niri 测试模式' '配置生成或载入失败，当前配置未切换'"; }
     // Super+D: 打开/关闭窗口概览（所有窗口一览）
     Mod+D repeat=false hotkey-overlay-title="打开/关闭窗口概览" { toggle-overview; }
     // Super+Esc: 切换快捷键抑制模式（临时禁用 niri 快捷键，方便在虚拟机/游戏中使用）
