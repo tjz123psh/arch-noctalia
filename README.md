@@ -58,7 +58,7 @@ curl -fsSL $U | bash -s -- --no-aur    # 外网不稳时先跳过 AUR；进桌�
 
 这套东西是**为一台机器写死**的（用户名 `pang`、路径 `/home/pang`、内屏 144Hz 的 eDP-1/eDP-2 双接口名、ASUS 的 `dgpu_disable` 开关），换机器要改 `lib/` 和清单里的机器相关项。下面几条是“知道、但没做或做不到”的，免得以后再翻一遍：
 
-- **没有 CI**：仓库没有 `.github/`，全部验证靠手动跑 —— `tests/run-all.sh`（15 个沙箱回归）、`tools/selfcheck.sh`（清单/语法/许可证/密钥）、`tests/test-machine-reconcile.sh`（本机对账，`AN_RECONCILE_STRICT=1` 可当门禁）。
+- **没有 CI**：仓库没有 `.github/`，全部验证靠手动跑 —— `tests/run-all.sh`（15 个回归，多数在 mktemp 沙箱里跑）、`tools/selfcheck.sh`（清单/语法/许可证/密钥）、`tests/test-machine-reconcile.sh`（本机对账，`AN_RECONCILE_STRICT=1` 可当门禁）。
 - **只在一台真机上验收**：所有结论来自本机（ASUS TUF A15 + btrfs）。`--machine vm` 分支只有检测与沙箱测试覆盖，没有第二台真机的重装记录。
 - **yazi 状态栏字段不可配**：26.9.1 的状态栏内容（大小/权限/滚动位置）由版本写死，主题只能改颜色；视频里那套“权限 + 硬链接 + 属主:属组 + 修改时间”得换旧版本才有。
 - **`/boot` 不做快照**：ESP 是 vfat，snapper 无法快照，所以 root/home 的快照不含内核与引导文件。
