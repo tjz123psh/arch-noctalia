@@ -40,7 +40,13 @@ if problems:
     sys.exit(1)
 
 # 追加唯一保留的开关键（指向正常配置，绝对路径）
-s += '\n// 测试模式唯一保留键：Win+Shift+D 切回正常模式\nbinds {\n    Mod+Shift+D { spawn "niri" "msg" "action" "load-config-file" "--path" "%s"; }\n}\n' % src
+# 切回正常配置后弹一条通知，免得“按了不知道有没有生效”
+s += """
+// 测试模式唯一保留键：Super+Shift+D 切回正常模式（切回后弹一条通知）
+binds {
+    Mod+Shift+D { spawn-sh "niri msg action load-config-file --path '%s' && notify-send -a niri 'niri 测试模式' '已切回正常配置：快捷键已恢复'"; }
+}
+""" % src
 
 open(dst, 'w', encoding='utf-8').write(s)
 

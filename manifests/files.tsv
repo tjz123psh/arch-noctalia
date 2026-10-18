@@ -168,7 +168,7 @@ payload/home/.config/mpv/bdanmaku.LICENSE.txt	/home/pang/.config/mpv/bdanmaku.LI
 payload/home/.config/mpv/scripts/bdanmaku.lua	/home/pang/.config/mpv/scripts/bdanmaku.lua	644	05e63e2413e877725e41b3b57582e6f1
 payload/home/.config/mpv/使用说明.md	/home/pang/.config/mpv/使用说明.md	644	605bbd156b1fb3512902d62c550059cd
 payload/home/.config/niri/conf.d/animations.kdl	/home/pang/.config/niri/conf.d/animations.kdl	644	a2bb9cd9ee2e0d137f0a160e7e769347
-payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	817091a11359941f29ec88c965357d03
+payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	4eee8cf6f51f8f4efea8256788c1227d
 payload/home/.config/niri/conf.d/cursor.kdl	/home/pang/.config/niri/conf.d/cursor.kdl	644	da3d31125409f685f2dd5ffcb3c87cb4
 payload/home/.config/niri/conf.d/environment.kdl	/home/pang/.config/niri/conf.d/environment.kdl	644	a911b178abca4a884dc44461659a0548
 payload/home/.config/niri/conf.d/general.kdl	/home/pang/.config/niri/conf.d/general.kdl	644	4e00543e1ddac2d25b58333982010608
@@ -186,7 +186,8 @@ payload/home/.config/niri/config.kdl	/home/pang/.config/niri/config.kdl	600	c255
 payload/home/.config/niri/scripts/niri-force-kill-window	/home/pang/.config/niri/scripts/niri-force-kill-window	755	1f4fe11f8ae05ed3ecf172f698fd2e46
 payload/home/.config/niri/scripts/niri-quit	/home/pang/.config/niri/scripts/niri-quit	755	b07b12985da06d5c9ff62487b6a3bcf0
 payload/home/.config/niri/scripts/niri-touchpad-toggle	/home/pang/.config/niri/scripts/niri-touchpad-toggle	755	675269243c9bf08cc11a4f7f9c7e00fe
-payload/home/.config/niri/scripts/niri-vmtest-gen	/home/pang/.config/niri/scripts/niri-vmtest-gen	755	56f32cfbc990146539830314ff7ad146
+payload/home/.config/niri/scripts/niri-vmtest-gen	/home/pang/.config/niri/scripts/niri-vmtest-gen	755	148f58e9a01052ed6a97adf1ea499880
+payload/home/.config/niri/scripts/niri-vmtest-enter	/home/pang/.config/niri/scripts/niri-vmtest-enter	755	ebdc3801f5072a9fb93ee1dfc6b80206
 payload/home/.config/noctalia/hooks.toml	/home/pang/.config/noctalia/hooks.toml	644	949788850bc98a9878df6d6e80bd9edf
 payload/home/.config/nomacs/Image Lounge.conf	/home/pang/.config/nomacs/Image Lounge.conf	644	8d4a0f214e9bf402c48be6f5b7002b9e
 payload/home/.config/nwg-look/config	/home/pang/.config/nwg-look/config	644	1d7532f1af614a510283dc0b46520eee

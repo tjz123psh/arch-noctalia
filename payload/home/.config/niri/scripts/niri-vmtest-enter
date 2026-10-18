@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# niri-vmtest-enter — Super+Shift+D 的目标：重新生成测试配置并载入（进入“测试模式”）
+#   1) 跑同目录的 niri-vmtest-gen 重新生成 config.kdl.vmtest（内部自带 niri validate，失败不动原文件）
+#   2) 生成成功后用 niri msg 载入它 —— 全部快捷键被禁用，只保留 Super+Shift+D 返回
+#   3) 成功、失败都发桌面通知，避免“按了没反应”的困惑
+# 环境变量：NIRI_VMTEST_CONFIG_DIR 可指定配置目录（与 niri-vmtest-gen 一致，便于隔离测试）
+set -uo pipefail
+
+CONFIG_DIR="${NIRI_VMTEST_CONFIG_DIR:-$HOME/.config/niri}"
+GEN="$CONFIG_DIR/scripts/niri-vmtest-gen"
+TEST="$CONFIG_DIR/config.kdl.vmtest"
+TITLE="niri 测试模式"
+
+notify() { # $1=urgency $2=正文
+  command -v notify-send >/dev/null 2>&1 || return 0
+  notify-send -a niri -u "$1" "$TITLE" "$2" 2>/dev/null || true
+}
+
+if ! out="$("$GEN" 2>&1)"; then
+  printf '%s\n' "$out" >&2
+  notify critical "生成测试配置失败，当前配置未切换（原因见 niri-vmtest-gen 的输出）"
+  exit 1
+fi
+
+if ! out="$(niri msg action load-config-file --path "$TEST" 2>&1)"; then
+  printf '%s\n' "$out" >&2
+  notify critical "载入测试配置失败，当前配置未切换"
+  exit 1
+fi
+
+notify normal "已重新生成并载入测试配置：全部快捷键已禁用，按 Super+Shift+D 返回"
+printf '%s\n' "$out"
