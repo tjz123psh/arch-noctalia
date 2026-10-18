@@ -54,6 +54,18 @@ curl -fsSL $U | bash -s -- --no-aur    # 外网不稳时先跳过 AUR；进桌�
 - 自检容差：桌面/程序会自行改写的文件（Noctalia 主题产物、WPS 配置、登录背景…）列在 `manifests/runtime-regenerated.tsv`（只核对存在性），你可能编辑的状态文件列在 `manifests/seed.tsv`（存在即保持）——所以机器用过一段时间后 `--redo 12` 也不会误报“安装失败”。真机对账 `tests/test-machine-reconcile.sh` 用同一份名单豁免内容比对，`AN_RECONCILE_STRICT=1` 可当门禁（本机现为 0 漂移）；清单的形状/白名单/取值由 `tools/selfcheck.sh` 与 `tests/test-manifest-schema.sh` 双重把关。
 - 登录界面背景：`payload/system/etc/nwg-hello/background.png` 的初始快照**就是种子默认壁纸**（`Pictures/wallpapers/斑斓.png`，两者字节完全相同），所以装完第一次开机，登录界面和桌面壁纸是一致的；之后每次换壁纸由 `~/bin/rice-login-bg`（Noctalia 的 `wallpaper_changed` hook）按**原字节**跟随改写，不做缩放/重编码，写入走第 11 步加的 `u:pang:rw` ACL，所以这条路径的内容不需要安装器再管（`runtime-regenerated.tsv` 只核存在性）。
 
+## 已知限制与取舍
+
+这套东西是**为一台机器写死**的（用户名 `pang`、路径 `/home/pang`、内屏 144Hz 的 eDP-1/eDP-2 双接口名、ASUS 的 `dgpu_disable` 开关），换机器要改 `lib/` 和清单里的机器相关项。下面几条是“知道、但没做或做不到”的，免得以后再翻一遍：
+
+- **没有 CI**：仓库没有 `.github/`，全部验证靠手动跑 —— `tests/run-all.sh`（15 个沙箱回归）、`tools/selfcheck.sh`（清单/语法/许可证/密钥）、`tests/test-machine-reconcile.sh`（本机对账，`AN_RECONCILE_STRICT=1` 可当门禁）。
+- **只在一台真机上验收**：所有结论来自本机（ASUS TUF A15 + btrfs）。`--machine vm` 分支只有检测与沙箱测试覆盖，没有第二台真机的重装记录。
+- **yazi 状态栏字段不可配**：26.9.1 的状态栏内容（大小/权限/滚动位置）由版本写死，主题只能改颜色；视频里那套“权限 + 硬链接 + 属主:属组 + 修改时间”得换旧版本才有。
+- **`/boot` 不做快照**：ESP 是 vfat，snapper 无法快照，所以 root/home 的快照不含内核与引导文件。
+- **`assrt.lua` 不入公开仓库**：上游没有许可证文件且要自填 API token（记账见 `excluded.tsv`）；`bdanmaku` 有 MIT 许可证，已连同 `LICENSE` 一起纳管。
+- **字体是仓库体积的大头**：Maple Mono NF CN 四款 + 资源汉圆体三款共约 123MB（工作区 147MB）；这是“没有离线包、全从 git 拉”的代价。
+- **破坏性操作只验证到预演**：维护脚本里真会删数据的（`clean`、快照恢复）测试只覆盖沙箱与 dry-run，实际执行仍需人工在终端确认。
+
 ## 结构
 
 `bootstrap.sh`、`install.sh`（入口）· `steps/`（12 步）· `manifests/`（清单）· `payload/`（配置/脚本/字体/插件）· `lib/` · `tests/`、`tools/`（自检）。
