@@ -1,0 +1,123 @@
+id = "pang/tide-sidebar"
+name = "侧边栏工作台"
+version = "2.2.0"
+plugin_api = 32
+author = "pang"
+license = "MIT"
+description = "窄标签侧栏：可恢复便签、计算器、自由倒计时、秒表、rice-hotspot 热点和 niri 窗口管理。"
+icon = "layout-sidebar-left-expand"
+tags = ["panel", "utility", "productivity", "service"]
+dependencies = ["python", "niri", "networkmanager", "gjs", "gtk4", "gtk4-layer-shell"]
+
+# 插件级设置：在 设置 → 插件（插件行上的齿轮）里编辑，所有 entry 都能用
+# noctalia.getConfig(key) 读到；未声明的键会报警告并返回 nil。
+
+[[setting]]
+key = "reduced_motion"
+type = "bool"
+label_key = "settings.reduced_motion.label"
+description_key = "settings.reduced_motion.description"
+default = false
+
+[[setting]]
+key = "panel_width"
+type = "int"
+label_key = "settings.panel_width.label"
+description_key = "settings.panel_width.description"
+default = 450
+min = 380
+max = 640
+
+[[setting]]
+key = "remember_last_tab"
+type = "bool"
+label_key = "settings.remember_last_tab.label"
+description_key = "settings.remember_last_tab.description"
+default = true
+
+[[setting]]
+key = "default_tab"
+type = "select"
+label_key = "settings.default_tab.label"
+description_key = "settings.default_tab.description"
+default = "notes"
+options = [
+  { value = "notes", label_key = "settings.tab.notes" },
+  { value = "tools", label_key = "settings.tab.tools" },
+  { value = "hotspot", label_key = "settings.tab.hotspot" },
+  { value = "windows", label_key = "settings.tab.windows" },
+]
+visible_when = { key = "remember_last_tab", values = ["false"] }
+
+[[setting]]
+key = "timer_default_minutes"
+type = "int"
+label_key = "settings.timer_default_minutes.label"
+description_key = "settings.timer_default_minutes.description"
+default = 25
+min = 1
+max = 5999
+
+[[setting]]
+key = "timer_presets"
+type = "string_list"
+label_key = "settings.timer_presets.label"
+description_key = "settings.timer_presets.description"
+default = ["5", "15", "25", "60"]
+
+[[setting]]
+key = "confirm_window_close"
+type = "bool"
+label_key = "settings.confirm_window_close.label"
+description_key = "settings.confirm_window_close.description"
+default = true
+
+[[setting]]
+key = "hotspot_default_ssid"
+type = "string"
+label_key = "settings.hotspot_default_ssid.label"
+description_key = "settings.hotspot_default_ssid.description"
+default = ""
+
+[[setting]]
+key = "hotspot_default_band"
+type = "select"
+label_key = "settings.hotspot_default_band.label"
+description_key = "settings.hotspot_default_band.description"
+default = "bg"
+options = [
+  { value = "bg", label_key = "settings.band.bg" },
+  { value = "a", label_key = "settings.band.a" },
+]
+
+[[setting]]
+key = "system_refresh_seconds"
+type = "int"
+label_key = "settings.system_refresh_seconds.label"
+description_key = "settings.system_refresh_seconds.description"
+default = 3
+min = 1
+max = 30
+advanced = true
+
+[[panel]]
+id = "sidebar"
+entry = "panel.luau"
+width = 1
+height = 1
+placement = "floating"
+position = "center_left"
+keyboard_focus = "none"
+dismiss_on_outside_click = false
+
+[[service]]
+id = "backend"
+entry = "service.luau"
+
+[[widget]]
+id = "toggle"
+entry = "widget.luau"
+
+[[shortcut]]
+id = "open"
+entry = "shortcut.luau"

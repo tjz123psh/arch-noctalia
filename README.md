@@ -54,6 +54,8 @@ curl -fsSL $U | bash -s -- --no-aur    # 外网不稳时先跳过 AUR；进桌�
 - 自检容差：桌面/程序会自行改写的文件（Noctalia 主题产物、WPS 配置、登录背景…）列在 `manifests/runtime-regenerated.tsv`（只核对存在性），你可能编辑的状态文件列在 `manifests/seed.tsv`（存在即保持）——所以机器用过一段时间后 `--redo 12` 也不会误报“安装失败”。真机对账 `tests/test-machine-reconcile.sh` 用同一份名单豁免内容比对，`AN_RECONCILE_STRICT=1` 可当门禁（本机现为 0 漂移）；清单的形状/白名单/取值由 `tools/selfcheck.sh` 与 `tests/test-manifest-schema.sh` 双重把关。
 - 登录界面背景：`payload/system/etc/nwg-hello/background.png` 的初始快照**就是种子默认壁纸**（`Pictures/wallpapers/斑斓.png`，两者字节完全相同），所以装完第一次开机，登录界面和桌面壁纸是一致的；之后每次换壁纸由 `~/bin/rice-login-bg`（Noctalia 的 `wallpaper_changed` hook）按**原字节**跟随改写，不做缩放/重编码，写入走第 11 步加的 `u:pang:rw` ACL，所以这条路径的内容不需要安装器再管（`runtime-regenerated.tsv` 只核存在性）。
 
+- Noctalia 插件源码：`payload/home/noctalia-plugins/`（`magnifier` 放大镜 + `tide-sidebar` 侧边栏工作台），07 步部署到 `~/noctalia-plugins`，宿主以 path 源 `pang-dev` **直接读这个目录**（不另建运行副本）；改插件就在本仓里改，提交推送后跑 `./install.sh --redo 07` 部署。`.backups/`、`magnifier/tools/cursor-track/build/` 属本地产物，不入仓。
+
 ## 已知限制与取舍
 
 这套东西是**为一台机器写死**的（用户名 `pang`、路径 `/home/pang`、内屏 144Hz 的 eDP-1/eDP-2 双接口名、ASUS 的 `dgpu_disable` 开关），换机器要改 `lib/` 和清单里的机器相关项。下面几条是“知道、但没做或做不到”的，免得以后再翻一遍：

@@ -1,0 +1,54 @@
+{
+  "settings": {
+    "reduced_motion": {
+      "label": "减少装饰动效",
+      "description": "停止波浪与内容过渡，保留即时操作反馈。"
+    },
+    "panel_width": {
+      "label": "侧栏宽度",
+      "description": "侧栏的宽度（逻辑像素）。450 与已确认的参考样张一致。"
+    },
+    "remember_last_tab": {
+      "label": "记住上次的标签页",
+      "description": "再次打开时回到上次使用的标签页。"
+    },
+    "default_tab": {
+      "label": "起始标签页",
+      "description": "不记住上次标签页时，打开侧栏使用的页面。"
+    },
+    "timer_default_minutes": {
+      "label": "倒计时默认时长",
+      "description": "倒计时空闲时给出的默认分钟数。"
+    },
+    "timer_presets": {
+      "label": "倒计时预设",
+      "description": "快捷时长（分钟），例如 5、15、25、60。无效项会被忽略。"
+    },
+    "confirm_window_close": {
+      "label": "关闭窗口前先确认",
+      "description": "打开时先显示确认卡片，而不是立刻关闭窗口。"
+    },
+    "hotspot_default_ssid": {
+      "label": "默认热点名称",
+      "description": "当已保存的名称未知时，预填到热点表单里。"
+    },
+    "hotspot_default_band": {
+      "label": "默认热点频段",
+      "description": "热点关闭时预选的频段。"
+    },
+    "system_refresh_seconds": {
+      "label": "状态刷新间隔",
+      "description": "热点/窗口页打开时，两次状态查询之间的秒数。"
+    },
+    "tab": {
+      "notes": "便签",
+      "tools": "工具",
+      "hotspot": "热点",
+      "windows": "窗口"
+    },
+    "band": {
+      "bg": "2.4 GHz",
+      "a": "5 GHz"
+    }
+  }
+}

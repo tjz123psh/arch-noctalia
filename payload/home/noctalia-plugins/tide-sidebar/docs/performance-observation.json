@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-14",
+  "old": {
+    "open_seconds": 6.008,
+    "noctalia_cpu_seconds": 0.68,
+    "open_one_core_cpu_percent": 11.32,
+    "closed_seconds": 6.009,
+    "closed_one_core_cpu_percent": 1.83,
+    "includesOpeningAnimation": true
+  },
+  "native": {
+    "open_seconds": 6,
+    "prewarmed": true,
+    "noctalia_one_core_cpu_percent": 4,
+    "frontend_one_core_cpu_percent": 1.67,
+    "combined_one_core_cpu_percent": 5.67,
+    "closed_combined_one_core_cpu_percent": 1.17,
+    "frontend_rss_mib": 217.1
+  },
+  "limits": [
+    "Whole-process short sample, not FPS or input latency.",
+    "Old observation included opening; new observation followed 1.1s warm-up, so do not claim a causal 50% improvement.",
+    "Other desktop activity was not controlled."
+  ]
+}

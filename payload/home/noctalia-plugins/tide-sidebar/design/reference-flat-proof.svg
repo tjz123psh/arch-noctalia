@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="964" viewBox="0 0 980 964"><defs><filter id="s" x="-15%" y="-15%" width="130%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#514631" flood-opacity=".20"/></filter><clipPath id="paper"><rect x="108" y="148" width="340" height="740" rx="22"/></clipPath></defs><rect width="980" height="964" fill="#EAE3D6"/>
+<text x="30" y="30" font-family="Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" text-anchor="start" fill="#7B725B">便签页</text>
+<text x="510" y="30" font-family="Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" text-anchor="start" fill="#7B725B">工具页 · 计算器与计时器同页</text>
+<rect x="24" y="48" width="444" height="866" rx="20" fill="#FBF5E9"/>
+<rect x="504" y="48" width="444" height="866" rx="20" fill="#FBF5E9"/>
+<rect x="40" y="66" width="42" height="824" rx="17" fill="#EFE6CC"/>
+<rect x="45" y="84" width="32" height="51" rx="12" fill="#F4E7BC"/>
+<path d="M53 96h17v16h-13l-4 4z M57 101h9 M57 106h6" fill="none" stroke="#78671C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="61" y="130" font-family="Noto Sans CJK SC,sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#78671C">便签</text>
+<path d="M53 164h17v23h-17z M56 168h11 M56 173h2 M63 173h3 M56 179h2 M63 179h3" fill="none" stroke="#7B725B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="61" y="200" font-family="Noto Sans CJK SC,sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#7B725B">工具</text>
+<path d="M50 240q11-11 23 0 M54 245q7-7 15 0 M58 249q3-3 7 0" fill="none" stroke="#7B725B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="60" y="253" width="3" height="3" rx="1" fill="#7B725B"/>
+<text x="61" y="270" font-family="Noto Sans CJK SC,sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#7B725B">热点</text>
+<rect x="52" y="305" width="8" height="8" rx="2" fill="#7B725B"/>
+<rect x="52" y="317" width="8" height="8" rx="2" fill="#7B725B"/>
+<rect x="64" y="305" width="8" height="8" rx="2" fill="#7B725B"/>
+<rect x="64" y="317" width="8" height="8" rx="2" fill="#7B725B"/>
+<text x="61" y="340" font-family="Noto Sans CJK SC,sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#7B725B">窗口</text>
+<path d="M65 856l-8 8 8 8" fill="none" stroke="#7B725B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="520" y="66" width="42" height="824" rx="17" fill="#EFE6CC"/>
+<path d="M533 96h17v16h-13l-4 4z M537 101h9 M537 106h6" fill="none" stroke="#7B725B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="541" y="130" font-family="Noto Sans CJK SC,sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#7B725B">便签</text>
+<rect x="525" y="154" width="32" height="51" rx="12" fill="#F4E7BC"/>
+<path d="M533 164h17v23h-17z M536 168h11 M536 173h2 M543 173h3 M536 179h2 M543 179h3" fill="none" stroke="#78671C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="541" y="200" font-family="Noto Sans CJK SC,sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#78671C">工具</text>
+<path d="M530 240q11-11 23 0 M534 245q7-7 15 0 M538 249q3-3 7 0" fill="none" stroke="#7B725B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="540" y="253" width="3" height="3" rx="1" fill="#7B725B"/>
+<text x="541" y="270" font-family="Noto Sans CJK SC,sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#7B725B">热点</text>
+<rect x="532" y="305" width="8" height="8" rx="2" fill="#7B725B"/>
+<rect x="532" y="317" width="8" height="8" rx="2" fill="#7B725B"/>
+<rect x="544" y="305" width="8" height="8" rx="2" fill="#7B725B"/>
+<rect x="544" y="317" width="8" height="8" rx="2" fill="#7B725B"/>
+<text x="541" y="340" font-family="Noto Sans CJK SC,sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#7B725B">窗口</text>
+<path d="M545 856l-8 8 8 8" fill="none" stroke="#7B725B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="108" y="96" font-family="Noto Sans CJK SC,sans-serif" font-size="20" font-weight="600" text-anchor="start" fill="#332D1F">便签</text>
+<text x="433" y="96" font-family="Noto Sans CJK SC,sans-serif" font-size="26" font-weight="400" text-anchor="end" fill="#78671C">＋</text>
+<rect x="108" y="110" width="340" height="30" rx="12" fill="#F4E7BC"/>
+<text x="122" y="131" font-family="Noto Sans CJK SC,sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#332D1F">随手记</text>
+<text x="430" y="131" font-family="Noto Sans CJK SC,sans-serif" font-size="16" font-weight="400" text-anchor="end" fill="#78671C">⌄</text>
+<rect x="108" y="148" width="340" height="740" rx="22" fill="#FFE49A" filter="url(#s)"/>
+<text x="126" y="183" font-family="Noto Sans CJK SC,sans-serif" font-size="21" font-weight="500" text-anchor="start" fill="#332D1F">随手记</text>
+<text x="126" y="232" font-family="Noto Sans CJK SC,sans-serif" font-size="16" font-weight="400" text-anchor="start" fill="#8C794D">写便签…</text>
+<g clip-path="url(#paper)">
+<path d="M108 831 C151 820 177 841 222 832 C260 824 291 829 327 835 C370 843 411 823 448 831 L448 900 L108 900Z" fill="#ECD081"/>
+</g>
+<text x="126" y="869" font-family="Noto Sans CJK SC,sans-serif" font-size="11" font-weight="400" text-anchor="start" fill="#675826">0 字</text>
+<text x="367" y="869" font-family="Noto Sans CJK SC,sans-serif" font-size="11" font-weight="400" text-anchor="end" fill="#675826">已保存</text>
+<path d="M417 843 C425 841 433 844 435 851 L440 860 Q440 870 431 874 L420 877 Q409 877 406 869 L402 860 Q402 850 411 849Z" fill="#78671C"/>
+<path d="M415 861l7-7 4 4-7 7-5 1z" fill="none" stroke="#FFF4CF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="588" y="74" width="340" height="440" rx="22" fill="#FFE49A" filter="url(#s)"/>
+<text x="604" y="103" font-family="Noto Sans CJK SC,sans-serif" font-size="15" font-weight="500" text-anchor="start" fill="#332D1F">计算器</text>
+<text x="604" y="143" font-family="Noto Sans CJK SC,sans-serif" font-size="18" font-weight="400" text-anchor="start" fill="#69592D">128 × 3</text>
+<text x="906" y="186" font-family="Noto Sans CJK SC,sans-serif" font-size="42" font-weight="500" text-anchor="end" fill="#332D1F">384</text>
+<path d="M588 208 C638 197 673 216 716 207 S795 197 836 205 S893 215 928 207 L928 217 H588Z" fill="#F1D68B"/>
+<rect x="852" y="227" width="58" height="268" rx="15" fill="#E9CE80"/>
+<text x="632" y="257" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">C</text>
+<text x="715" y="257" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">(</text>
+<text x="798" y="257" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">)</text>
+<text x="881" y="257" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">⌫</text>
+<text x="632" y="300" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">7</text>
+<text x="715" y="300" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">8</text>
+<text x="798" y="300" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">9</text>
+<text x="881" y="300" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">÷</text>
+<text x="632" y="343" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">4</text>
+<text x="715" y="343" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">5</text>
+<text x="798" y="343" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">6</text>
+<text x="881" y="343" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">×</text>
+<text x="632" y="386" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">1</text>
+<text x="715" y="386" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">2</text>
+<text x="798" y="386" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">3</text>
+<text x="881" y="386" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">−</text>
+<text x="632" y="429" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">0</text>
+<text x="715" y="429" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">.</text>
+<text x="798" y="429" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">%</text>
+<text x="881" y="429" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">+</text>
+<text x="632" y="472" font-family="Noto Sans CJK SC,sans-serif" font-size="16" font-weight="400" text-anchor="middle" fill="#332D1F">Ans</text>
+<text x="715" y="472" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">√</text>
+<text x="798" y="472" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="400" text-anchor="middle" fill="#332D1F">^</text>
+<rect x="858" y="443" width="46" height="39" rx="13" fill="#78671C"/>
+<text x="881" y="472" font-family="Noto Sans CJK SC,sans-serif" font-size="23" font-weight="500" text-anchor="middle" fill="#FFF4CD">=</text>
+<rect x="588" y="534" width="340" height="239" rx="22" fill="#78671C" filter="url(#s)"/>
+<text x="604" y="567" font-family="Noto Sans CJK SC,sans-serif" font-size="20" font-weight="600" text-anchor="start" fill="#FFFAE7">倒计时</text>
+<text x="604" y="745" font-family="Noto Sans CJK SC,sans-serif" font-size="12" font-weight="400" text-anchor="start" fill="#ECE4BD">已暂停</text>
+<rect x="694" y="534" width="234" height="239" rx="22" fill="#FFE49A"/>
+<text x="813" y="605" font-family="Noto Sans CJK SC,sans-serif" font-size="40" font-weight="500" text-anchor="middle" fill="#332D1F">24:59</text>
+<text x="731" y="653" font-family="Noto Sans CJK SC,sans-serif" font-size="22" font-weight="500" text-anchor="middle" fill="#332D1F">00</text>
+<text x="731" y="675" font-family="Noto Sans CJK SC,sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#7B725B">时</text>
+<text x="797" y="653" font-family="Noto Sans CJK SC,sans-serif" font-size="22" font-weight="500" text-anchor="middle" fill="#332D1F">25</text>
+<text x="797" y="675" font-family="Noto Sans CJK SC,sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#7B725B">分</text>
+<text x="863" y="653" font-family="Noto Sans CJK SC,sans-serif" font-size="22" font-weight="500" text-anchor="middle" fill="#332D1F">00</text>
+<text x="863" y="675" font-family="Noto Sans CJK SC,sans-serif" font-size="10" font-weight="400" text-anchor="middle" fill="#7B725B">秒</text>
+<rect x="712" y="701" width="93" height="37" rx="12" fill="#78671C"/>
+<text x="758" y="726" font-family="Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" text-anchor="middle" fill="#FFF6DB">▶ 继续</text>
+<text x="862" y="726" font-family="Noto Sans CJK SC,sans-serif" font-size="14" font-weight="500" text-anchor="middle" fill="#78671C">↺ 重置</text>
+<text x="598" y="814" font-family="Noto Sans CJK SC,sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#7B725B">5 分</text>
+<text x="682" y="814" font-family="Noto Sans CJK SC,sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#7B725B">15 分</text>
+<text x="768" y="814" font-family="Noto Sans CJK SC,sans-serif" font-size="13" font-weight="500" text-anchor="start" fill="#78671C">25 分</text>
+<text x="859" y="814" font-family="Noto Sans CJK SC,sans-serif" font-size="13" font-weight="400" text-anchor="start" fill="#7B725B">60 分</text>
+<text x="490" y="945" font-family="Noto Sans CJK SC,sans-serif" font-size="12" font-weight="400" text-anchor="middle" fill="#7B725B">静态视觉样张 · 只确认形状、配色和层次，不代表已替换运行界面</text>
+</svg>

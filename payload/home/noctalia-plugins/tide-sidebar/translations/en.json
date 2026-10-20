@@ -1,0 +1,54 @@
+{
+  "settings": {
+    "reduced_motion": {
+      "label": "Reduce decorative motion",
+      "description": "Stop decorative waves and page transitions while keeping controls responsive."
+    },
+    "panel_width": {
+      "label": "Sidebar width",
+      "description": "Logical pixels for the sidebar surface. 450 matches the approved reference."
+    },
+    "remember_last_tab": {
+      "label": "Remember the last tab",
+      "description": "Reopen the sidebar on the tab you used last."
+    },
+    "default_tab": {
+      "label": "Starting tab",
+      "description": "Tab used when the sidebar does not remember the last one."
+    },
+    "timer_default_minutes": {
+      "label": "Default countdown length",
+      "description": "Minutes offered when the countdown is idle."
+    },
+    "timer_presets": {
+      "label": "Countdown presets",
+      "description": "Quick lengths in minutes, e.g. 5, 15, 25, 60. Invalid entries are dropped."
+    },
+    "confirm_window_close": {
+      "label": "Ask before closing a window",
+      "description": "Show a confirmation card instead of closing a window immediately."
+    },
+    "hotspot_default_ssid": {
+      "label": "Default hotspot name",
+      "description": "Prefilled in the hotspot form when the saved name is unknown."
+    },
+    "hotspot_default_band": {
+      "label": "Default hotspot band",
+      "description": "Band preselected when the hotspot is off."
+    },
+    "system_refresh_seconds": {
+      "label": "Status refresh interval",
+      "description": "Seconds between hotspot and window status queries while those pages are open."
+    },
+    "tab": {
+      "notes": "Notes",
+      "tools": "Tools",
+      "hotspot": "Hotspot",
+      "windows": "Windows"
+    },
+    "band": {
+      "bg": "2.4 GHz",
+      "a": "5 GHz"
+    }
+  }
+}
