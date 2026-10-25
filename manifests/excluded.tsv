@@ -87,7 +87,6 @@ package	unzip	手动安装（通用小工具，按需手动装）
 package	net-tools	手动安装（ifconfig/netstat；rjsupplicant-gui 脚本/文档涉及，按需手动装）
 package	libpulse	无需显式声明：ffmpeg/mpv/gpu-screen-recorder/微信/WPS 等会自动依赖带入
 package	iptables	无需显式声明：随 docker 依赖带入；热点放行助手 /usr/local/bin/rice-hotspot-net 用它（没装 docker 时助手直接退出，无副作用）
-package	gtk4-layer-shell	手动安装：是 Vellum 的运行时依赖，随 Vellum 一起手动装
 dir	/home/pang/scripts/dsh	手动拷贝（DSH 辅助脚本 13 个文件：会话修复/迁移、AnyRouter 代理服务、图标修补）
 dir	/home/pang/scripts/package	手动拷贝（pacman 三件套 pac/pacd/pacr + lib/ + 7 个测试 + 文档）
 dir	/home/pang/scripts/media	手动拷贝（b23 播放器，由另一会话维护中）

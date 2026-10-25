@@ -54,6 +54,7 @@ grim	extra
 grub	core		
 grub-btrfs	extra		
 gst-plugin-pipewire	extra		
+gtk4-layer-shell	extra		Noctalia 插件 pang/tide-sidebar 原生前端依赖（LD_PRELOAD libgtk4-layer-shell.so；缺它 Super+Shift+W 面板起不来）
 gvfs-dnssd	extra		
 gvfs-gphoto2	extra		
 gvfs-mtp	extra		
