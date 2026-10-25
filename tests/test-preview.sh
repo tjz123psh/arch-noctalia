@@ -41,6 +41,10 @@ if [ -e "$HOME/.local/state/arch-noctalia" ]; then
   exit 1
 fi
 
+# 默认模式：`./install.sh` 不带参数就是安装（预览要显式 --preview）。
+grep -q '^MODE="run"' "$ROOT/install.sh" || { echo "default mode must be run (./install.sh installs)"; exit 1; }
+bash "$ROOT/install.sh" --help | grep -q 'install (resumable)' || { echo "--help must advertise install as the default"; exit 1; }
+
 # --no-aur 预览：05 行必须带标注；默认预览不得出现标注。
 if ! bash "$ROOT/install.sh" --preview --no-aur > "$out3" 2>&1; then
   echo "preview --no-aur exited non-zero:"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # install.sh — arch-noctalia 主入口。
-# 默认 = 预览（只读）。实装：./install.sh --run [--yes] [--machine physical|vm] [--from NN]
+# 默认 = 直接安装（./install.sh）。只想看计划：./install.sh --preview
 set -Eeuo pipefail
 
 AN_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,7 +13,7 @@ source "${AN_ROOT_DIR}/lib/detect.sh"
 source "${AN_ROOT_DIR}/lib/plan.sh"
 
 AN_TARGET_USER="pang"
-MODE="preview"
+MODE="run"
 AN_ASSUME_YES="${AN_ASSUME_YES:-0}"
 MACHINE_OVERRIDE=""
 FROM_STAGE=""
@@ -25,16 +25,16 @@ usage() {
 arch-noctalia installer
 
 Usage:
-  ./install.sh                        preview (read-only, default)
-  ./install.sh --run [options]        perform the installation
+  ./install.sh [options]              install (resumable)
+  ./install.sh --preview              read-only: show the plan, change nothing
 
 Options:
-  --run             perform the installation (steps in order, resumable)
-  --preview         read-only: render the full stage plan, change nothing (default)
+  --preview         read-only: render the full stage plan, change nothing
+  --run             explicit install (the default; kept for scripts)
   --machine M       force machine type (physical|vm) instead of auto-detection
   --from NN         resume: skip stages before NN (done stages are still skipped)
   --redo NN         repair: clear the done-record of stages >= NN and re-run them
-  --no-aur          skip stage 05 (AUR packages); finish it later: ./install.sh --run
+  --no-aur          skip stage 05 (AUR packages); finish it later: ./install.sh
   --yes, -y         non-interactive: auto-confirm prompts
   -h, --help        this help
 EOF
@@ -150,7 +150,7 @@ for id in $(stage_ids); do
     continue
   fi
   if [[ "$SKIP_AUR" == "1" && "$id" == "05" ]]; then
-    info "stage ${id} ${name}: skipped (--no-aur) — finish it later: ${AN_ROOT_DIR}/install.sh --run --yes"
+    info "stage ${id} ${name}: skipped (--no-aur) — finish it later: ${AN_ROOT_DIR}/install.sh --yes"
     continue
   fi
   # 唯一性：多一个 07-config-old.sh 就会按字典序抢占 07-config.sh，装出来的东西全错。
@@ -162,7 +162,7 @@ for id in $(stage_ids); do
   step_file="${step_files[0]}"
   info "=== stage ${id} ${name} ==="
   if ! AN_RUN=1 AN_MACHINE="$machine" AN_ASSUME_YES="$AN_ASSUME_YES" bash "$step_file"; then
-    die "stage ${id} ${name} failed — fix the cause, then resume: ./install.sh --run  (done stages are skipped; to force stages again: ./install.sh --run --redo ${id})"
+    die "stage ${id} ${name} failed — fix the cause, then resume: ./install.sh  (done stages are skipped; to force stages again: ./install.sh --redo ${id})"
   fi
   echo "$id" >> "$DONE_FILE"
   ok "stage ${id} ${name}: done"
@@ -184,9 +184,9 @@ elif (( ${#missing_stages[@]} == 1 )) && [[ "${missing_stages[0]}" == "05" ]]; t
   else
     ok "all stages complete except AUR (not installed yet)."
   fi
-  info "after login, finish the AUR packages with: ${AN_ROOT_DIR}/install.sh --run --yes"
+  info "after login, finish the AUR packages with: ${AN_ROOT_DIR}/install.sh --yes"
 else
   warn "stages not completed: ${missing_stages[*]}"
-  info "finish them with: ${AN_ROOT_DIR}/install.sh --run   (or force a stage again: ./install.sh --run --redo NN)"
+  info "finish them with: ${AN_ROOT_DIR}/install.sh   (or force a stage again: ./install.sh --redo NN)"
 fi
 info "next: reboot / re-login. The desktop (niri + Noctalia) is ready; see README for post-install notes."

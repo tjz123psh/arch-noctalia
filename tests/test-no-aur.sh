@@ -52,7 +52,7 @@ for id in 01 02 03 04 06 07 08 09 10 11 12; do
   grep -qx "$id" "$DONE" || { echo "[FAIL] stage ${id} not marked done"; exit 1; }
 done
 printf '%s\n' "$out1" | grep -q 'all stages complete except AUR' || { echo "[FAIL] 'except AUR' footer missing"; exit 1; }
-printf '%s\n' "$out1" | grep -q 'install.sh --run --yes' || { echo "[FAIL] deferred-finish hint missing"; exit 1; }
+printf '%s\n' "$out1" | grep -q 'install.sh --yes' || { echo "[FAIL] deferred-finish hint missing"; exit 1; }
 if printf '%s\n' "$out1" | grep -q 'STUB 05-aur.sh'; then
   echo "[FAIL] stage 05 ran despite --no-aur"
   exit 1
