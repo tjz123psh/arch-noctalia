@@ -121,6 +121,7 @@ playerctl	extra
 poppler	extra		
 power-profiles-daemon	extra		
 powertop	extra		
+python	extra		biliass 弹幕转换用 python -m venv（显式声明，别只靠 nwg-hello/yt-dlp 传递带入）
 qt6ct	extra		
 quazip-qt6	extra		
 rclone	extra		

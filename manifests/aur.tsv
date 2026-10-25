@@ -12,6 +12,7 @@ mpv-uosc	aur	explicit	mpv 现代 UI/OSC（uosc 5.13；装到 /usr/share/mpv/scri
 musicfree-desktop-wayland-bin	aur	explicit	插件化音乐播放器（Wayland 适配预构建版）
 obsidian-bin	aur	explicit	
 opencode-bin	aur	explicit	
+papirus-folders	aur	explicit	改 Papirus 文件夹配色（Noctalia 的 papirus-icons 模板会调用它）
 pi-coding-agent-bin	aur	explicit	AI 编码代理 pi（终端 coding agent，预编译包；取代 grok-build-git）
 ttf-wps-fonts	aur	explicit	
 wechat-bin	aur	explicit	官方包重打包（替换 wechat-universal-bwrap）
