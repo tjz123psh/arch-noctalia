@@ -35,13 +35,11 @@ done
 (( missing == 0 )) || die "plugins are not deployed under ${PLUGINS_DIR} — stage 07 must run first; re-run ./install.sh --run"
 info "plugin sources: present (magnifier)"
 
-# --- 2) settings.toml 校验（插件源 + 启用列表） ---
+# --- 2) settings.toml 存在性（内容属用户态，不校验） ---
+# 这个文件在 manifests/seed.tsv 里：Noctalia 面板会实时改写它（关插件、改顺序、换插件源都是正常操作）。
+# 所以这里只要求文件在，不比对内容——否则用户动过设置后 --redo 09 会误判"仓库副本坏了"并中止。
 [[ -f "$SETTINGS" ]] || die "missing settings: ${SETTINGS} (stage 07 must deploy it)"
-settings_bad=0
-grep -q '"pang/magnifier"' "$SETTINGS" || { warn "settings: pang/magnifier not in the enabled list"; settings_bad=$((settings_bad + 1)); }
-grep -q 'location = "/home/pang/noctalia-plugins"' "$SETTINGS" || { warn "settings: local plugin source 'pang-dev' missing"; settings_bad=$((settings_bad + 1)); }
-(( settings_bad == 0 )) || die "settings.toml does not match the payload — repository copy broken?"
-info "settings: plugin source + enabled list look right"
+info "settings: present (content is user-managed — not validated)"
 
 # --- 3) cursor-track（构建产物不入仓，09 负责重建） ---
 mkdir -p "${HOME}/bin"
