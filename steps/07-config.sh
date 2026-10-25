@@ -111,6 +111,10 @@ backup_overwritten() { # $1=target  $2=ftype  → 0=有副本或无需副本，1
       return 1
     fi
   fi
+  {
+    # MANIFEST.tsv：出事后按它还原（路径 / 原权限与属主 / 备份文件在哪）。
+    printf '%s\t%s\t%s\t%s\n' "$(date -Is)" "$t" "$(stat -c '%a %U:%G' -- "$t" 2>/dev/null || printf '? ?:?')" "$base"
+  } >> "${AN_STATE_DIR}/overwritten/${RUN_TS}/MANIFEST.tsv" 2>/dev/null || true
   info "backed up: ${t} -> ${base}"
 }
 
@@ -280,10 +284,11 @@ if have locale-gen; then
 fi
 
 # c) 登录 shell：与样本/物理机一致（fish；/etc/shells 已随文件部署）。
+me="$(id -un)"
 if [[ -x /usr/bin/fish ]]; then
-  if [[ "$(getent passwd "$USER" | cut -d: -f7)" != "/usr/bin/fish" ]]; then
-    as_root usermod -s /usr/bin/fish "$USER" || die "failed to set login shell to fish"
-    ok "login shell set to /usr/bin/fish for ${USER}"
+  if [[ "$(getent passwd "$me" | cut -d: -f7)" != "/usr/bin/fish" ]]; then
+    as_root usermod -s /usr/bin/fish "$me" || die "failed to set login shell to fish"
+    ok "login shell set to /usr/bin/fish for ${me}"
   fi
 else
   warn "fish not installed — login shell left unchanged"
@@ -293,6 +298,15 @@ fi
 # /boot 通常是 drwx------ root：普通用户 [[ -d /boot/grub ]] 恒为假，原先这条会被静默跳过，
 # 于是 07/12 都报成功而主题从未生效。改用 root 探测，并在探测失败时明确告警。
 if have grub-mkconfig; then
+  # payload 的 GRUB_CMDLINE_LINUX 是按目标机（btrfs）写的：换到别的根文件系统上会生成起不来的菜单。
+  # 非 btrfs 的机器上先把 rootfstype=btrfs 摘掉，再重建菜单。
+  if [[ -z "${AN_TARGET_ROOT:-}" ]]; then
+    rootfs="$(findmnt -no FSTYPE / 2>/dev/null || true)"
+    if [[ -n "$rootfs" && "$rootfs" != "btrfs" ]] && grep -q 'rootfstype=btrfs' /etc/default/grub 2>/dev/null; then
+      as_root sed -i 's/ *rootfstype=btrfs//' /etc/default/grub
+      warn "root filesystem is ${rootfs}, not btrfs — removed rootfstype=btrfs from /etc/default/grub before regenerating the menu"
+    fi
+  fi
   if as_root test -d /boot/grub; then
     as_root grub-mkconfig -o /boot/grub/grub.cfg >/dev/null || die "grub-mkconfig failed"
     ok "GRUB menu regenerated (theme applied)"
@@ -318,10 +332,10 @@ fi
 # f) 登录背景的 ACL：11 步会加一次，但 install 覆盖会重建 inode、把 ACL 丢掉（改过壁纸后重跑 07 就会触发）。
 #    这里再补一次，保证 rice-login-bg 下一次仍写得进去；沙箱演练跳过（不碰真实 /etc）。
 if [[ -z "${AN_TARGET_ROOT:-}" && -e /etc/nwg-hello/background.png ]] && have setfacl; then
-  if getfacl -p /etc/nwg-hello/background.png 2>/dev/null | grep -q "^user:${USER}:rw-"; then
-    info "ACL already present: u:${USER}:rw on background.png"
-  elif as_root setfacl -m "u:${USER}:rw" /etc/nwg-hello/background.png; then
-    ok "ACL re-applied: u:${USER}:rw on background.png"
+  if getfacl -p /etc/nwg-hello/background.png 2>/dev/null | grep -q "^user:${me}:rw-"; then
+    info "ACL already present: u:${me}:rw on background.png"
+  elif as_root setfacl -m "u:${me}:rw" /etc/nwg-hello/background.png; then
+    ok "ACL re-applied: u:${me}:rw on background.png"
   else
     warn "failed to re-apply the ACL on /etc/nwg-hello/background.png — rice-login-bg will not be able to rewrite it"
   fi
