@@ -76,7 +76,7 @@ if ! out2="$(run07 2>&1)"; then
   echo "[FAIL] second run exited non-zero"
   exit 1
 fi
-printf '%s\n' "$out2" | grep -q 'files: 3 checked, 0 deployed, 1 unchanged, 2 kept (seed), 0 failed' || {
+printf '%s\n' "$out2" | grep -q 'files: 3 checked, 0 deployed, 1 unchanged, 2 kept (seed/runtime), 0 failed' || {
   echo "[FAIL] second run is not idempotent:"
   printf '%s\n' "$out2" | grep 'files:'
   exit 1

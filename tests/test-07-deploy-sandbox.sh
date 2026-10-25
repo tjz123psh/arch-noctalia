@@ -74,7 +74,7 @@ if ! out1="$(run_a 2>&1)"; then
   printf '%s\n' "$out1" | tail -20
   bad "first full sandbox deploy exited non-zero"
 fi
-grep -q '^\[info\]  files: 520 checked, 519 deployed, 0 unchanged, 1 kept (seed), 0 failed$' <<<"$out1" \
+grep -q '^\[info\]  files: 520 checked, 519 deployed, 0 unchanged, 1 kept (seed/runtime), 0 failed$' <<<"$out1" \
   || bad "unexpected summary: $(grep 'files:' <<<"$out1" | tail -1)"
 
 deploy_warn="$(grep -cE '^\[warn\].*(install failed|post-install verify failed|payload md5 mismatch|payload missing)' <<<"$out1" || true)"
@@ -99,10 +99,26 @@ done < "$arepo/manifests/files.tsv"
 [[ "$(cat "$aroot$seed_target")" == "USER EDIT" ]] || bad "seed file was overwritten"
 grep -q 'kept (seed' <<<"$out1" || bad "kept (seed) message missing"
 
+# runtime（桌面/程序自行改写的文件，如 Noctalia 主题产物、登录背景）：内容被改过后重跑必须保持，
+# 不许被打回仓库快照（否则 --redo 07 会静默回退主题与壁纸，并连带丢掉 11 步加的 ACL）。
+rt_repo="$(awk -F'\t' '!/^#/ && NF>1 {print $1; exit}' "$arepo/manifests/runtime-regenerated.tsv")"
+rt_target="$(awk -F'\t' -v r="$rt_repo" '!/^#/ && $1==r {print $2; exit}' "$arepo/manifests/files.tsv")"
+[[ -n "$rt_target" ]] || bad "cannot resolve a runtime target for the keep-assertion"
+printf 'RUNTIME EDIT\n' > "$aroot$rt_target"
+
 if ! out2="$(run_a 2>&1)"; then bad "second (idempotent) run exited non-zero"; fi
-# 第二次：34 个新初始化的种子 + 预置的那个 = 35 个 seed 目标都已存在 → 全部 kept，其余 unchanged。
-grep -q '^\[info\]  files: 520 checked, 0 deployed, 486 unchanged, 34 kept (seed), 0 failed$' <<<"$out2" \
+# 第二次：34 个 seed + 17 个 runtime 目标都已存在 → 51 个 kept，其余 469 个 unchanged（幂等）。
+grep -q '^\[info\]  files: 520 checked, 0 deployed, 469 unchanged, 51 kept (seed/runtime), 0 failed$' <<<"$out2" \
   || bad "second run is not idempotent: $(grep 'files:' <<<"$out2" | tail -1)"
+[[ "$(cat "$aroot$rt_target")" == "RUNTIME EDIT" ]] || bad "runtime-regenerated file was overwritten by a re-run"
+grep -q 'kept (runtime' <<<"$out2" || bad "kept (runtime) message missing"
+
+# runtime 的例外：/etc/supergfxd.conf 的 hotplug_type=Asus 是安装器保证值，写错了必须被修回来（
+# 不能被「运行时文件保持现状」放过，否则 README 里那个「切集显重启又回混合」的坑会复发）。
+printf '{"mode": "Hybrid", "hotplug_type": "None"}\n' > "$aroot/etc/supergfxd.conf"
+if ! run_a >/dev/null 2>&1; then bad "third run (supergfxd repair) exited non-zero"; fi
+grep -q '"hotplug_type": "Asus"' "$aroot/etc/supergfxd.conf" \
+  || bad "supergfxd.conf hotplug_type was not repaired back to Asus"
 
 # ---------- B. 失败路径：目标目录不可写 ----------
 if [[ "$EUID" == 0 ]]; then
@@ -119,7 +135,7 @@ else
   chmod 700 "$bhome/blocked"
   [[ "$rc" != 0 ]] || bad "a failing install must make 07 exit non-zero"
   grep -q 'install failed' <<<"$outb" || bad "'install failed' warning missing on the failure path"
-  grep -q 'files: 1 checked, 0 deployed, 0 unchanged, 0 kept (seed), 1 failed' <<<"$outb" \
+  grep -q 'files: 1 checked, 0 deployed, 0 unchanged, 0 kept (seed/runtime), 1 failed' <<<"$outb" \
     || bad "failure summary wrong: $(grep 'files:' <<<"$outb" | tail -1)"
 fi
 

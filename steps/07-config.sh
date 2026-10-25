@@ -5,7 +5,8 @@
 #   2) 部署：install -D -m <mode> —— $HOME 内用当前用户，其余（/etc、/usr/share、/var/lib）走 sudo；
 #   3) 每行部署后立即复核 md5（+ 权限位）；不一致 → warn + 计数，继续后续行，不中断；
 #   4) 幂等：常规文件且 md5（+ 权限位）一致 → 跳过（unchanged）；
-#   5) seed（manifests/seed.tsv，个人数据种子如便签/模板）：已存在一律保持现状，只在缺失时初始化；
+#   5) seed（manifests/seed.tsv，个人数据种子如便签/模板）与 runtime（manifests/runtime-regenerated.tsv，
+#      装完由桌面自行改写的主题产物/登录背景/supergfxd mode 等）：已存在一律保持现状，只在缺失时初始化；
 #   6) 覆盖"内容不同"的文件前，先把旧内容备份到 .state/overwritten/<时间戳>/；
 #   7) 两种环境适配（不改挂载设置）：FAT 系（vfat/exfat，如 ESP）没有 Unix 权限位——权限由挂载选项
 #      决定，这类文件系统跳过权限位校验；系统文件普通用户读不到时，校验改用 root 读；
@@ -72,6 +73,7 @@ fi
 
 # --- 2) 部署 + 3) 逐行复核 ---
 load_seed_targets
+load_runtime_targets
 
 # 覆盖前备份：把将被覆盖文件的旧内容存到 ${AN_STATE_DIR}/overwritten/<时间戳>/（用户可读、可恢复）。
 # 尽力而为：备份失败只 warn，不中断部署（会留下明确日志）。
@@ -134,6 +136,19 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
     continue
   fi
 
+  # runtime（装完由桌面/程序自行改写）：同样「存在即保持」。
+  # 否则 --redo 07 会把 Noctalia 主题产物、登录背景打回仓库快照，还会连带丢掉 11 步加在
+  # /etc/nwg-hello/background.png 上的 u:pang:rw ACL（install 会重建 inode），此后换壁纸就写不进去。
+  if (( exists == 1 )) && [[ -n "${AN_RUNTIME[$repo_path]:-}" ]]; then
+    # 例外：/etc/supergfxd.conf 里的 hotplug_type=Asus 是安装器必须保证的值（README 的「切集显重启又回混合」坑）。
+    # 该键没落上时照常覆盖（先备份），不能因为它是运行时文件就放过。
+    if [[ "$raw_target" != "/etc/supergfxd.conf" ]] || grep -q '"hotplug_type": "Asus"' "$target" 2>/dev/null; then
+      info "kept (runtime — rewritten by the desktop): ${target}"
+      kept=$((kept + 1))
+      continue
+    fi
+  fi
+
   actual_md5=""
   if (( exists == 1 )); then
     actual_md5="$(t_md5 "$target")"
@@ -193,7 +208,7 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
   deployed=$((deployed + 1))
 done < "$MANIFEST"
 
-printf '[info]  files: %d checked, %d deployed, %d unchanged, %d kept (seed), %d failed\n' "$checked" "$deployed" "$unchanged" "$kept" "$failed"
+printf '[info]  files: %d checked, %d deployed, %d unchanged, %d kept (seed/runtime), %d failed\n' "$checked" "$deployed" "$unchanged" "$kept" "$failed"
 if (( mode_skipped > 0 )); then
   info "note: ${mode_skipped} file(s) on a filesystem without Unix permission bits (vfat/msdos/exfat) — permission is governed by the mount options; mode checks skipped"
 fi
