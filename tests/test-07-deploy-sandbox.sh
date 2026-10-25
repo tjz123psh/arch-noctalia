@@ -180,6 +180,8 @@ m="$(md5sum "$ROOT_DIR/payload/home/.bash_profile" | awk '{print $1}')"
 {
   printf 'payload/home/.bash_profile\trelative/path\t644\t%s\n' "$m"
   printf 'payload/home/.bash_profile\t/tmp/arch-noctalia-should-not-be-written\t644\t%s\n' "$m"
+  # "/opt/../tmp/x" 归一化后就是 /tmp/x：白名单必须按归一化后的路径判断，否则 ".." 能绕过。
+  printf 'payload/home/.bash_profile\t/opt/../tmp/arch-noctalia-should-not-be-written\t644\t%s\n' "$m"
 } > "$crepo/manifests/files.tsv"
 rc=0
 outc="$(env HOME="$chome" PATH="$cstub:$PATH" AN_RUN=1 AN_MACHINE=physical AN_ROOT_DIR="$crepo" \

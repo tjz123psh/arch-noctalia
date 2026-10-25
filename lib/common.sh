@@ -128,11 +128,18 @@ t_md5()   { _target_probe md5 "$1"; }
 # 把文件丢到意外位置。两者都只作用于「清单 → 实际路径」这一步。
 # 用法：an_resolve_target "/home/pang/.bash_profile" → stdout 实际路径；非绝对/不在白名单 → rc=1
 an_resolve_target() {
-  local t="$1" allow p
+  local t="$1" allow p norm
   if [[ "$t" != /* ]]; then
     warn "manifest target is not an absolute path: ${t}"
     return 1
   fi
+  # 纯词法归一化（realpath -m 不解析软链、也不要求路径存在）：/opt/../tmp/x → /tmp/x。
+  # 少了这一步，前缀白名单可以被 ".." 绕过，护栏就形同虚设。
+  if ! norm="$(realpath -m -- "$t" 2>/dev/null)"; then
+    warn "cannot normalise manifest target: ${t}"
+    return 1
+  fi
+  t="$norm"
   allow="${AN_TARGET_ALLOW:-/home/ /etc/ /usr/share/ /usr/local/ /var/lib/ /var/cache/ /boot/ /opt/}"
   # shellcheck disable=SC2086  # allow 是空格分隔的前缀列表，这里就是要按词展开
   for p in $allow; do
@@ -167,7 +174,8 @@ load_seed_targets() { # 填充全局关联数组 AN_SEED[]（键 = files.tsv 的
   declare -gA AN_SEED=()
   local p _note
   [[ -f "${AN_ROOT_DIR}/manifests/seed.tsv" ]] || return 0
-  while IFS=$'\t' read -r p _note; do
+  # 末行没有换行时 read 仍返回非零但已读到数据——用 || [[ -n $p ]] 兜住。
+  while IFS=$'\t' read -r p _note || [[ -n "$p" ]]; do
     if [[ -z "$p" || "$p" == "#"* ]]; then
       continue
     fi
@@ -183,7 +191,7 @@ load_runtime_targets() {
   declare -gA AN_RUNTIME=()
   local p _note
   [[ -f "${AN_ROOT_DIR}/manifests/runtime-regenerated.tsv" ]] || return 0
-  while IFS=$'\t' read -r p _note; do
+  while IFS=$'\t' read -r p _note || [[ -n "$p" ]]; do
     if [[ -z "$p" || "$p" == "#"* ]]; then
       continue
     fi
