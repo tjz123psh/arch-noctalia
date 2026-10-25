@@ -26,6 +26,14 @@ count_lock "$M/seed.tsv" 34 "seed.tsv"
 count_lock "$M/excluded.tsv" 153 "excluded.tsv"
 count_lock "$M/runtime-regenerated.tsv" 26 "runtime-regenerated.tsv"
 
+# --- 末行换行：所有步骤都用 while read 逐行读清单，末行没换行会静默漏掉最后一条 ---
+for f in "$M"/*.tsv; do
+  [[ -s "$f" ]] || continue
+  if [[ -n "$(tail -c 1 -- "$f")" ]]; then
+    note "missing trailing newline: $(basename "$f")"
+  fi
+done
+
 # --- 通用逐列规则 ---
 nf_rule() { # $1=file $2=fields $3=label
   awk -F'\t' -v n="$2" -v lab="$3" '!/^[[:space:]]*#/ && NF && NF != n { printf "%s: line %d has %d fields (want %d)\n", lab, NR, NF, n }' "$1" >> "$errs"
