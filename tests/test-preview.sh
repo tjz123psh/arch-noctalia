@@ -8,8 +8,9 @@ out1="$(mktemp)"
 out2="$(mktemp)"
 out3="$(mktemp)"
 out4="$(mktemp)"
+out5="$(mktemp)"
 sandbox="$(mktemp -d)"
-trap 'rm -f "$out1" "$out2" "$out3" "$out4"; rm -rf "$sandbox"' EXIT
+trap 'rm -f "$out1" "$out2" "$out3" "$out4" "$out5"; rm -rf "$sandbox"' EXIT
 # 状态目录现在落在用户 XDG state 下，所以给沙箱 HOME，顺便把「预览不写状态」断言精确到位置上。
 export HOME="$sandbox/home"
 mkdir -p "$HOME"
@@ -64,4 +65,10 @@ if grep -q 'note: --redo' "$out1"; then
   exit 1
 fi
 
-echo "ok: deterministic preview, full stage plan, environment line present, no state written, --no-aur and --redo annotated"
+# --machine 取值校验：大小写/拼错必须当场拒绝，不能被当成 unknown 继续往下跑。
+rc=0
+bash "$ROOT/install.sh" --preview --machine Physical > "$out5" 2>&1 || rc=$?
+[[ "$rc" != 0 ]] || { echo "--machine with an invalid value must exit non-zero"; exit 1; }
+grep -q 'must be physical or vm' "$out5" || { echo "missing --machine error message"; exit 1; }
+
+echo "ok: deterministic preview, full stage plan, environment line present, no state written, --no-aur and --redo annotated, --machine validated"

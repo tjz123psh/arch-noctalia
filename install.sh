@@ -62,6 +62,17 @@ user="$(current_user)"
 virt="$(detect_virt)"
 machine="${MACHINE_OVERRIDE:-$(detect_machine)}"
 
+# --machine 只在显式传入时校验（自动探测可能返回 unknown，那种情况留给 run 模式下面报错）。
+if [[ -n "${MACHINE_OVERRIDE}" ]]; then
+  case "$machine" in
+    physical|vm) ;;
+    *) die "--machine must be physical or vm (got: ${machine})" ;;
+  esac
+  if [[ "$machine" == "physical" && "$virt" == "vmware" ]]; then
+    warn "machine type forced to physical, but systemd-detect-virt says vmware — drivers will be installed on a VM."
+  fi
+fi
+
 if [[ "$MODE" == "preview" ]]; then
   render_plan "preview" "$machine" "$virt" "$user" "$SKIP_AUR"
   if [[ -n "$REDO_STAGE" ]]; then
