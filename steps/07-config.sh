@@ -76,32 +76,61 @@ load_seed_targets
 load_runtime_targets
 
 # 覆盖前备份：把将被覆盖文件的旧内容存到 ${AN_STATE_DIR}/overwritten/<时间戳>/（用户可读、可恢复）。
-# 尽力而为：备份失败只 warn，不中断部署（会留下明确日志）。
+# 备份是覆盖的**前置条件**：拿不到副本就返回 1，调用方计 failed 并跳过这个文件。
+# 宁可这一次不更新某个文件，也不做「没有副本的覆盖」。
 RUN_TS=""
-backup_overwritten() { # $1=target  $2=ftype
-  local t="$1" ftype="$2" rel base
+backup_overwritten() { # $1=target  $2=ftype  → 0=有副本或无需副本，1=备份失败
+  local t="$1" ftype="$2" rel base base_ts suffix
   [[ "$ftype" == "regular file" ]] || return 0
-  [[ -n "$RUN_TS" ]] || RUN_TS="$(date +%Y%m%d-%H%M%S)"
+  if [[ -z "$RUN_TS" ]]; then
+    # 同一秒内跑两次要落到不同目录，否则第二次的 cp 会把第一次的备份覆盖掉。
+    base_ts="$(date +%Y%m%d-%H%M%S)"
+    RUN_TS="$base_ts"
+    suffix=1
+    while [[ -e "${AN_STATE_DIR}/overwritten/${RUN_TS}" ]]; do
+      suffix=$((suffix + 1))
+      RUN_TS="${base_ts}-${suffix}"
+    done
+  fi
   rel="${t#/}"
   base="${AN_STATE_DIR}/overwritten/${RUN_TS}/${rel}"
   if ! mkdir -p -- "$(dirname -- "$base")"; then
     warn "backup dir not writable: $(dirname -- "$base")"
-    return 0
+    return 1
   fi
   if [[ "$t" == "$HOME"/* ]]; then
     if ! cp -- "$t" "$base" 2>/dev/null; then
       warn "backup failed: ${t}"
-      return 0
+      return 1
     fi
   else
     # 系统文件由 root 读、重定向由当前用户执行（备份文件归用户所有，可自行恢复）。
     if ! as_root cat -- "$t" > "$base" 2>/dev/null; then
       rm -f -- "$base"
       warn "backup failed: ${t}"
-      return 0
+      return 1
     fi
   fi
   info "backed up: ${t} -> ${base}"
+}
+
+# 软链被替换前，把「它原本指向哪」记下来——cp 只能存内容，存不了链接本身。
+backup_symlink() { # $1=target  → 0=已记录，1=失败
+  local t="$1" rel base
+  [[ -n "$RUN_TS" ]] || RUN_TS="$(date +%Y%m%d-%H%M%S)"
+  rel="${t#/}"
+  base="${AN_STATE_DIR}/overwritten/${RUN_TS}/${rel}.symlink"
+  if ! mkdir -p -- "$(dirname -- "$base")"; then
+    warn "backup dir not writable: $(dirname -- "$base")"
+    return 1
+  fi
+  if ! printf "%s\n" "$(readlink -- "$t")" > "$base" 2>/dev/null; then
+    warn "backup failed (symlink): ${t}"
+    return 1
+  fi
+  # 能整份复制就再存一份（保留链接形态）；失败不影响上面那份指向记录。
+  cp -P -- "$t" "${base%.symlink}" 2>/dev/null || true
+  info "backed up symlink: ${t} -> $(readlink -- "$t") (recorded in ${base})"
 }
 
 checked=0
@@ -160,7 +189,15 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
     mode_skipped=$((mode_skipped + 1))
   fi
 
-  # 幂等跳过：常规文件（非软链）且内容一致；支持权限位的文件系统上还要求权限位一致。
+  # 软链（用户把自己的 dotfile 链过来）：内容一致就保持链接不动。
+  # 不这么做的话 install 会 unlink 重建，链接被换成普通文件、而摘要仍显示 0 failed。
+  if [[ -L "$target" && -n "$actual_md5" && "$actual_md5" == "$md5" ]]; then
+    info "kept (symlink, identical content): ${target} -> $(readlink -- "$target")"
+    unchanged=$((unchanged + 1))
+    continue
+  fi
+
+  # 幂等跳过：常规文件且内容一致；支持权限位的文件系统上还要求权限位一致。
   if [[ "$ftype" == "regular file" && ! -L "$target" && -n "$actual_md5" && "$actual_md5" == "$md5" ]]; then
     if (( mode_enforced == 0 )) || [[ "$(t_perms "$target")" == "$mode" ]]; then
       unchanged=$((unchanged + 1))
@@ -171,9 +208,20 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
   if (( exists == 1 )); then
     if [[ "$actual_md5" == "$md5" ]]; then
       info "re-installing (mode or type differs): ${target}"
+    elif [[ -L "$target" ]]; then
+      info "replacing symlink (content differs): ${target} -> $(readlink -- "$target")"
+      if ! backup_symlink "$target"; then
+        warn "skipping ${target}: refusing to replace a symlink without a record of where it pointed"
+        failed=$((failed + 1))
+        continue
+      fi
     else
       info "overwriting changed file: ${target}"
-      backup_overwritten "$target" "$ftype"
+      if ! backup_overwritten "$target" "$ftype"; then
+        warn "skipping ${target}: refusing to overwrite without a backup copy"
+        failed=$((failed + 1))
+        continue
+      fi
     fi
   fi
 
@@ -265,6 +313,39 @@ if [[ -f /usr/share/glib-2.0/schemas/io.missioncenter.MissionCenter.gschema.xml 
   fi
 else
   warn "mission-center schema not installed — skipped GSettings override compile"
+fi
+
+# f) 登录背景的 ACL：11 步会加一次，但 install 覆盖会重建 inode、把 ACL 丢掉（改过壁纸后重跑 07 就会触发）。
+#    这里再补一次，保证 rice-login-bg 下一次仍写得进去；沙箱演练跳过（不碰真实 /etc）。
+if [[ -z "${AN_TARGET_ROOT:-}" && -e /etc/nwg-hello/background.png ]] && have setfacl; then
+  if getfacl -p /etc/nwg-hello/background.png 2>/dev/null | grep -q "^user:${USER}:rw-"; then
+    info "ACL already present: u:${USER}:rw on background.png"
+  elif as_root setfacl -m "u:${USER}:rw" /etc/nwg-hello/background.png; then
+    ok "ACL re-applied: u:${USER}:rw on background.png"
+  else
+    warn "failed to re-apply the ACL on /etc/nwg-hello/background.png — rice-login-bg will not be able to rewrite it"
+  fi
+fi
+
+# g) 索引刷新：payload 带了三套字体和三个 .desktop，装完要重建缓存，否则首登可能落回默认字体、
+#    yazi 也不出现在「打开方式」候选里（失败只 warn，不影响安装结果）。
+if have fc-cache; then
+  if as_root fc-cache -f >/dev/null 2>&1; then
+    ok "font cache refreshed"
+  else
+    warn "fc-cache failed — the bundled fonts may not be picked up until the next login"
+  fi
+else
+  warn "fc-cache not found — the bundled fonts may not be picked up until the next login"
+fi
+if have update-desktop-database; then
+  if update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1; then
+    ok "desktop database updated (~/.local/share/applications)"
+  else
+    warn "update-desktop-database failed — yazi may not show up in \"Open with\""
+  fi
+else
+  warn "update-desktop-database not found — .desktop entries may not be picked up"
 fi
 
 ok "Stage 07 config: done"

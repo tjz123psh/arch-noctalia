@@ -107,8 +107,8 @@ rt_target="$(awk -F'\t' -v r="$rt_repo" '!/^#/ && $1==r {print $2; exit}' "$arep
 printf 'RUNTIME EDIT\n' > "$aroot$rt_target"
 
 if ! out2="$(run_a 2>&1)"; then bad "second (idempotent) run exited non-zero"; fi
-# 第二次：34 个 seed + 17 个 runtime 目标都已存在 → 51 个 kept，其余 469 个 unchanged（幂等）。
-grep -q '^\[info\]  files: 520 checked, 0 deployed, 469 unchanged, 51 kept (seed/runtime), 0 failed$' <<<"$out2" \
+# 第二次：34 个 seed + 26 个 runtime 目标都已存在 → 60 个 kept，其余 460 个 unchanged（幂等）。
+grep -q '^\[info\]  files: 520 checked, 0 deployed, 460 unchanged, 60 kept (seed/runtime), 0 failed$' <<<"$out2" \
   || bad "second run is not idempotent: $(grep 'files:' <<<"$out2" | tail -1)"
 [[ "$(cat "$aroot$rt_target")" == "RUNTIME EDIT" ]] || bad "runtime-regenerated file was overwritten by a re-run"
 grep -q 'kept (runtime' <<<"$out2" || bad "kept (runtime) message missing"
@@ -119,6 +119,40 @@ printf '{"mode": "Hybrid", "hotplug_type": "None"}\n' > "$aroot/etc/supergfxd.co
 if ! run_a >/dev/null 2>&1; then bad "third run (supergfxd repair) exited non-zero"; fi
 grep -q '"hotplug_type": "Asus"' "$aroot/etc/supergfxd.conf" \
   || bad "supergfxd.conf hotplug_type was not repaired back to Asus"
+
+# ---------- D. 软链：内容一致保持链接；内容不同才替换，并留下「原本指向哪」 ----------
+dstore="$sandbox/d-store"; mkdir -p "$dstore"
+link_t="$aroot/home/pang/.bash_profile"
+cp -p -- "$link_t" "$dstore/same.conf"
+printf 'LOCAL OVERRIDE\n' > "$dstore/diff.conf"
+rm -f -- "$link_t"; ln -s "$dstore/same.conf" "$link_t"
+if ! outd1="$(run_a 2>&1)"; then bad "symlink(identical) run exited non-zero"; fi
+[[ -L "$link_t" ]] || bad "identical-content symlink was replaced by a regular file"
+grep -q 'kept (symlink, identical content)' <<<"$outd1" || bad "kept (symlink) message missing"
+
+rm -f -- "$link_t"; ln -s "$dstore/diff.conf" "$link_t"
+if ! run_a >/dev/null 2>&1; then bad "symlink(differs) run exited non-zero"; fi
+[[ ! -L "$link_t" ]] || bad "a symlink with different content should have been replaced"
+[[ "$(cat "$link_t")" == "$(cat "$ROOT_DIR/payload/home/.bash_profile")" ]] || bad "symlink target was not restored to the manifest content"
+link_rec="$(find "$ahome/.local/state/arch-noctalia/overwritten" -name '*.symlink' -print -quit 2>/dev/null || true)"
+[[ -n "$link_rec" ]] || bad "no *.symlink record was written for the replaced symlink"
+[[ "$(cat "$link_rec")" == "$dstore/diff.conf" ]] || bad "the *.symlink record does not point at the original target"
+
+# ---------- E. 备份失败 → 不覆盖（fail-closed） ----------
+E="$sandbox/e"; erepo="$E/repo"; eroot="$E/root"; ehome="$eroot/home/pang"; estub="$E/stub-bin"; estate="$E/state-ro"
+mkdir -p "$ehome" "$estate"; make_repo "$erepo"; make_stubs "$estub" "$eroot" "$erepo"
+m="$(md5sum "$ROOT_DIR/payload/home/.bash_profile" | awk '{print $1}')"
+printf 'payload/home/.bash_profile\t/home/pang/keep.conf\t644\t%s\n' "$m" > "$erepo/manifests/files.tsv"
+printf 'USER DATA\n' > "$eroot/home/pang/keep.conf"
+chmod 500 "$estate"
+rc=0
+oute="$(env HOME="$ehome" PATH="$estub:$PATH" AN_RUN=1 AN_MACHINE=physical AN_ROOT_DIR="$erepo" \
+        AN_TARGET_ROOT="$eroot" AN_TARGET_ALLOW=/ AN_STATE_DIR="$estate/state" \
+        bash "$erepo/steps/07-config.sh" 2>&1)" || rc=$?
+chmod 700 "$estate"
+[[ "$rc" != 0 ]] || bad "a failed backup must make 07 exit non-zero (fail-closed)"
+[[ "$(cat "$eroot/home/pang/keep.conf")" == "USER DATA" ]] || bad "the file was overwritten even though the backup failed"
+grep -q 'refusing to overwrite without a backup copy' <<<"$oute" || bad "missing fail-closed message"
 
 # ---------- B. 失败路径：目标目录不可写 ----------
 if [[ "$EUID" == 0 ]]; then
