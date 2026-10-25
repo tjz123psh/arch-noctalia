@@ -24,8 +24,8 @@ curl -fsSL $U | bash -s -- --no-aur    # 外网不稳时先跳过 AUR；进桌�
 - 目标机用户名 `pang`（路径按 `/home/pang` 写死）；只从 git/curl 拉取，无离线包。
 - 共 12 步：源 → 系统更新 → 软件 → 驱动 → AUR → 桌面 → 配置 → 脚本 → Noctalia → 服务 → 登录界面 → 自检。
 - 01 步自动配好 archlinuxcn 与官方镜像表（先备份，再按实测速度重排）；07 步另建标准用户目录、zh_CN locale、fish 登录 shell、主题化 GRUB。
-- 中断可续：`./install.sh --run` 接着装；`--redo NN` 从第 NN 步起强制重跑（修复用）。
-- 数据安全：便签与 `Templates/` 只在缺失时初始化，你写的内容不会被覆盖；桌面/程序会自己改写的文件（Noctalia 主题产物、登录背景、`supergfxd.conf` 的 `mode`，见 `manifests/runtime-regenerated.tsv`）同样只在缺失时初始化，重跑不会把调好的主题和壁纸打回快照；其余文件更新前旧内容备份到 `<状态目录>/overwritten/<时间戳>/`（08 步替换 `~/bin` 下已存在的真实文件时同样先备份）。
+- 中断可续：`./install.sh --run` 接着装；`--redo NN` 从第 NN 步起强制重跑（修复用）。**`--redo 07` 的语义是“把受管文件对回仓库版本”**：除了 seed / runtime 两张名单，其余文件都会被覆盖（旧内容先备份到 `<状态目录>/overwritten/<时间戳>/`）。所以它适合“配置被我改坏了，恢复基线”，不适合“只更新一个插件”。
+- 数据安全：便签与 `Templates/` 只在缺失时初始化，你写的内容不会被覆盖；桌面/程序会自己改写的文件（Noctalia 主题产物、登录背景、`supergfxd.conf` 的 `mode`，见 `manifests/runtime-regenerated.tsv`）同样只在缺失时初始化，重跑不会把调好的主题和壁纸打回快照；其余文件更新前旧内容备份到 `<状态目录>/overwritten/<时间戳>/`（08 步替换 `~/bin` 下已存在的真实文件时同样先备份）。**备份拿不到就不覆盖**：备份失败的文件会记为失败并跳过（宁可这次不更新，也不做没有副本的覆盖）；目标是软链时，备份里另外记下 `它原本指向哪`（`<文件名>.symlink`），内容一致则软链原样保留、不被换成普通文件。
 - 状态目录：续装记录与覆盖备份放在 `~/.local/state/arch-noctalia/`（不再落在 clone 里，删掉/重克隆仓库不会丢备份）。
 - btrfs 机器：snapper 时间线快照**每周一次**（`/etc/systemd/system/snapper-timeline.timer.d/override.conf` 覆盖上游 hourly，随 07 部署；保留策略仍由 snapper 自身配置决定）。
 - 快照策略：**root 与 home 走同一条逻辑**——只有维护脚本成套打快照（`quicksave`，以及 `sysup` 升级前的 `quicksave-sysup`；两个配置同一批次）＋ snapper 自身的每周 timeline。`/etc/snap-pac.ini` 随 07 部署，把 `[root] snapshot` 显式设为 `False`，关掉 snap-pac 的「每次 pacman 事务自动快照」（它的默认只对 root 生效，会让 root 比 home 多出一堆零碎快照）。注意：维护脚本的深度清理（`clean all`）只保留 `before*` 节点与最近一套成套批次，timeline 快照也会被它删掉。
@@ -51,10 +51,10 @@ curl -fsSL $U | bash -s -- --no-aur    # 外网不稳时先跳过 AUR；进桌�
 - 外观：毛玻璃等 GTK 样式以样式类限定作用域（`gtk.css` 追加段，只影响指定程序）；程序的"系统默认值"以 GSettings vendor override 随 07 部署（`/usr/share/glib-2.0/schemas/*.gschema.override`），07 末尾统一 `glib-compile-schemas` 生效——你在程序里改过的值（dconf）优先，不会被覆盖。
 - 未纳管项有账可查：`manifests/excluded.tsv` 记录**手动安装项**（需自行安装，安装器带上会出问题，如 AUR 交互构建、按机器定制、需登录/许可）、安全排除项与各类缓存/生成目录的解释；实际纳管的内容见 `files.tsv` / `packages.tsv` / `aur.tsv`。
 - 自检：第 12 步查文件 / 软件包 / `~/bin` 软链 / 服务启用状态（含 snapper timeline 的生效日历=每周）；手动跑 `tools/selfcheck.sh`、`tests/run-all.sh`。
-- 自检容差：桌面/程序会自行改写的文件（Noctalia 主题产物、WPS 配置、登录背景…）列在 `manifests/runtime-regenerated.tsv`（只核对存在性），你可能编辑的状态文件列在 `manifests/seed.tsv`（存在即保持）——所以机器用过一段时间后 `--redo 12` 也不会误报“安装失败”。真机对账 `tests/test-machine-reconcile.sh` 用同一份名单豁免内容比对，`AN_RECONCILE_STRICT=1` 可当门禁（本机现为 0 漂移）；清单的形状/白名单/取值由 `tools/selfcheck.sh` 与 `tests/test-manifest-schema.sh` 双重把关。
+- 自检容差：桌面/程序会自行改写的文件（Noctalia 主题产物、WPS 配置、登录背景…）列在 `manifests/runtime-regenerated.tsv`（只核对存在性，且 07 重跑时也不会覆盖它们），你可能编辑的状态文件列在 `manifests/seed.tsv`（存在即保持）——所以机器用过一段时间后 `--redo 12` 也不会误报“安装失败”。真机对账 `tests/test-machine-reconcile.sh` 用同一份名单豁免内容比对，`AN_RECONCILE_STRICT=1` 可当门禁（本机现为 0 漂移）；清单的形状/白名单/取值由 `tools/selfcheck.sh` 与 `tests/test-manifest-schema.sh` 双重把关。
 - 登录界面背景：`payload/system/etc/nwg-hello/background.png` 的初始快照**就是种子默认壁纸**（`Pictures/wallpapers/斑斓.png`，两者字节完全相同），所以装完第一次开机，登录界面和桌面壁纸是一致的；之后每次换壁纸由 `~/bin/rice-login-bg`（Noctalia 的 `wallpaper_changed` hook）按**原字节**跟随改写，不做缩放/重编码，写入走第 11 步加的 `u:pang:rw` ACL，所以这条路径的内容不需要安装器再管（`runtime-regenerated.tsv` 只核存在性）。
 
-- Noctalia 插件源码：`payload/home/noctalia-plugins/`（`magnifier` 放大镜 + `tide-sidebar` 侧边栏工作台），07 步部署到 `~/noctalia-plugins`，宿主以 path 源 `pang-dev` **直接读这个目录**（不另建运行副本）；改插件就在本仓里改，提交推送后跑 `./install.sh --redo 07` 部署。`.backups/`、`magnifier/tools/cursor-track/build/` 属本地产物，不入仓。
+- Noctalia 插件源码：`payload/home/noctalia-plugins/`（`magnifier` 放大镜 + `tide-sidebar` 侧边栏工作台），07 步部署到 `~/noctalia-plugins`，宿主以 path 源 `pang-dev` **直接读这个目录**；改插件就在本仓里改，提交推送后跑 `./install.sh --redo 07` 部署，然后在 Noctalia 里重新载入插件。注意 Noctalia 的插件系统仍会把插件装到 `~/.local/state/noctalia/plugins/`（那份是运行副本，含便签等用户数据，见 `excluded.tsv`），源码与运行副本是两回事。`.backups/`、`magnifier/tools/cursor-track/build/` 属本地产物，不入仓。
 
 ## 已知限制与取舍
 
