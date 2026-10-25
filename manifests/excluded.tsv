@@ -171,7 +171,7 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 # · Office.conf:20 的 keys\priv（1699 字符高熵块）：WPS SDK 自带的设备级 blob，用户确认本人从未配置过 WPS 账号
 #   → 保留在 payload，不视为泄露。该文件本身是纳管项，故这里只写注释、不列 file 行（否则会与 payload 冲突）。
 # · 机型识别不扩展 KVM/QEMU：用户只用 VMware，lib/detect.sh 保持 vmware-only。
-# · 不再补的测试：11-greeter 脚本体的沙箱测试、bootstrap 只测已提交 HEAD（用户判定性价比低）。
+# · 不再补的测试：11-greeter 脚本体的沙箱测试（用户判定性价比低；bootstrap.sh 已于 2026-10-25 移除）。
 # · selfcheck 不加『包必须在 pacman sync db 里存在』：会让自检依赖本机数据库环境。
 # · 12 个 manifest mode=600 的文件在 git 里只能是 644（git 只存可执行位）——已知且不可避免。
 # · excluded 的 kind=file 行有若干条指向软链（Vellum 三个单元等）——已知，接受。
