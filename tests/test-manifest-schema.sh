@@ -24,7 +24,7 @@ count_lock "$M/aur.tsv" 16 "aur.tsv"
 count_lock "$M/bin-links.tsv" 18 "bin-links.tsv"
 count_lock "$M/seed.tsv" 34 "seed.tsv"
 count_lock "$M/excluded.tsv" 153 "excluded.tsv"
-count_lock "$M/runtime-regenerated.tsv" 17 "runtime-regenerated.tsv"
+count_lock "$M/runtime-regenerated.tsv" 26 "runtime-regenerated.tsv"
 
 # --- 通用逐列规则 ---
 nf_rule() { # $1=file $2=fields $3=label
@@ -89,4 +89,4 @@ if [[ -s "$errs" ]]; then
   echo "test-manifest-schema: FAIL ($(wc -l < "$errs") problem(s))"
   exit 1
 fi
-echo "ok: 7 manifests (520/172/16/18/34/153/17 rows) match the column/format/value/whitelist rules"
+echo "ok: 7 manifests (520/172/16/18/34/153/26 rows) match the column/format/value/whitelist rules"

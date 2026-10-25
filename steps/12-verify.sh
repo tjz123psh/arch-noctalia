@@ -32,7 +32,7 @@ bad=0
 miss=0
 seeded=0
 runtime=0
-while IFS=$'\t' read -r repo_path raw_target _mode md5; do
+while IFS=$'\t' read -r repo_path raw_target mode md5; do
   if [[ -z "$raw_target" || "$raw_target" == "#"* ]]; then
     continue
   fi
@@ -75,12 +75,18 @@ while IFS=$'\t' read -r repo_path raw_target _mode md5; do
     continue
   fi
   actual="$(t_md5 "$target")"
-  if [[ "$actual" == "$md5" ]]; then
-    okc=$((okc + 1))
-  else
+  if [[ "$actual" != "$md5" ]]; then
     bad=$((bad + 1))
     warn "md5 mismatch: ${target}"
+    continue
   fi
+  # 内容对了还要看权限位（只有支持 Unix 权限位的文件系统才核；vfat/ESP 由挂载选项决定）。
+  if fs_has_unix_perms "$(fs_of_target "$target")" && [[ "$(t_perms "$target")" != "$mode" ]]; then
+    bad=$((bad + 1))
+    warn "mode mismatch (on disk $(t_perms "$target"), manifest ${mode}): ${target}"
+    continue
+  fi
+  okc=$((okc + 1))
 done < "$FILES"
 printf '[info]  files: %d checked, %d ok, %d mismatched, %d missing\n' "$checked" "$okc" "$bad" "$miss"
 if (( seeded > 0 )); then
@@ -110,6 +116,28 @@ while IFS=$'\t' read -r pkg _repo module _purpose; do
 done < "$PACKAGES"
 printf '[info]  packages: %d checked, %d missing\n' "$pk_checked" "$pk_missing"
 
+# AUR/foreign 包：只核 aur.tsv 里 role=explicit 的那些（dependency 条目由 explicit 传递带入）。
+# 05 步没跑过（--no-aur / 只跑了部分阶段）时不核，否则会把「用户主动跳过」误报成安装失败。
+info "Stage 12 verify: checking AUR packages against aur.tsv"
+AUR="${AN_ROOT_DIR}/manifests/aur.tsv"
+aur_checked=0
+aur_missing=0
+if [[ -f "$AUR" ]] && grep -qx '05' "${AN_STATE_DIR}/steps.done" 2>/dev/null; then
+  while IFS=$'\t' read -r pkg _channel role _purpose; do
+    if [[ -z "$pkg" || "$pkg" == "#"* || "${role:-}" != "explicit" ]]; then
+      continue
+    fi
+    aur_checked=$((aur_checked + 1))
+    if ! pacman -Q "$pkg" >/dev/null 2>&1; then
+      aur_missing=$((aur_missing + 1))
+      warn "aur package missing: ${pkg}"
+    fi
+  done < "$AUR"
+  printf '[info]  aur: %d checked, %d missing\n' "$aur_checked" "$aur_missing"
+else
+  info "aur: stage 05 is not recorded as done — skipped (--no-aur or partial run)"
+fi
+
 info "Stage 12 verify: misc (user dirs, login shell)"
 misc_bad=0
 for d in Desktop Documents Downloads Music Videos Public Projects Templates Pictures/Screenshots; do
@@ -121,6 +149,11 @@ done
 if [[ "$(getent passwd "$USER" | cut -d: -f7)" != "/usr/bin/fish" ]]; then
   misc_bad=$((misc_bad + 1))
   warn "login shell is not fish: $(getent passwd "$USER" | cut -d: -f7)"
+fi
+# 09 步编译的光标传感器：不在 files.tsv 里（是构建产物），magnifier 插件靠它拿光标位置。
+if [[ ! -x "$HOME/bin/cursor-track" ]]; then
+  misc_bad=$((misc_bad + 1))
+  warn "missing or not executable: ~/bin/cursor-track (built by stage 09)"
 fi
 
 info "Stage 12 verify: checking ~/bin links against bin-links.tsv"
@@ -191,7 +224,18 @@ if (( ${#svc_inactive[@]} > 0 )); then
   info "note: enabled but not running right now (may be deferred to reboot / hardware-dependent): ${svc_inactive[*]}"
 fi
 
-if (( bad > 0 || miss > 0 || pk_missing > 0 || misc_bad > 0 || links_bad > 0 || svc_bad > 0 || svc_sched_bad > 0 )); then
+# ACL 抽查：登录背景由 rice-login-bg 以普通用户身份改写，靠 11 步加、07 重跑的 u:<user>:rw。
+# 丢了 ACL 不会让任何文件缺失，但换壁纸会静默失败——这种"看不见的坏"正是自检该管的。
+if [[ -e /etc/nwg-hello/background.png ]] && have getfacl; then
+  if getfacl -p /etc/nwg-hello/background.png 2>/dev/null | grep -q "^user:${USER}:rw-"; then
+    info "acl: background.png carries u:${USER}:rw"
+  else
+    misc_bad=$((misc_bad + 1))
+    warn "acl missing: /etc/nwg-hello/background.png has no u:${USER}:rw — rice-login-bg cannot rewrite it"
+  fi
+fi
+
+if (( bad > 0 || miss > 0 || pk_missing > 0 || aur_missing > 0 || misc_bad > 0 || links_bad > 0 || svc_bad > 0 || svc_sched_bad > 0 )); then
   error "Stage 12 verify: FAIL"
   exit 1
 fi

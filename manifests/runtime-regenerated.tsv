@@ -21,4 +21,13 @@ payload/home/.config/yazi/flavors/noctalia.yazi/flavor.toml	Noctalia 主题模�
 payload/home/.config/yazi/flavors/noctalia.yazi/tmtheme.xml	Noctalia 主题模板生成（语法高亮）
 payload/home/.config/Kingsoft/Office.conf	WPS 运行时自写（时间戳 / 插件通道时间 / 硬件上报计数）
 payload/home/.config/Kingsoft/WPSCloud.conf	WPS 运行时自写（设备键 / 引导标记 / 云端开关）
+payload/home/.config/fcitx5/profile	fcitx5 自己维护输入法组与顺序（fcitx5-configtool 改写）
+payload/home/.config/fcitx5/conf/pinyin.conf	fcitx5-configtool 改写（候选数/云拼音/双拼）
+payload/home/.config/fcitx5/conf/chttrans.conf	fcitx5-configtool 改写（简繁转换默认值）
+payload/home/.config/fcitx5/conf/classicui.conf	fcitx5-configtool 改写（主题/字号）
+payload/home/.config/gtk-3.0/settings.ini	nwg-look 等 GTK 设置程序改写（主题/字体/图标）
+payload/home/.config/gtk-4.0/settings.ini	nwg-look 等 GTK 设置程序改写（主题/字体/图标）
+payload/home/.config/btop/btop.conf	btop 退出时写回选项
+payload/home/.config/qt6ct/qt6ct.conf	qt6ct GUI 写回（含窗口 geometry）
+payload/home/.config/nwg-look/config	nwg-look 写回
 payload/system/etc/supergfxd.conf	supergfxd 切换显卡模式时会改写 mode 字段；只核存在性（hotplug_type=Asus 见 excluded.tsv 记账）
