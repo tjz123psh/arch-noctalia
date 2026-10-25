@@ -6,7 +6,8 @@ title-text: ""
 desktop-image: "background.jpg"
 desktop-color: "#242424"
 terminal-font: "Terminus Regular 14"
-terminal-box: "terminal_box_*.png"
+# terminal-box: 原主题的九宫格边框图（terminal_box_*.png）没有随仓库提供。
+# 引用一个不存在的 pixmap，GRUB 会退回默认绘制；显式注释掉，避免"主题缺文件"的假象。
 terminal-left: "0"
 terminal-top: "0"
 terminal-width: "100%"
