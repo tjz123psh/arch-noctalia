@@ -34,7 +34,6 @@ ok "tool: curl present"
 # 1a) 官方仓库镜像表：一律写成安装器标准列表（tuna 打头）——base 自带顺序可能阿里云打头
 #     （实测 aliyun 持续只有 ~2.3MB/s，会拖垮 stage 02/03）。先备份、内容一致则跳过（幂等）。
 MIRRORLIST="/etc/pacman.d/mirrorlist"
-confirm "Write the installer's official mirror list to ${MIRRORLIST}?" || die "official mirrorlist is required (stages 02-03 use it)."
 tmp_ml="$(mktemp)"
 cat > "$tmp_ml" <<'EOF'
 # arch-noctalia 写入：官方仓库镜像（tuna 打头）
@@ -64,7 +63,6 @@ if grep -qE '^[[:space:]]*\[archlinuxcn\]' "$PACMAN_CONF"; then
 else
   info "archlinuxcn repo missing in ${PACMAN_CONF} — adding the installer's mirror list"
 fi
-confirm "Write the installer's [archlinuxcn] block to ${PACMAN_CONF}?" || die "archlinuxcn repo is required (stages 03-05 use it)."
 tmp_conf="$(mktemp)"
 cn_replace_section "$PACMAN_CONF" > "$tmp_conf" <<'EOF'
 [archlinuxcn]
@@ -113,7 +111,6 @@ fi
 if grep -qE '^[[:space:]]*\[multilib\]' "$PACMAN_CONF"; then
   ok "[multilib]: present"
 else
-  confirm "Enable [multilib] in ${PACMAN_CONF}?" || die "multilib is required for lib32 packages (stages 03/06)."
   as_root sed -i -e 's/^#\[multilib\][[:space:]]*$/[multilib]/' "$PACMAN_CONF"
   # Include 行只在 [multilib] 段内放开——原先的全文件替换会把 core/extra 等段落里注释掉的同名行
   # 一起放开，导致 pacman 每次运行都刷 warning（实测 5 条）。

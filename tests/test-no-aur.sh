@@ -42,8 +42,7 @@ if ! out1="$(run --no-aur)"; then
   exit 1
 fi
 printf '%s\n' "$out1"
-printf '%s\n' "$out1" | grep -q 'stage 05 aur: skipped (--no-aur' || { echo "[FAIL] 05 skip line missing"; exit 1; }
-printf '%s\n' "$out1" | grep -q '\[skipped: --no-aur\]' || { echo "[FAIL] plan annotation missing"; exit 1; }
+printf '%s\n' "$out1" | grep -q '·  05 aur (skipped: --no-aur' || { echo "[FAIL] 05 skip line missing"; exit 1; }
 if grep -qx '05' "$DONE"; then
   echo "[FAIL] stage 05 was wrongly marked done"
   exit 1
@@ -52,7 +51,7 @@ for id in 01 02 03 04 06 07 08 09 10 11 12; do
   grep -qx "$id" "$DONE" || { echo "[FAIL] stage ${id} not marked done"; exit 1; }
 done
 printf '%s\n' "$out1" | grep -q 'all stages complete except AUR' || { echo "[FAIL] 'except AUR' footer missing"; exit 1; }
-printf '%s\n' "$out1" | grep -q 'install.sh --yes' || { echo "[FAIL] deferred-finish hint missing"; exit 1; }
+printf '%s\n' "$out1" | grep -q 'finish the AUR packages with: .*install.sh' || { echo "[FAIL] deferred-finish hint missing"; exit 1; }
 if printf '%s\n' "$out1" | grep -q 'STUB 05-aur.sh'; then
   echo "[FAIL] stage 05 ran despite --no-aur"
   exit 1
@@ -64,7 +63,7 @@ if ! out2b="$(run --redo 07)"; then
   echo "[FAIL] --redo 07 (before 05) exited non-zero"
   exit 1
 fi
-printf '%s\n' "$out2b" | grep -q 'stage 01 sources: skipped (--redo 07)' || { echo "[FAIL] skip label should say '--redo 07'"; exit 1; }
+printf '%s\n' "$out2b" | grep -q '·  01 sources (skipped: --redo 07)' || { echo "[FAIL] skip label should say '--redo 07'"; exit 1; }
 printf '%s\n' "$out2b" | grep -q 'all stages complete except AUR (not installed yet)' || { echo "[FAIL] footer must report AUR as outstanding"; exit 1; }
 if printf '%s\n' "$out2b" | grep -q 'all stages complete\.$'; then
   echo "[FAIL] footer must not claim everything complete while 05 is pending"
@@ -79,7 +78,7 @@ if ! out2="$(run)"; then
 fi
 printf '%s\n' "$out2"
 printf '%s\n' "$out2" | grep -q 'STUB 05-aur.sh' || { echo "[FAIL] stage 05 did not run on the second pass"; exit 1; }
-printf '%s\n' "$out2" | grep -q 'stage 01 sources: already done (resume)' || { echo "[FAIL] resume line for stage 01 missing"; exit 1; }
+printf '%s\n' "$out2" | grep -q '·  01 sources (already done)' || { echo "[FAIL] resume line for stage 01 missing"; exit 1; }
 if printf '%s\n' "$out2" | grep -q 'STUB 01-sources.sh'; then
   echo "[FAIL] stage 01 re-ran on the second pass"
   exit 1

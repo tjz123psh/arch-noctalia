@@ -20,37 +20,19 @@ else
 fi
 
 # --- 输出 ---
-info()  { printf '[info]  %s\n' "$*"; }
-warn()  { printf '[warn]  %s\n' "$*" >&2; }
-error() { printf '[error] %s\n' "$*" >&2; }
-ok()    { printf '[ok]    %s\n' "$*"; }
-die()   { error "$@"; exit 1; }
+# install.sh 跑步骤时会导出 AN_QUIET=1：步骤内部只留 warn/error（外加阶段进度那几行），
+# 免得 520 行的 "deployed: ..." 把屏幕刷没。单独跑某个步骤时默认照旧全量输出，便于排错。
+info()    { [[ "${AN_QUIET:-0}" == "1" ]] && return 0; printf '[info]  %s\n' "$*"; }
+ok()      { [[ "${AN_QUIET:-0}" == "1" ]] && return 0; printf '[ok]    %s\n' "$*"; }
+summary() { [[ "${AN_QUIET:-0}" == "1" ]] && return 0; printf '[info]  %s\n' "$*"; }
+warn()    { printf '[warn]  %s\n' "$*" >&2; }
+error()   { printf '[error] %s\n' "$*" >&2; }
+die()     { error "$@"; exit 1; }
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
 # --- root 操作（目标机已按 §9.1 装好 sudo） ---
 as_root() { sudo "$@"; }
-
-# --- 确认（--yes / AN_ASSUME_YES=1 时自动通过） ---
-confirm() {
-  local prompt="$1"
-  if [[ "${AN_ASSUME_YES:-0}" == "1" ]]; then
-    info "auto-confirmed: ${prompt}"
-    return 0
-  fi
-  local reply=""
-  # 提示必须自己写到 stderr：read -p 的提示只在 stdin 是终端时才显示，而且写给 stderr——
-  # 这里把 stdin 指向 /dev/tty、又不想让杂音进日志，过去那句 2>/dev/null 会把提示一起吞掉，
-  # 用户看到的是「安装器卡住不动」（2026-10-25 真机踩到）。
-  printf '%s [y/N] ' "$prompt" >&2
-  if { : </dev/tty; } 2>/dev/null; then
-    read -r reply </dev/tty || return 1
-  else
-    error "no terminal available for the confirmation prompt — re-run with --yes for non-interactive installs"
-    return 1
-  fi
-  [[ "${reply}" =~ ^[Yy]$ ]]
-}
 
 # --- 步骤守卫：步骤脚本只允许经 install.sh 运行（防手滑直跑） ---
 require_orchestrator() {

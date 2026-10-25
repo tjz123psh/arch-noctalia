@@ -31,7 +31,6 @@ if (( ${#to_install[@]} == 0 )); then
   ok "Stage 06 desktop: nothing to do"
   exit 0
 fi
-confirm "Install ${#to_install[@]} desktop packages now?" || die "declined"
 # --ask=4：冲突包自动替换（与 03 一致）
 as_root pacman -S --needed --noconfirm --ask=4 "${to_install[@]}"
 ok "Stage 06 desktop: done"

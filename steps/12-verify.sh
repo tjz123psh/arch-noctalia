@@ -88,7 +88,7 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
   fi
   okc=$((okc + 1))
 done < "$FILES"
-printf '[info]  files: %d checked, %d ok, %d mismatched, %d missing\n' "$checked" "$okc" "$bad" "$miss"
+summary "$(printf 'files: %d checked, %d ok, %d mismatched, %d missing' "$checked" "$okc" "$bad" "$miss")"
 if (( seeded > 0 )); then
   info "seed files (user data): existence checked, content skipped: ${seeded}"
 fi
@@ -114,7 +114,7 @@ while IFS=$'\t' read -r pkg _repo module _purpose; do
     warn "package missing: ${pkg}"
   fi
 done < "$PACKAGES"
-printf '[info]  packages: %d checked, %d missing\n' "$pk_checked" "$pk_missing"
+summary "$(printf 'packages: %d checked, %d missing' "$pk_checked" "$pk_missing")"
 
 # AUR/foreign 包：只核 aur.tsv 里 role=explicit 的那些（dependency 条目由 explicit 传递带入）。
 # 05 步没跑过（--no-aur / 只跑了部分阶段）时不核，否则会把「用户主动跳过」误报成安装失败。
@@ -133,7 +133,7 @@ if [[ -f "$AUR" ]] && grep -qx '05' "${AN_STATE_DIR}/steps.done" 2>/dev/null; th
       warn "aur package missing: ${pkg}"
     fi
   done < "$AUR"
-  printf '[info]  aur: %d checked, %d missing\n' "$aur_checked" "$aur_missing"
+  summary "$(printf 'aur: %d checked, %d missing' "$aur_checked" "$aur_missing")"
 else
   info "aur: stage 05 is not recorded as done — skipped (--no-aur or partial run)"
 fi
@@ -174,7 +174,7 @@ if [[ -f "$LINKS" ]]; then
     fi
   done < "$LINKS"
 fi
-printf '[info]  links: %d checked, %d bad\n' "$links_checked" "$links_bad"
+summary "$(printf 'links: %d checked, %d bad' "$links_checked" "$links_bad")"
 
 info "Stage 12 verify: service states (enabled = required; not running now = reported only)"
 svc_required=(docker.service bluetooth.service)
@@ -224,7 +224,7 @@ if systemctl cat snapper-timeline.timer >/dev/null 2>&1; then
     warn "snapper-timeline.timer is not weekly (expected exactly one weekly OnCalendar): ${cal:-<empty>}"
   fi
 fi
-printf '[info]  services: %d checked, %d not enabled, %d enabled-but-inactive, %d wrong schedule\n' "${#svc_required[@]}" "$svc_bad" "${#svc_inactive[@]}" "$svc_sched_bad"
+summary "$(printf 'services: %d checked, %d not enabled, %d enabled-but-inactive, %d wrong schedule' "${#svc_required[@]}" "$svc_bad" "${#svc_inactive[@]}" "$svc_sched_bad")"
 if (( ${#svc_inactive[@]} > 0 )); then
   info "note: enabled but not running right now (may be deferred to reboot / hardware-dependent): ${svc_inactive[*]}"
 fi

@@ -49,7 +49,6 @@ else
     die "paru is required for AUR packages but was not found — stage 01 installs it from archlinuxcn; re-run from stage 01: ./install.sh --run --from 01"
   fi
   info "selected ${explicit_total} explicit packages; ${#aur_pending[@]} AUR + ${#repo_pending[@]} repo still to install (machine=${machine})"
-  confirm "Install ${#aur_pending[@]} AUR + ${#repo_pending[@]} repo packages now?" || die "declined"
   failed=()
   for pkg in "${repo_pending[@]}"; do
     info "installing repo package: ${pkg}"

@@ -260,7 +260,7 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
   deployed=$((deployed + 1))
 done < "$MANIFEST"
 
-printf '[info]  files: %d checked, %d deployed, %d unchanged, %d kept (seed/runtime), %d failed\n' "$checked" "$deployed" "$unchanged" "$kept" "$failed"
+summary "$(printf 'files: %d checked, %d deployed, %d unchanged, %d kept (seed/runtime), %d failed' "$checked" "$deployed" "$unchanged" "$kept" "$failed")"
 if (( mode_skipped > 0 )); then
   info "note: ${mode_skipped} file(s) on a filesystem without Unix permission bits (vfat/msdos/exfat) — permission is governed by the mount options; mode checks skipped"
 fi

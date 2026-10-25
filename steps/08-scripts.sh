@@ -88,7 +88,7 @@ while IFS=$'\t' read -r name target; do
   fi
 done < "$MANIFEST"
 
-printf '[info]  links: %d checked, %d linked, %d unchanged, %d replaced, %d failed\n' "$checked" "$linked" "$unchanged" "$replaced" "$failed"
+summary "$(printf 'links: %d checked, %d linked, %d unchanged, %d replaced, %d failed' "$checked" "$linked" "$unchanged" "$replaced" "$failed")"
 if (( failed > 0 )); then
   die "Stage 08 scripts: ${failed} link(s) failed"
 fi

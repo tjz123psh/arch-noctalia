@@ -19,6 +19,8 @@ MACHINE_OVERRIDE=""
 FROM_STAGE=""
 REDO_STAGE=""
 SKIP_AUR=0
+# 步骤输出默认静音（只留 warn/error）；--verbose 关掉静音，排错时用。
+QUIET=1
 
 usage() {
   cat <<'EOF'
@@ -35,7 +37,7 @@ Options:
   --from NN         resume: skip stages before NN (done stages are still skipped)
   --redo NN         repair: clear the done-record of stages >= NN and re-run them
   --no-aur          skip stage 05 (AUR packages); finish it later: ./install.sh
-  --yes, -y         non-interactive: auto-confirm prompts
+  --verbose         show every step's full output (default: quiet — warnings only)
   -h, --help        this help
 EOF
 }
@@ -44,7 +46,8 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --preview) MODE="preview"; shift ;;
     --run) MODE="run"; shift ;;
-    --yes|-y) AN_ASSUME_YES=1; shift ;;
+    --yes|-y) AN_ASSUME_YES=1; shift ;;   # 兼容保留：安装不再询问，传了也只是无操作
+    --verbose) QUIET=0; shift ;;
     --machine) MACHINE_OVERRIDE="${2:?--machine needs a value}"; shift 2 ;;
     --from) FROM_STAGE="${2:?--from needs a value}"; shift 2 ;;
     --redo) REDO_STAGE="${2:?--redo needs a value}"; shift 2 ;;
@@ -98,6 +101,9 @@ if [[ "$MODE" == "preview" ]]; then
 fi
 
 # ---------- run mode ----------
+total_stages=0
+for _ in $(stage_ids); do total_stages=$((total_stages + 1)); done
+fmt_dur() { local s="$1"; if (( s >= 60 )); then printf '%dm%02ds' $((s / 60)) $((s % 60)); else printf '%ds' "$s"; fi; }
 [[ "$user" == "$AN_TARGET_USER" ]] || die "run as the target user '${AN_TARGET_USER}' (current: '${user}')."
 [[ "$machine" != "unknown" ]] || die "machine type unknown — pass --machine physical|vm."
 have sudo || die "sudo is required (the base install provides it)."
@@ -108,11 +114,9 @@ if ! sudo -n true 2>/dev/null; then
   sudo -v || die "sudo authentication failed."
 fi
 
-render_plan "run" "$machine" "$virt" "$user" "$SKIP_AUR"
-printf '\n'
-if [[ "${AN_ASSUME_YES}" != "1" ]]; then
-  confirm "Proceed with the installation?" || die "aborted by user."
-fi
+# 安装过程保持安静：横幅两行 + 每步一行进度；细节想看就加 --verbose。
+printf 'arch-noctalia · niri + Noctalia\n'
+printf 'machine: %s · user: %s · %d 步\n\n' "$machine" "$user" "$total_stages"
 
 mkdir -p "$AN_STATE_DIR"
 DONE_FILE="${AN_STATE_DIR}/steps.done"
@@ -139,18 +143,20 @@ if [[ -n "$REDO_STAGE" ]]; then
   fi
 fi
 
+n=0
 for id in $(stage_ids); do
   name="$(stage_name "$id")"
+  n=$((n + 1))
   if [[ -n "$FROM_STAGE" && "$id" < "$FROM_STAGE" ]]; then
-    info "stage ${id} ${name}: skipped (${START_LABEL} ${FROM_STAGE})"
+    printf '  ·  %s %s (skipped: %s %s)\n' "$id" "$name" "$START_LABEL" "$FROM_STAGE"
     continue
   fi
   if grep -qx "$id" "$DONE_FILE" 2>/dev/null; then
-    info "stage ${id} ${name}: already done (resume)"
+    printf '  ·  %s %s (already done)\n' "$id" "$name"
     continue
   fi
   if [[ "$SKIP_AUR" == "1" && "$id" == "05" ]]; then
-    info "stage ${id} ${name}: skipped (--no-aur) — finish it later: ${AN_ROOT_DIR}/install.sh --yes"
+    printf '  ·  %s %s (skipped: --no-aur; later: ./install.sh)\n' "$id" "$name"
     continue
   fi
   # 唯一性：多一个 07-config-old.sh 就会按字典序抢占 07-config.sh，装出来的东西全错。
@@ -160,12 +166,14 @@ for id in $(stage_ids); do
   done
   (( ${#step_files[@]} == 1 )) || die "stage ${id}: expected exactly one steps/${id}-*.sh, found ${#step_files[@]}"
   step_file="${step_files[0]}"
-  info "=== stage ${id} ${name} ==="
-  if ! AN_RUN=1 AN_MACHINE="$machine" AN_ASSUME_YES="$AN_ASSUME_YES" bash "$step_file"; then
-    die "stage ${id} ${name} failed — fix the cause, then resume: ./install.sh  (done stages are skipped; to force stages again: ./install.sh --redo ${id})"
+  printf '[%02d/%02d] %s\n' "$n" "$total_stages" "$name"
+  stage_start="$(date +%s)"
+  if ! AN_RUN=1 AN_MACHINE="$machine" AN_QUIET="$QUIET" bash "$step_file"; then
+    printf '        ✗ 失败\n' >&2
+    die "第 ${id} 步（${name}）失败 — 修好后重跑：./install.sh（已完成的步骤会跳过；强制重跑：./install.sh --redo ${id}）"
   fi
+  printf '        ✓ %s\n' "$(fmt_dur $(( $(date +%s) - stage_start )))"
   echo "$id" >> "$DONE_FILE"
-  ok "stage ${id} ${name}: done"
 done
 
 # 结尾状态以完成记录（DONE_FILE）为准，而不是以本次运行的参数为准——
@@ -184,7 +192,7 @@ elif (( ${#missing_stages[@]} == 1 )) && [[ "${missing_stages[0]}" == "05" ]]; t
   else
     ok "all stages complete except AUR (not installed yet)."
   fi
-  info "after login, finish the AUR packages with: ${AN_ROOT_DIR}/install.sh --yes"
+  info "after login, finish the AUR packages with: ${AN_ROOT_DIR}/install.sh"
 else
   warn "stages not completed: ${missing_stages[*]}"
   info "finish them with: ${AN_ROOT_DIR}/install.sh   (or force a stage again: ./install.sh --redo NN)"
