@@ -146,9 +146,10 @@ for d in Desktop Documents Downloads Music Videos Public Projects Templates Pict
     warn "missing user dir: ~/${d}"
   fi
 done
-if [[ "$(getent passwd "$USER" | cut -d: -f7)" != "/usr/bin/fish" ]]; then
+me="$(id -un)"
+if [[ "$(getent passwd "$me" | cut -d: -f7)" != "/usr/bin/fish" ]]; then
   misc_bad=$((misc_bad + 1))
-  warn "login shell is not fish: $(getent passwd "$USER" | cut -d: -f7)"
+  warn "login shell is not fish: $(getent passwd "$me" | cut -d: -f7)"
 fi
 # 09 步编译的光标传感器：不在 files.tsv 里（是构建产物），magnifier 插件靠它拿光标位置。
 if [[ ! -x "$HOME/bin/cursor-track" ]]; then
@@ -180,6 +181,10 @@ svc_required=(docker.service bluetooth.service)
 # 热点转发自动补（10 步启用、挂在 docker.service 上）：装了 docker 且单元存在，就必须是 enabled。
 if systemctl cat docker.service >/dev/null 2>&1 && systemctl cat rice-hotspot-net-sync.service >/dev/null 2>&1; then
   svc_required+=(rice-hotspot-net-sync.service)
+fi
+# NetworkManager 存在就该是 enabled（archinstall 默认启用；热点/网络页签都靠它）。
+if systemctl cat NetworkManager.service >/dev/null 2>&1; then
+  svc_required+=(NetworkManager.service)
 fi
 if [[ "$(findmnt -no FSTYPE / 2>/dev/null || true)" == "btrfs" ]]; then
   svc_required+=(snapper-timeline.timer snapper-cleanup.timer 'btrfs-scrub@-.timer')
@@ -224,14 +229,20 @@ if (( ${#svc_inactive[@]} > 0 )); then
   info "note: enabled but not running right now (may be deferred to reboot / hardware-dependent): ${svc_inactive[*]}"
 fi
 
+# supergfxd.conf 是 runtime 名单（只核存在），但 hotplug_type=Asus 是安装器必须保证的值：单独抽查。
+if [[ -e /etc/supergfxd.conf ]] && ! grep -q '"hotplug_type": "Asus"' /etc/supergfxd.conf 2>/dev/null; then
+  misc_bad=$((misc_bad + 1))
+  warn "supergfxd.conf does not carry hotplug_type=Asus — 切集显重启后会弹回 Hybrid"
+fi
+
 # ACL 抽查：登录背景由 rice-login-bg 以普通用户身份改写，靠 11 步加、07 重跑的 u:<user>:rw。
 # 丢了 ACL 不会让任何文件缺失，但换壁纸会静默失败——这种"看不见的坏"正是自检该管的。
 if [[ -e /etc/nwg-hello/background.png ]] && have getfacl; then
-  if getfacl -p /etc/nwg-hello/background.png 2>/dev/null | grep -q "^user:${USER}:rw-"; then
-    info "acl: background.png carries u:${USER}:rw"
+  if getfacl -p /etc/nwg-hello/background.png 2>/dev/null | grep -q "^user:${me}:rw-"; then
+    info "acl: background.png carries u:${me}:rw"
   else
     misc_bad=$((misc_bad + 1))
-    warn "acl missing: /etc/nwg-hello/background.png has no u:${USER}:rw — rice-login-bg cannot rewrite it"
+    warn "acl missing: /etc/nwg-hello/background.png has no u:${me}:rw — rice-login-bg cannot rewrite it"
   fi
 fi
 

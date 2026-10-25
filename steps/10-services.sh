@@ -77,6 +77,20 @@ as_root systemctl daemon-reload
 enable_system_unit docker.service
 enable_system_unit bluetooth.service
 
+# --- NetworkManager：archinstall 的基础系统默认已启用，这里只做幂等兜底（热点、侧边栏网络页签都依赖它）。
+#     不当作硬要求：没有这个单元说明网络由别的方式管理，跳过即可。 ---
+if systemctl cat NetworkManager.service >/dev/null 2>&1; then
+  if systemctl is-enabled NetworkManager.service >/dev/null 2>&1; then
+    info "already enabled: NetworkManager.service"
+  elif as_root systemctl enable --now NetworkManager.service; then
+    ok "enabled: NetworkManager.service"
+  else
+    warn "could not enable NetworkManager.service — the network may not come up after reboot"
+  fi
+else
+  info "NetworkManager.service not present — network is managed some other way, skipping"
+fi
+
 # --- 物理机驱动配套（由 04 的包提供；本机不存在则跳过） ---
 for u in asusd.service supergfxd.service; do
   if systemctl cat "$u" >/dev/null 2>&1; then
