@@ -25,7 +25,7 @@ curl -fsSL $U | bash -s -- --no-aur    # 外网不稳时先跳过 AUR；进桌�
 - 共 12 步：源 → 系统更新 → 软件 → 驱动 → AUR → 桌面 → 配置 → 脚本 → Noctalia → 服务 → 登录界面 → 自检。
 - 01 步自动配好 archlinuxcn 与官方镜像表（先备份，再按实测速度重排）；07 步另建标准用户目录、zh_CN locale、fish 登录 shell、主题化 GRUB。
 - 中断可续：`./install.sh --run` 接着装；`--redo NN` 从第 NN 步起强制重跑（修复用）。**`--redo 07` 的语义是“把受管文件对回仓库版本”**：除了 seed / runtime 两张名单，其余文件都会被覆盖（旧内容先备份到 `<状态目录>/overwritten/<时间戳>/`）。所以它适合“配置被我改坏了，恢复基线”，不适合“只更新一个插件”。
-- 数据安全：便签与 `Templates/` 只在缺失时初始化，你写的内容不会被覆盖；桌面/程序会自己改写的文件（Noctalia 主题产物、登录背景、`supergfxd.conf` 的 `mode`，见 `manifests/runtime-regenerated.tsv`）同样只在缺失时初始化，重跑不会把调好的主题和壁纸打回快照；其余文件更新前旧内容备份到 `<状态目录>/overwritten/<时间戳>/`（08 步替换 `~/bin` 下已存在的真实文件时同样先备份）。**备份拿不到就不覆盖**：备份失败的文件会记为失败并跳过（宁可这次不更新，也不做没有副本的覆盖）；目标是软链时，备份里另外记下 `它原本指向哪`（`<文件名>.symlink`），内容一致则软链原样保留、不被换成普通文件。
+- 数据安全：便签与 `Templates/` 只在缺失时初始化，你写的内容不会被覆盖；桌面/程序会自己改写的文件（Noctalia 主题产物、登录背景、`supergfxd.conf` 的 `mode`，见 `manifests/runtime-regenerated.tsv`）同样只在缺失时初始化，重跑不会把调好的主题和壁纸打回快照；其余文件更新前旧内容备份到 `<状态目录>/overwritten/<时间戳>/`（08 步替换 `~/bin` 下已存在的真实文件时同样先备份）。备份目录里有一份 `MANIFEST.tsv`（时间 / 原路径 / 原权限与属主 / 备份文件位置），还原就是把它拷回原位、再 `chown`/`chmod` 成记录值。**备份拿不到就不覆盖**：备份失败的文件会记为失败并跳过（宁可这次不更新，也不做没有副本的覆盖）；目标是软链时，备份里另外记下 `它原本指向哪`（`<文件名>.symlink`），内容一致则软链原样保留、不被换成普通文件。
 - 状态目录：续装记录与覆盖备份放在 `~/.local/state/arch-noctalia/`（不再落在 clone 里，删掉/重克隆仓库不会丢备份）。
 - btrfs 机器：snapper 时间线快照**每周一次**（`/etc/systemd/system/snapper-timeline.timer.d/override.conf` 覆盖上游 hourly，随 07 部署；保留策略仍由 snapper 自身配置决定）。
 - 快照策略：**root 与 home 走同一条逻辑**——只有维护脚本成套打快照（`quicksave`，以及 `sysup` 升级前的 `quicksave-sysup`；两个配置同一批次）＋ snapper 自身的每周 timeline。`/etc/snap-pac.ini` 随 07 部署，把 `[root] snapshot` 显式设为 `False`，关掉 snap-pac 的「每次 pacman 事务自动快照」（它的默认只对 root 生效，会让 root 比 home 多出一堆零碎快照）。注意：维护脚本的深度清理（`clean all`）只保留 `before*` 节点与最近一套成套批次，timeline 快照也会被它删掉。
