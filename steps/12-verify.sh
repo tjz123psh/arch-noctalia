@@ -144,6 +144,10 @@ printf '[info]  links: %d checked, %d bad\n' "$links_checked" "$links_bad"
 
 info "Stage 12 verify: service states (enabled = required; not running now = reported only)"
 svc_required=(docker.service bluetooth.service)
+# 热点转发自动补（10 步启用、挂在 docker.service 上）：装了 docker 且单元存在，就必须是 enabled。
+if systemctl cat docker.service >/dev/null 2>&1 && systemctl cat rice-hotspot-net-sync.service >/dev/null 2>&1; then
+  svc_required+=(rice-hotspot-net-sync.service)
+fi
 if [[ "$(findmnt -no FSTYPE / 2>/dev/null || true)" == "btrfs" ]]; then
   svc_required+=(snapper-timeline.timer snapper-cleanup.timer 'btrfs-scrub@-.timer')
   if have grub-btrfsd; then

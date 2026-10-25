@@ -142,7 +142,12 @@ if systemctl cat docker.service >/dev/null 2>&1 && systemctl cat "$hotspot_sync"
   if systemctl is-enabled "$hotspot_sync" >/dev/null 2>&1; then
     info "already enabled: ${hotspot_sync}"
   else
-    as_root systemctl enable "$hotspot_sync" >/dev/null && ok "enabled: ${hotspot_sync} (跟随 docker.service)"
+    if as_root systemctl enable "$hotspot_sync" >/dev/null; then
+      ok "enabled: ${hotspot_sync} (跟随 docker.service)"
+    else
+      warn "enable failed: ${hotspot_sync}"
+      missing_units+=("${hotspot_sync}(enable)")
+    fi
   fi
 else
   warn "${hotspot_sync} 或 docker.service 不在，跳过热点转发自动补"
