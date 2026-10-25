@@ -39,7 +39,16 @@ confirm() {
     return 0
   fi
   local reply=""
-  read -r -p "${prompt} [y/N] " reply </dev/tty 2>/dev/null || return 1
+  # 提示必须自己写到 stderr：read -p 的提示只在 stdin 是终端时才显示，而且写给 stderr——
+  # 这里把 stdin 指向 /dev/tty、又不想让杂音进日志，过去那句 2>/dev/null 会把提示一起吞掉，
+  # 用户看到的是「安装器卡住不动」（2026-10-25 真机踩到）。
+  printf '%s [y/N] ' "$prompt" >&2
+  if { : </dev/tty; } 2>/dev/null; then
+    read -r reply </dev/tty || return 1
+  else
+    error "no terminal available for the confirmation prompt — re-run with --yes for non-interactive installs"
+    return 1
+  fi
   [[ "${reply}" =~ ^[Yy]$ ]]
 }
 
