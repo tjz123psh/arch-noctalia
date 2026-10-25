@@ -71,4 +71,10 @@ bash "$ROOT/install.sh" --preview --machine Physical > "$out5" 2>&1 || rc=$?
 [[ "$rc" != 0 ]] || { echo "--machine with an invalid value must exit non-zero"; exit 1; }
 grep -q 'must be physical or vm' "$out5" || { echo "missing --machine error message"; exit 1; }
 
-echo "ok: deterministic preview, full stage plan, environment line present, no state written, --no-aur and --redo annotated, --machine validated"
+# --from/--redo 的取值在预览阶段就要校验（预览是最先跑的，错参数不该等到 run 才发现）。
+rc=0
+bash "$ROOT/install.sh" --preview --from 7 > "$out5" 2>&1 || rc=$?
+[[ "$rc" != 0 ]] || { echo "--from 7 must be rejected in preview (want two-digit stage ids)"; exit 1; }
+grep -q 'no such stage' "$out5" || { echo "missing --from error message"; exit 1; }
+
+echo "ok: deterministic preview, full stage plan, environment line present, no state written, --no-aur and --redo annotated, --machine and --from validated"

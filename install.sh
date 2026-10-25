@@ -73,6 +73,22 @@ if [[ -n "${MACHINE_OVERRIDE}" ]]; then
   fi
 fi
 
+# --from / --redo 的取值在预览里也要校验：预览是最先跑的，错误参数不该等到 run 才发现。
+if [[ -n "$FROM_STAGE" || -n "$REDO_STAGE" ]]; then
+  want="${FROM_STAGE:-$REDO_STAGE}"
+  stage_ok=0
+  for known in $(stage_ids); do
+    [[ "$known" == "$want" ]] && stage_ok=1
+  done
+  if (( stage_ok == 0 )); then
+    if [[ -n "$FROM_STAGE" ]]; then
+      die "--from ${FROM_STAGE}: no such stage (want 01..12)."
+    else
+      die "--redo ${REDO_STAGE}: no such stage (want 01..12)."
+    fi
+  fi
+fi
+
 if [[ "$MODE" == "preview" ]]; then
   render_plan "preview" "$machine" "$virt" "$user" "$SKIP_AUR"
   if [[ -n "$REDO_STAGE" ]]; then
@@ -109,18 +125,18 @@ if [[ -n "$REDO_STAGE" ]]; then
   FROM_STAGE="$REDO_STAGE"
 fi
 
-have_from=0
-if [[ -n "$FROM_STAGE" ]]; then
-  for id in $(stage_ids); do
-    [[ "$id" == "$FROM_STAGE" ]] && have_from=1
-  done
-  [[ "$have_from" == "1" ]] || die "${START_LABEL} ${FROM_STAGE}: no such stage."
-fi
-
 if [[ -n "$REDO_STAGE" ]]; then
   info "redo: clearing done-records for stages >= ${REDO_STAGE} (they will re-run)"
   redo_tmp="${DONE_FILE}.redo.tmp"
-  awk -v r="$REDO_STAGE" '$1 < r' "$DONE_FILE" > "$redo_tmp" && mv -- "$redo_tmp" "$DONE_FILE"
+  # 这里失败必须当场停：静默 no-op 的话，屏幕上已经打印过 "clearing"，用户会以为重跑发生了。
+  if ! awk -v r="$REDO_STAGE" '$1 < r' "$DONE_FILE" > "$redo_tmp"; then
+    rm -f -- "$redo_tmp"
+    die "redo: cannot rewrite ${DONE_FILE} — nothing was cleared, nothing will re-run."
+  fi
+  if ! mv -- "$redo_tmp" "$DONE_FILE"; then
+    rm -f -- "$redo_tmp"
+    die "redo: cannot replace ${DONE_FILE} — nothing was cleared."
+  fi
 fi
 
 for id in $(stage_ids); do
@@ -137,11 +153,13 @@ for id in $(stage_ids); do
     info "stage ${id} ${name}: skipped (--no-aur) — finish it later: ${AN_ROOT_DIR}/install.sh --run --yes"
     continue
   fi
-  step_file=""
+  # 唯一性：多一个 07-config-old.sh 就会按字典序抢占 07-config.sh，装出来的东西全错。
+  step_files=()
   for f in "${AN_ROOT_DIR}/steps/${id}-"*.sh; do
-    [[ -e "$f" ]] && step_file="$f" && break
+    [[ -e "$f" ]] && step_files+=("$f")
   done
-  [[ -n "$step_file" ]] || die "stage ${id}: step script not found"
+  (( ${#step_files[@]} == 1 )) || die "stage ${id}: expected exactly one steps/${id}-*.sh, found ${#step_files[@]}"
+  step_file="${step_files[0]}"
   info "=== stage ${id} ${name} ==="
   if ! AN_RUN=1 AN_MACHINE="$machine" AN_ASSUME_YES="$AN_ASSUME_YES" bash "$step_file"; then
     die "stage ${id} ${name} failed — fix the cause, then resume: ./install.sh --run  (done stages are skipped; to force stages again: ./install.sh --run --redo ${id})"
