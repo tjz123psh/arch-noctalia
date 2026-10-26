@@ -37,7 +37,7 @@ while IFS=$'\t' read -r pkg channel role _purpose; do
       deps+=("$pkg")
       ;;
     *)
-      warn "unknown role '${role:-}' for ${pkg} in aur.tsv — ignored"
+      warn "unknown role '${role:-}' for ${pkg} in aur.tsv - ignored"
       ;;
   esac
 done < "$MANIFEST"
@@ -46,7 +46,7 @@ if (( ${#aur_pending[@]} == 0 && ${#repo_pending[@]} == 0 )); then
   ok "Stage 05 aur: nothing to do"
 else
   if (( ${#aur_pending[@]} > 0 )) && ! have paru; then
-    die "paru is required for AUR packages but was not found — stage 01 installs it from archlinuxcn; re-run from stage 01: ./install.sh --run --from 01"
+    die "paru is required for AUR packages but was not found - stage 01 installs it from archlinuxcn; re-run from stage 01: ./install.sh --run --from 01"
   fi
   info "selected ${explicit_total} explicit packages; ${#aur_pending[@]} AUR + ${#repo_pending[@]} repo still to install (machine=${machine})"
   failed=()
@@ -70,7 +70,7 @@ else
     for pkg in "${failed[@]}"; do
       error "failed package: ${pkg}"
     done
-    die "${#failed[@]} package(s) failed to install — fix the cause and re-run (already-installed packages are skipped)"
+    die "${#failed[@]} package(s) failed to install - fix the cause and re-run (already-installed packages are skipped)"
   fi
   ok "Stage 05 aur: done"
 fi

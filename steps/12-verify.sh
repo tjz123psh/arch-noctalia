@@ -135,7 +135,7 @@ if [[ -f "$AUR" ]] && grep -qx '05' "${AN_STATE_DIR}/steps.done" 2>/dev/null; th
   done < "$AUR"
   summary "$(printf 'aur: %d checked, %d missing' "$aur_checked" "$aur_missing")"
 else
-  info "aur: stage 05 is not recorded as done — skipped (--no-aur or partial run)"
+  info "aur: stage 05 is not recorded as done - skipped (--no-aur or partial run)"
 fi
 
 info "Stage 12 verify: misc (user dirs, login shell)"
@@ -232,7 +232,7 @@ fi
 # supergfxd.conf 是 runtime 名单（只核存在），但 hotplug_type=Asus 是安装器必须保证的值：单独抽查。
 if [[ -e /etc/supergfxd.conf ]] && ! grep -q '"hotplug_type": "Asus"' /etc/supergfxd.conf 2>/dev/null; then
   misc_bad=$((misc_bad + 1))
-  warn "supergfxd.conf does not carry hotplug_type=Asus — 切集显重启后会弹回 Hybrid"
+  warn "supergfxd.conf does not carry hotplug_type=Asus - switching to iGPU will bounce back to Hybrid after reboot"
 fi
 
 # ACL 抽查：登录背景由 rice-login-bg 以普通用户身份改写，靠 11 步加、07 重跑的 u:<user>:rw。
@@ -242,7 +242,7 @@ if [[ -e /etc/nwg-hello/background.png ]] && have getfacl; then
     info "acl: background.png carries u:${me}:rw"
   else
     misc_bad=$((misc_bad + 1))
-    warn "acl missing: /etc/nwg-hello/background.png has no u:${me}:rw — rice-login-bg cannot rewrite it"
+    warn "acl missing: /etc/nwg-hello/background.png has no u:${me}:rw - rice-login-bg cannot rewrite it"
   fi
 fi
 

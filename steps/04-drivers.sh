@@ -15,7 +15,7 @@ MANIFEST="${AN_ROOT_DIR}/manifests/packages.tsv"
 [[ -f "$MANIFEST" ]] || die "missing manifest: ${MANIFEST}"
 
 if [[ "$machine" != "physical" ]]; then
-  info "machine is not physical (machine=${machine}) — drivers are physical-only; skipping"
+  info "machine is not physical (machine=${machine}) - drivers are physical-only; skipping"
   ok "Stage 04 drivers: nothing to do"
   exit 0
 fi

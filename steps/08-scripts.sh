@@ -63,7 +63,7 @@ while IFS=$'\t' read -r name target; do
     RUN_TS="${RUN_TS:-$(date +%Y%m%d-%H%M%S)}"
     backup_path="${AN_STATE_DIR}/overwritten/${RUN_TS}${lib}"
     if ! { mkdir -p -- "$(dirname -- "$backup_path")" && cp -p -- "$lib" "$backup_path"; }; then
-      warn "backup failed for ${lib} — refusing to replace it"
+      warn "backup failed for ${lib} - refusing to replace it"
       failed=$((failed + 1))
       continue
     fi

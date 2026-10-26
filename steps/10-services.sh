@@ -44,11 +44,11 @@ enable_system_unit() { # $1=unit
     # 已启用但当前没在跑：补一次启动尝试（重跑修复场景），并区分三种结果。
     as_root systemctl start "$u" >/dev/null 2>&1 || true
     if systemctl is-active "$u" >/dev/null 2>&1; then
-      ok "was enabled but not running — started now: ${u}"
+      ok "was enabled but not running - started now: ${u}"
     elif kernel_defer; then
-      warn "${u}: enabled; start deferred — the running kernel's modules were replaced by the upgrade; it will start after reboot"
+      warn "${u}: enabled; start deferred - the running kernel's modules were replaced by the upgrade; it will start after reboot"
     elif unit_condition_skipped "$u"; then
-      warn "${u}: enabled; condition not met (no matching hardware?) — systemd skips it"
+      warn "${u}: enabled; condition not met (no matching hardware?) - systemd skips it"
     else
       warn "${u}: enabled but still not running (see: systemctl status ${u})"
       inactive_units+=("$u")
@@ -59,11 +59,11 @@ enable_system_unit() { # $1=unit
     ok "enabled: ${u}"
   elif kernel_defer; then
     # 刚升级过内核但尚未重启：单元保持 enabled，启动自动延期到重启之后。
-    warn "${u}: start deferred — the running kernel's modules were replaced by the upgrade; it will start after reboot"
+    warn "${u}: start deferred - the running kernel's modules were replaced by the upgrade; it will start after reboot"
     systemctl is-enabled "$u" >/dev/null 2>&1 || missing_units+=("$u")
   elif unit_condition_skipped "$u"; then
     # 条件不满足（如无蓝牙控制器）：enable 已生效，启动被 systemd 跳过——硬件就绪后会自动启动。
-    warn "${u}: enabled; condition not met (no matching hardware?) — systemd skips it"
+    warn "${u}: enabled; condition not met (no matching hardware?) - systemd skips it"
   else
     die "failed to start ${u} (see: systemctl status ${u})"
   fi
@@ -85,10 +85,10 @@ if systemctl cat NetworkManager.service >/dev/null 2>&1; then
   elif as_root systemctl enable --now NetworkManager.service; then
     ok "enabled: NetworkManager.service"
   else
-    warn "could not enable NetworkManager.service — the network may not come up after reboot"
+    warn "could not enable NetworkManager.service - the network may not come up after reboot"
   fi
 else
-  info "NetworkManager.service not present — network is managed some other way, skipping"
+  info "NetworkManager.service not present - network is managed some other way, skipping"
 fi
 
 # --- 物理机驱动配套（由 04 的包提供；本机不存在则跳过） ---
@@ -111,14 +111,14 @@ if [[ "$(findmnt -no FSTYPE / 2>/dev/null || true)" == "btrfs" ]]; then
       if [[ -f "/etc/snapper/configs/${c}" ]]; then
         info "snapper config '${c}': present"
       elif [[ "$c" == "home" && "$home_ok" != "1" ]]; then
-        warn "snapper: /home is not a separate btrfs mount — skipping the 'home' config"
+        warn "snapper: /home is not a separate btrfs mount - skipping the 'home' config"
       else
         as_root snapper -c "$c" create-config "$m"
         ok "snapper config '${c}': created"
       fi
     done
   else
-    warn "snapper not installed — snapshot configs cannot be created"
+    warn "snapper not installed - snapshot configs cannot be created"
     missing_units+=("snapper")
   fi
   enable_system_unit snapper-timeline.timer
@@ -126,11 +126,11 @@ if [[ "$(findmnt -no FSTYPE / 2>/dev/null || true)" == "btrfs" ]]; then
   if have grub-btrfsd; then
     enable_system_unit grub-btrfsd.service
   else
-    warn "grub-btrfsd not found — skipping snapshot boot menu daemon"
+    warn "grub-btrfsd not found - skipping snapshot boot menu daemon"
   fi
   enable_system_unit 'btrfs-scrub@-.timer'
 else
-  warn "root filesystem is not btrfs — skipping snapper / grub-btrfsd / btrfs-scrub setup"
+  warn "root filesystem is not btrfs - skipping snapper / grub-btrfsd / btrfs-scrub setup"
 fi
 
 # --- docker 组 ---
@@ -156,14 +156,14 @@ if systemctl cat docker.service >/dev/null 2>&1 && systemctl cat "$hotspot_sync"
     info "already enabled: ${hotspot_sync}"
   else
     if as_root systemctl enable "$hotspot_sync" >/dev/null; then
-      ok "enabled: ${hotspot_sync} (跟随 docker.service)"
+      ok "enabled: ${hotspot_sync} (follows docker.service)"
     else
       warn "enable failed: ${hotspot_sync}"
       missing_units+=("${hotspot_sync}(enable)")
     fi
   fi
 else
-  warn "${hotspot_sync} 或 docker.service 不在，跳过热点转发自动补"
+  warn "${hotspot_sync} or docker.service is missing - skipping the hotspot forward rule"
 fi
 
 # --- 用户级：rice-dnd.timer ---
@@ -176,11 +176,11 @@ else
   WANTS_DIR="${HOME}/.config/systemd/user/timers.target.wants"
   mkdir -p "$WANTS_DIR"
   ln -sfn "$TIMER_FILE" "${WANTS_DIR}/rice-dnd.timer"
-  warn "user session bus not reachable — created the enable symlink directly (the timer starts at login)"
+  warn "user session bus not reachable - created the enable symlink directly (the timer starts at login)"
 fi
 
 if (( ${#missing_units[@]} > 0 )); then
-  die "required units/packages missing: ${missing_units[*]} — stages 03/06 should provide them"
+  die "required units/packages missing: ${missing_units[*]} - stages 03/06 should provide them"
 fi
 if (( ${#inactive_units[@]} > 0 )); then
   warn "services enabled but not running: ${inactive_units[*]}"

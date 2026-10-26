@@ -79,6 +79,6 @@ render_plan() {
   printf 'payload files:  %s\n' "$payload_count"
 
   if [[ "$mode" == "preview" ]]; then
-    printf '\npreview OK — nothing was changed.\n'
+    printf '\npreview OK - nothing was changed.\n'
   fi
 }

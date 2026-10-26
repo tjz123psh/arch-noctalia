@@ -43,7 +43,7 @@ face_target="/var/lib/avatars/pang/.face"
 if [[ "$(readlink "$face_link" 2>/dev/null || true)" == "$face_target" ]]; then
   info "avatar symlink already present: ~/.face"
 elif [[ -e "$face_link" && ! -L "$face_link" ]]; then
-  warn "avatar path exists as a real file — left unchanged: ${face_link}"
+  warn "avatar path exists as a real file - left unchanged: ${face_link}"
 else
   ln -sfn "$face_target" "$face_link"
   ok "avatar symlink created: ~/.face -> ${face_target}"
@@ -51,7 +51,7 @@ fi
 
 # --- 2) background.png 的 ACL（hook 写入权限） ---
 if ! have getfacl || ! have setfacl; then
-  die "getfacl/setfacl not found (acl package — expected from the base system)"
+  die "getfacl/setfacl not found (acl package - expected from the base system)"
 fi
 facl="$(getfacl -p "$BG" 2>/dev/null || true)"
 if grep -q '^user:pang:rw-' <<<"$facl"; then

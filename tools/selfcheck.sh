@@ -34,6 +34,20 @@ if grep -rnE '^[[:space:]]*confirm[[:space:]]' "${ROOT_DIR}/steps" "${ROOT_DIR}/
 fi
 info "guards: no calls to removed helpers (confirm)"
 
+# 安装器跑在裸 TTY（内核控制台字体没有 CJK / ✓·→ 这类字形，只会显示 ???）。
+# 注释和文档随便写中文，但**打印出来的字符串**必须是 ASCII。
+nonascii_msgs="$(
+  {
+    grep -hP '^[[:space:]]*(info|ok|warn|error|die|summary)[[:space:]]+' \
+      "${ROOT_DIR}/install.sh" "${ROOT_DIR}"/steps/*.sh "${ROOT_DIR}"/lib/*.sh 2>/dev/null || true
+    grep -hP '^[[:space:]]*printf[[:space:]]+.' "${ROOT_DIR}/install.sh" "${ROOT_DIR}"/steps/*.sh 2>/dev/null || true
+  } | grep -P '[^\x00-\x7F]' || true
+)"
+if [[ -n "$nonascii_msgs" ]]; then
+  bad "non-ASCII in printed messages (bare TTY shows ???): $(head -1 <<<"$nonascii_msgs")"
+fi
+info "guards: printed messages are ASCII-only"
+
 # 风格检查只跑项目自有代码；payload/ 是原样入仓的样本（用户脚本，不改不评风格）。
 # 批量传入（含 lib/*.sh）可避免逐一执行时对相对 source 的 SC1091 误报。
 our_files=()

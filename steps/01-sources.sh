@@ -59,9 +59,9 @@ fi
 # 1) archlinuxcn：一律写成安装器标准块——缺失则追加、已有则整段覆盖
 #    （2026-10-05 用户确认"覆盖即可"：重装时不会再手配源）。覆盖前自动备份；随后 1b 按实测重排。
 if grep -qE '^[[:space:]]*\[archlinuxcn\]' "$PACMAN_CONF"; then
-  info "archlinuxcn repo present — overwriting it with the installer's mirror list"
+  info "archlinuxcn repo present - overwriting it with the installer's mirror list"
 else
-  info "archlinuxcn repo missing in ${PACMAN_CONF} — adding the installer's mirror list"
+  info "archlinuxcn repo missing in ${PACMAN_CONF} - adding the installer's mirror list"
 fi
 tmp_conf="$(mktemp)"
 cn_replace_section "$PACMAN_CONF" > "$tmp_conf" <<'EOF'
@@ -89,12 +89,12 @@ fi
 #     pacman 逐文件按 Server 顺序取用，天然"前不行后顶上"；本步保证慢/死镜像不打头阵。
 mapfile -t cn_servers < <(cn_servers_in_conf "$PACMAN_CONF")
 if (( ${#cn_servers[@]} >= 2 )); then
-  info "probing ${#cn_servers[@]} archlinuxcn mirrors (parallel)…"
+  info "probing ${#cn_servers[@]} archlinuxcn mirrors (parallel)..."
   mapfile -t cn_fast < <(printf '%s\n' "${cn_servers[@]}" | cn_probe_servers | cn_order_servers)
   tmp_conf="$(mktemp)"
   printf '%s\n' "${cn_fast[@]}" | cn_rewrite_conf "$PACMAN_CONF" > "$tmp_conf"
   if (( ${#cn_fast[@]} < 2 )); then
-    warn "mirror probe returned no usable result — leaving order as-is"
+    warn "mirror probe returned no usable result - leaving order as-is"
   elif cmp -s "$tmp_conf" "$PACMAN_CONF"; then
     ok "mirror order: already fastest-first"
   else
@@ -104,7 +104,7 @@ if (( ${#cn_servers[@]} >= 2 )); then
   fi
   rm -f "$tmp_conf"
 else
-  warn "archlinuxcn mirror list has <2 entries — skipping reorder"
+  warn "archlinuxcn mirror list has <2 entries - skipping reorder"
 fi
 
 # 2) [multilib]（lib32 包的依赖）

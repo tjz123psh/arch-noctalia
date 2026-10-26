@@ -72,7 +72,7 @@ if [[ -n "${MACHINE_OVERRIDE}" ]]; then
     *) die "--machine must be physical or vm (got: ${machine})" ;;
   esac
   if [[ "$machine" == "physical" && "$virt" == "vmware" ]]; then
-    warn "machine type forced to physical, but systemd-detect-virt says vmware — drivers will be installed on a VM."
+    warn "machine type forced to physical, but systemd-detect-virt says vmware - drivers will be installed on a VM."
   fi
 fi
 
@@ -95,7 +95,7 @@ fi
 if [[ "$MODE" == "preview" ]]; then
   render_plan "preview" "$machine" "$virt" "$user" "$SKIP_AUR"
   if [[ -n "$REDO_STAGE" ]]; then
-    info "note: --redo ${REDO_STAGE} — in run mode, the done-record of stages >= ${REDO_STAGE} is cleared and they run again"
+    info "note: --redo ${REDO_STAGE} - in run mode, the done-record of stages >= ${REDO_STAGE} is cleared and they run again"
   fi
   exit 0
 fi
@@ -115,8 +115,8 @@ if ! sudo -n true 2>/dev/null; then
 fi
 
 # 安装过程保持安静：横幅两行 + 每步一行进度；细节想看就加 --verbose。
-printf 'arch-noctalia · niri + Noctalia\n'
-printf 'machine: %s · user: %s · %d 步\n\n' "$machine" "$user" "$total_stages"
+printf 'arch-noctalia installer  (niri + Noctalia)\n'
+printf 'machine: %s   user: %s   %d stages\n\n' "$machine" "$user" "$total_stages"
 
 mkdir -p "$AN_STATE_DIR"
 DONE_FILE="${AN_STATE_DIR}/steps.done"
@@ -135,11 +135,11 @@ if [[ -n "$REDO_STAGE" ]]; then
   # 这里失败必须当场停：静默 no-op 的话，屏幕上已经打印过 "clearing"，用户会以为重跑发生了。
   if ! awk -v r="$REDO_STAGE" '$1 < r' "$DONE_FILE" > "$redo_tmp"; then
     rm -f -- "$redo_tmp"
-    die "redo: cannot rewrite ${DONE_FILE} — nothing was cleared, nothing will re-run."
+    die "redo: cannot rewrite ${DONE_FILE} - nothing was cleared, nothing will re-run."
   fi
   if ! mv -- "$redo_tmp" "$DONE_FILE"; then
     rm -f -- "$redo_tmp"
-    die "redo: cannot replace ${DONE_FILE} — nothing was cleared."
+    die "redo: cannot replace ${DONE_FILE} - nothing was cleared."
   fi
 fi
 
@@ -148,15 +148,15 @@ for id in $(stage_ids); do
   name="$(stage_name "$id")"
   n=$((n + 1))
   if [[ -n "$FROM_STAGE" && "$id" < "$FROM_STAGE" ]]; then
-    printf '  ·  %s %s (skipped: %s %s)\n' "$id" "$name" "$START_LABEL" "$FROM_STAGE"
+    printf '  -  %s %s (skipped: %s %s)\n' "$id" "$name" "$START_LABEL" "$FROM_STAGE"
     continue
   fi
   if grep -qx "$id" "$DONE_FILE" 2>/dev/null; then
-    printf '  ·  %s %s (already done)\n' "$id" "$name"
+    printf '  -  %s %s (already done)\n' "$id" "$name"
     continue
   fi
   if [[ "$SKIP_AUR" == "1" && "$id" == "05" ]]; then
-    printf '  ·  %s %s (skipped: --no-aur; later: ./install.sh)\n' "$id" "$name"
+    printf '  -  %s %s (skipped: --no-aur; later: ./install.sh)\n' "$id" "$name"
     continue
   fi
   # 唯一性：多一个 07-config-old.sh 就会按字典序抢占 07-config.sh，装出来的东西全错。
@@ -169,10 +169,10 @@ for id in $(stage_ids); do
   printf '[%02d/%02d] %s\n' "$n" "$total_stages" "$name"
   stage_start="$(date +%s)"
   if ! AN_RUN=1 AN_MACHINE="$machine" AN_QUIET="$QUIET" bash "$step_file"; then
-    printf '        ✗ 失败\n' >&2
-    die "第 ${id} 步（${name}）失败 — 修好后重跑：./install.sh（已完成的步骤会跳过；强制重跑：./install.sh --redo ${id}）"
+    printf '        FAILED\n' >&2
+    die "stage ${id} ${name} failed - fix the cause and re-run ./install.sh (done stages are skipped; force: ./install.sh --redo ${id})"
   fi
-  printf '        ✓ %s\n' "$(fmt_dur $(( $(date +%s) - stage_start )))"
+  printf '        done (%s)\n' "$(fmt_dur $(( $(date +%s) - stage_start )))"
   echo "$id" >> "$DONE_FILE"
 done
 

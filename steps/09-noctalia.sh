@@ -39,7 +39,7 @@ info "plugin sources: present (magnifier)"
 # 这个文件在 manifests/seed.tsv 里：Noctalia 面板会实时改写它（关插件、改顺序、换插件源都是正常操作）。
 # 所以这里只要求文件在，不比对内容——否则用户动过设置后 --redo 09 会误判"仓库副本坏了"并中止。
 [[ -f "$SETTINGS" ]] || die "missing settings: ${SETTINGS} (stage 07 must deploy it)"
-info "settings: present (content is user-managed — not validated)"
+info "settings: present (content is user-managed - not validated)"
 
 # --- 3) cursor-track（构建产物不入仓，09 负责重建） ---
 mkdir -p "${HOME}/bin"
@@ -63,7 +63,7 @@ if (( need_build == 1 )); then
   info "building cursor-track (gcc + wayland-scanner)"
   if ! ( cd "$SRC_DIR" && bash build.sh install ); then
     rm -rf "${SRC_DIR}/build"
-    die "cursor-track build failed — removed the build/ cache; re-run ./install.sh --run"
+    die "cursor-track build failed - removed the build/ cache; re-run ./install.sh --run"
   fi
   [[ -x "$BIN" ]] || die "cursor-track build failed (no binary at ${BIN})"
   ok "cursor-track: built and installed"

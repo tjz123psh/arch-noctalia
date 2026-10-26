@@ -52,10 +52,10 @@ while IFS=$'\t' read -r repo_path raw_target _mode md5; do
 done < "$MANIFEST"
 
 if (( payload_bad > 0 )); then
-  die "payload incomplete — the repository copy is broken; re-clone it"
+  die "payload incomplete - the repository copy is broken; re-clone it"
 fi
 if (( target_bad > 0 )); then
-  die "${target_bad} manifest target(s) rejected — they must be absolute and under AN_TARGET_ALLOW"
+  die "${target_bad} manifest target(s) rejected - they must be absolute and under AN_TARGET_ALLOW"
 fi
 # sudoers 这类"部署错了会锁死 sudo"的文件，先在预检里验语法（不合格直接中止，不冒险写 /etc）。
 if have visudo && [[ -d "${AN_ROOT_DIR}/payload/system/etc/sudoers.d" ]]; then
@@ -68,7 +68,7 @@ fi
 
 info "Stage 07 config: ${rows} files to deploy; payload verified"
 if [[ -n "${AN_TARGET_ROOT:-}" ]]; then
-  info "Stage 07 config: SANDBOX — all targets are rewritten under ${AN_TARGET_ROOT} (nothing touches the real system)"
+  info "Stage 07 config: SANDBOX - all targets are rewritten under ${AN_TARGET_ROOT} (nothing touches the real system)"
 fi
 
 # --- 2) 部署 + 3) 逐行复核 ---
@@ -164,7 +164,7 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
 
   # seed（个人数据种子）：已存在就保持现状，绝不覆盖；缺失才初始化。
   if (( exists == 1 )) && [[ -n "${AN_SEED[$repo_path]:-}" ]]; then
-    info "kept (seed — initialized only when missing): ${target}"
+    info "kept (seed - initialized only when missing): ${target}"
     kept=$((kept + 1))
     continue
   fi
@@ -176,7 +176,7 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
     # 例外：/etc/supergfxd.conf 里的 hotplug_type=Asus 是安装器必须保证的值（README 的「切集显重启又回混合」坑）。
     # 该键没落上时照常覆盖（先备份），不能因为它是运行时文件就放过。
     if [[ "$raw_target" != "/etc/supergfxd.conf" ]] || grep -q '"hotplug_type": "Asus"' "$target" 2>/dev/null; then
-      info "kept (runtime — rewritten by the desktop): ${target}"
+      info "kept (runtime - rewritten by the desktop): ${target}"
       kept=$((kept + 1))
       continue
     fi
@@ -262,7 +262,7 @@ done < "$MANIFEST"
 
 summary "$(printf 'files: %d checked, %d deployed, %d unchanged, %d kept (seed/runtime), %d failed' "$checked" "$deployed" "$unchanged" "$kept" "$failed")"
 if (( mode_skipped > 0 )); then
-  info "note: ${mode_skipped} file(s) on a filesystem without Unix permission bits (vfat/msdos/exfat) — permission is governed by the mount options; mode checks skipped"
+  info "note: ${mode_skipped} file(s) on a filesystem without Unix permission bits (vfat/msdos/exfat) - permission is governed by the mount options; mode checks skipped"
 fi
 if (( failed > 0 )); then
   die "Stage 07 config: ${failed} file(s) failed"
@@ -291,7 +291,7 @@ if [[ -x /usr/bin/fish ]]; then
     ok "login shell set to /usr/bin/fish for ${me}"
   fi
 else
-  warn "fish not installed — login shell left unchanged"
+  warn "fish not installed - login shell left unchanged"
 fi
 
 # d) GRUB：/etc/default/grub 与主题已部署，重建菜单让主题生效（BIOS/UEFI 同一配置路径）。
@@ -304,14 +304,14 @@ if have grub-mkconfig; then
     rootfs="$(findmnt -no FSTYPE / 2>/dev/null || true)"
     if [[ -n "$rootfs" && "$rootfs" != "btrfs" ]] && grep -q 'rootfstype=btrfs' /etc/default/grub 2>/dev/null; then
       as_root sed -i 's/ *rootfstype=btrfs//' /etc/default/grub
-      warn "root filesystem is ${rootfs}, not btrfs — removed rootfstype=btrfs from /etc/default/grub before regenerating the menu"
+      warn "root filesystem is ${rootfs}, not btrfs - removed rootfstype=btrfs from /etc/default/grub before regenerating the menu"
     fi
   fi
   if as_root test -d /boot/grub; then
     as_root grub-mkconfig -o /boot/grub/grub.cfg >/dev/null || die "grub-mkconfig failed"
     ok "GRUB menu regenerated (theme applied)"
   else
-    warn "/boot/grub not found or not readable — GRUB menu NOT regenerated; the boot theme will not apply"
+    warn "/boot/grub not found or not readable - GRUB menu NOT regenerated; the boot theme will not apply"
   fi
 fi
 
@@ -323,10 +323,10 @@ if [[ -f /usr/share/glib-2.0/schemas/io.missioncenter.MissionCenter.gschema.xml 
     as_root glib-compile-schemas /usr/share/glib-2.0/schemas || die "glib-compile-schemas failed"
     ok "GSettings schemas recompiled (vendor overrides applied)"
   else
-    warn "glib-compile-schemas not available — gschema overrides not applied"
+    warn "glib-compile-schemas not available - gschema overrides not applied"
   fi
 else
-  warn "mission-center schema not installed — skipped GSettings override compile"
+  warn "mission-center schema not installed - skipped GSettings override compile"
 fi
 
 # f) 登录背景的 ACL：11 步会加一次，但 install 覆盖会重建 inode、把 ACL 丢掉（改过壁纸后重跑 07 就会触发）。
@@ -337,7 +337,7 @@ if [[ -z "${AN_TARGET_ROOT:-}" && -e /etc/nwg-hello/background.png ]] && have se
   elif as_root setfacl -m "u:${me}:rw" /etc/nwg-hello/background.png; then
     ok "ACL re-applied: u:${me}:rw on background.png"
   else
-    warn "failed to re-apply the ACL on /etc/nwg-hello/background.png — rice-login-bg will not be able to rewrite it"
+    warn "failed to re-apply the ACL on /etc/nwg-hello/background.png - rice-login-bg will not be able to rewrite it"
   fi
 fi
 
@@ -347,19 +347,19 @@ if have fc-cache; then
   if as_root fc-cache -f >/dev/null 2>&1; then
     ok "font cache refreshed"
   else
-    warn "fc-cache failed — the bundled fonts may not be picked up until the next login"
+    warn "fc-cache failed - the bundled fonts may not be picked up until the next login"
   fi
 else
-  warn "fc-cache not found — the bundled fonts may not be picked up until the next login"
+  warn "fc-cache not found - the bundled fonts may not be picked up until the next login"
 fi
 if have update-desktop-database; then
   if update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1; then
     ok "desktop database updated (~/.local/share/applications)"
   else
-    warn "update-desktop-database failed — yazi may not show up in \"Open with\""
+    warn "update-desktop-database failed - yazi may not show up in \"Open with\""
   fi
 else
-  warn "update-desktop-database not found — .desktop entries may not be picked up"
+  warn "update-desktop-database not found - .desktop entries may not be picked up"
 fi
 
 ok "Stage 07 config: done"
