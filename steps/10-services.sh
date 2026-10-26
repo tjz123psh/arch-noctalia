@@ -79,12 +79,20 @@ enable_system_unit bluetooth.service
 
 # --- sshd：远程维护用（重装/排错时尤其需要）。装了就启用，没装就跳过，不当硬要求。 ---
 if systemctl cat sshd.service >/dev/null 2>&1; then
-  if systemctl is-enabled sshd.service >/dev/null 2>&1; then
+  if systemctl is-enabled sshd.service >/dev/null 2>&1 && systemctl is-active sshd.service >/dev/null 2>&1; then
     info "already enabled: sshd.service"
-  elif as_root systemctl enable --now sshd.service; then
-    ok "enabled: sshd.service"
   else
-    warn "could not enable sshd.service"
+    # 首次装 openssh 时机器上可能还没有 host key（Arch 的 sshdgenkeys.service 没跑成），
+    # sshd 会以 "no hostkeys available" 直接退出——所以先补 key 再启用。
+    if ! compgen -G '/etc/ssh/ssh_host_*_key' >/dev/null; then
+      info "sshd: no host keys yet - running ssh-keygen -A"
+      as_root ssh-keygen -A >/dev/null 2>&1 || warn "ssh-keygen -A failed (check /etc/ssh permissions)"
+    fi
+    if as_root systemctl enable --now sshd.service >/dev/null 2>&1 && systemctl is-active sshd.service >/dev/null 2>&1; then
+      ok "enabled: sshd.service"
+    else
+      warn "could not start sshd.service - check: journalctl -xeu sshd"
+    fi
   fi
 else
   info "sshd.service not present - skipping (openssh is not installed)"
