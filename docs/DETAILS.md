@@ -35,7 +35,7 @@
 - 外观：毛玻璃等 GTK 样式以样式类限定作用域（`gtk.css` 追加段，只影响指定程序）；程序的"系统默认值"以 GSettings vendor override 随 07 部署（`/usr/share/glib-2.0/schemas/*.gschema.override`），07 末尾统一 `glib-compile-schemas` 生效——你在程序里改过的值（dconf）优先，不会被覆盖。
 - 未纳管项有账可查：`manifests/excluded.tsv` 记录**手动安装项**（需自行安装，安装器带上会出问题，如 AUR 交互构建、按机器定制、需登录/许可）、安全排除项与各类缓存/生成目录的解释；实际纳管的内容见 `files.tsv` / `packages.tsv` / `aur.tsv`。
 - 自检：第 12 步查文件 / 软件包 / `~/bin` 软链 / 服务启用状态（含 snapper timeline 的生效日历=每周）；手动跑 `tools/selfcheck.sh`、`tests/run-all.sh`。
-- 自检容差：桌面/程序会自行改写的文件（Noctalia 主题产物、WPS 配置、登录背景…）列在 `manifests/runtime-regenerated.tsv`（只核对存在性，且 07 重跑时也不会覆盖它们），你可能编辑的状态文件列在 `manifests/seed.tsv`（存在即保持）——所以机器用过一段时间后 `--redo 12` 也不会误报“安装失败”。真机对账 `tests/test-machine-reconcile.sh` 用同一份名单豁免内容比对，`AN_RECONCILE_STRICT=1` 可当门禁（本机现为 0 漂移）；清单的形状/白名单/取值由 `tools/selfcheck.sh` 与 `tests/test-manifest-schema.sh` 双重把关。
+- 自检容差：桌面/程序会自行改写的文件（Noctalia 主题产物、WPS 配置、登录背景…）列在 `manifests/runtime-regenerated.tsv`（只核对存在性，且 07 重跑时也不会覆盖它们），你可能编辑的状态文件列在 `manifests/seed.tsv`（存在即保持）——所以机器用过一段时间后 `--redo 12` 也不会误报“安装失败”。真机对账 `tests/test-machine-reconcile.sh` 用同一份名单豁免内容比对，`AN_RECONCILE_STRICT=1` 可当门禁（只在装了本套桌面的目标机上跑，非目标机 `run-all` 会跳过）；清单的形状/白名单/取值由 `tools/selfcheck.sh` 与 `tests/test-manifest-schema.sh` 双重把关。
 - 登录界面背景：`payload/system/etc/nwg-hello/background.png` 的初始快照**就是种子默认壁纸**（`Pictures/wallpapers/斑斓.png`，两者字节完全相同），所以装完第一次开机，登录界面和桌面壁纸是一致的；之后每次换壁纸由 `~/bin/rice-login-bg`（Noctalia 的 `wallpaper_changed` hook）按**原字节**跟随改写，不做缩放/重编码，写入走第 11 步加的 `u:pang:rw` ACL，所以这条路径的内容不需要安装器再管（`runtime-regenerated.tsv` 只核存在性）。
 
 - Noctalia 插件源码：`payload/home/noctalia-plugins/`（`magnifier` 放大镜 + `tide-sidebar` 侧边栏工作台），07 步部署到 `~/noctalia-plugins`，宿主以 path 源 `pang-dev` **直接读这个目录**；改插件就在本仓里改，提交推送后跑 `./install.sh --redo 07` 部署，然后在 Noctalia 里重新载入插件。注意 Noctalia 的插件系统仍会把插件装到 `~/.local/state/noctalia/plugins/`（那份是运行副本，含便签等用户数据，见 `excluded.tsv`），源码与运行副本是两回事。`.backups/`、`magnifier/tools/cursor-track/build/` 属本地产物，不入仓。
@@ -44,8 +44,9 @@
 
 这套东西是**为一台机器写死**的（用户名 `pang`、路径 `/home/pang`、内屏 144Hz 的 eDP-1/eDP-2 双接口名、ASUS 的 `dgpu_disable` 开关），换机器要改 `lib/` 和清单里的机器相关项。下面几条是“知道、但没做或做不到”的，免得以后再翻一遍：
 
-- **没有 CI**：仓库没有 `.github/`，全部验证靠手动跑 —— `tests/run-all.sh`（15 个回归，多数在 mktemp 沙箱里跑）、`tools/selfcheck.sh`（清单/语法/许可证/密钥）、`tests/test-machine-reconcile.sh`（本机对账，`AN_RECONCILE_STRICT=1` 可当门禁）。
-- **只在一台真机上验收**：所有结论来自本机（ASUS TUF A15 + btrfs）。`--machine vm` 分支只有检测与沙箱测试覆盖，没有第二台真机的重装记录。
+- **没有 CI**：仓库没有 `.github/`，全部验证靠手动跑 —— `tests/run-all.sh`（14 个回归，多数在 mktemp 沙箱里跑；机器对账在没有 niri 的机器上自动跳过）、`tools/selfcheck.sh`（清单/语法/许可证/密钥）、`tests/test-machine-reconcile.sh`（本机对账，`AN_RECONCILE_STRICT=1` 可当门禁）。
+- **只在一台物理机 + 一台 VMware 虚拟机上验收**：物理结论来自原机（ASUS TUF A15 + btrfs）；`--machine vm` 分支于 2026-10-26 在 VMware 里完整跑通 12 步、第 12 步自检全绿。仍未在第二台**物理机**上重装过。
+- **VM 上验证不到的东西**：蓝牙、Wi-Fi 热点（虚拟机没有对应硬件）、supergfxd 切卡、内屏 144Hz 固定、NVIDIA 驱动——这些只在物理机上才有意义。
 - **yazi 状态栏字段不可配**：26.9.1 的状态栏内容（大小/权限/滚动位置）由版本写死，主题只能改颜色；视频里那套“权限 + 硬链接 + 属主:属组 + 修改时间”得换旧版本才有。
 - **`/boot` 不做快照**：ESP 是 vfat，snapper 无法快照，所以 root/home 的快照不含内核与引导文件。
 - **`assrt.lua` 不入公开仓库**：上游没有许可证文件且要自填 API token（记账见 `excluded.tsv`）；`bdanmaku` 有 MIT 许可证，已连同 `LICENSE` 一起纳管。
