@@ -113,7 +113,6 @@ if [[ "$(findmnt -no FSTYPE / 2>/dev/null || true)" == "btrfs" ]]; then
       elif [[ "$c" == "home" && "$home_ok" != "1" ]]; then
         warn "snapper: /home is not a separate btrfs mount — skipping the 'home' config"
       else
-        confirm "Create the missing snapper config '${c}' (defaults)?" || die "declined"
         as_root snapper -c "$c" create-config "$m"
         ok "snapper config '${c}': created"
       fi

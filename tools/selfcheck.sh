@@ -27,6 +27,13 @@ while IFS= read -r f; do
 done < <(find "$ROOT_DIR" -name '*.sh' -type f -not -path '*/.git/*' | LC_ALL=C sort)
 info "syntax: ${all_count} scripts checked with bash -n (project + payload)"
 
+# 已删除的交互助手不得再被调用：confirm() 于 b128708 移除（安装不再询问），
+# 残留调用会在运行时炸 `confirm: 未找到命令`——只在跑到那一步才暴露，自检要提前挡住。
+if grep -rnE '^[[:space:]]*confirm[[:space:]]' "${ROOT_DIR}/steps" "${ROOT_DIR}/lib" >/dev/null 2>&1; then
+  bad "removed helper 'confirm' is still called (steps/ or lib/): remove the prompt"
+fi
+info "guards: no calls to removed helpers (confirm)"
+
 # 风格检查只跑项目自有代码；payload/ 是原样入仓的样本（用户脚本，不改不评风格）。
 # 批量传入（含 lib/*.sh）可避免逐一执行时对相对 source 的 SC1091 误报。
 our_files=()
