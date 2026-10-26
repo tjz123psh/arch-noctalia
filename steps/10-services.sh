@@ -77,6 +77,19 @@ as_root systemctl daemon-reload
 enable_system_unit docker.service
 enable_system_unit bluetooth.service
 
+# --- sshd：远程维护用（重装/排错时尤其需要）。装了就启用，没装就跳过，不当硬要求。 ---
+if systemctl cat sshd.service >/dev/null 2>&1; then
+  if systemctl is-enabled sshd.service >/dev/null 2>&1; then
+    info "already enabled: sshd.service"
+  elif as_root systemctl enable --now sshd.service; then
+    ok "enabled: sshd.service"
+  else
+    warn "could not enable sshd.service"
+  fi
+else
+  info "sshd.service not present - skipping (openssh is not installed)"
+fi
+
 # --- NetworkManager：archinstall 的基础系统默认已启用，这里只做幂等兜底（热点、侧边栏网络页签都依赖它）。
 #     不当作硬要求：没有这个单元说明网络由别的方式管理，跳过即可。 ---
 if systemctl cat NetworkManager.service >/dev/null 2>&1; then
