@@ -1,0 +1,296 @@
+#!/usr/bin/env bash
+# screenrec-menu — Wayland 录屏菜单（fuzzel UI）
+#
+# 引擎：gpu-screen-recorder（默认，GPU 编码）→ wf-recorder（兜底，ffmpeg）
+# 目标：全屏 / 区域（slurp 框选）/ 窗口（niri 当前焦点，取其几何区域）
+#
+# 用法：
+#   screenrec-menu                 打开菜单（fuzzel）
+#   screenrec-menu --start MODE    MODE = fullscreen | region | window
+#   screenrec-menu --stop          停止正在进行的录制
+#   screenrec-menu --toggle        录着就停，没录就开全屏
+#   screenrec-menu --status        输出 "recording <秒> <引擎> <文件>" 或 "idle"
+#
+# 运行时状态与配置都在 ~/.local/state/screenrec-menu/（脚本自建，不进仓库）。
+set -Eeuo pipefail
+
+APP="screenrec-menu"
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/screenrec-menu"
+PIDF="$STATE/pid"; OUTF="$STATE/out"; STARTF="$STATE/start"; ENGF="$STATE/engine"
+MODEF="$STATE/mode"; LOG="$STATE/last.log"; CONF="$STATE/config"
+mkdir -p "$STATE"
+
+# 从 niri 会话外（比如终端复用器）也能跑：补齐 Wayland 环境
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+    sock=$(ls "$XDG_RUNTIME_DIR"/wayland-[0-9]* 2>/dev/null | grep -v '\.lock$' | head -1 || true)
+    [[ -n "$sock" ]] && export WAYLAND_DISPLAY=$(basename "$sock")
+fi
+[[ -n "${NIRI_SOCKET:-}" ]] || export NIRI_SOCKET="$XDG_RUNTIME_DIR/niri.wayland-${WAYLAND_DISPLAY#wayland-}.sock"
+
+# ---------------- 基础工具 ----------------
+have() { command -v "$1" >/dev/null 2>&1; }
+notify() { have notify-send && notify-send -a 录屏 "$1" "${2:-}" || true; }
+die()    { notify "$1" "${2:-}"; printf '%s\n' "$1 ${2:-}" >&2; exit 1; }
+
+# ---------------- 配置 ----------------
+cfg_defaults() {
+    ENGINE="${ENGINE:-gsr}"      # gsr | wf
+    FPS="${FPS:-60}"             # 30 | 60 | 120
+    AUDIO="${AUDIO:-system}"     # system | mic | off
+    CODEC="${CODEC:-h264}"       # gsr: h264 | hevc | av1
+    SAVEDIR="${SAVEDIR:-$HOME/Videos}"
+}
+cfg_load() {
+    cfg_defaults
+    if [[ -f "$CONF" ]]; then
+        # shellcheck disable=SC1090
+        . "$CONF"
+    fi
+    mkdir -p "$SAVEDIR"
+}
+cfg_save() {
+    { printf 'ENGINE=%q\n' "$ENGINE"; printf 'FPS=%q\n' "$FPS"; printf 'AUDIO=%q\n' "$AUDIO"
+      printf 'CODEC=%q\n' "$CODEC"; printf 'SAVEDIR=%q\n' "$SAVEDIR"; } > "$CONF"
+}
+cfg_load
+
+# ---------------- 录制状态 ----------------
+rec_engine() {   # 打印 gsr / wf / 空
+    if [[ -f "$PIDF" ]]; then
+        local pid; pid=$(cat "$PIDF" 2>/dev/null || true)
+        if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+            cat "$ENGF" 2>/dev/null || printf 'gsr'
+            return 0
+        fi
+    fi
+    if pgrep -x wf-recorder >/dev/null 2>&1; then printf 'wf'; return 0; fi
+    if pgrep -f 'gpu-screen-recorder' >/dev/null 2>&1; then printf 'gsr'; return 0; fi
+    return 1
+}
+is_recording() { [[ -n "$(rec_engine)" ]]; }
+elapsed_secs() {
+    [[ -f "$STARTF" ]] || { printf 0; return; }
+    local s; s=$(cat "$STARTF" 2>/dev/null || printf 0)
+    [[ "$s" =~ ^[0-9]+$ ]] || { printf 0; return; }
+    printf '%d' "$(( $(date +%s) - s ))"
+}
+fmt_dur() { local s=$1; printf '%02d:%02d:%02d' $((s/3600)) $((s%3600/60)) $((s%60)); }
+
+# ---------------- fuzzel ----------------
+pick() {  # $1=prompt；其余行为菜单项；选中打印整行，取消返回 130
+    local prompt="$1"; shift
+    (($#)) || return 130
+    printf '%s\n' "$@" | fuzzel --dmenu --prompt="$prompt " --lines=$(("$#" > 10 ? 10 : $#)) --width=34
+}
+
+# ---------------- 几何 ----------------
+pick_region() {  # 输出 slurp 的 "x,y wxh"；用户取消 → 返回 130
+    have slurp || return 1
+    slurp -b 00000000 -c FFFFFFFF -w 2
+}
+
+window_region() {  # 输出 "x,y wxh"（逻辑像素）；拿不到返回 1
+    have niri && have jq || return 1
+    niri msg --json focused-window 2>/dev/null | jq -er '
+        .layout as $l
+        | select($l.tile_pos_in_workspace_view != null)
+        | [$l.tile_pos_in_workspace_view[0], $l.tile_pos_in_workspace_view[1],
+           $l.window_size[0], $l.window_size[1]] | @tsv' 2>/dev/null | {
+            IFS=$'\t' read -r x y w h || exit 1
+            [[ "${x:-}" =~ ^-?[0-9]+$ && "${y:-}" =~ ^-?[0-9]+$ ]] || exit 1
+            printf '%d,%d %dx%d' "$x" "$y" "$w" "$h"
+        }
+}
+region_scale() {  # 当前输出缩放，用于把逻辑坐标换成物理像素
+    have niri && have jq || { printf 1; return; }
+    local s; s=$(niri msg --json outputs 2>/dev/null | jq -r '[.[] | .logical.scale] | first // 1' 2>/dev/null || true)
+    [[ "$s" =~ ^[0-9.]+$ ]] && printf '%s' "$s" || printf 1
+}
+
+# ---------------- 录制 ----------------
+start_rec() {  # $1 = fullscreen | region | window
+    local mode="${1:-fullscreen}"
+    if is_recording; then
+        notify "已经在录制了" "先停止当前录制（$(fmt_dur "$(elapsed_secs)")）"
+        return 0
+    fi
+
+    local geom=""   # slurp 风格：x,y wxh
+    case "$mode" in
+        fullscreen) ;;
+        region)
+            if ! geom="$(pick_region)"; then notify "已取消" "没有选区"; return 0; fi
+            [[ -n "$geom" ]] || return 0
+            ;;
+        window)
+            if ! geom="$(window_region)"; then
+                # niri 某些版本/场景不给窗口的屏幕坐标（tile_pos_in_workspace_view = null），
+                # 这时让用户自己选：框选一块区域，或者取消。绝不静默卡在 slurp 上。
+                local ans
+                ans="$(pick "这个窗口拿不到屏幕坐标" "改用区域框选" "取消")" || return 0
+                [[ "$ans" == "改用区域框选" ]] || return 0
+                mode=region
+                geom="$(pick_region)" || return 0
+                [[ -n "$geom" ]] || return 0
+            fi
+            ;;
+        *) die "未知模式：$mode" ;;
+    esac
+
+    local out="$SAVEDIR/rec-$(date +%Y%m%d-%H%M%S)-$mode.mp4"
+    local engine="$ENGINE"
+    [[ "$engine" == gsr ]] && ! have gpu-screen-recorder && engine=wf
+    [[ "$engine" == wf  ]] && ! have wf-recorder        && engine=gsr
+    have gpu-screen-recorder || have wf-recorder || die "没有可用的录屏引擎" "装 gpu-screen-recorder 或 wf-recorder"
+
+    local -a args=()
+    if [[ "$engine" == gsr ]]; then
+        args=(gpu-screen-recorder -f "$FPS" -c mp4 -o "$out")
+        case "$mode" in
+            fullscreen) args+=(-w screen) ;;
+            region|window)
+                # slurp: "x,y wxh" → gsr: "WxH+X+Y"（按输出缩放换成物理像素）
+                local scale x y w h
+                scale="$(region_scale)"
+                read -r x y w h <<<"$(sed -E 's/^([-0-9]+),([-0-9]+) ([0-9]+)x([0-9]+)$/\1 \2 \3 \4/' <<<"$geom")"
+                args+=(-w region -region "$(awk -v s="$scale" -v x="$x" -v y="$y" -v w="$w" -v h="$h" \
+                    'BEGIN{printf "%dx%d+%d+%d", int(w*s+0.5), int(h*s+0.5), int(x*s+0.5), int(y*s+0.5)}')")
+                ;;
+        esac
+        case "$AUDIO" in
+            system) args+=(-a default_output) ;;
+            mic)    args+=(-a default_input) ;;
+        esac
+        case "$CODEC" in
+            hevc) args+=(-k hevc) ;;
+            av1)  args+=(-k av1) ;;
+            *)    args+=(-k h264) ;;
+        esac
+    else
+        args=(wf-recorder -f "$out" -r "$FPS")
+        case "$mode" in
+            region|window) args+=(-g "$geom") ;;
+        esac
+        case "$AUDIO" in
+            system) args+=(-a) ;;
+            mic)    args+=(-a=default_input) ;;
+        esac
+    fi
+
+    notify "开始录制（${engine}，${mode}）" "$(basename "$out") · 再按 Alt+F6 停止"
+    setsid "${args[@]}" >"$LOG" 2>&1 < /dev/null &
+    local pid=$!
+    printf '%s' "$pid" >"$PIDF"
+    printf '%s' "$engine" >"$ENGF"
+    printf '%s' "$mode" >"$MODEF"
+    printf '%s' "$out" >"$OUTF"
+    date +%s >"$STARTF"
+    sleep 0.8
+    if ! kill -0 "$pid" 2>/dev/null; then
+        local err; err=$(tail -3 "$LOG" 2>/dev/null | tr '\n' ' ')
+        notify "录制没能启动" "${err:-看 $LOG}"
+        rm -f "$out" "$PIDF" "$STARTF"
+        return 1
+    fi
+}
+
+stop_rec() {
+    if ! is_recording; then notify "没在录" ""; return 0; fi
+    local pid=""; [[ -f "$PIDF" ]] && pid=$(cat "$PIDF" 2>/dev/null || true)
+    local out=""; [[ -f "$OUTF" ]] && out=$(cat "$OUTF" 2>/dev/null || true)
+    local dur; dur=$(fmt_dur "$(elapsed_secs)")
+
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+        kill -INT "$pid" 2>/dev/null || true
+        for _ in $(seq 1 30); do kill -0 "$pid" 2>/dev/null || break; sleep 0.1; done
+        kill -0 "$pid" 2>/dev/null && kill -TERM "$pid" 2>/dev/null || true
+    else
+        pkill -INT -x wf-recorder 2>/dev/null || true
+        pkill -INT -f gpu-screen-recorder 2>/dev/null || true
+    fi
+
+    sleep 0.5
+    local size=""
+    [[ -n "$out" && -f "$out" ]] && size=$(du -h "$out" 2>/dev/null | cut -f1)
+    if [[ -n "$out" && -f "$out" ]]; then
+        have wl-copy && printf '%s' "$out" | wl-copy 2>/dev/null || true
+        notify "录制完成 · $dur · ${size:-?}" "$(basename "$out")（路径已复制）"
+    else
+        notify "录制结束，但没找到文件" "$LOG"
+    fi
+    rm -f "$PIDF" "$STARTF" "$ENGF" "$MODEF" "$OUTF"
+}
+
+# ---------------- 菜单 ----------------
+show_settings() {
+    local cur="引擎 ${ENGINE}｜${FPS}fps｜${CODEC}｜音频 ${AUDIO}"
+    local choice
+    choice="$(pick "设置（$cur）" \
+        "引擎：$( [[ $ENGINE == gsr ]] && echo GPU（gpu-screen-recorder） || echo 兼容（wf-recorder）)" \
+        "帧率：${FPS} fps" \
+        "音频：$(case $AUDIO in system) echo 系统声音;; mic) echo 麦克风;; *) echo 关闭;; esac)" \
+        "编码：${CODEC}" \
+        "保存目录：${SAVEDIR}" \
+        "返回")" || return 0
+    case "$choice" in
+        "引擎："*)
+            local e; e="$(pick "引擎" "GPU（gpu-screen-recorder）" "兼容（wf-recorder）")" || return 0
+            [[ "$e" == GPU* ]] && ENGINE=gsr || ENGINE=wf ;;
+        "帧率："*)
+            local f; f="$(pick "帧率" "30 fps" "60 fps" "120 fps")" || return 0
+            FPS="${f%% *}" ;;
+        "音频："*)
+            local a; a="$(pick "音频" "系统声音" "麦克风" "关闭")" || return 0
+            case "$a" in 系统*) AUDIO=system ;; 麦克风*) AUDIO=mic ;; *) AUDIO=off ;; esac ;;
+        "编码："*)
+            local c; c="$(pick "编码（仅 GPU 引擎）" "h264" "hevc" "av1")" || return 0
+            CODEC="$c" ;;
+        "保存目录："*)
+            notify "保存目录" "$SAVEDIR（要改就编辑 $CONF）" ;;
+        *) return 0 ;;
+    esac
+    cfg_save
+    notify "已保存" "引擎 $ENGINE · ${FPS}fps · 音频 $AUDIO · 编码 $CODEC"
+}
+
+show_menu() {
+    local head=()
+    if is_recording; then
+        head=("■ 停止录制 · $(fmt_dur "$(elapsed_secs)")")
+    fi
+    local choice
+    choice="$(pick "录屏" "${head[@]}" \
+        "▶ 全屏录制" \
+        "▶ 区域录制（框选）" \
+        "▶ 窗口录制（当前焦点）" \
+        "设置…" \
+        "打开录像目录" \
+        "退出")" || return 0
+    case "$choice" in
+        "■ 停止录制"*)  stop_rec ;;
+        "▶ 全屏")        start_rec fullscreen ;;
+        "▶ 区域")        start_rec region ;;
+        "▶ 窗口")        start_rec window ;;
+        "设置…")         show_settings; show_menu ;;
+        "打开录像目录")  have xdg-open && xdg-open "$SAVEDIR" >/dev/null 2>&1 || notify "录像目录" "$SAVEDIR" ;;
+        *) return 0 ;;
+    esac
+}
+
+# ---------------- 入口 ----------------
+case "${1:-}" in
+    ""|-m|--menu) show_menu ;;
+    --start)  start_rec "${2:-fullscreen}" ;;
+    --stop)   stop_rec ;;
+    --toggle) if is_recording; then stop_rec; else start_rec fullscreen; fi ;;
+    --status)
+        if is_recording; then
+            printf 'recording %s %s %s\n' "$(elapsed_secs)" "$(rec_engine)" "$(cat "$OUTF" 2>/dev/null || true)"
+        else
+            printf 'idle\n'
+        fi
+        ;;
+    -h|--help) sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//' ;;
+    *) printf '未知参数：%s（用 --help）\n' "$1" >&2; exit 2 ;;
+esac

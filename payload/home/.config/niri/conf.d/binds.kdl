@@ -292,7 +292,7 @@ binds {
     Mod+Shift+C hotkey-overlay-title="维护菜单" { spawn-sh "kitty --class=term-menu --override initial_window_width=1600 --override initial_window_height=1000 -e $HOME/scripts/maintenance/term-menu"; }
     // Alt+A: 放大镜
     Alt+A hotkey-overlay-title="放大镜" { spawn-sh "noctalia msg panel-toggle pang/magnifier:panel"; }
-    // Alt+F5 录屏菜单（shorin-screenrec-menu 脚本）
+    Alt+F6 hotkey-overlay-title="录屏菜单（fuzzel）" { spawn-sh "$HOME/scripts/media/screenrec-menu"; }
     // Mod+Ctrl+Print  vellum 钉图（vellumctl pin-last，未绑定）
     // Ctrl+XF86AudioLowerVolume / Ctrl+XF86AudioRaiseVolume  媒体音量微调（需 playerctl 小脚本）
 }

@@ -168,7 +168,7 @@ payload/home/.config/mpv/bdanmaku.LICENSE.txt	/home/pang/.config/mpv/bdanmaku.LI
 payload/home/.config/mpv/scripts/bdanmaku.lua	/home/pang/.config/mpv/scripts/bdanmaku.lua	644	05e63e2413e877725e41b3b57582e6f1
 payload/home/.config/mpv/使用说明.md	/home/pang/.config/mpv/使用说明.md	644	605bbd156b1fb3512902d62c550059cd
 payload/home/.config/niri/conf.d/animations.kdl	/home/pang/.config/niri/conf.d/animations.kdl	644	a2bb9cd9ee2e0d137f0a160e7e769347
-payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	4eee8cf6f51f8f4efea8256788c1227d
+payload/home/.config/niri/conf.d/binds.kdl	/home/pang/.config/niri/conf.d/binds.kdl	644	cfb327897220fa2322421a7b38f7a8b2
 payload/home/.config/niri/conf.d/cursor.kdl	/home/pang/.config/niri/conf.d/cursor.kdl	644	da3d31125409f685f2dd5ffcb3c87cb4
 payload/home/.config/niri/conf.d/environment.kdl	/home/pang/.config/niri/conf.d/environment.kdl	644	a911b178abca4a884dc44461659a0548
 payload/home/.config/niri/conf.d/general.kdl	/home/pang/.config/niri/conf.d/general.kdl	644	4e00543e1ddac2d25b58333982010608
@@ -539,3 +539,22 @@ payload/home/.config/yazi/plugins/full-border.yazi/LICENSE	/home/pang/.config/ya
 payload/system/etc/snap-pac.ini	/etc/snap-pac.ini	644	c5a2db04a99d395654ffa86744d10f73
 # ——— 2026-10-13 热点：无线管制域 CN（wireless-regdb + modprobe.d），5GHz AP 才稳 ———
 payload/system/etc/modprobe.d/cfg80211-regdom.conf	/etc/modprobe.d/cfg80211-regdom.conf	644	803dc314a0f16a5ac0a1eb7784435499
+payload/home/scripts/media/b23	/home/pang/scripts/media/b23	755	79b9660033ee66e73ccaa5a28b89e75a
+payload/home/scripts/media/screenrec-menu	/home/pang/scripts/media/screenrec-menu	755	0428182260c4636b2340f475f1d9aeb5
+payload/home/scripts/package/README.md	/home/pang/scripts/package/README.md	644	fbdcbb4d84d2045ff7708d1fb82b6f38
+payload/home/scripts/package/UPGRADE.md	/home/pang/scripts/package/UPGRADE.md	644	3c75328f655422edc56ecc0f1f9eadd4
+payload/home/scripts/package/pac	/home/pang/scripts/package/pac	755	058529a1d23d9ee46cc2afcb97ae52f3
+payload/home/scripts/package/pacd	/home/pang/scripts/package/pacd	755	2aa40cfca5192d44716465b54fdb5006
+payload/home/scripts/package/pacr	/home/pang/scripts/package/pacr	755	1b037986d9cf3c069ceb110a54e6374f
+payload/home/scripts/package/lib/pac-ai.sh	/home/pang/scripts/package/lib/pac-ai.sh	644	b4fc5531a1b65a07674cd3c63ff8a563
+payload/home/scripts/package/tests/phase1-review-gate.sh	/home/pang/scripts/package/tests/phase1-review-gate.sh	755	165a498c06d8e296a51cc609440ef140
+payload/home/scripts/package/tests/phase2-leftover.sh	/home/pang/scripts/package/tests/phase2-leftover.sh	755	86e0a6375d105747f3371a70a8060b75
+payload/home/scripts/package/tests/phase3-flatpak.sh	/home/pang/scripts/package/tests/phase3-flatpak.sh	755	1c8558b3d290c7968bc835f08f5d6a5f
+payload/home/scripts/package/tests/phase4-review-score.sh	/home/pang/scripts/package/tests/phase4-review-score.sh	755	cfa8ccea06e9676cf3aa5067ae74b627
+payload/home/scripts/package/tests/phase5-ai-http.sh	/home/pang/scripts/package/tests/phase5-ai-http.sh	755	c6e1f4a4d344380e694af80d2319081c
+payload/home/scripts/package/tests/phase6-ai-leftover.sh	/home/pang/scripts/package/tests/phase6-ai-leftover.sh	755	4627edea7e3c46ec4df19ee510c0973d
+payload/home/scripts/package/tests/run-all.sh	/home/pang/scripts/package/tests/run-all.sh	755	a8b85aed8feaf1b62decd552273176d0
+payload/home/scripts/share/README.md	/home/pang/scripts/share/README.md	644	ce1045004a83f812364e87e870748e23
+payload/home/scripts/share/prompts/aur-review.legacy.md	/home/pang/scripts/share/prompts/aur-review.legacy.md	644	08f5ddbecb38a02cf2ac626f88730feb
+payload/home/scripts/share/prompts/aur-review.md	/home/pang/scripts/share/prompts/aur-review.md	644	e4e88b58cb9e0a867822b09028e65d8e
+payload/home/scripts/share/prompts/leftover-scan.md	/home/pang/scripts/share/prompts/leftover-scan.md	644	db8f693765e36f8983b975e7402deb69
