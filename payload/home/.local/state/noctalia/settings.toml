@@ -72,7 +72,6 @@ order = [ "default" ]
             "notifications",
             "clipboard",
             "screenshot",
-            "screenrec",
             "color-picker",
             "8bury/mini-docker:mini-docker",
             "nightlight",
@@ -271,13 +270,9 @@ max_visible = 4
 background_opacity = 0.5
 offset_y = 56
 
-[plugin_settings."noctalia/screen_recorder"]
-frame_rate = 144
-video_qp = 15
-
 [plugins]
 auto_update = "all"
-enabled = [ "noctalia/screen_recorder", "oldirtty/color_picker", "pang/magnifier", "8bury/mini-docker", "pang/tide-sidebar" ]
+enabled = [ "oldirtty/color_picker", "pang/magnifier", "8bury/mini-docker", "pang/tide-sidebar" ]
 
     [[plugins.source]]
     kind = "git"
@@ -542,10 +537,6 @@ show_value = true
 stat = "ram_pct"
 type = "sysmon"
 visualization = "gauge"
-
-[widget.screenrec]
-color = "#f0dedecc"
-type = "noctalia/screen_recorder:recorder"
 
 [widget.screenshot]
 color = "#f0dedecc"

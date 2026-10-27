@@ -23,7 +23,7 @@ count_lock "$M/packages.tsv" 173 "packages.tsv"
 count_lock "$M/aur.tsv" 17 "aur.tsv"
 count_lock "$M/bin-links.tsv" 18 "bin-links.tsv"
 count_lock "$M/seed.tsv" 34 "seed.tsv"
-count_lock "$M/excluded.tsv" 153 "excluded.tsv"
+count_lock "$M/excluded.tsv" 152 "excluded.tsv"
 count_lock "$M/runtime-regenerated.tsv" 26 "runtime-regenerated.tsv"
 
 # --- 末行换行：所有步骤都用 while read 逐行读清单，末行没换行会静默漏掉最后一条 ---

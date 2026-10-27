@@ -48,7 +48,7 @@ git	extra
 git-delta	extra		
 github-cli	extra		
 go	extra		
-gpu-screen-recorder	extra		Noctalia 官方插件 noctalia/screen_recorder 依赖；~/bin/rice-record 也优先用它
+gpu-screen-recorder	extra		~/bin/rice-record 依赖（Noctalia 录屏插件 2026-10-26 已弃用）
 greetd	extra	desktop	
 grim	extra		
 grub	core		

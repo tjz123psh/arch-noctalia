@@ -62,7 +62,6 @@ file	/home/pang/.local/state/noctalia/.setup-complete	运行标记（Noctalia �
 dir	/home/pang/.local/state/noctalia/community-templates	社区模板缓存（联网自动下载）
 dir	/home/pang/.local/state/noctalia/community-palettes	社区调色板缓存（联网自动下载）
 dir	/home/pang/.local/state/noctalia/plugin-cache	插件缓存（自动重建）
-dir	/home/pang/.local/state/noctalia/screen_recorder	录屏状态（自建）
 dir	/home/pang/.config/nautilus	空目录残留
 dir	/home/pang/.config/opencode	空目录残留
 dir	/home/pang/.config/celluloid	空目录残留（celluloid 已删）
@@ -196,10 +195,12 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 #   – manifests/runtime-regenerated.tsv 的行只核对存在性（新增 Kingsoft/Office.conf、WPSCloud.conf：WPS 自己改写）；
 #   – manifests/seed.tsv 的行同样只核存在性（新增 niri/conf.d/touchpad-state.kdl：Fn+F10 开关状态，重跑不得覆盖）。
 #   此后 AN_RECONCILE_STRICT=1 在样本机上应当为 0 漂移；再出现这两类之外的漂移=清单过期或用户新编辑，需要归位。
-# · Noctalia 远端插件（本机启用：noctalia/screen_recorder、oldirtty/color_picker、8bury/mini-docker）由 Noctalia
+# · Noctalia 远端插件（本机启用：oldirtty/color_picker、8bury/mini-docker）由 Noctalia
 #   自己从 official/community 源拉取、升级并重建（~/.local/state/noctalia/plugins/** 已有 pattern 账），安装器不代管其文件；
 #   与它们有关的包按插件逐个记在 packages.tsv 备注列：docker（mini-docker）、hyprpicker（color_picker）、
-#   gpu-screen-recorder（screen_recorder）。上游插件升级若引入新依赖，需要在 packages.tsv 补行或补备注。
+#   上游插件升级若引入新依赖，需要在 packages.tsv 补行或补备注。
+#   （官方插件 noctalia/screen_recorder 已于 2026-10-26 弃用：Noctalia 5.3.0 的插件接口装不上对应版本，
+#     settings.toml 里的 screenrec 栏位与 widget 一并删除；gpu-screen-recorder 仍保留，~/bin/rice-record 在用。）
 # · 本机自建 Noctalia 插件 pang/tide-sidebar（侧边栏工作台，2026-10-15 重构完成并启用）：
 #   源码（2026-10-20 起）就在本仓 payload/home/noctalia-plugins/，07 步按 files.tsv 部署到 ~/noctalia-plugins；
 #   运行副本仍由 Noctalia 装进 ~/.local/state/noctalia/plugins/**（已有 pattern 账）；另纳管两处接口：
