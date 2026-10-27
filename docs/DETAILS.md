@@ -53,6 +53,13 @@
 - **字体是仓库体积的大头**：Maple Mono NF CN 四款 + 资源汉圆体三款共约 123MB（工作区 147MB）；这是“没有离线包、全从 git 拉”的代价。
 - **破坏性操作只验证到预演**：维护脚本里真会删数据的（`clean`、快照恢复）测试只覆盖沙箱与 dry-run，实际执行仍需人工在终端确认。
 
+## 本机差异（2026-10-26 重装后）
+
+重装当天在这台笔记本上做的两处手工调整。都不是安装器该自动做的事，记在这里免得下次重装又踩一遍：
+
+- **`NetworkManager-wait-online.service` 已禁用**：开机时 Wi-Fi 慢于 60 秒，这个单元必然超时失败（桌面机常态），只会在 `systemctl --failed` 里留一条红字。安装器不动它——是否需要 "网络就绪" 取决于机器；本机已手动 `systemctl disable` + `reset-failed`，失败单元归零。换机后要是又看到这条，同样的命令即可。
+- **官方录屏插件 `noctalia/screen_recorder` 已弃用**：Noctalia 5.3.0 的插件接口装不上兼容版本（市场里同类插件都标 "needs plugin API 43"），引用它只会让状态栏多一个点不动的按钮、`rice-doctor` 报 `unrecognized widget type`。`settings.toml` 里的 `screenrec` 栏位、`[widget.screenrec]`、`plugin_settings` 段已删；`gpu-screen-recorder` 保留，`~/bin/rice-record` 和 `Alt+F5` 录屏菜单还在用。
+
 ## 结构
 
 `install.sh`（入口）· `steps/`（12 步）· `manifests/`（清单）· `payload/`（配置/脚本/字体/插件）· `lib/` · `tests/`、`tools/`（自检）。
