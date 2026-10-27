@@ -6,7 +6,9 @@
 #   2) seed：预置用户内容的种子文件必须保持原样（kept (seed)）；
 #   3) 幂等：第二次运行全 unchanged；
 #   4) 失败路径：目标目录不可写 → 必须 rc≠0 且摘要行体现 failed（守住「装坏了要报错」）；
-#   5) 目标白名单：相对路径 / 白名单外（/tmp/…）目标必须在部署前被拒。
+#   5) 目标白名单：相对路径 / 白名单外（/tmp/…）目标必须在部署前被拒；
+#   6) terminal-tools：部署完成后 Git 半边（6 个全局键 + 回退状态文件）必须到位，
+#      且重跑 07 不得重写它们（首次启用前的旧值要能留到 --disable）。
 # 安全：所有写入都发生在 mktemp 沙箱内（AN_TARGET_ROOT + HOME 都在沙箱里，
 #       且 sandbox-sudo 只放行沙箱内的绝对路径）；脚本开头有自检，沙箱路径异常直接退出。
 set -Eeuo pipefail
@@ -30,7 +32,8 @@ make_stubs() { # $1=stubdir $2=root $3=repo
   mkdir -p "$d"
   local c
   for c in pacman paru yay systemctl snapper usermod locale-gen grub-mkconfig \
-           glib-compile-schemas setfacl getfacl mkinitcpio fc-cache update-desktop-database gsettings; do
+           glib-compile-schemas setfacl getfacl mkinitcpio fc-cache update-desktop-database gsettings \
+           bat zoxide delta fish; do
     printf '#!/bin/sh\nexit 0\n' > "$d/$c"; chmod +x "$d/$c"
   done
   sed -e "s|@ROOT@|$2|" -e "s|@REPO@|$3|" > "$d/sudo" <<'STUB'
@@ -84,6 +87,27 @@ grep -qF -- "$exp1" <<<"$out1" \
 deploy_warn="$(grep -cE '^\[warn\].*(install failed|post-install verify failed|payload md5 mismatch|payload missing)' <<<"$out1" || true)"
 (( deploy_warn == 0 )) || bad "${deploy_warn} deploy warning(s) during the sandbox run"
 
+# 终端效率工具的两半边：config.fish 自带其管理块（Fish 半边），07 结尾要调 terminal-tools --enable
+# 把 Git 半边（6 个全局键）补进 ~/.gitconfig。少了这一步，重装后状态页报 6 条 warn、git diff 不走 delta，
+# 而 12 步与部署复核全绿——2026-10-26 真实重装就是这样静默半天初始化。
+tt_state="$ahome/.local/state/maintenance/terminal-tools-git-before.tsv"
+tt_conf="$ahome/.gitconfig"
+[[ -f "$tt_conf" ]] || bad "terminal-tools: stage 07 did not write ~/.gitconfig (git half of the integration missing)"
+tt_bad=""
+for kv in 'core.pager=delta' 'interactive.diffFilter=delta --color-only' 'delta.navigate=true' \
+          'delta.side-by-side=true' 'merge.conflictstyle=zdiff3' 'diff.colorMoved=default'; do
+  k="${kv%%=*}"; v="${kv#*=}"
+  # 逐键 --get：git config --list 会把变量名转成小写（interactive.difffilter），不能拿来比对。
+  got="$(env HOME="$ahome" git config --global --get "$k" 2>/dev/null || true)"
+  [[ "$got" == "$v" ]] || tt_bad="${tt_bad}${k}=[${got}] (want [${v}]) "
+done
+[[ -z "$tt_bad" ]] || bad "terminal-tools: git keys not applied: ${tt_bad}"
+[[ -f "$tt_state" ]] || bad "terminal-tools: rollback state file was not created"
+[[ "$(head -n 1 "$tt_state" 2>/dev/null)" == "# maintenance-terminal-tools-v1" ]] \
+  || bad "terminal-tools: rollback state file has an unexpected header"
+tt_state_md5="$(md5sum -- "$tt_state" 2>/dev/null | awk '{print $1}')"
+tt_conf_md5="$(md5sum -- "$tt_conf" 2>/dev/null | awk '{print $1}')"
+
 n=0; nbad=0
 while IFS=$'\t' read -r rp tp mode md5; do
   if [[ -z "$rp" || "$rp" == "#"* ]]; then continue; fi
@@ -117,6 +141,14 @@ grep -qF -- "$exp2" <<<"$out2" \
   || bad "second run is not idempotent: $(grep 'files:' <<<"$out2" | tail -1) (want: $exp2)"
 [[ "$(cat "$aroot$rt_target")" == "RUNTIME EDIT" ]] || bad "runtime-regenerated file was overwritten by a re-run"
 grep -q 'kept (runtime' <<<"$out2" || bad "kept (runtime) message missing"
+
+# terminal-tools：重跑 07 不得重现刷 git 配置，也不得覆盖首次启用时记下的回退值（否则 --disable 回错值）。
+grep -q 'terminal-tools: git integration already applied' <<<"$out2" \
+  || bad "second run did not report the terminal-tools git half as already applied"
+[[ "$(md5sum -- "$tt_state" 2>/dev/null | awk '{print $1}')" == "$tt_state_md5" ]] \
+  || bad "second run rewrote the terminal-tools rollback state (first-enable values must survive)"
+[[ "$(md5sum -- "$tt_conf" 2>/dev/null | awk '{print $1}')" == "$tt_conf_md5" ]] \
+  || bad "second run rewrote ~/.gitconfig (the git half should be a no-op when already applied)"
 
 # runtime 的例外：/etc/supergfxd.conf 的 hotplug_type=Asus 是安装器保证值，写错了必须被修回来（
 # 不能被「运行时文件保持现状」放过，否则 README 里那个「切集显重启又回混合」的坑会复发）。

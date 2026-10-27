@@ -246,6 +246,29 @@ if [[ -e /etc/nwg-hello/background.png ]] && have getfacl; then
   fi
 fi
 
+# 终端效率工具（terminal-tools）的两半边：payload 的 config.fish 自带它的管理块（Fish 半边随部署生效），
+# Git 半边（6 个全局键）由 07 结尾调 --enable 补齐。只部署文件不补 Git 半边 → 状态页 6 条 warn、
+# git diff 不走 delta，但什么都“不缺”——2026-10-26 重装后就是这样静默半天初始化。
+# 只抓“一个都没设”这种半初始化；用户自己换过 pager / 只改其中几项不算失败。
+tt_fish_conf="${XDG_CONFIG_HOME:-$HOME/.config}/fish/config.fish"
+tt_keys=(core.pager interactive.diffFilter delta.navigate delta.side-by-side merge.conflictstyle diff.colorMoved)
+if have git && [[ -f "$tt_fish_conf" ]] && grep -Fxq '# >>> maintenance terminal-tools >>>' "$tt_fish_conf"; then
+  tt_unset=0
+  for k in "${tt_keys[@]}"; do
+    if ! git config --global --get-all "$k" >/dev/null 2>&1; then
+      tt_unset=$((tt_unset + 1))
+    fi
+  done
+  if (( tt_unset == ${#tt_keys[@]} )); then
+    misc_bad=$((misc_bad + 1))
+    warn "terminal-tools: fish integration is on but all ${#tt_keys[@]} git keys are unset - run ~/scripts/maintenance/terminal-tools --enable"
+  elif (( tt_unset > 0 )); then
+    info "terminal-tools: ${tt_unset}/${#tt_keys[@]} git key(s) unset (custom values are left alone)"
+  else
+    info "terminal-tools: fish + git integration in place"
+  fi
+fi
+
 if (( bad > 0 || miss > 0 || pk_missing > 0 || aur_missing > 0 || misc_bad > 0 || links_bad > 0 || svc_bad > 0 || svc_sched_bad > 0 )); then
   error "Stage 12 verify: FAIL"
   exit 1

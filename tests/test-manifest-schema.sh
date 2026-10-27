@@ -92,6 +92,38 @@ uniq_rule "$M/runtime-regenerated.tsv" 1 "runtime-regenerated.tsv col1"
 nf_rule "$M/excluded.tsv" 3 "excluded.tsv"
 col_rule "$M/excluded.tsv" 1 '^(dir|file|package|pattern)$' "excluded.tsv col1 must be dir|file|package|pattern"
 
+# --- terminal-tools 的 Git 键表：07 步与工具本体各存一份，两处必须一字不差 ---
+# 07 结尾把 Git 半边补进 ~/.gitconfig（键表写在步骤里），而真正写入/回退的是 payload 里的
+# terminal-tools（GIT_KEYS/GIT_VALUES）。两处一旦分叉（改了一个忘了另一个），自检与工具就会
+# 一个说已就位、一个说缺——用测试把“只能有一处口径”钉住。
+pairs_of() { # $1=file $2=keys-array-name $3=values-array-name
+  # 用 substr 比较而不是正则：把 "^NAME=\\(" 传给 awk -v 时，未识别的转义会被吃掉，变成裸括号报
+  # "invalid regexp"。数组名里没有特殊字符，前缀比较就够了。
+  awk -v ka="$2=(" -v va="$3=(" '
+    substr($0, 1, length(ka)) == ka { k = 1; v = 0; next }
+    substr($0, 1, length(va)) == va { k = 0; v = 1; next }
+    k && /^\)/ { k = 0; next }
+    v && /^\)/ { v = 0; next }
+    k { gsub(/^[ \t]+|[ \t]+$/, ""); if ($0 != "") keys[++n] = $0 }
+    v { gsub(/^[ \t]+|[ \t]+$/, ""); gsub(/^'\''|'\''$/, ""); if ($0 != "") vals[++m] = $0 }
+    END {
+      if (n == 0 || n != m) { print "EXTRACT-FAILED(n=" n ",m=" m ")"; exit }
+      for (i = 1; i <= n; i++) print keys[i] "=" vals[i]
+    }
+  ' "$1"
+}
+tt_tool="$ROOT_DIR/payload/home/scripts/maintenance/terminal-tools"
+tt_step="$ROOT_DIR/steps/07-config.sh"
+if [[ -f "$tt_tool" ]]; then
+  tt_tool_pairs="$(pairs_of "$tt_tool" GIT_KEYS GIT_VALUES)"
+  tt_step_pairs="$(pairs_of "$tt_step" tt_keys tt_values)"
+  case "$tt_tool_pairs$tt_step_pairs" in
+    *EXTRACT-FAILED*) note "terminal-tools: 键表提取失败（工具本体或 07 的数组形状变了）" ;;
+  esac
+  [[ "$tt_tool_pairs" == "$tt_step_pairs" ]] \
+    || note "terminal-tools: 07-config.sh 的 tt_keys/tt_values 与工具本体的 GIT_KEYS/GIT_VALUES 不一致"
+fi
+
 if [[ -s "$errs" ]]; then
   head -40 "$errs"
   echo "test-manifest-schema: FAIL ($(wc -l < "$errs") problem(s))"

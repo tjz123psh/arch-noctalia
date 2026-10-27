@@ -13,7 +13,8 @@
 #   8) 目标路径护栏：清单第 2 列必须是绝对路径且落在 AN_TARGET_ALLOW 的顶层目录内；
 #      AN_TARGET_ROOT 非空时整棵目标树重写到该前缀下（测试/演练用，真实安装留空）。
 #   9) 部署后收尾：建标准用户目录、locale-gen、登录 shell（fish）、GRUB 菜单重建、
-#      GSettings vendor override 重编译（*.gschema.override → glib-compile-schemas）。
+#      GSettings vendor override 重编译（*.gschema.override → glib-compile-schemas）、
+#      终端效率工具（terminal-tools）的 Git 半边补齐。
 set -Eeuo pipefail
 AN_ROOT_DIR="${AN_ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 # shellcheck source=lib/common.sh
@@ -360,6 +361,50 @@ if have update-desktop-database; then
   fi
 else
   warn "update-desktop-database not found - .desktop entries may not be picked up"
+fi
+
+# h) 终端效率工具（terminal-tools）的两半边必须同源：payload 的 config.fish 自带它的管理块，
+#    Fish 半边（zoxide / 增强 cat）随文件部署就生效；但 Git 半边（delta pager、zdiff3 冲突标记、
+#    colorMoved 等 6 个全局键）只有 `terminal-tools --enable` 才会写进 ~/.gitconfig。
+#    只部署文件不补 Git 半边 → 重装后状态页报 6 条「尚未由本工具配置」，git diff/log 也没走 delta。
+#    幂等：6 个键已全部到位就什么都不做；工具自己只在首次启用时记旧值，回退仍走 --disable。
+#    GIT_KEYS / GIT_VALUES 必须与 payload 里 terminal-tools 的同名数组一致（tests/test-manifest-schema.sh 锁住）。
+fish_conf="${XDG_CONFIG_HOME:-$HOME/.config}/fish/config.fish"
+term_tools="$HOME/scripts/maintenance/terminal-tools"
+tt_keys=(
+  core.pager
+  interactive.diffFilter
+  delta.navigate
+  delta.side-by-side
+  merge.conflictstyle
+  diff.colorMoved
+)
+tt_values=(
+  delta
+  'delta --color-only'
+  true
+  true
+  zdiff3
+  default
+)
+if have git && [[ -x "$term_tools" && -f "$fish_conf" ]] && grep -Fxq '# >>> maintenance terminal-tools >>>' "$fish_conf"; then
+  tt_pending=0
+  for i in "${!tt_keys[@]}"; do
+    tt_now="$(git config --global --get-all "${tt_keys[$i]}" 2>/dev/null || true)"
+    if [[ "$tt_now" != "${tt_values[$i]}" ]]; then
+      tt_pending=$((tt_pending + 1))
+    fi
+  done
+  if (( tt_pending == 0 )); then
+    info "terminal-tools: git integration already applied"
+  elif tt_log="$("$term_tools" --enable 2>&1)"; then
+    ok "terminal-tools: git integration enabled (delta pager, zdiff3, colorMoved)"
+  else
+    warn "terminal-tools --enable failed - git diff/log will not use delta; run: ~/scripts/maintenance/terminal-tools --enable"
+    printf '%s\n' "$tt_log" | sed 's/^/    /' >&2 || true
+  fi
+elif [[ -f "$fish_conf" ]] && grep -Fxq '# >>> maintenance terminal-tools >>>' "$fish_conf"; then
+  info "terminal-tools: not deployed or git missing - git integration skipped"
 fi
 
 ok "Stage 07 config: done"
