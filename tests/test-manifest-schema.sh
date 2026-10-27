@@ -19,7 +19,7 @@ count_lock() { # $1=file $2=expected $3=label
   [[ "$n" == "$2" ]] || note "$3 row count: $n (locked at $2) — intentional changes must update this test"
 }
 count_lock "$M/files.tsv" 539 "files.tsv"
-count_lock "$M/packages.tsv" 173 "packages.tsv"
+count_lock "$M/packages.tsv" 176 "packages.tsv"
 count_lock "$M/aur.tsv" 17 "aur.tsv"
 count_lock "$M/bin-links.tsv" 19 "bin-links.tsv"
 count_lock "$M/seed.tsv" 34 "seed.tsv"
@@ -97,4 +97,4 @@ if [[ -s "$errs" ]]; then
   echo "test-manifest-schema: FAIL ($(wc -l < "$errs") problem(s))"
   exit 1
 fi
-echo "ok: 7 manifests (539/173/17/19/34/153/26 rows) match the column/format/value/whitelist rules"
+echo "ok: 7 manifests (539/176/17/19/34/153/26 rows) match the column/format/value/whitelist rules"

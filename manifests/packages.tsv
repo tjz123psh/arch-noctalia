@@ -18,10 +18,12 @@ btrfs-assistant	extra
 btrfs-progs	core		
 capitaine-cursors	extra		
 cargo-audit	extra		
+curl	core		pac/pacd/pacr 直接调用（A.L.A 与仓库元数据查询）
 dkms	extra	drivers	
 dnsmasq	extra		Wi-Fi 热点（NetworkManager ipv4.method shared 的 DHCP/DNS）；rice-hotspot 与侧栏插件热点开关都靠它
 docker	extra		Noctalia 社区插件 8bury/mini-docker 依赖；另供命令行 docker 与 docker.service
 docker-compose	extra		
+downgrade	archlinuxcn		pacd 的版本回退后端（硬依赖，缺了 pacd 直接报错退出）
 efibootmgr	core		
 evtest	extra		
 exfatprogs	extra		
@@ -78,9 +80,9 @@ libva-utils	extra
 libxres	extra		Wayland 剪贴板代理识别（linuxqq-wayland-fix 自检项）
 linux-firmware	core	drivers	
 linux-lts	core		
+linux-lts-headers	core		LTS 备用内核的头文件（nvidia-open-dkms 在 lts 上构建所需）
 linux-zen	extra		
 linux-zen-headers	extra		
-linux-lts-headers	core		LTS 备用内核的头文件（nvidia-open-dkms 在 lts 上构建所需）
 mesa	extra	drivers	
 mesa-utils	extra	drivers	
 mission-center	extra		
@@ -166,6 +168,7 @@ xdg-desktop-portal-gnome	extra	desktop
 xdg-desktop-portal-gtk	extra	desktop	
 xdg-terminal-exec	extra		
 xdg-user-dirs	extra		标准用户目录（user-dirs.dirs 配套）
+xdg-utils	extra		screenrec-menu 用 xdg-open 打开录像目录
 xorg-mkfontscale	extra		
 xwayland-satellite	extra	desktop	
 yazi	extra		

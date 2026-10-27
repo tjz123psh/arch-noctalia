@@ -53,6 +53,18 @@
 - **字体是仓库体积的大头**：Maple Mono NF CN 四款 + 资源汉圆体三款共约 123MB（工作区 147MB）；这是“没有离线包、全从 git 拉”的代价。
 - **破坏性操作只验证到预演**：维护脚本里真会删数据的（`clean`、快照恢复）测试只覆盖沙箱与 dry-run，实际执行仍需人工在终端确认。
 
+## 录屏（screenrec-menu）
+
+`~/scripts/media/screenrec-menu`，niri 里 **Alt+F6** 打开 fuzzel 菜单（旧的一键开关 `Alt+Shift+D` → `rice-record` 保留）。
+
+- 引擎：`gpu-screen-recorder`（默认，GPU 编码）→ `wf-recorder` 兜底
+- 目标：全屏 / 区域（`slurp` 框选）/ 窗口（取 niri 焦点窗口几何；niri 某些版本不给坐标时会问是否改框选）
+- 设置（写进 `~/.local/state/screenrec-menu/config`，脚本自建、不入仓）：
+  编码 h264/hevc/av1/10bit · 质量档 medium→ultra · 码率模式 qp/vbr/cbr（cbr 时质量按码率换算）·
+  帧率 30/60/120/144 · 分辨率上限 · 容器 mp4/mkv/webm · 音频源 关/系统/麦克风/两者 + 具体设备 ·
+  保存目录 · 停止后复制路径 / 打开目录 · 光标 · 倒计时 0/3/5 秒 · 时长上限（分钟）
+- CLI：`--start fullscreen|region|window`、`--stop`、`--toggle`、`--settings`、`--status`
+
 ## 本机差异（2026-10-26 重装后）
 
 重装当天在这台笔记本上做的两处手工调整。都不是安装器该自动做的事，记在这里免得下次重装又踩一遍：

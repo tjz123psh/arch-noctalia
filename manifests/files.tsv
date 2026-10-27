@@ -540,7 +540,7 @@ payload/system/etc/snap-pac.ini	/etc/snap-pac.ini	644	c5a2db04a99d395654ffa86744
 # ——— 2026-10-13 热点：无线管制域 CN（wireless-regdb + modprobe.d），5GHz AP 才稳 ———
 payload/system/etc/modprobe.d/cfg80211-regdom.conf	/etc/modprobe.d/cfg80211-regdom.conf	644	803dc314a0f16a5ac0a1eb7784435499
 payload/home/scripts/media/b23	/home/pang/scripts/media/b23	755	79b9660033ee66e73ccaa5a28b89e75a
-payload/home/scripts/media/screenrec-menu	/home/pang/scripts/media/screenrec-menu	755	0428182260c4636b2340f475f1d9aeb5
+payload/home/scripts/media/screenrec-menu	/home/pang/scripts/media/screenrec-menu	755	82d9dbcf1243f72201a4818252dcdfd7
 payload/home/scripts/package/README.md	/home/pang/scripts/package/README.md	644	fbdcbb4d84d2045ff7708d1fb82b6f38
 payload/home/scripts/package/UPGRADE.md	/home/pang/scripts/package/UPGRADE.md	644	3c75328f655422edc56ecc0f1f9eadd4
 payload/home/scripts/package/pac	/home/pang/scripts/package/pac	755	058529a1d23d9ee46cc2afcb97ae52f3
