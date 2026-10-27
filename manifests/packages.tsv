@@ -67,7 +67,7 @@ hyprpicker	extra		Noctalia 社区插件 oldirtty/color_picker 依赖；niri 下 
 imagemagick	extra		
 inotify-tools	extra		
 iw	extra		Wi-Fi 排障：iw reg get / iw phy info（热点频段与管制域检查）
-jdk21-openjdk	extra		
+jdk25-openjdk	extra		
 jdk8-openjdk	extra		
 jq	extra		
 kitty	extra	desktop	
