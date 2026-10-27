@@ -113,7 +113,9 @@ pick() {
     (($#)) || return 130
     have fuzzel || die "缺少 fuzzel" "装 fuzzel 后再试"
     local lines=$(( $# > 12 ? 12 : $# ))
-    printf '%s\n' "$@" | fuzzel --dmenu --prompt="$prompt " --lines="$lines" --width=46
+    # --placeholder='' ：fuzzel.ini 里有全局 placeholder（"搜索应用…"，给启动器用的），
+    # 菜单场景下那是噪音，本脚本逐次清掉。
+    printf '%s\n' "$@" | fuzzel --dmenu --prompt="$prompt " --placeholder='' --lines="$lines" --width=46
 }
 
 # ---------------- 几何 ----------------
