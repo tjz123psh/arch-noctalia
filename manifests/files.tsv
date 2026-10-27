@@ -299,7 +299,7 @@ payload/home/scripts/maintenance/run	/home/pang/scripts/maintenance/run	755	4b69
 payload/home/scripts/maintenance/storage-health	/home/pang/scripts/maintenance/storage-health	755	c5b8c1e6bee73cb780fadfb4be12f4bf
 payload/home/scripts/maintenance/sysup	/home/pang/scripts/maintenance/sysup	755	36c56681e44e362dc3d9065b8f04b197
 payload/home/scripts/maintenance/term-menu	/home/pang/scripts/maintenance/term-menu	755	f7443f782f855210354b6ccfa638d64c
-payload/home/scripts/maintenance/terminal-tools	/home/pang/scripts/maintenance/terminal-tools	755	11e6f47ea88deb23cdf8ca6e1a338f07
+payload/home/scripts/maintenance/terminal-tools	/home/pang/scripts/maintenance/terminal-tools	755	26bed46aa9cfbca499e0793a721a9c91
 payload/home/scripts/maintenance/tests/DESTRUCTIVE-VM.md	/home/pang/scripts/maintenance/tests/DESTRUCTIVE-VM.md	644	eb29c8ddf9f234250eb05f479312ce52
 payload/home/scripts/maintenance/tests/run	/home/pang/scripts/maintenance/tests/run	755	e2301d9d0390989948087b3275a76736
 payload/system/etc/greetd/config.toml	/etc/greetd/config.toml	644	1812fea641f1c31f43936e83e4cdde83

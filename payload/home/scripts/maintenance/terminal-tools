@@ -125,10 +125,16 @@ rewrite_fish_config() {
   tmp="$(mktemp "$config_dir/.config.fish.terminal-tools.XXXXXX")"
   ui_tmp_register "$tmp"
   if [[ -e "$target" ]]; then
+    # 块前后各有一行空行分隔（下面的 heredoc 自带前导空行）；删块时必须把块前那行空行也吃掉，
+    # 否则每跑一次 --enable 就多留一行空行——写出的文件与仓库里的 config.fish 逐渐漂移，
+    # 07 部署后的 md5 复核和 12 步自检都会对不上。做法：空行先暂存，只在后面还有内容时才吐出去，
+    # 于是文件末尾的空行自然被丢掉（中间的空行原样保留）。
     awk -v begin="$BLOCK_BEGIN" -v end="$BLOCK_END" '
-      $0 == begin { inside=1; next }
+      $0 == begin { inside=1; pending=0; next }
       $0 == end { inside=0; next }
-      !inside { print }
+      inside { next }
+      /^[ \t]*$/ { pending++; next }
+      { for (i = 0; i < pending; i++) print ""; pending = 0; print }
       END { if (inside) exit 2 }
     ' "$target" > "$tmp" || awk_rc=$?
   else
