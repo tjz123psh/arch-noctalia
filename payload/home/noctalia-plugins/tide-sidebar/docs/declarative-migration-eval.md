@@ -81,3 +81,17 @@ python tests/run_all.py                                    # 插件回归（含 
   （`note-edit` → `notes-*.json`，revision 递增），证明"声明式输入 → 服务持久化"这条路是通的。
 - 数据安全：面板打开不会改动便签（实测正文与 revision 均未变）；删除进回收区，仍可从原生界面恢复。
 - 结论：**三页都能做**；是否需要为了外观一致而放弃撤销栈，是迁移前唯一需要拍板的产品取舍。
+
+## 8. 切换结果（2026-10-28）
+
+- 新增 `panel-main.luau`（约 280 行）+ `[[panel]] side-panel`：三页合一带标签栏，
+  `capture_keys = ["escape","ctrl+1","ctrl+2","ctrl+3"]`，键盘实测可切换/关闭。
+- 入口全部改到声明式侧栏：`shortcut.luau`、`widget.luau` 改调 `noctalia.togglePanel`；
+  niri 绑定的 `noctalia msg plugin … toggle` 在服务里同样转到新面板。
+- 服务不再启动原生 gjs 前端（仅 `frontend-toggle` 旧路径按需拉起）——实测切换后
+  `pgrep -f native/main.js` 为空，即省掉 219 MiB 常驻。
+- 数据源改为 `noctalia.state` 的共享快照（timer/stopwatch/system/notes_snapshot），
+  面板不再依赖 `private/frontend/*.json` 文件，也就不依赖那个 gjs 进程写盘。
+- 回退方式：把 `shortcut.luau`/`widget.luau` 的 onClick 换回
+  `noctalia.state.set("command",{action="frontend-toggle"})`，并把 `service.luau` 的
+  toggle 分支恢复为 `frontend:control`。原生代码一行没删。

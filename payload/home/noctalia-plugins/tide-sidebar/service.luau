@@ -438,7 +438,8 @@ local accepted=noctalia.runAsync({"chmod","-R","go-rwx","--",base},function(resu
   noctalia.state.set("preferences",preferences)
   publishPreferences();frontend:publish("calc",calculation);publishConfig()
   if frontend.serial==0 then frontend.page=normalizePage(preferences.tab) end;frontend.reducedMotion=reducedMotion()
-  frontend:start()
+  -- 原生 GTK 前端改为懒启动：只有走 frontend-toggle（旧入口）时 frontend:ensure() 才拉起它。
+  -- 声明式侧栏走 noctalia.state 快照，不需要这个进程（省一个 gjs 常驻与 gtk4-layer-shell 依赖）。
   refresh()
 end,5000)
 if not accepted then noteError="无法启动后台存储初始化"; timerError=noteError; stopwatchError=noteError; publishNotes(); publishTimer(); publishStopwatch() end
@@ -473,7 +474,11 @@ function onExit()
   if ready then noctalia.runAsync({"chmod","-R","go-rwx","--",base},function() end,5000) end
 end
 function onIpc(event,payload)
-  if event=="toggle" or event=="show" or event=="hide" then
+  if event=="toggle" then
+    -- 默认入口改走声明式侧栏（同 shortcut.luau / widget.luau）；原生 GTK 前端只保留
+    -- 在 frontend-toggle 这条旧路径上，作为回退。
+    noctalia.togglePanel("pang/tide-sidebar:side-panel")
+  elseif event=="show" or event=="hide" then
     if ready then frontend:ensure() end
     frontend:control(event,payload and payload~="" and normalizePage(payload) or nil,reducedMotion())
   elseif event=="reload-ui" then frontend:restart()

@@ -153,3 +153,13 @@ height = "content"
 max_height = 620
 placement = "floating"
 position = "center"
+
+# 统一侧栏：窗口 / 工具 / 便签三页。快捷键 Super+Shift+W 与状态栏按钮都指向这里。
+[[panel]]
+id = "side-panel"
+entry = "panel-main.luau"
+width = 460
+height = 560
+placement = "floating"
+position = "center"
+capture_keys = [ "escape", "ctrl+1", "ctrl+2", "ctrl+3" ]

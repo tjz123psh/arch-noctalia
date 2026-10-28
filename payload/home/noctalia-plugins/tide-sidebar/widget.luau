@@ -6,6 +6,6 @@ function update()
   barWidget.setText("侧栏")
   barWidget.setTooltip("侧边栏 · Super+Shift+W")
 end
-function onClick() noctalia.state.set("command",{action="frontend-toggle"}) end
+function onClick() noctalia.togglePanel("pang/tide-sidebar:side-panel") end
 noctalia.state.watch("timer_snapshot",function() update() end)
 update()
