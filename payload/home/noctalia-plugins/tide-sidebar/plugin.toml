@@ -1,7 +1,7 @@
 id = "pang/tide-sidebar"
 name = "侧边栏工作台"
-version = "2.2.0"
-plugin_api = 32
+version = "2.3.0"
+plugin_api = 42
 author = "pang"
 license = "MIT"
 description = "窄标签侧栏：可恢复便签、计算器、自由倒计时、秒表、rice-hotspot 热点和 niri 窗口管理。"
@@ -121,3 +121,15 @@ entry = "widget.luau"
 [[shortcut]]
 id = "open"
 entry = "shortcut.luau"
+
+# 「窗口」页的声明式 UI 原型（Noctalia 5.4 / plugin_api 42 起可用）：
+# 与正式侧栏（id = sidebar，走 native GTK 前端）并存，用来对比 [[panel]] + ui.*
+# 的观感与维护成本；入口：noctalia msg panel-open pang/tide-sidebar:windows-proto
+[[panel]]
+id = "windows-proto"
+entry = "panel-windows.luau"
+width = 420
+height = "content"
+max_height = 560
+placement = "floating"
+position = "center"

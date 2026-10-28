@@ -2,6 +2,12 @@
 
 适配本机 Noctalia 5.2.1 + niri。界面按用户确认的[参考式样张](<design/reference-flat-proof.png>)制作：米白底、奶黄色块、橄榄拼接、自然波浪分色与轻投影；不再使用品牌口号、反光渐变和一格格描边按键。
 
+## 5.4 起的新增（2026-10-28）
+
+- 倒计时结束、热点开/关会额外弹一条**系统 OSD**（`noctalia.osd.show`，与音量/亮度共用槽位；通知历史仍保留 `noctalia.notify`）。
+- 新增声明式面板 **`windows-proto`**：`[[panel]]` + `ui.*` 写法的「窗口」页原型，用于评估是否把原生 GTK 前端整体迁到声明式 UI。
+  打开：`noctalia msg panel-open pang/tide-sidebar:windows-proto`。点一行切窗口、行尾 × 关窗口、顶部刷新、Esc 关闭。
+
 ## 打开与关闭
 
 **Super + Shift + W**，写在 `~/.config/niri/conf.d/binds.kdl`，改完 `niri validate` 通过即热加载生效。
