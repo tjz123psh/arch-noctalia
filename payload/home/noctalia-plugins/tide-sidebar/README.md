@@ -2,13 +2,6 @@
 
 适配本机 Noctalia 5.2.1 + niri。界面按用户确认的[参考式样张](<design/reference-flat-proof.png>)制作：米白底、奶黄色块、橄榄拼接、自然波浪分色与轻投影；不再使用品牌口号、反光渐变和一格格描边按键。
 
-## 5.4 起的新增（2026-10-28）
-
-- 倒计时结束、热点开/关会额外弹一条**系统 OSD**（`noctalia.osd.show`，与音量/亮度共用槽位；通知历史仍保留 `noctalia.notify`）。
-- 侧栏外观仍是原生 GTK 前端（`native/`）。2026-10-28 曾试过用声明式面板（`[[panel]]` + `ui.*`）整体替换，
-  功能对齐但观感被否（缺阴影/渐变，太朴素），已回退；评估数据与回退记录见
-  [docs/declarative-migration-eval.md](docs/declarative-migration-eval.md)。
-
 ## 打开与关闭
 
 **Super + Shift + W**，写在 `~/.config/niri/conf.d/binds.kdl`，改完 `niri validate` 通过即热加载生效。

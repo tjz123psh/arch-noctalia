@@ -1,7 +1,7 @@
 id = "pang/tide-sidebar"
 name = "侧边栏工作台"
-version = "2.3.0"
-plugin_api = 42
+version = "2.2.0"
+plugin_api = 32
 author = "pang"
 license = "MIT"
 description = "窄标签侧栏：可恢复便签、计算器、自由倒计时、秒表、rice-hotspot 热点和 niri 窗口管理。"

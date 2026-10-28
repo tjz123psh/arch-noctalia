@@ -19,9 +19,6 @@
 - 终端效率工具 `~/scripts/maintenance/terminal-tools`（bat / zoxide / git-delta）是**两半边**：Fish 半边（zoxide 初始化、增强 `cat`）写在 `config.fish` 的 `# >>> maintenance terminal-tools >>>` 管理块里，随 07 部署就生效；Git 半边（`core.pager=delta`、`interactive.diffFilter`、`delta.navigate`、`delta.side-by-side`、`merge.conflictstyle=zdiff3`、`diff.colorMoved` 这 6 个全局键）**只有 `--enable` 才会写进 `~/.gitconfig`**，安装器不部署那个文件。所以 07 结尾会在部署完成后判定一次：6 个键已全部到位就跳过，否则调 `terminal-tools --enable` 补齐（失败只 warn，不中断安装）。漏了这一步的话，重装后 `terminal-tools --status` 会报 6 条「尚未由本工具配置」、`git diff`/`log -p` 也不走 delta，而 12 步与部署复核全绿——2026-10-26 重装后就是这样静默半天初始化的，12 步现在也会在「Fish 半边在、6 个键一个都没设」时报错。回退仍走 `terminal-tools --disable`（它会恢复首次启用前记录的旧值，状态在 `~/.local/state/maintenance/terminal-tools-git-before.tsv`；重跑 07 不会覆盖这份记录）。键表在 `07-config.sh` 的 `tt_keys`/`tt_values` 与工具本体的 `GIT_KEYS`/`GIT_VALUES` 各有一份，`tests/test-manifest-schema.sh` 锁死两处必须一字不差。
   工具原先有个坑：`rewrite_fish_config` 删管理块时不删块前那行空行、heredoc 又补一行，于是**每跑一次 `--enable` 就多积一行空行**，写出的 `config.fish` 逐渐偏离 `files.tsv` 的 md5（12 步必红）。已改成「空行先暂存、只在其后仍有内容时才吐出」，现在 `--enable` 对仓库里的 `config.fish` 是**不动点**（`tests/test-07-deploy-sandbox.sh` 锁住）。
 - Noctalia 的 shell 字体固定为 `Noto Sans CJK SC`（`[shell] font_family`，随 settings 种子副本部署；提供字体的 `noto-fonts-cjk` 本来就在 `packages.tsv`）：宿主 `ui.input` 的**鼠标拖选**在"中文＋英文/符号混排"时会因字体回退在 run 边界卡住（命中测试按 Pango per-run 度量做视觉行分组；上游未修，属宿主限制），把 shell 字体设成同时覆盖中英文的字体即可绕开（键盘选区不受影响）。**以后换字体要保持"拉丁 + 中文同一字体"**，否则该缺陷复发。
-- 输入法：状态栏**不放** `keyboard_layout` 组件——托盘里那个「拼」图标就是 fcitx5 的托盘图标，5.4 的组件显示的是同一信息（会重复）。锁屏登录框的「显示键盘布局」仍然开着，锁屏时能看当前布局/输入法。
-- 视觉细节（Noctalia 5.4）：壁纸转场 `fade/zoom/vortex`、锁屏 `fade/zoom/disc/diamond`（5.4 新增 vortex/pixel/diamond/golden/melt，壁纸与锁屏都支持）；状态栏 `media` 右边跟着 `audio_visualizer`（`show_wave = true`：平滑波形＋color_2 回声波，没在放东西时不占位）；桌面两个网速组件 `network_speed_decimal_places = 2`（显示成 `1.23M`）。
-- 会话菜单（状态栏最右）：锁屏 / 注销 / 锁屏+休眠 / 重启 / **重启到固件设置** / 关机，外加一个示例自定义命令行。`reboot_uefi` 走 `systemctl reboot --firmware-setup`（要 UEFI + systemd；这条与 GRUB 菜单里的「UEFI Firmware Settings」是两条路，效果一样，这条不用等 GRUB 菜单）。
 - 文件管理器 yazi：包在 `packages.tsv` 里，桌面项在启动器可见（`Exec=kitty --class yazi -e yazi %f`，同时是「打开文件夹」的候选，nautilus 仍是默认）。
   配色与语法高亮交给 Noctalia 的「Yazi」社区模板（`settings.toml` 的 `community_ids` 已含 `yazi`），产物是 `~/.config/yazi/{theme.toml,flavors/noctalia.yazi/*}`，换壁纸自动重渲染——这三个文件列在 `runtime-regenerated.tsv`，自检只核对存在。
   整屏外框：`init.lua` 里一句 `require("full-border"):setup()`，让整个界面套一圈圆角方框、栏位分隔线接到方框上下沿。插件本体随安装器部署在 `plugins/full-border.yazi/`（上游 yazi-rs/plugins 的 MIT 版本，`main.lua` 头标 `@since 26.8.15`，许可证一并纳管），**不走 `ya pkg` 联网安装**；升级 yazi 后这里若报错，从上游拉最新 `main.lua` 覆盖即可。想换成方角外框，把那行改成 `require("full-border"):setup { type = ui.Border.PLAIN }`。
@@ -34,7 +31,7 @@
   B 站弹幕：`scripts/bdanmaku.lua`（第三方 MIT，许可证一并纳管 `bdanmaku.LICENSE.txt`）+ `~/bin/biliass` 包装脚本（弹幕 XML → ASS）；真正的 biliass 在 `~/.local/share/mpv-danmaku/venv`（首用自动创建，机器本地不入仓）。播放 B 站链接时弹幕自动出现，`v` 即弹幕开关。
   在线字幕：`scripts/assrt.lua` 从 assrt.net 搜字幕（按 `a` 触发）——上游没有许可证文件，为免版权问题**不入公开仓库**（见 `excluded.tsv`）；需要在 `script-opts/assrt.conf` 填自己的 API token（assrt.net 注册后免费获取）。
 - 显卡模式（supergfxd）：`/etc/supergfxd.conf` 设 `hotplug_type: "Asus"`（上游 / Arch Wiki 建议值）。ASUS 的 `dgpu_disable` 机制下，若该值为 `None`，supergfxd 开机会把「集显」判成状态错乱、强行把 dgpu_disable 写回 0 并回到 Hybrid —— 表现就是「切集显 → 重启 → 又变混合」。该文件列 `files.tsv` + `runtime-regenerated.tsv`（`mode` 字段由 supergfxd 自写，只核存在性）。
-- AI agent 技能共享库：`~/.agents/skills/`（Agent Skills 规范的用户级位置，**DSH 与 pi 都原生读取**）；共用技能放这里、工具专属的留在 `~/.dsh/skills` 与 `~/.pi/agent/skills`。**这套库由用户手工维护，安装器既不部署也不校验**（2026-10-27 从 payload 与 `files.tsv` 摘除，见 `excluded.tsv` 记账）；共用脚本（`context.mjs` / `palette.mjs` / `pseudoloc.py`）在 `~/.agents/skills/_shared/scripts/`。
+- AI agent 技能共享库：`~/.agents/skills/`（Agent Skills 规范的用户级位置，**DSH 与 pi 都原生读取**）；共用技能放这里、工具专属的留在 `~/.dsh/skills` 与 `~/.pi/agent/skills`；库本体是独立 git 仓库（见 `excluded.tsv` 记账）。共用脚本（`context.mjs` / `palette.mjs` / `pseudoloc.py`）在 `~/.agents/skills/_shared/scripts/`。当前分布：共用 18 个、DSH 专属 2 个（`~/.dsh/skills`）、pi 专属 1 个（`~/.pi/agent/skills/batch`）。
 - 内屏刷新率：niri 的 `~/.config/niri/conf.d/outputs.kdl` 与登录界面的 `/etc/nwg-hello/niri.kdl` 都**显式钉 `1920x1080@144.063`**，并**给核显（eDP-1）与 MUX 独显（eDP-2）两个接口名各写一段** —— MUX 切到独显后面板接口名会变，而 `mode` 只写「1920x1080」不带刷新率时 niri 用驱动的 preferred 模式（NVIDIA 那边 preferred 只有 60.061Hz，AMD 那边恰是 144Hz，所以以前没暴露）。
 - 环境适配：ESP 等 vfat 挂载不做权限位校验、系统文件读取自动走 root；**不改你的挂载设置**。
 - 外观：毛玻璃等 GTK 样式以样式类限定作用域（`gtk.css` 追加段，只影响指定程序）；程序的"系统默认值"以 GSettings vendor override 随 07 部署（`/usr/share/glib-2.0/schemas/*.gschema.override`），07 末尾统一 `glib-compile-schemas` 生效——你在程序里改过的值（dconf）优先，不会被覆盖。
@@ -43,9 +40,7 @@
 - 自检容差：桌面/程序会自行改写的文件（Noctalia 主题产物、WPS 配置、登录背景…）列在 `manifests/runtime-regenerated.tsv`（只核对存在性，且 07 重跑时也不会覆盖它们），你可能编辑的状态文件列在 `manifests/seed.tsv`（存在即保持）——所以机器用过一段时间后 `--redo 12` 也不会误报“安装失败”。真机对账 `tests/test-machine-reconcile.sh` 用同一份名单豁免内容比对，`AN_RECONCILE_STRICT=1` 可当门禁（只在装了本套桌面的目标机上跑，非目标机 `run-all` 会跳过）；清单的形状/白名单/取值由 `tools/selfcheck.sh` 与 `tests/test-manifest-schema.sh` 双重把关。
 - 登录界面背景：`payload/system/etc/nwg-hello/background.png` 的初始快照**就是种子默认壁纸**（`Pictures/wallpapers/斑斓.png`，两者字节完全相同），所以装完第一次开机，登录界面和桌面壁纸是一致的；之后每次换壁纸由 `~/bin/rice-login-bg`（Noctalia 的 `wallpaper_changed` hook）按**原字节**跟随改写，不做缩放/重编码，写入走第 11 步加的 `u:pang:rw` ACL，所以这条路径的内容不需要安装器再管（`runtime-regenerated.tsv` 只核存在性）。
 
-- Noctalia 插件源码：`payload/home/noctalia-plugins/`（`magnifier` 放大镜 + `tide-sidebar` 侧边栏工作台；**2026-10-28 起 tide-sidebar 用 plugin_api 42，需要 Noctalia 5.4+**），07 步部署到 `~/noctalia-plugins`，宿主以 path 源 `pang-dev` **直接读这个目录**；改插件就在本仓里改，提交推送后跑 `./install.sh --redo 07` 部署，然后在 Noctalia 里重新载入插件。注意 Noctalia 的插件系统仍会把插件装到 `~/.local/state/noctalia/plugins/`（那份是运行副本，含便签等用户数据，见 `excluded.tsv`），源码与运行副本是两回事。`.backups/`、`magnifier/tools/cursor-track/build/` 属本地产物，不入仓。
-  **tide-sidebar 自 2026-10-28 起用声明式侧栏 `side-panel`（plugin_api 42，需 Noctalia 5.4+）**：窗口 / 工具 / 计算 / 便签四页（Ctrl+1..4 切换），`Super+Shift+W`、状态栏「侧栏」按钮、`noctalia msg plugin … toggle` 都指向它；数据走 `noctalia.state` 共享快照，原生 GTK 前端（`native/`）默认不再启动（省 200 MB+ 常驻内存），只作回退保留——回退步骤见插件仓库 `docs/declarative-migration-eval.md` 第 8 节。`gtk4-layer-shell` 因此只在回退路径上需要，包仍留在清单里。
-  tide-sidebar 在 5.4 上新增两样：倒计时结束/热点开关会多弹一条**系统 OSD**（`noctalia.osd.show`，通知历史仍走 `noctalia.notify`）；另有一个声明式面板原型 `windows-proto`（`[[panel]]` + `ui.*` 重写的「窗口」页，用来评估是否把原生 GTK 前端整体迁移到声明式 UI）。打开方式：`noctalia msg panel-open pang/tide-sidebar:windows-proto`。
+- Noctalia 插件源码：`payload/home/noctalia-plugins/`（`magnifier` 放大镜 + `tide-sidebar` 侧边栏工作台），07 步部署到 `~/noctalia-plugins`，宿主以 path 源 `pang-dev` **直接读这个目录**；改插件就在本仓里改，提交推送后跑 `./install.sh --redo 07` 部署，然后在 Noctalia 里重新载入插件。注意 Noctalia 的插件系统仍会把插件装到 `~/.local/state/noctalia/plugins/`（那份是运行副本，含便签等用户数据，见 `excluded.tsv`），源码与运行副本是两回事。`.backups/`、`magnifier/tools/cursor-track/build/` 属本地产物，不入仓。
 
 - GRUB 菜单：`/etc/default/grub` 随 07 部署，其中 `GRUB_DISABLE_BOOTNEXT=true` 关掉 grub 2.16 自带 `31_efi_bootnext` 生成的同名「UEFI OS」条目（不关就会在开机菜单里多出一串重复项）。该变量由 grub 包自己的脚本读取，机型无关；没有这个脚本的系统上它只是一行不起作用的设置。
 
@@ -53,7 +48,7 @@
 
 这套东西是**为一台机器写死**的（用户名 `pang`、路径 `/home/pang`、内屏 144Hz 的 eDP-1/eDP-2 双接口名、ASUS 的 `dgpu_disable` 开关），换机器要改 `lib/` 和清单里的机器相关项。下面几条是“知道、但没做或做不到”的，免得以后再翻一遍：
 
-- **没有 CI**：仓库没有 `.github/`，全部验证靠手动跑 —— `tests/run-all.sh`（14 个回归，多数在 mktemp 沙箱里跑；机器对账在没有 niri 的机器上自动跳过）、`tools/selfcheck.sh`（清单/语法/许可证/密钥）、推送前 `gitleaks dir . --redact --no-banner` 复核（`gitleaks` 已随安装器装，见 `packages.tsv`）、`tests/test-machine-reconcile.sh`（本机对账，`AN_RECONCILE_STRICT=1` 可当门禁）。
+- **没有 CI**：仓库没有 `.github/`，全部验证靠手动跑 —— `tests/run-all.sh`（14 个回归，多数在 mktemp 沙箱里跑；机器对账在没有 niri 的机器上自动跳过）、`tools/selfcheck.sh`（清单/语法/许可证/密钥）、`tests/test-machine-reconcile.sh`（本机对账，`AN_RECONCILE_STRICT=1` 可当门禁）。
 - **只在一台物理机 + 一台 VMware 虚拟机上验收**：物理结论来自原机（ASUS TUF A15 + btrfs）；`--machine vm` 分支于 2026-10-26 在 VMware 里完整跑通 12 步、第 12 步自检全绿。仍未在第二台**物理机**上重装过。
 - **VM 上验证不到的东西**：蓝牙、Wi-Fi 热点（虚拟机没有对应硬件）、supergfxd 切卡、内屏 144Hz 固定、NVIDIA 驱动——这些只在物理机上才有意义。
 - **yazi 状态栏字段不可配**：26.9.1 的状态栏内容（大小/权限/滚动位置）由版本写死，主题只能改颜色；视频里那套“权限 + 硬链接 + 属主:属组 + 修改时间”得换旧版本才有。
@@ -62,7 +57,7 @@
 - **字体是仓库体积的大头**：Maple Mono NF CN 四款 + 资源汉圆体三款共约 123MB（工作区 147MB）；这是“没有离线包、全从 git 拉”的代价。
 - **破坏性操作只验证到预演**：维护脚本里真会删数据的（`clean`、快照恢复）测试只覆盖沙箱与 dry-run，实际执行仍需人工在终端确认。
 
-- **`~/.agents` 技能库不入安装器**：整套 `~/.agents`（124 个文件，含各技能的 `SKILL.md`、`references` 与本机排障历史）由用户手工维护，2026-10-27 起不再随安装器发布，重装后需自行恢复。恢复来源是本仓 git 历史（该目录曾在 `payload/home/.agents/**` 与 `files.tsv` 内，见提交 `0da81fc` 之前的版本）；因此技能之间互相引用的路径（如 `nvim-config` → `nvim-troubleshooting`）只在手工恢复后成立。
+- **排障历史不入安装器**：`~/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md`（本机累积的事故记录）已从 payload 与 `files.tsv` 移除，重装后不会带回。技能本体（`SKILL.md`、`local-patterns.md`）仍随安装器部署，所以重装的机器上该技能里指向历史的章节索引会查不到对应文件。要找回历史：`git log --diff-filter=D -- payload/home/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md` 取回旧版本。
 
 ## 录屏（screenrec-menu）
 

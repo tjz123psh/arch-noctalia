@@ -202,15 +202,8 @@ local function saveTimer()
   timerError="倒计时状态暂未保存；会自动重试，请先不要重启 Shell"
   return false
 end
--- 5.4 起插件可以弹系统 OSD（plugin_api 39+）；旧版本没有这个表，静默跳过。
-local function osdShow(icon,value,opts)
-  local osd=noctalia.osd
-  if type(osd)~="table" or type(osd.show)~="function" then return end
-  pcall(osd.show,icon,value,opts)
-end
 local function finishNotification()
   noctalia.notify("倒计时结束","设定的时间已到。")
-  osdShow("clock","倒计时结束")
 end
 local function finishSafely()
   pendingFinish=true
@@ -307,7 +300,6 @@ local function hotspotAction(kind,path)
     local message=(value and value.message) or err or "热点操作结束；请核对当前状态"
     if hotspotOperationWarning and hotspotOperationWarning~="" then message=message.." "..hotspotOperationWarning end
     feedback(value and value.ok==true,message,"hotspot")
-    if value and value.ok==true then osdShow(system.hotspot.on and "wifi" or "wifi-off",message) end
     publishSystem()
     refresh()
   end,60000)
@@ -484,10 +476,6 @@ function onIpc(event,payload)
   elseif event=="timer-resume" then applyTimer("resume")
   elseif event=="timer-reset" then applyTimer("reset",tonumber(payload) and tonumber(payload)*1000)
   elseif event:sub(1,10)=="stopwatch-" then applyStopwatch(event:sub(11))
-  elseif event:sub(1,5)=="note-" then
-    local ok,args=pcall(noctalia.json.decode,payload or "")
-    if ok and type(args)=="table" then args.action=event; command(args) end
-  elseif event=="hotspot" and (payload=="on" or payload=="off") then hotspotAction(payload)
   elseif event=="focus-window" then windowAction("focus",payload)
   elseif event=="close-window" then windowAction("close",payload)
   end

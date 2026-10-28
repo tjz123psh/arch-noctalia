@@ -1,11 +1,11 @@
-# Noctalia 5.2.1 / plugin_api 32 SDK 核实笔记（2026-10-28：插件已升到 5.4 / plugin_api 42，增补见文末）
+# Noctalia 5.2.1 / plugin_api 32 SDK 核实笔记
 
 结论：可以用原生 Luau 插件做侧栏、编辑、拖放、后台服务和轻量动画；没有 QML 服务对象、通用 canvas/shapes 或可自定义的 CSS 动画。以下按 v5.2.1 实际导出/属性白名单记录，避免套用旧版 Noctalia 或浏览器 API。
 
 ## 核实范围与版本
 
 - 本机包查询：`pacman -Qo /usr/bin/noctalia` → noctalia 5.2.1-1。未修改宿主、系统配置或插件启用状态。
-- 本机当初用来核对的稀疏源码缓存已删除；对应源码以 [v5.2.1 标签](<https://github.com/noctalia-dev/noctalia/tree/v5.2.1>) 为准（5.4 的差异见文末「5.4 增补」）。
+- 当初核对时用的本机稀疏源码缓存已删除；对应源码以 [v5.2.1 标签](<https://github.com/noctalia-dev/noctalia/tree/v5.2.1>) 为准（当时的 HEAD 为 `6ef43e2bf2f3d5b4205ec72a72e34a2ab76ce3b4`，与 tag 一致）。
 - [API 版本常量](<https://github.com/noctalia-dev/noctalia/blob/v5.2.1/src/scripting/plugin_api.h>)：最高 32；require 为 22、argv 子进程为 24、输入 frameVisible 为 27、容器 tooltip 为 32。
 - [运行时文档](<https://github.com/noctalia-dev/noctalia/blob/v5.2.1/docs/user/plugins/development/runtime-api.mdx>)、[UI 文档](<https://github.com/noctalia-dev/noctalia/blob/v5.2.1/docs/user/plugins/development/declarative-ui.mdx>)、[入口与生命周期](<https://github.com/noctalia-dev/noctalia/blob/v5.2.1/docs/user/plugins/development/entries.mdx>)。
 
@@ -259,11 +259,3 @@ function onClick() noctalia.togglePanel("pang/tide-sidebar:panel") end
 ~~~
 
 barWidget.render(tree) 也可用，但一旦调用，其树取代内置 glyph/text，之后 setText/setGlyph 不再显示效果。bar 不取键盘，不能放 input/select/scroll；bar 没有 frame tick API。声明入口不等于已经启用或放进用户栏/控制中心。
-
-## 5.4 增补（2026-10-28）
-
-- `plugin_api` 最高 43；本插件用 42（需要 OSD=39 与 panel-content-height=42 两项）。
-- `noctalia.osd.show(icon, value?, opts?)`：系统 OSD 弹窗，与音量/亮度共用槽位；`opts.progress` 0–1，`opts.inactive` 变灰。用户可用 `[osd.kinds].custom = false` 关掉插件弹窗。
-- `[[panel]]` 支持 `height = "content"` + `max_height`（42 起）：面板高度随内容伸缩并带动画；超出时用 `ui.scroll` + `flexGrow = 1`。
-- `[[layer]]`（36 起）：插件自有 layer-shell 表面，键含 layer/anchors/width/height/margins；入口地址 `<author>/<plugin>:<entry-id>`。
-- 面板内可用控件仍是 5.2.1 那套 `ui.*`：没有阴影/渐变，自定义绘制只能靠 `ui.graph` 或 `ui.pixelStream`。
