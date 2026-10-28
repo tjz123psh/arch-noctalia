@@ -59,7 +59,7 @@ order = [ "default" ]
         [[bar.default.capsule_group]]
         fill = "on_secondary"
         id = "status"
-        members = [ "tray", "network", "keyboard_layout", "volume", "brightness", "battery", "bluetooth" ]
+        members = [ "tray", "network", "volume", "brightness", "battery", "bluetooth" ]
         opacity = 0.36999999172985554
         padding = 8.0
         widget_spacing = 8
@@ -503,12 +503,6 @@ stat = "disk_used_pct"
 type = "sysmon"
 visualization = "gauge"
 
-[widget.keyboard_layout]
-display = "short"
-hide_when_single_layout = false
-show_glyph = false
-show_label = true
-type = "keyboard_layout"
 [widget.launcher]
 capsule = false
 type = "launcher"
