@@ -113,7 +113,7 @@ dir	/home/pang/.config/dbx	包安装后自动生成或自行安装的配置，�
 dir	/home/pang/.config/com.dbx.app	包安装后自动生成或自行安装的配置，不入仓
 dir	/home/pang/.config/antigravity-proxy	包安装后自动生成或自行安装的配置，不入仓
 dir	/home/pang/.config/hardinfo2	包安装后自动生成或自行安装的配置，不入仓（hardinfo2 首启自建 settings.ini：版本号 + 主题号）
-dir	/home/pang/.agents/.git	技能库本地的 git 历史（库文件本身已由 files.tsv 纳管；此目录不入仓，删了不影响使用）
+dir	/home/pang/.agents	AI agent 技能共享库（~/.agents/skills/**，124 个文件）：用户手工维护，不随安装器发布——库内容与机器绑定（含本机排障历史），重装后自行恢复；恢复来源 = 本仓 git 历史（2026-10-27 之前 payload/home/.agents/** 在 files.tsv 内）
 dir	/home/pang/.local/share/mpv-danmaku	弹幕转换器 biliass 的 Python venv（首用自动创建；机器本地，不入仓）
 file	/home/pang/.config/mpv/scripts/assrt.lua	第三方脚本：上游未提供许可证，为免版权问题不入公开仓库（自行安装）
 file	/home/pang/.config/mpv/script-opts/assrt.conf	第三方脚本配置（含 assrt.net API token，不入公开仓库）
@@ -208,7 +208,9 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 # · AI agent 技能共享（2026-10-16 建立）：~/.agents/skills/ 是 Agent Skills 规范的用户级位置——
 #   DSH 的搜索根含 <agentsHome>/skills（发现深度仅一层）、pi 的 docs/skills.md 亦明确支持；
 #   故共用技能放这里，两边零配置可见（实测：DSH 会话内热更新技能清单）。工具专属技能留在
-#   库文件已纳入本仓（payload/home/.agents/** + files.tsv），只有 ~/.agents/.git 本地历史不入仓（见上面的 dir 行）。
+#   ~/.dsh/skills 与 ~/.pi/agent/skills。
+#   2026-10-27 改为纯手工维护：整套库（124 个文件）不再进 payload/files.tsv——它是随机器长出来的
+#   （各技能 references 里有本机排障历史），由用户自己同步；恢复来源 = 本仓 git 历史。
 # · fish 两件事（2026-10-17）：
 #      内容只有 127.0.0.1 代理地址、无凭据，故不再是『凭据类不入仓』。
 #   ② completions/rice-hotspot.fish 删除（payload + files.tsv 行 + 样本机文件）：热点改由侧边栏插件 pang/tide-sidebar 提供 UI；
@@ -241,5 +243,3 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 # --- 2026-10-27 录屏脚本 ---
 dir	/home/pang/.local/state/screenrec-menu	录屏脚本的运行时状态（pid/配置/日志），脚本自建，不入仓
 
-# --- 2026-10-27 技能库排障历史 ---
-file	/home/pang/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md	个人排障历史（本机累积的事故记录）：不随安装器部署——新装的机器没有这些事故，技能本体（SKILL.md + local-patterns.md）照常部署。恢复来源：本仓 git 历史（`git log --diff-filter=D -- payload/home/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md`）

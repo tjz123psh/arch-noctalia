@@ -31,7 +31,7 @@
   B 站弹幕：`scripts/bdanmaku.lua`（第三方 MIT，许可证一并纳管 `bdanmaku.LICENSE.txt`）+ `~/bin/biliass` 包装脚本（弹幕 XML → ASS）；真正的 biliass 在 `~/.local/share/mpv-danmaku/venv`（首用自动创建，机器本地不入仓）。播放 B 站链接时弹幕自动出现，`v` 即弹幕开关。
   在线字幕：`scripts/assrt.lua` 从 assrt.net 搜字幕（按 `a` 触发）——上游没有许可证文件，为免版权问题**不入公开仓库**（见 `excluded.tsv`）；需要在 `script-opts/assrt.conf` 填自己的 API token（assrt.net 注册后免费获取）。
 - 显卡模式（supergfxd）：`/etc/supergfxd.conf` 设 `hotplug_type: "Asus"`（上游 / Arch Wiki 建议值）。ASUS 的 `dgpu_disable` 机制下，若该值为 `None`，supergfxd 开机会把「集显」判成状态错乱、强行把 dgpu_disable 写回 0 并回到 Hybrid —— 表现就是「切集显 → 重启 → 又变混合」。该文件列 `files.tsv` + `runtime-regenerated.tsv`（`mode` 字段由 supergfxd 自写，只核存在性）。
-- AI agent 技能共享库：`~/.agents/skills/`（Agent Skills 规范的用户级位置，**DSH 与 pi 都原生读取**）；共用技能放这里、工具专属的留在 `~/.dsh/skills` 与 `~/.pi/agent/skills`；库本体是独立 git 仓库（见 `excluded.tsv` 记账）。共用脚本（`context.mjs` / `palette.mjs` / `pseudoloc.py`）在 `~/.agents/skills/_shared/scripts/`。当前分布：共用 18 个、DSH 专属 2 个（`~/.dsh/skills`）、pi 专属 1 个（`~/.pi/agent/skills/batch`）。
+- AI agent 技能共享库：`~/.agents/skills/`（Agent Skills 规范的用户级位置，**DSH 与 pi 都原生读取**）；共用技能放这里、工具专属的留在 `~/.dsh/skills` 与 `~/.pi/agent/skills`。**这套库由用户手工维护，安装器既不部署也不校验**（2026-10-27 从 payload 与 `files.tsv` 摘除，见 `excluded.tsv` 记账）；共用脚本（`context.mjs` / `palette.mjs` / `pseudoloc.py`）在 `~/.agents/skills/_shared/scripts/`。
 - 内屏刷新率：niri 的 `~/.config/niri/conf.d/outputs.kdl` 与登录界面的 `/etc/nwg-hello/niri.kdl` 都**显式钉 `1920x1080@144.063`**，并**给核显（eDP-1）与 MUX 独显（eDP-2）两个接口名各写一段** —— MUX 切到独显后面板接口名会变，而 `mode` 只写「1920x1080」不带刷新率时 niri 用驱动的 preferred 模式（NVIDIA 那边 preferred 只有 60.061Hz，AMD 那边恰是 144Hz，所以以前没暴露）。
 - 环境适配：ESP 等 vfat 挂载不做权限位校验、系统文件读取自动走 root；**不改你的挂载设置**。
 - 外观：毛玻璃等 GTK 样式以样式类限定作用域（`gtk.css` 追加段，只影响指定程序）；程序的"系统默认值"以 GSettings vendor override 随 07 部署（`/usr/share/glib-2.0/schemas/*.gschema.override`），07 末尾统一 `glib-compile-schemas` 生效——你在程序里改过的值（dconf）优先，不会被覆盖。
@@ -57,7 +57,7 @@
 - **字体是仓库体积的大头**：Maple Mono NF CN 四款 + 资源汉圆体三款共约 123MB（工作区 147MB）；这是“没有离线包、全从 git 拉”的代价。
 - **破坏性操作只验证到预演**：维护脚本里真会删数据的（`clean`、快照恢复）测试只覆盖沙箱与 dry-run，实际执行仍需人工在终端确认。
 
-- **排障历史不入安装器**：`~/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md`（本机累积的事故记录）已从 payload 与 `files.tsv` 移除，重装后不会带回。技能本体（`SKILL.md`、`local-patterns.md`）仍随安装器部署，所以重装的机器上该技能里指向历史的章节索引会查不到对应文件。要找回历史：`git log --diff-filter=D -- payload/home/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md` 取回旧版本。
+- **`~/.agents` 技能库不入安装器**：整套 `~/.agents`（124 个文件，含各技能的 `SKILL.md`、`references` 与本机排障历史）由用户手工维护，2026-10-27 起不再随安装器发布，重装后需自行恢复。恢复来源是本仓 git 历史（该目录曾在 `payload/home/.agents/**` 与 `files.tsv` 内，见提交 `0da81fc` 之前的版本）；因此技能之间互相引用的路径（如 `nvim-config` → `nvim-troubleshooting`）只在手工恢复后成立。
 
 ## 录屏（screenrec-menu）
 
