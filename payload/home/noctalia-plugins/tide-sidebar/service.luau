@@ -492,6 +492,9 @@ function onIpc(event,payload)
   elseif event=="timer-resume" then applyTimer("resume")
   elseif event=="timer-reset" then applyTimer("reset",tonumber(payload) and tonumber(payload)*1000)
   elseif event:sub(1,10)=="stopwatch-" then applyStopwatch(event:sub(11))
+  elseif event=="preferences" then
+    local ok,args=pcall(noctalia.json.decode,payload or "")
+    if ok and type(args)=="table" then args.action="preferences"; command(args) end
   elseif event:sub(1,5)=="note-" then
     local ok,args=pcall(noctalia.json.decode,payload or "")
     if ok and type(args)=="table" then args.action=event; command(args) end

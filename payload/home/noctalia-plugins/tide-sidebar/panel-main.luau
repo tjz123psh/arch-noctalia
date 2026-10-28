@@ -61,13 +61,19 @@ end
 
 -- ---------------------------------------------------------------- shared bits
 
+local function switchTab(id)
+  tab = id
+  send("preferences", { tab = id })
+  render()
+end
+
 local function tabButton(id, text)
   return ui.button({
     text = text,
     variant = tab == id and "secondary" or "ghost",
     controlSize = "sm",
     width = 96,
-    onClick = function() tab = id; render() end,
+    onClick = function() switchTab(id) end,
   })
 end
 
@@ -137,8 +143,11 @@ local function pageTools()
     timerButtons[#timerButtons + 1] = ui.button({ text = "开始", variant = "primary", controlSize = "sm", onClick = function() cmd("timer-start", math.max(1, math.floor(duration / 1000))) end })
   end
   timerButtons[#timerButtons + 1] = ui.button({ text = "重置", variant = "ghost", controlSize = "sm", onClick = function() cmd("timer-reset", 1500) end })
-  for _, minutes in ipairs({ 5, 15, 25, 60 }) do
-    timerButtons[#timerButtons + 1] = ui.button({ text = tostring(minutes), variant = "ghost", controlSize = "sm", onClick = function() cmd("timer-start", minutes * 60) end })
+  local cfg = noctalia.state.get("config")
+  local presets = type(cfg) == "table" and type(cfg.timerPresets) == "table" and #cfg.timerPresets > 0 and cfg.timerPresets or { "5", "15", "25", "60" }
+  for _, preset in ipairs(presets) do
+    local minutes = tonumber(preset) or 25
+    timerButtons[#timerButtons + 1] = ui.button({ text = tostring(preset), variant = "ghost", controlSize = "sm", onClick = function() cmd("timer-start", minutes * 60) end })
   end
 
   local progress = duration > 0
@@ -255,9 +264,21 @@ local function guard(name, fn)
   if not ok and type(noctalia.log) == "function" then noctalia.log("tide-sidebar side-panel: " .. name .. ": " .. tostring(err)) end
 end
 
+local function restoreTab()
+  local prefs = noctalia.state.get("preferences")
+  local last = type(prefs) == "table" and prefs.tab or nil
+  local cfg = noctalia.state.get("config")
+  local fallback = type(cfg) == "table" and cfg.defaultTab or "notes"
+  local wanted = last or fallback
+  if wanted == "notes" then tab = "notes"
+  elseif wanted == "tools" or wanted == "hotspot" then tab = "tools"
+  else tab = "windows" end
+end
+
 function onOpen(context)
   guard("onOpen", function()
     noctalia.state.set("side_panel_open", true)
+    restoreTab()
     panel.setWantsSecondTicks(true)
     refreshAll()
     render()
@@ -281,9 +302,9 @@ function onKey(chord, pressed)
   guard("onKey", function()
     if not pressed then return end
     if chord == "escape" then panel.close()
-    elseif chord == "ctrl+1" then tab = "windows"; render()
-    elseif chord == "ctrl+2" then tab = "tools"; render()
-    elseif chord == "ctrl+3" then tab = "notes"; render() end
+    elseif chord == "ctrl+1" then switchTab("windows")
+    elseif chord == "ctrl+2" then switchTab("tools")
+    elseif chord == "ctrl+3" then switchTab("notes") end
   end)
 end
 
