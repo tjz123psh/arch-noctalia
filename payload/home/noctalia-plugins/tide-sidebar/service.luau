@@ -461,6 +461,8 @@ function update()
     publishTimer()
   end
   if ready and stopwatchDirty and t>=stopwatchRetryAt then saveStopwatch();publishStopwatch() end
+  -- 声明式侧栏打开时按同样的节流节奏刷新系统信息（原生前端不再常驻，不能靠它的可见性事件）。
+  if noctalia.state.get("side_panel_open")==true and t>=nextRefresh then nextRefresh=t+refreshIntervalMs(); refresh() end
   if t<visibleUntil and t>=nextRefresh then nextRefresh=t+refreshIntervalMs(); refresh() end
   frontend:pulse()
   frontend:flush()

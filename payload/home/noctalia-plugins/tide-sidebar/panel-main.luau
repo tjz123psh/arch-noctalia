@@ -257,6 +257,7 @@ end
 
 function onOpen(context)
   guard("onOpen", function()
+    noctalia.state.set("side_panel_open", true)
     panel.setWantsSecondTicks(true)
     refreshAll()
     render()
@@ -288,6 +289,7 @@ end
 
 function onClose()
   guard("onClose", function()
+    noctalia.state.set("side_panel_open", false)
     if editingId and noteDirty then send("note-edit", { id = editingId, body = draft }); noteDirty = false end
     panel.setWantsSecondTicks(false)
   end)
