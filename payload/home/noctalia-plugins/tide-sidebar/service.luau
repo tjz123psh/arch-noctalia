@@ -340,7 +340,7 @@ command=function(c)
   if action=="frontend-ready" then
     frontend.lastSeen=now()
     publishNotes(); publishTimer(); publishStopwatch(); publishSystem()
-    frontend:publish("preferences",preferences); noctalia.state.set("calc_snapshot",calculation); if frontend then frontend:publish("calc",calculation) end
+    frontend:publish("preferences",preferences); frontend:publish("calc",calculation)
     publishConfig()
     frontend:control(nil,frontend.page,reducedMotion())
   elseif action=="frontend-heartbeat" then
@@ -375,7 +375,7 @@ command=function(c)
         end
       end
     end
-    noctalia.state.set("calc_snapshot",calculation); if frontend then frontend:publish("calc",calculation) end
+    frontend:publish("calc",calculation)
   elseif action:sub(1,5)=="note-" then
     if not ready or not noteModel then feedback(false,noteError~="" and noteError or "便签正在加载","notes"); return end
     local next,err=Notes.apply(noteModel,action:sub(6),c,now())
@@ -436,10 +436,9 @@ local accepted=noctalia.runAsync({"chmod","-R","go-rwx","--",base},function(resu
   loadTimer();loadStopwatch()
   publishNotes(); publishTimer(); publishStopwatch()
   noctalia.state.set("preferences",preferences)
-  publishPreferences();noctalia.state.set("calc_snapshot",calculation); if frontend then frontend:publish("calc",calculation) end;publishConfig()
+  publishPreferences();frontend:publish("calc",calculation);publishConfig()
   if frontend.serial==0 then frontend.page=normalizePage(preferences.tab) end;frontend.reducedMotion=reducedMotion()
-  -- 原生 GTK 前端改为懒启动：只有走 frontend-toggle（旧入口）时 frontend:ensure() 才拉起它。
-  -- 声明式侧栏走 noctalia.state 快照，不需要这个进程（省一个 gjs 常驻与 gtk4-layer-shell 依赖）。
+  frontend:start()
   refresh()
 end,5000)
 if not accepted then noteError="无法启动后台存储初始化"; timerError=noteError; stopwatchError=noteError; publishNotes(); publishTimer(); publishStopwatch() end
@@ -461,9 +460,6 @@ function update()
     publishTimer()
   end
   if ready and stopwatchDirty and t>=stopwatchRetryAt then saveStopwatch();publishStopwatch() end
-  -- 声明式侧栏打开时按同样的节流节奏刷新系统信息（原生前端不再常驻，不能靠它的可见性事件）。
-  local panelOpen = type(noctalia.state)=="table" and type(noctalia.state.get)=="function" and noctalia.state.get("side_panel_open")==true
-  if panelOpen and t>=nextRefresh then nextRefresh=t+refreshIntervalMs(); refresh() end
   if t<visibleUntil and t>=nextRefresh then nextRefresh=t+refreshIntervalMs(); refresh() end
   frontend:pulse()
   frontend:flush()
@@ -477,11 +473,7 @@ function onExit()
   if ready then noctalia.runAsync({"chmod","-R","go-rwx","--",base},function() end,5000) end
 end
 function onIpc(event,payload)
-  if event=="toggle" then
-    -- 默认入口改走声明式侧栏（同 shortcut.luau / widget.luau）；原生 GTK 前端只保留
-    -- 在 frontend-toggle 这条旧路径上，作为回退。
-    noctalia.togglePanel("pang/tide-sidebar:side-panel")
-  elseif event=="show" or event=="hide" then
+  if event=="toggle" or event=="show" or event=="hide" then
     if ready then frontend:ensure() end
     frontend:control(event,payload and payload~="" and normalizePage(payload) or nil,reducedMotion())
   elseif event=="reload-ui" then frontend:restart()
@@ -492,12 +484,6 @@ function onIpc(event,payload)
   elseif event=="timer-resume" then applyTimer("resume")
   elseif event=="timer-reset" then applyTimer("reset",tonumber(payload) and tonumber(payload)*1000)
   elseif event:sub(1,10)=="stopwatch-" then applyStopwatch(event:sub(11))
-  elseif event=="calc-evaluate" then
-    local ok,args=pcall(noctalia.json.decode,payload or "")
-    if ok and type(args)=="table" then args.action="calc-evaluate"; command(args) end
-  elseif event=="preferences" then
-    local ok,args=pcall(noctalia.json.decode,payload or "")
-    if ok and type(args)=="table" then args.action="preferences"; command(args) end
   elseif event:sub(1,5)=="note-" then
     local ok,args=pcall(noctalia.json.decode,payload or "")
     if ok and type(args)=="table" then args.action=event; command(args) end

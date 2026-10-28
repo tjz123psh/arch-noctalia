@@ -57,7 +57,7 @@
 1. **窗口页**（已完成原型）：与原生版并存，用 `panel-open pang/tide-sidebar:windows-proto` 对比观感。
 2. **工具页**：下一个试点，把倒计时/秒表/热点搬进声明式面板；计算器保留 `lib/calculator.luau` 不动。
 3. **便签页**：最后做，且先只做「列表 + 只读预览」，编辑仍回原生；等 `ui.input` 的多行体验能接受再谈替换。
-4. **收尾**：四页都认可后，删掉 `native/`、`lib/frontend.luau` 与 `gtk4-layer-shell` 依赖，
+4. **收尾**：三页都认可后，删掉 `native/`、`lib/frontend.luau` 与 `gtk4-layer-shell` 依赖，
    `plugin_api` 保持 42，插件体积和内存一起下降。
 
 **劝退条件**（任一成立就停在原生方案）：便签编辑体验明显退化；`ui.scroll` 在 40+ 条便签时卡顿；
@@ -80,24 +80,20 @@ python tests/run_all.py                                    # 插件回归（含 
 - 编辑视图：404×396，`ui.input(multiline)` 渲染正常；用 `wtype` 注入按键后，正文 1 秒内经服务写回
   （`note-edit` → `notes-*.json`，revision 递增），证明"声明式输入 → 服务持久化"这条路是通的。
 - 数据安全：面板打开不会改动便签（实测正文与 revision 均未变）；删除进回收区，仍可从原生界面恢复。
-- 结论：**四页都能做**（计算页额外并入）；是否需要为了外观一致而放弃撤销栈，是迁移前唯一需要拍板的产品取舍。
+- 结论：**三页都能做**；是否需要为了外观一致而放弃撤销栈，是迁移前唯一需要拍板的产品取舍。
 
-## 8. 切换结果（2026-10-28）
+## 10. 最终结论（2026-10-28 深夜）：**已回退到原生 GTK 前端**
 
-- 新增 `panel-main.luau` + `[[panel]] side-panel`：四页（窗口/工具/计算/便签）合一带标签栏，
-  `capture_keys = ["escape","ctrl+1".."ctrl+4"]`，键盘实测可切换/关闭。
-- 入口全部改到声明式侧栏：`shortcut.luau`、`widget.luau` 改调 `noctalia.togglePanel`；
-  niri 绑定的 `noctalia msg plugin … toggle` 在服务里同样转到新面板。
-- 服务不再启动原生 gjs 前端（仅 `frontend-toggle` 旧路径按需拉起）——实测切换后
-  `pgrep -f native/main.js` 为空，即省掉 219 MiB 常驻。
-- 数据源改为 `noctalia.state` 的共享快照（timer/stopwatch/system/notes_snapshot），
-  面板不再依赖 `private/frontend/*.json` 文件，也就不依赖那个 gjs 进程写盘。
-- 回退方式：把 `shortcut.luau`/`widget.luau` 的 onClick 换回
-  `noctalia.state.set("command",{action="frontend-toggle"})`，并把 `service.luau` 的
-  toggle 分支恢复为 `frontend:control`。原生代码一行没删。
+声明式版本做完并跑通（四页、键盘、刻度、便签编辑、计算），但实机观感被否——「太丑」：
+没有阴影/渐变，卡片与标签偏朴素，与原生那套圆角+投影+拼接色块差距明显。
 
-## 9. 原型合并（2026-10-28，收尾）
+已执行的回退：
 
-三个原型（windows / tools / notes-proto）已合并进 `panel-main.luau`，各自的 panel 条目与
-脚本随后删除——评估数据保留在本文第 7/8 节，需要看历史实现可用
-`git show c8da3c2:payload/home/noctalia-plugins/tide-sidebar/panel-notes.luau` 之类的命令取回。
+- `shortcut.luau` / `widget.luau` 的 onClick 改回 `noctalia.state.set("command",{action="frontend-toggle"})`；
+- `service.luau` 的 toggle 分支改回 `frontend:ensure() + frontend:control(...)`，并恢复 init 时的
+  `frontend:start()`（原生前端随插件启动）；
+- 删除 `panel-main.luau` 与三个原型面板、移除 `[[panel]] side-panel` 条目；
+- 保留 5.4 的 OSD 反馈（与外观无关，且已单独验证）。
+
+若以后要再试，建议的方向不是"照搬"，而是**用 `ui.image` 贴预渲染的卡片底图** + 只把
+交互区做成声明式控件，才能同时保住观感和内存收益。
