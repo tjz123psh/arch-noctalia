@@ -42,7 +42,7 @@ order = [ "default" ]
     shadow = true
     show_on_workspace_switch = true
     smart_auto_hide = false
-    start = [ "launcher", "workspaces", "active_window", "media" ]
+    start = [ "launcher", "workspaces", "active_window", "media", "audio_visualizer" ]
     thickness = 36
     widget_spacing = 12
 
@@ -111,6 +111,7 @@ widget_order = [ "net-down", "net-up" ]
         background_padding = 12.0
         label_min_width = 64.0
         network_speed_compact = true
+        network_speed_decimal_places = 2
         stat = "net_rx"
 
     [desktop_widgets.widget.net-up]
@@ -130,6 +131,7 @@ widget_order = [ "net-down", "net-up" ]
         background_padding = 12.0
         label_min_width = 64.0
         network_speed_compact = true
+        network_speed_decimal_places = 2
         stat = "net_tx"
 
 [dock]
@@ -183,7 +185,7 @@ edge_smoothness = 0.29999999999999999
 enabled = true
 lock_before_suspend = true
 tint_intensity = 0.29999999999999999
-transition = [ "fade", "zoom", "disc" ]
+transition = [ "fade", "zoom", "disc", "diamond" ]
 transition_duration = 950.0
 wallpaper = ""
 
@@ -394,7 +396,7 @@ wallpaper_scheme = "m3-tonal-spot"
 [wallpaper]
 directory = "/home/pang/Pictures/wallpapers"
 enabled = true
-transition = [ "fade", "zoom" ]
+transition = [ "fade", "zoom", "vortex" ]
 transition_duration = 1100.0
 
     [wallpaper.automation]
@@ -424,6 +426,7 @@ type = "active_window"
 bands = 20
 color_1 = "primary"
 color_2 = "secondary"
+show_wave = true
 type = "audio_visualizer"
 width = 72
 
