@@ -143,3 +143,13 @@ height = "content"
 max_height = 620
 placement = "floating"
 position = "center"
+
+# 「便签」页的声明式原型：列表 + 编辑器（ui.input multiline），数据与原生前端同源。
+[[panel]]
+id = "notes-proto"
+entry = "panel-notes.luau"
+width = 460
+height = "content"
+max_height = 620
+placement = "floating"
+position = "center"

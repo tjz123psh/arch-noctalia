@@ -38,7 +38,7 @@
 |---|---|---|---|
 | 窗口 | `views/system.js` 548 行 | **已验证** | `panel-windows.luau` 169 行复刻完成（列表/焦点/切换/关闭/刷新），真机 420×216 渲染正常 |
 | 工具（计算器/倒计时/秒表/热点） | `views/tools.js` 825 行 | 高 | 全是按钮/输入框/进度条，唯一要改的是把「按下瞬间的波浪动画」换成 `ui.progress` 或去掉 |
-| 便签 | `views/notes.js` 494 行 | **中低** | `ui.input(multiline)` 能输入，但没有原生 TextView 的撤销栈、自动增高和 Pango 排版；数据层（`notes-*.json`、revision 校验、64 KiB 上限）可原样复用 |
+| 便签 | `views/notes.js` 494 行 | **已验证（有缺口）** | `panel-notes.luau` 180 行：列表 + `ui.input(multiline)` 编辑 + 每秒自动保存；实测 wtype 输入后 1 秒内写回服务。缺口：没有撤销栈、不支持富文本、保存粒度 1 秒 |
 | 外观（圆角卡片/拼接色块/投影） | `style.css` 206 行 | 低 | 声明式只有 fill/radius/border；投影和拼接分色要么放弃，要么用 `ui.image` 贴预渲染图 |
 
 ## 4. 成本对比
@@ -73,3 +73,11 @@ python tests/run_all.py                                    # 插件回归（含 
 
 截图量测（用于核对面板尺寸）：`grim` 抓图后 `magick compare -metric AE` 或
 `magick ... -connected-components` 取变化区域的包围盒。
+
+## 7. 补充实测（2026-10-28 晚，便签页原型落地后）
+
+- 列表视图：451×163（1 条便签时），点行进入编辑；新建/删除走 `note-*` IPC，与原生前端同一份模型。
+- 编辑视图：404×396，`ui.input(multiline)` 渲染正常；用 `wtype` 注入按键后，正文 1 秒内经服务写回
+  （`note-edit` → `notes-*.json`，revision 递增），证明"声明式输入 → 服务持久化"这条路是通的。
+- 数据安全：面板打开不会改动便签（实测正文与 revision 均未变）；删除进回收区，仍可从原生界面恢复。
+- 结论：**三页都能做**；是否需要为了外观一致而放弃撤销栈，是迁移前唯一需要拍板的产品取舍。
