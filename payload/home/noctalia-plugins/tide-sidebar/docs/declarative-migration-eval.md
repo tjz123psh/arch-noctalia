@@ -57,7 +57,7 @@
 1. **窗口页**（已完成原型）：与原生版并存，用 `panel-open pang/tide-sidebar:windows-proto` 对比观感。
 2. **工具页**：下一个试点，把倒计时/秒表/热点搬进声明式面板；计算器保留 `lib/calculator.luau` 不动。
 3. **便签页**：最后做，且先只做「列表 + 只读预览」，编辑仍回原生；等 `ui.input` 的多行体验能接受再谈替换。
-4. **收尾**：三页都认可后，删掉 `native/`、`lib/frontend.luau` 与 `gtk4-layer-shell` 依赖，
+4. **收尾**：四页都认可后，删掉 `native/`、`lib/frontend.luau` 与 `gtk4-layer-shell` 依赖，
    `plugin_api` 保持 42，插件体积和内存一起下降。
 
 **劝退条件**（任一成立就停在原生方案）：便签编辑体验明显退化；`ui.scroll` 在 40+ 条便签时卡顿；
@@ -80,12 +80,12 @@ python tests/run_all.py                                    # 插件回归（含 
 - 编辑视图：404×396，`ui.input(multiline)` 渲染正常；用 `wtype` 注入按键后，正文 1 秒内经服务写回
   （`note-edit` → `notes-*.json`，revision 递增），证明"声明式输入 → 服务持久化"这条路是通的。
 - 数据安全：面板打开不会改动便签（实测正文与 revision 均未变）；删除进回收区，仍可从原生界面恢复。
-- 结论：**三页都能做**；是否需要为了外观一致而放弃撤销栈，是迁移前唯一需要拍板的产品取舍。
+- 结论：**四页都能做**（计算页额外并入）；是否需要为了外观一致而放弃撤销栈，是迁移前唯一需要拍板的产品取舍。
 
 ## 8. 切换结果（2026-10-28）
 
-- 新增 `panel-main.luau`（约 280 行）+ `[[panel]] side-panel`：三页合一带标签栏，
-  `capture_keys = ["escape","ctrl+1","ctrl+2","ctrl+3"]`，键盘实测可切换/关闭。
+- 新增 `panel-main.luau` + `[[panel]] side-panel`：四页（窗口/工具/计算/便签）合一带标签栏，
+  `capture_keys = ["escape","ctrl+1".."ctrl+4"]`，键盘实测可切换/关闭。
 - 入口全部改到声明式侧栏：`shortcut.luau`、`widget.luau` 改调 `noctalia.togglePanel`；
   niri 绑定的 `noctalia msg plugin … toggle` 在服务里同样转到新面板。
 - 服务不再启动原生 gjs 前端（仅 `frontend-toggle` 旧路径按需拉起）——实测切换后

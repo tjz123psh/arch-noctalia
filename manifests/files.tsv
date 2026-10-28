@@ -341,12 +341,12 @@ payload/home/noctalia-plugins/magnifier/tools/cursor-track/README.md	/home/pang/
 # ——— 2026-10-20 插件源码整体纳入：~/noctalia-plugins 的开发改为在本仓 payload/home/noctalia-plugins/ 进行，
 #     07 步按清单部署回本机（宿主以 path 源 pang-dev 直接读该目录）；.git/.backups/build 不入仓。
 payload/home/noctalia-plugins/README.md	/home/pang/noctalia-plugins/README.md	600	0c46818d98230bcadaa48c2b83d60749
-payload/home/noctalia-plugins/tide-sidebar/README.md	/home/pang/noctalia-plugins/tide-sidebar/README.md	600	4c7b6e6aba6767ad8b8817951b498500
+payload/home/noctalia-plugins/tide-sidebar/README.md	/home/pang/noctalia-plugins/tide-sidebar/README.md	600	677b2f9ce73ea2cd9330495d76f0c5fb
 payload/home/noctalia-plugins/tide-sidebar/design/reference-flat-proof.png	/home/pang/noctalia-plugins/tide-sidebar/design/reference-flat-proof.png	644	c2880d20d00ab2975be907c2f7d754bb
 payload/home/noctalia-plugins/tide-sidebar/design/reference-flat-proof.svg	/home/pang/noctalia-plugins/tide-sidebar/design/reference-flat-proof.svg	600	ea3138dc64a0365ba4748b00a3f71b64
 payload/home/noctalia-plugins/tide-sidebar/docs/performance-observation.json	/home/pang/noctalia-plugins/tide-sidebar/docs/performance-observation.json	600	eceaa18df9f27eca73caa1b88114faac
 payload/home/noctalia-plugins/tide-sidebar/docs/project-review.md	/home/pang/noctalia-plugins/tide-sidebar/docs/project-review.md	600	6ac314ed148a0fe54720248d00b29573
-payload/home/noctalia-plugins/tide-sidebar/docs/declarative-migration-eval.md	/home/pang/noctalia-plugins/tide-sidebar/docs/declarative-migration-eval.md	644	e86b1796b9ce11e741f8348b6a2985f0
+payload/home/noctalia-plugins/tide-sidebar/docs/declarative-migration-eval.md	/home/pang/noctalia-plugins/tide-sidebar/docs/declarative-migration-eval.md	644	4427c8c934baa7c6e265fe627c3a66cf
 payload/home/noctalia-plugins/tide-sidebar/docs/reference-redesign.md	/home/pang/noctalia-plugins/tide-sidebar/docs/reference-redesign.md	600	6b92cae2d103632e71edaa4b859387c2
 payload/home/noctalia-plugins/tide-sidebar/docs/sdk-notes.md	/home/pang/noctalia-plugins/tide-sidebar/docs/sdk-notes.md	600	a54b3c515902b2ee6be1bc177fc64230
 payload/home/noctalia-plugins/tide-sidebar/helpers/system.py	/home/pang/noctalia-plugins/tide-sidebar/helpers/system.py	600	5275115c9c7a560bd1c728899795570d
