@@ -364,6 +364,12 @@ settings_window_translucent = true
     enabled = true
     shortcut = "4"
     variant = "default"
+    [[shell.session.actions]]
+    action = "reboot_uefi"
+    countdown_seconds = 0.0
+    enabled = true
+    shortcut = "6"
+    variant = "default"
 
     [[shell.session.actions]]
     action = "shutdown"
