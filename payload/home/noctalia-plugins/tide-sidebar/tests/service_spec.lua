@@ -203,6 +203,7 @@ local function boot(options)
             h.watchers[key] = h.watchers[key] or {}
             table.insert(h.watchers[key], callback)
         end,
+        get=function(key) return h.values[key] end,
         set=function(key, value)
             h.values[key] = copy(value)
             h.history[key] = h.history[key] or {}

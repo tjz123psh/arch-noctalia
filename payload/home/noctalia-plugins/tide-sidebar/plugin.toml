@@ -124,35 +124,8 @@ entry = "shortcut.luau"
 
 # 「窗口」页的声明式 UI 原型（Noctalia 5.4 / plugin_api 42 起可用）：
 # 与正式侧栏（id = sidebar，走 native GTK 前端）并存，用来对比 [[panel]] + ui.*
-# 的观感与维护成本；入口：noctalia msg panel-open pang/tide-sidebar:windows-proto
-[[panel]]
-id = "windows-proto"
-entry = "panel-windows.luau"
-width = 420
-height = "content"
-max_height = 560
-placement = "floating"
-position = "center"
 
-# 「工具」页的声明式原型：倒计时 / 秒表 / 热点，全部通过服务 IPC 操作（同一份状态）。
-[[panel]]
-id = "tools-proto"
-entry = "panel-tools.luau"
-width = 420
-height = "content"
-max_height = 620
-placement = "floating"
-position = "center"
 
-# 「便签」页的声明式原型：列表 + 编辑器（ui.input multiline），数据与原生前端同源。
-[[panel]]
-id = "notes-proto"
-entry = "panel-notes.luau"
-width = 460
-height = "content"
-max_height = 620
-placement = "floating"
-position = "center"
 
 # 统一侧栏：窗口 / 工具 / 便签三页。快捷键 Super+Shift+W 与状态栏按钮都指向这里。
 [[panel]]

@@ -44,6 +44,7 @@
 - 登录界面背景：`payload/system/etc/nwg-hello/background.png` 的初始快照**就是种子默认壁纸**（`Pictures/wallpapers/斑斓.png`，两者字节完全相同），所以装完第一次开机，登录界面和桌面壁纸是一致的；之后每次换壁纸由 `~/bin/rice-login-bg`（Noctalia 的 `wallpaper_changed` hook）按**原字节**跟随改写，不做缩放/重编码，写入走第 11 步加的 `u:pang:rw` ACL，所以这条路径的内容不需要安装器再管（`runtime-regenerated.tsv` 只核存在性）。
 
 - Noctalia 插件源码：`payload/home/noctalia-plugins/`（`magnifier` 放大镜 + `tide-sidebar` 侧边栏工作台；**2026-10-28 起 tide-sidebar 用 plugin_api 42，需要 Noctalia 5.4+**），07 步部署到 `~/noctalia-plugins`，宿主以 path 源 `pang-dev` **直接读这个目录**；改插件就在本仓里改，提交推送后跑 `./install.sh --redo 07` 部署，然后在 Noctalia 里重新载入插件。注意 Noctalia 的插件系统仍会把插件装到 `~/.local/state/noctalia/plugins/`（那份是运行副本，含便签等用户数据，见 `excluded.tsv`），源码与运行副本是两回事。`.backups/`、`magnifier/tools/cursor-track/build/` 属本地产物，不入仓。
+  **tide-sidebar 自 2026-10-28 起用声明式侧栏 `side-panel`（plugin_api 42，需 Noctalia 5.4+）**：窗口 / 工具 / 便签三页，`Super+Shift+W`、状态栏「侧栏」按钮、`noctalia msg plugin … toggle` 都指向它；数据走 `noctalia.state` 共享快照，原生 GTK 前端（`native/`）默认不再启动（省 200 MB+ 常驻内存），只作回退保留——回退步骤见插件仓库 `docs/declarative-migration-eval.md` 第 8 节。`gtk4-layer-shell` 因此只在回退路径上需要，包仍留在清单里。
   tide-sidebar 在 5.4 上新增两样：倒计时结束/热点开关会多弹一条**系统 OSD**（`noctalia.osd.show`，通知历史仍走 `noctalia.notify`）；另有一个声明式面板原型 `windows-proto`（`[[panel]]` + `ui.*` 重写的「窗口」页，用来评估是否把原生 GTK 前端整体迁移到声明式 UI）。打开方式：`noctalia msg panel-open pang/tide-sidebar:windows-proto`。
 
 - GRUB 菜单：`/etc/default/grub` 随 07 部署，其中 `GRUB_DISABLE_BOOTNEXT=true` 关掉 grub 2.16 自带 `31_efi_bootnext` 生成的同名「UEFI OS」条目（不关就会在开机菜单里多出一串重复项）。该变量由 grub 包自己的脚本读取，机型无关；没有这个脚本的系统上它只是一行不起作用的设置。

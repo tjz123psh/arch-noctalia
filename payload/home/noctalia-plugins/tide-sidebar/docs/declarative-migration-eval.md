@@ -95,3 +95,9 @@ python tests/run_all.py                                    # 插件回归（含 
 - 回退方式：把 `shortcut.luau`/`widget.luau` 的 onClick 换回
   `noctalia.state.set("command",{action="frontend-toggle"})`，并把 `service.luau` 的
   toggle 分支恢复为 `frontend:control`。原生代码一行没删。
+
+## 9. 原型合并（2026-10-28，收尾）
+
+三个原型（windows / tools / notes-proto）已合并进 `panel-main.luau`，各自的 panel 条目与
+脚本随后删除——评估数据保留在本文第 7/8 节，需要看历史实现可用
+`git show c8da3c2:payload/home/noctalia-plugins/tide-sidebar/panel-notes.luau` 之类的命令取回。
