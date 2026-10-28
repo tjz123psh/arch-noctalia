@@ -49,6 +49,7 @@ fzf	extra
 git	extra		
 git-delta	extra		
 github-cli	extra		
+gitleaks	extra		密钥扫描：推送前用 `gitleaks dir . --redact --no-banner` 复核凭据（本机 git-push 流程的必备工具；安装器自检另有一遍轻量扫描）
 go	extra		
 gpu-screen-recorder	extra		~/bin/rice-record 依赖（Noctalia 录屏插件 2026-10-26 已弃用）
 greetd	extra	desktop	

@@ -48,7 +48,7 @@
 
 这套东西是**为一台机器写死**的（用户名 `pang`、路径 `/home/pang`、内屏 144Hz 的 eDP-1/eDP-2 双接口名、ASUS 的 `dgpu_disable` 开关），换机器要改 `lib/` 和清单里的机器相关项。下面几条是“知道、但没做或做不到”的，免得以后再翻一遍：
 
-- **没有 CI**：仓库没有 `.github/`，全部验证靠手动跑 —— `tests/run-all.sh`（14 个回归，多数在 mktemp 沙箱里跑；机器对账在没有 niri 的机器上自动跳过）、`tools/selfcheck.sh`（清单/语法/许可证/密钥）、`tests/test-machine-reconcile.sh`（本机对账，`AN_RECONCILE_STRICT=1` 可当门禁）。
+- **没有 CI**：仓库没有 `.github/`，全部验证靠手动跑 —— `tests/run-all.sh`（14 个回归，多数在 mktemp 沙箱里跑；机器对账在没有 niri 的机器上自动跳过）、`tools/selfcheck.sh`（清单/语法/许可证/密钥）、推送前 `gitleaks dir . --redact --no-banner` 复核（`gitleaks` 已随安装器装，见 `packages.tsv`）、`tests/test-machine-reconcile.sh`（本机对账，`AN_RECONCILE_STRICT=1` 可当门禁）。
 - **只在一台物理机 + 一台 VMware 虚拟机上验收**：物理结论来自原机（ASUS TUF A15 + btrfs）；`--machine vm` 分支于 2026-10-26 在 VMware 里完整跑通 12 步、第 12 步自检全绿。仍未在第二台**物理机**上重装过。
 - **VM 上验证不到的东西**：蓝牙、Wi-Fi 热点（虚拟机没有对应硬件）、supergfxd 切卡、内屏 144Hz 固定、NVIDIA 驱动——这些只在物理机上才有意义。
 - **yazi 状态栏字段不可配**：26.9.1 的状态栏内容（大小/权限/滚动位置）由版本写死，主题只能改颜色；视频里那套“权限 + 硬链接 + 属主:属组 + 修改时间”得换旧版本才有。
