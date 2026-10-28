@@ -340,7 +340,7 @@ command=function(c)
   if action=="frontend-ready" then
     frontend.lastSeen=now()
     publishNotes(); publishTimer(); publishStopwatch(); publishSystem()
-    frontend:publish("preferences",preferences); frontend:publish("calc",calculation)
+    frontend:publish("preferences",preferences); noctalia.state.set("calc_snapshot",calculation); if frontend then frontend:publish("calc",calculation) end
     publishConfig()
     frontend:control(nil,frontend.page,reducedMotion())
   elseif action=="frontend-heartbeat" then
@@ -375,7 +375,7 @@ command=function(c)
         end
       end
     end
-    frontend:publish("calc",calculation)
+    noctalia.state.set("calc_snapshot",calculation); if frontend then frontend:publish("calc",calculation) end
   elseif action:sub(1,5)=="note-" then
     if not ready or not noteModel then feedback(false,noteError~="" and noteError or "便签正在加载","notes"); return end
     local next,err=Notes.apply(noteModel,action:sub(6),c,now())
@@ -436,7 +436,7 @@ local accepted=noctalia.runAsync({"chmod","-R","go-rwx","--",base},function(resu
   loadTimer();loadStopwatch()
   publishNotes(); publishTimer(); publishStopwatch()
   noctalia.state.set("preferences",preferences)
-  publishPreferences();frontend:publish("calc",calculation);publishConfig()
+  publishPreferences();noctalia.state.set("calc_snapshot",calculation); if frontend then frontend:publish("calc",calculation) end;publishConfig()
   if frontend.serial==0 then frontend.page=normalizePage(preferences.tab) end;frontend.reducedMotion=reducedMotion()
   -- 原生 GTK 前端改为懒启动：只有走 frontend-toggle（旧入口）时 frontend:ensure() 才拉起它。
   -- 声明式侧栏走 noctalia.state 快照，不需要这个进程（省一个 gjs 常驻与 gtk4-layer-shell 依赖）。
@@ -492,6 +492,9 @@ function onIpc(event,payload)
   elseif event=="timer-resume" then applyTimer("resume")
   elseif event=="timer-reset" then applyTimer("reset",tonumber(payload) and tonumber(payload)*1000)
   elseif event:sub(1,10)=="stopwatch-" then applyStopwatch(event:sub(11))
+  elseif event=="calc-evaluate" then
+    local ok,args=pcall(noctalia.json.decode,payload or "")
+    if ok and type(args)=="table" then args.action="calc-evaluate"; command(args) end
   elseif event=="preferences" then
     local ok,args=pcall(noctalia.json.decode,payload or "")
     if ok and type(args)=="table" then args.action="preferences"; command(args) end

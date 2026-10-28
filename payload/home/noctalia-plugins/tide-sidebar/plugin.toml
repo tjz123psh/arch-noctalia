@@ -135,4 +135,4 @@ width = 460
 height = 560
 placement = "floating"
 position = "center"
-capture_keys = [ "escape", "ctrl+1", "ctrl+2", "ctrl+3" ]
+capture_keys = [ "escape", "ctrl+1", "ctrl+2", "ctrl+3", "ctrl+4" ]

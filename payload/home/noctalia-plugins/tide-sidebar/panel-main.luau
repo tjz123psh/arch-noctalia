@@ -9,7 +9,7 @@
 -- 打开：快捷键 Super+Shift+W、状态栏「侧栏」按钮，或 noctalia msg panel-open pang/tide-sidebar:side-panel
 
 local tab = "windows"                  -- windows | tools | notes
-local timer, stopwatch, hotspot, model, noteError
+local timer, stopwatch, hotspot, model, noteError, calc
 local editingId, draft, noteDirty = nil, "", false
 local busy = false
 local pendingRefresh = true
@@ -51,6 +51,7 @@ local function refreshAll()
   timer = (read("timer") or {}).timer
   stopwatch = (read("stopwatch") or {}).stopwatch
   hotspot = (read("system") or {}).hotspot
+  calc = read("calc")
   local notes = read("notes")
   if notes then
     model = notes.model or model
@@ -176,6 +177,32 @@ local function findNote(id)
   end
 end
 
+local function pageCalc()
+  local value = type(calc) == "table" and calc or {}
+  local history = type(value.history) == "table" and value.history or {}
+  local rows = {}
+  for index, item in ipairs(history) do
+    rows[#rows + 1] = ui.button({
+      key = "calc" .. tostring(index),
+      text = tostring(item.expression or "") .. " = " .. tostring(item.result or ""),
+      variant = "ghost", controlSize = "sm", contentAlign = "start",
+      onClick = function() send("calc-evaluate", { expression = tostring(item.expression or ""), commit = true }); render() end,
+    })
+  end
+  if #rows == 0 then rows[1] = ui.label({ text = "还没有计算记录", fontSize = 11, color = "on_surface_variant" }) end
+  return {
+    ui.input({
+      value = "",
+      placeholder = "输入表达式，回车计算（支持单位/常量，libqalculate）",
+      focus = true,
+      onSubmit = function(text) send("calc-evaluate", { expression = text, commit = true }); render() end,
+    }),
+    ui.label({ text = tostring(value.result or "0"), fontSize = 26, color = "on_surface", maxLines = 1 }),
+    ui.label({ text = tostring(value.error or ""), fontSize = 11, color = "on_surface_variant", maxLines = 2 }),
+    ui.scroll({ height = math.max(36, math.min(#rows * 34, 200)), gap = 2 }, rows),
+  }
+end
+
 local function pageNotes()
   if editingId then
     local note = findNote(editingId)
@@ -233,6 +260,7 @@ function render()
   local body
   local okp, res = pcall(function()
     if tab == "tools" then return pageTools()
+    elseif tab == "calc" then return pageCalc()
     elseif tab == "notes" then return pageNotes()
     else return pageWindows() end
   end)
@@ -246,6 +274,7 @@ function render()
       ui.row({ gap = 6 }, {
         tabButton("windows", "窗口"),
         tabButton("tools", "工具"),
+        tabButton("calc", "计算"),
         tabButton("notes", "便签"),
       }),
       ui.label({ text = "Ctrl+1..3 切换", fontSize = 10, color = "on_surface_variant" }),
@@ -304,7 +333,8 @@ function onKey(chord, pressed)
     if chord == "escape" then panel.close()
     elseif chord == "ctrl+1" then switchTab("windows")
     elseif chord == "ctrl+2" then switchTab("tools")
-    elseif chord == "ctrl+3" then switchTab("notes") end
+    elseif chord == "ctrl+3" then switchTab("calc")
+    elseif chord == "ctrl+4" then switchTab("notes") end
   end)
 end
 
