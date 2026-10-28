@@ -484,6 +484,7 @@ function onIpc(event,payload)
   elseif event=="timer-resume" then applyTimer("resume")
   elseif event=="timer-reset" then applyTimer("reset",tonumber(payload) and tonumber(payload)*1000)
   elseif event:sub(1,10)=="stopwatch-" then applyStopwatch(event:sub(11))
+  elseif event=="hotspot" and (payload=="on" or payload=="off") then hotspotAction(payload)
   elseif event=="focus-window" then windowAction("focus",payload)
   elseif event=="close-window" then windowAction("close",payload)
   end
