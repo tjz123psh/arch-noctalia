@@ -341,11 +341,12 @@ payload/home/noctalia-plugins/magnifier/tools/cursor-track/README.md	/home/pang/
 # ——— 2026-10-20 插件源码整体纳入：~/noctalia-plugins 的开发改为在本仓 payload/home/noctalia-plugins/ 进行，
 #     07 步按清单部署回本机（宿主以 path 源 pang-dev 直接读该目录）；.git/.backups/build 不入仓。
 payload/home/noctalia-plugins/README.md	/home/pang/noctalia-plugins/README.md	600	0c46818d98230bcadaa48c2b83d60749
-payload/home/noctalia-plugins/tide-sidebar/README.md	/home/pang/noctalia-plugins/tide-sidebar/README.md	600	69c44a386ad39cd3bbba81a31ac8398b
+payload/home/noctalia-plugins/tide-sidebar/README.md	/home/pang/noctalia-plugins/tide-sidebar/README.md	600	b2fec0913e1ec6cce1e092cb831d168e
 payload/home/noctalia-plugins/tide-sidebar/design/reference-flat-proof.png	/home/pang/noctalia-plugins/tide-sidebar/design/reference-flat-proof.png	644	c2880d20d00ab2975be907c2f7d754bb
 payload/home/noctalia-plugins/tide-sidebar/design/reference-flat-proof.svg	/home/pang/noctalia-plugins/tide-sidebar/design/reference-flat-proof.svg	600	ea3138dc64a0365ba4748b00a3f71b64
 payload/home/noctalia-plugins/tide-sidebar/docs/performance-observation.json	/home/pang/noctalia-plugins/tide-sidebar/docs/performance-observation.json	600	eceaa18df9f27eca73caa1b88114faac
 payload/home/noctalia-plugins/tide-sidebar/docs/project-review.md	/home/pang/noctalia-plugins/tide-sidebar/docs/project-review.md	600	6ac314ed148a0fe54720248d00b29573
+payload/home/noctalia-plugins/tide-sidebar/docs/declarative-migration-eval.md	/home/pang/noctalia-plugins/tide-sidebar/docs/declarative-migration-eval.md	644	62ebf7145dd0a116c02fdcaed8d15a4c
 payload/home/noctalia-plugins/tide-sidebar/docs/reference-redesign.md	/home/pang/noctalia-plugins/tide-sidebar/docs/reference-redesign.md	600	6b92cae2d103632e71edaa4b859387c2
 payload/home/noctalia-plugins/tide-sidebar/docs/sdk-notes.md	/home/pang/noctalia-plugins/tide-sidebar/docs/sdk-notes.md	600	a54b3c515902b2ee6be1bc177fc64230
 payload/home/noctalia-plugins/tide-sidebar/helpers/system.py	/home/pang/noctalia-plugins/tide-sidebar/helpers/system.py	600	5275115c9c7a560bd1c728899795570d

@@ -6,7 +6,7 @@
 
 - 倒计时结束、热点开/关会额外弹一条**系统 OSD**（`noctalia.osd.show`，与音量/亮度共用槽位；通知历史仍保留 `noctalia.notify`）。
 - 新增声明式面板 **`windows-proto`**：`[[panel]]` + `ui.*` 写法的「窗口」页原型，用于评估是否把原生 GTK 前端整体迁到声明式 UI。
-  打开：`noctalia msg panel-open pang/tide-sidebar:windows-proto`。点一行切窗口、行尾 × 关窗口、顶部刷新、Esc 关闭。
+  打开：`noctalia msg panel-open pang/tide-sidebar:windows-proto`。点一行切窗口、行尾 × 关窗口、顶部刷新、Esc 关闭。\n- 迁移取舍与实测数据（内存/代码量/逐页可行性）：见 [docs/declarative-migration-eval.md](docs/declarative-migration-eval.md)。
 
 ## 打开与关闭
 
