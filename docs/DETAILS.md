@@ -42,6 +42,8 @@
 
 - Noctalia 插件源码：`payload/home/noctalia-plugins/`（`magnifier` 放大镜 + `tide-sidebar` 侧边栏工作台），07 步部署到 `~/noctalia-plugins`，宿主以 path 源 `pang-dev` **直接读这个目录**；改插件就在本仓里改，提交推送后跑 `./install.sh --redo 07` 部署，然后在 Noctalia 里重新载入插件。注意 Noctalia 的插件系统仍会把插件装到 `~/.local/state/noctalia/plugins/`（那份是运行副本，含便签等用户数据，见 `excluded.tsv`），源码与运行副本是两回事。`.backups/`、`magnifier/tools/cursor-track/build/` 属本地产物，不入仓。
 
+- GRUB 菜单：`/etc/default/grub` 随 07 部署，其中 `GRUB_DISABLE_BOOTNEXT=true` 关掉 grub 2.16 自带 `31_efi_bootnext` 生成的同名「UEFI OS」条目（不关就会在开机菜单里多出一串重复项）。该变量由 grub 包自己的脚本读取，机型无关；没有这个脚本的系统上它只是一行不起作用的设置。
+
 ## 已知限制与取舍
 
 这套东西是**为一台机器写死**的（用户名 `pang`、路径 `/home/pang`、内屏 144Hz 的 eDP-1/eDP-2 双接口名、ASUS 的 `dgpu_disable` 开关），换机器要改 `lib/` 和清单里的机器相关项。下面几条是“知道、但没做或做不到”的，免得以后再翻一遍：
@@ -54,6 +56,8 @@
 - **`assrt.lua` 不入公开仓库**：上游没有许可证文件且要自填 API token（记账见 `excluded.tsv`）；`bdanmaku` 有 MIT 许可证，已连同 `LICENSE` 一起纳管。
 - **字体是仓库体积的大头**：Maple Mono NF CN 四款 + 资源汉圆体三款共约 123MB（工作区 147MB）；这是“没有离线包、全从 git 拉”的代价。
 - **破坏性操作只验证到预演**：维护脚本里真会删数据的（`clean`、快照恢复）测试只覆盖沙箱与 dry-run，实际执行仍需人工在终端确认。
+
+- **排障历史不入安装器**：`~/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md`（本机累积的事故记录）已从 payload 与 `files.tsv` 移除，重装后不会带回。技能本体（`SKILL.md`、`local-patterns.md`）仍随安装器部署，所以重装的机器上该技能里指向历史的章节索引会查不到对应文件。要找回历史：`git log --diff-filter=D -- payload/home/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md` 取回旧版本。
 
 ## 录屏（screenrec-menu）
 

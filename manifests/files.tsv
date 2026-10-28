@@ -54,7 +54,6 @@ payload/home/.agents/skills/nvim-config/references/deprecated-apis.md	/home/pang
 payload/home/.agents/skills/nvim-config/references/local-checklist.md	/home/pang/.agents/skills/nvim-config/references/local-checklist.md	644	f0a693500604b1a770651faa5e9910ca
 payload/home/.agents/skills/nvim-troubleshooting/SKILL.md	/home/pang/.agents/skills/nvim-troubleshooting/SKILL.md	644	1a2cd639ef5dd88e802fad5844d6bcec
 payload/home/.agents/skills/nvim-troubleshooting/references/local-patterns.md	/home/pang/.agents/skills/nvim-troubleshooting/references/local-patterns.md	644	550447ba5804434e1fdab213a14cbd63
-payload/home/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md	/home/pang/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md	644	3cb92bf92b4cf1d7fa49c5540d66cacc
 payload/home/.agents/skills/script-composer/SKILL.md	/home/pang/.agents/skills/script-composer/SKILL.md	644	eef7a1c9584073951e967adb81550c72
 payload/home/.agents/skills/script-composer/references/bash-style.md	/home/pang/.agents/skills/script-composer/references/bash-style.md	644	e4e1e39dab74c4ce28e1362136a0abaa
 payload/home/.agents/skills/script-composer/references/patterns.md	/home/pang/.agents/skills/script-composer/references/patterns.md	644	421387d9f2f0d5975bbf0851a18a6247
@@ -440,7 +439,7 @@ payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/terminus-16.pf2	/boo
 payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/terminus-18.pf2	/boot/grub/themes/Elegant-wave-blur-left-dark/terminus-18.pf2	755	cdb2e467d8ff28051986c60eb67f4265
 payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/theme.txt	/boot/grub/themes/Elegant-wave-blur-left-dark/theme.txt	755	aef8e5847b8616571000a2beb8364b28
 payload/system/boot/grub/themes/Elegant-wave-blur-left-dark/unifont-16.pf2	/boot/grub/themes/Elegant-wave-blur-left-dark/unifont-16.pf2	755	ad707df70708711cc4b533c9b93eed89
-payload/system/etc/default/grub	/etc/default/grub	644	2091b24d420266a53ec6e95b9fb67da0
+payload/system/etc/default/grub	/etc/default/grub	644	e505186dcd384e35ab53342bf582dbf0
 payload/system/etc/environment	/etc/environment	644	67863225101199f03e31e254f95ef82b
 payload/system/etc/locale.conf	/etc/locale.conf	644	0b6ed22dfae445473656b625f580cab9
 payload/system/etc/locale.gen	/etc/locale.gen	644	9307d6e9e7eeae3d72326d1974786008

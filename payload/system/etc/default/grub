@@ -61,3 +61,6 @@ GRUB_THEME="/boot/grub/themes/Elegant-wave-blur-left-dark/theme.txt"
 # functionality install os-prober and uncomment to detect and include other
 # operating systems.
 GRUB_DISABLE_OS_PROBER=false
+
+# 关闭自动生成的 EFI BootNext 菜单项（那些同名的 UEFI OS 条目）
+GRUB_DISABLE_BOOTNEXT=true

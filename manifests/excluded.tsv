@@ -240,3 +240,6 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 
 # --- 2026-10-27 录屏脚本 ---
 dir	/home/pang/.local/state/screenrec-menu	录屏脚本的运行时状态（pid/配置/日志），脚本自建，不入仓
+
+# --- 2026-10-27 技能库排障历史 ---
+file	/home/pang/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md	个人排障历史（本机累积的事故记录）：不随安装器部署——新装的机器没有这些事故，技能本体（SKILL.md + local-patterns.md）照常部署。恢复来源：本仓 git 历史（`git log --diff-filter=D -- payload/home/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md`）
