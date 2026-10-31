@@ -142,8 +142,8 @@
     },
     "measured_frame_spans_ms": {
       "open_fade": 83,
-      "page_slide_forward": 183,
-      "page_slide_back": 167,
+      "page_slide_forward": 170,
+      "page_slide_back": 170,
       "close_fade": 100
     },
     "reduced_motion": {
@@ -154,11 +154,28 @@
       ],
       "note": "Frames captured 60fps from wf-recorder; diff count over 450x985 with 2% fuzz; values are encoder/cursor noise, i.e. no animation."
     },
-    "evidence": "~/Pictures/tide-sidebar/motion/panel-motion.gif, page-switch-frames.png, reduced-motion-frames.png",
+    "evidence": "~/Pictures/tide-sidebar/motion/panel-motion.gif, page-switch-forward.png, page-switch-backward.png, panel-fade-frames.png, picker-stagger-frames.png, window-stagger-frames.png, reduced-motion-frames.png",
     "limits": [
       "Frame spans are scene-diff clusters at 60fps and under-report the true duration slightly (threshold trims the tail).",
       "Recorded on one machine/session; not a frame-time/jank benchmark."
     ],
-    "note": "GTK4 has no SLIDE_RIGHT_LEFT; SLIDE_LEFT_RIGHT reverses by child order (audit caught the invalid enum being coerced to NONE)."
+    "note": "GTK4 has no SLIDE_RIGHT_LEFT; SLIDE_LEFT_RIGHT reverses by child order (audit caught the invalid enum being coerced to NONE).",
+    "effects": {
+      "row_stagger": {
+        "duration_ms": 170,
+        "step_ms": 18,
+        "max_rows": 7,
+        "trigger": "notes picker open, windows page show"
+      },
+      "interaction": {
+        "hover_lift_ms": 120,
+        "press_inset_ms": 120
+      },
+      "wave_pulse": "320ms on page show, calculator commit and timer start/finish"
+    },
+    "rejected": [
+      "full-page opacity fade during the stack slide (shows the outgoing page through the incoming one under cairo)",
+      "CSS keyframes on box-shadow/background-color (parsed but not rendered by this GTK version); only opacity keyframes are reliable"
+    ]
   }
 }

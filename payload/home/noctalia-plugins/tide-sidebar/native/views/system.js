@@ -406,6 +406,7 @@ export function createHotspot(ctx) {
 export function createWindows(ctx) {
     const ui = ctx.ui;
     let shown = false, current = {windows: [], loading: true}, pendingId = null;
+    let reducedMotion = false, staggerPending = false, rowStaggerSource = 0;
     let signature = '', ordered = [], rows = new Map(), query = '';
     const widget = ui.box('vertical', 10);
     widget.set_vexpand(true); widget.set_hexpand(true);
@@ -436,6 +437,27 @@ export function createWindows(ctx) {
     confirmation.set_child(confirmCard); widget.append(confirmation);
 
     const content = ui.box('vertical', 8, ['scroll-gutter']);
+    function staggerRows() {
+        if (reducedMotion) return;
+        if (rowStaggerSource) { GLib.source_remove(rowStaggerSource); rowStaggerSource = 0; }
+        const targets = [];
+        let index = 0;
+        for (let child = list.get_first_child(); child; child = child.get_next_sibling()) {
+            if (!child.has_css_class('window-row')) continue;
+            child.remove_css_class('row-in');
+            for (let n = 0; n < 8; n++) child.remove_css_class('row-in-' + n);
+            child.add_css_class('row-in');
+            child.add_css_class('row-in-' + Math.min(index, 7));
+            index += 1; targets.push(child);
+        }
+        if (!targets.length) return 0;
+        rowStaggerSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 380, () => {
+            rowStaggerSource = 0;
+            for (const child of targets) child.remove_css_class('row-in');
+            return GLib.SOURCE_REMOVE;
+        });
+        return targets.length;
+    }
     const list = ui.box('vertical', 8); content.append(list);
     const empty = ui.card(['window-card']);
     empty.append(ui.icon('apps', 32));
@@ -532,9 +554,10 @@ export function createWindows(ctx) {
         sensitive(close, shown && !!pendingId && !error);
         confirmation.set_transition_duration(ui.motionMs(state?.preferences?.reducedMotion === true, 'reveal'));
         applyFilter();
+        if (staggerPending && shown && staggerRows()) staggerPending = false;
     }
     function onShow() {
-        shown = true;
+        shown = true; staggerPending = true;
         for (const row of rows.values()) updateRow(row, row.data);
         sensitive(header.refresh, true); ctx.send('refresh');
     }

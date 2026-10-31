@@ -343,6 +343,7 @@ export function createTools(ctx) {
     let durationEdited = false;
     let settingDuration = false;
     let timerErrorText = '';
+    let previousTimerStatus = '';
     const durationSelectionSources = new Map();
     const durationControllers = [];
 
@@ -608,6 +609,12 @@ export function createTools(ctx) {
         if (timerReady && !timerLoaded) {
             timerLoaded = true;
             if (!durationEdited) setDuration(timerModel.durationMs);
+        }
+        const status = timerReady ? timerModel.status : '';
+        if (status !== previousTimerStatus) {
+            if (status === 'running') calcWave.pulse();
+            if (status === 'finished' && previousTimerStatus) calcWave.pulse();
+            previousTimerStatus = status;
         }
         renderTimer();
     }

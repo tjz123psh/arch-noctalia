@@ -34,6 +34,11 @@
 - 一套时长语汇：交互 120ms（悬停/按下/选中）、展开 160ms（提示条、重命名、撤销、确认卡、面板淡入淡出）、切页 220ms、toast 180ms、波浪 320ms；CSS 过渡与 GTK Revealer 使用同一组值。
 - 切页方向跟随导航顺序（rail 或 Ctrl+1–4）：向后是从右侧滑入，向前反向滑出；隐藏状态下切页时长为 0，不会在下次打开时补放动画。
 - 面板开合为 160ms 交叉淡入淡出；收起后延迟 170ms 再 unmapped，避免淡出被截断；toast 信息停留 3.6s、错误 6s 后滑出。
+- 列表入场：便签弹层与窗口列表在打开时逐行淡入（170ms、18ms 步进、最多 7 行），只在打开时播一次，定时刷新不重播。
+- 交互层次：玻璃按钮悬停有 1px 投影、按下有内阴影；窗口行/便签行/系统卡片的底色和描边有 120–160ms 过渡。
+- 计时器开始与完成时波浪短促脉冲一次（320ms），失败/暂停不脉冲。
+- 尝试后否决：整页淡入会让滑动时透出旧页（软件光栅下显脏）；该 GTK 版本的 CSS keyframes 对 `box-shadow`/`background-color` 不生效（只有 `opacity` 可靠），所以完成脉冲没有用关键帧，而是保留波浪反馈。
+
 - 减少动效（插件设置或 `motion off`）：窗口加 `.reduced-motion`，CSS 过渡/动画归零、所有 Revealer 时长 0、波浪停止脉冲。逐帧对比：切页/开合前后帧像素差 0.2–4 px（编码噪声），可视为完全静止。
 - 录屏证据：`~/Pictures/tide-sidebar/motion/panel-motion.gif`（正常开合与切页）、`page-switch-forward.png` / `page-switch-backward.png`（双向 220ms 滑动逐帧）、`panel-fade-frames.png`（160ms 开合）、`reduced-motion-frames.png`（同样动作下的静止帧）。
 

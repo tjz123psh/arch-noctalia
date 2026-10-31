@@ -176,11 +176,34 @@ export function createNotes(ctx) {
     // title was ellipsized to "新…". Keep a readable floor and then match the
     // selector's own width, which is what the dropdown lines up with.
     listShell.set_size_request(300, -1);
+    let reducedMotion = false, rowStaggerSource = 0;
+    function staggerRows() {
+        if (reducedMotion) return;
+        if (rowStaggerSource) { GLib.source_remove(rowStaggerSource); rowStaggerSource = 0; }
+        const targets = [];
+        for (const box of [normalList, recycleList]) {
+            let index = 0;
+            for (let child = box.get_first_child(); child; child = child.get_next_sibling()) {
+                if (!child.has_css_class('note-row')) continue;
+                child.remove_css_class('row-in');
+                for (let n = 0; n < 8; n++) child.remove_css_class('row-in-' + n);
+                child.add_css_class('row-in');
+                child.add_css_class('row-in-' + Math.min(index, 7));
+                index += 1; targets.push(child);
+            }
+        }
+        if (!targets.length) return;
+        rowStaggerSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 380, () => {
+            rowStaggerSource = 0;
+            for (const child of targets) child.remove_css_class('row-in');
+            return GLib.SOURCE_REMOVE;
+        });
+    }
     function sizeList() {
         const width = listButton.get_width();
         if (width >= 240) listShell.set_size_request(width, -1);
     }
-    listPopover.connect('show', sizeList);
+    listPopover.connect('show', () => { sizeList(); staggerRows(); });
     const listTabs = U.box(Gtk.Orientation.HORIZONTAL, 5);
     const normalTab = U.button('便签', null, () => selectList('notes'), ['list-tab', 'active']);
     const trashTab = U.button('回收站', null, () => selectList('trash'), ['list-tab']);
@@ -442,6 +465,7 @@ export function createNotes(ctx) {
     function update(state) {
         const next = state?.notes || {};
         const reduced = state?.preferences?.reducedMotion === true;
+        reducedMotion = reduced;
         listStack.set_transition_duration(U.motionMs(reduced, 'fast'));
         noticeRevealer.set_transition_duration(U.motionMs(reduced, 'reveal'));
         renameRevealer.set_transition_duration(U.motionMs(reduced, 'reveal'));

@@ -341,11 +341,11 @@ payload/home/noctalia-plugins/magnifier/tools/cursor-track/README.md	/home/pang/
 # ——— 2026-10-20 插件源码整体纳入：~/noctalia-plugins 的开发改为在本仓 payload/home/noctalia-plugins/ 进行，
 #     07 步按清单部署回本机（宿主以 path 源 pang-dev 直接读该目录）；.git/.backups/build 不入仓。
 payload/home/noctalia-plugins/README.md	/home/pang/noctalia-plugins/README.md	600	0c46818d98230bcadaa48c2b83d60749
-payload/home/noctalia-plugins/tide-sidebar/README.md	/home/pang/noctalia-plugins/tide-sidebar/README.md	644	d7b4f980939371936c326ffdb470727d
+payload/home/noctalia-plugins/tide-sidebar/README.md	/home/pang/noctalia-plugins/tide-sidebar/README.md	644	1392e19dc61a3919ae5a02ebaf3e8c2d
 payload/home/noctalia-plugins/tide-sidebar/design/reference-flat-proof.png	/home/pang/noctalia-plugins/tide-sidebar/design/reference-flat-proof.png	644	403928d8fe15915eef374dbfcac4e31e
-payload/home/noctalia-plugins/tide-sidebar/docs/performance-observation.json	/home/pang/noctalia-plugins/tide-sidebar/docs/performance-observation.json	600	715a4d5d3c439d1b2802615a892d917d
+payload/home/noctalia-plugins/tide-sidebar/docs/performance-observation.json	/home/pang/noctalia-plugins/tide-sidebar/docs/performance-observation.json	600	f71a4141d5836463ea3fd7ea088e00a4
 payload/home/noctalia-plugins/tide-sidebar/docs/project-review.md	/home/pang/noctalia-plugins/tide-sidebar/docs/project-review.md	600	6ce5548936c4d6a3b3565a08235dcce7
-payload/home/noctalia-plugins/tide-sidebar/docs/reference-redesign.md	/home/pang/noctalia-plugins/tide-sidebar/docs/reference-redesign.md	600	3fa303426f014a6970b7afaa8e626bac
+payload/home/noctalia-plugins/tide-sidebar/docs/reference-redesign.md	/home/pang/noctalia-plugins/tide-sidebar/docs/reference-redesign.md	600	ea7be6f987eb1df8ab038dae1098c680
 payload/home/noctalia-plugins/tide-sidebar/docs/sdk-notes.md	/home/pang/noctalia-plugins/tide-sidebar/docs/sdk-notes.md	644	71b9d135f4a4f720a8d23d4ea85d78bf
 payload/home/noctalia-plugins/tide-sidebar/helpers/system.py	/home/pang/noctalia-plugins/tide-sidebar/helpers/system.py	600	5275115c9c7a560bd1c728899795570d
 payload/home/noctalia-plugins/tide-sidebar/lib/calculator.luau	/home/pang/noctalia-plugins/tide-sidebar/lib/calculator.luau	600	11ed2a07bef68e805445154aae437756
@@ -354,12 +354,12 @@ payload/home/noctalia-plugins/tide-sidebar/lib/frontend.luau	/home/pang/noctalia
 payload/home/noctalia-plugins/tide-sidebar/lib/notes.luau	/home/pang/noctalia-plugins/tide-sidebar/lib/notes.luau	600	804829038ae3a995840773244968c096
 payload/home/noctalia-plugins/tide-sidebar/lib/stopwatch.luau	/home/pang/noctalia-plugins/tide-sidebar/lib/stopwatch.luau	600	c64ad8a9f0643422e04cfd2a7f131afb
 payload/home/noctalia-plugins/tide-sidebar/native/main.js	/home/pang/noctalia-plugins/tide-sidebar/native/main.js	600	ed28a198f101f809999e18b7591448a3
-payload/home/noctalia-plugins/tide-sidebar/native/style.css	/home/pang/noctalia-plugins/tide-sidebar/native/style.css	600	5cd0535b49516b59bcedf62239923eea
+payload/home/noctalia-plugins/tide-sidebar/native/style.css	/home/pang/noctalia-plugins/tide-sidebar/native/style.css	600	7bde610826a5880d978df0df0094af83
 payload/home/noctalia-plugins/tide-sidebar/native/transport.mjs	/home/pang/noctalia-plugins/tide-sidebar/native/transport.mjs	600	ec47ceb3bc238adac1f81c82bd94d406
 payload/home/noctalia-plugins/tide-sidebar/native/ui.js	/home/pang/noctalia-plugins/tide-sidebar/native/ui.js	600	704ccb1e14f6dc298a5b1c27dedf33ce
-payload/home/noctalia-plugins/tide-sidebar/native/views/notes.js	/home/pang/noctalia-plugins/tide-sidebar/native/views/notes.js	600	22c9f88a2cac6c3931a50a17781a6b8f
-payload/home/noctalia-plugins/tide-sidebar/native/views/system.js	/home/pang/noctalia-plugins/tide-sidebar/native/views/system.js	600	0955cc08dab0d445374632b2e1d3a2a5
-payload/home/noctalia-plugins/tide-sidebar/native/views/tools.js	/home/pang/noctalia-plugins/tide-sidebar/native/views/tools.js	600	27072e89de8d0d443ecb520ec2a9426b
+payload/home/noctalia-plugins/tide-sidebar/native/views/notes.js	/home/pang/noctalia-plugins/tide-sidebar/native/views/notes.js	600	f2c08143c9a85b767d641b22e2580fae
+payload/home/noctalia-plugins/tide-sidebar/native/views/system.js	/home/pang/noctalia-plugins/tide-sidebar/native/views/system.js	600	9b94e3f06fc3c74f8c851f9fb814b39c
+payload/home/noctalia-plugins/tide-sidebar/native/views/tools.js	/home/pang/noctalia-plugins/tide-sidebar/native/views/tools.js	600	836acdf6e83e21c4fe8ceca8d6e1837a
 payload/home/noctalia-plugins/tide-sidebar/open.sh	/home/pang/noctalia-plugins/tide-sidebar/open.sh	600	187b46965198322202c6813525ee01b0
 payload/home/noctalia-plugins/tide-sidebar/panel.luau	/home/pang/noctalia-plugins/tide-sidebar/panel.luau	600	768726ff7049931e0db70db78c0c5e9e
 payload/home/noctalia-plugins/tide-sidebar/plugin.toml	/home/pang/noctalia-plugins/tide-sidebar/plugin.toml	644	0836aed3a72315a081f0e1fe864fea4d
