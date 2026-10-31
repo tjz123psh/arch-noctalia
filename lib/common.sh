@@ -139,7 +139,13 @@ an_resolve_target() {
       return 0
     fi
   done
-  warn "manifest target outside the allowed prefixes (AN_TARGET_ALLOW='${allow}'): ${t}"
+  # 目标是软链时 realpath 会先解析到真实文件（链接本身原样保留，写入落在真实文件上）。
+  # 解析结果不在白名单里时报错要能看出这是「链接指到外面去了」，否则现场只看到一串无语的路径。
+  if [[ -L "${1}" ]]; then
+    warn "manifest target is a symlink to ${t}, which is outside the allowed prefixes (AN_TARGET_ALLOW='${allow}'): check where ${1} points"
+  else
+    warn "manifest target outside the allowed prefixes (AN_TARGET_ALLOW='${allow}'): ${t}"
+  fi
   return 1
 }
 # 目标所在文件系统的类型（沿路径向上找到第一个对当前用户可见的位置）。

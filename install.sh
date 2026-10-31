@@ -196,5 +196,8 @@ elif (( ${#missing_stages[@]} == 1 )) && [[ "${missing_stages[0]}" == "05" ]]; t
 else
   warn "stages not completed: ${missing_stages[*]}"
   info "finish them with: ${AN_ROOT_DIR}/install.sh   (or force a stage again: ./install.sh --redo NN)"
+  # 漏了阶段还退 0 会让脚本/自动化误以为装完了（例如 --from 07 跳过了 01-06）。
+  # 只有 05（AUR）这个已知的可后补阶段在上一分支里按成功处理。
+  exit 1
 fi
 info "next: reboot / re-login. The desktop (niri + Noctalia) is ready; see README for post-install notes."

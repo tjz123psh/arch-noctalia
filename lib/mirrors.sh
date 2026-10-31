@@ -4,9 +4,11 @@
 #       配合 pacman 逐文件按 Server 顺序取用的原生行为（前不行，后顶上）。
 
 # 解析 [archlinuxcn] 段的 Server URL（按出现顺序）。
+# 段头允许行尾注释（`[archlinuxcn] # local`）：与 01 步的检测正则保持一致，否则会出现
+# 「检测说已有、替换函数说没找到」→ 写出第二个 [archlinuxcn] 段（2026-10-31 审计）。
 cn_servers_in_conf() {
   awk '
-    /^[[:space:]]*\[archlinuxcn\][[:space:]]*$/ { f=1; next }
+    /^[[:space:]]*\[archlinuxcn\]($|[[:space:]])/ { f=1; next }
     f && /^[[:space:]]*\[/ { f=0 }
     f && /^[[:space:]]*Server[[:space:]]*=/ {
       sub(/^[[:space:]]*Server[[:space:]]*=[[:space:]]*/, "")
@@ -57,7 +59,7 @@ cn_rewrite_conf() {
     [[ -n "$line" ]] && new_servers+=("$line")
   done
   while IFS= read -r line || [[ -n "$line" ]]; do
-    if (( in_cn == 0 )) && [[ "$line" =~ ^[[:space:]]*\[archlinuxcn\][[:space:]]*$ ]]; then
+    if (( in_cn == 0 )) && [[ "$line" =~ ^[[:space:]]*\[archlinuxcn\]($|[[:space:]]) ]]; then
       in_cn=1
       printf '%s\n' "$line"
       for u in "${new_servers[@]}"; do
@@ -86,7 +88,7 @@ cn_replace_section() {
     block+=("$line")
   done
   while IFS= read -r line || [[ -n "$line" ]]; do
-    if (( in_cn == 0 )) && [[ "$line" =~ ^[[:space:]]*\[archlinuxcn\][[:space:]]*$ ]]; then
+    if (( in_cn == 0 )) && [[ "$line" =~ ^[[:space:]]*\[archlinuxcn\]($|[[:space:]]) ]]; then
       in_cn=1
       found=1
       printf '%s\n' "${block[@]}"

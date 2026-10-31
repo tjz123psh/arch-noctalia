@@ -21,14 +21,20 @@ ln -s "$ROOT/lib" "$repo/lib"
 printf 'conf repo content\n' > "$repo/payload/fixtures/conf.txt"
 printf 'note repo seed content\n' > "$repo/payload/fixtures/note.md"
 printf 'fresh repo seed content\n' > "$repo/payload/fixtures/fresh.md"
+printf 'same content, wrong mode\n' > "$repo/payload/fixtures/mode.txt"
+printf '#!/bin/sh\necho tool\n' > "$repo/payload/fixtures/tool.sh"
 m_conf="$(md5sum "$repo/payload/fixtures/conf.txt" | awk '{print $1}')"
 m_note="$(md5sum "$repo/payload/fixtures/note.md" | awk '{print $1}')"
 m_fresh="$(md5sum "$repo/payload/fixtures/fresh.md" | awk '{print $1}')"
+m_mode="$(md5sum "$repo/payload/fixtures/mode.txt" | awk '{print $1}')"
+m_tool="$(md5sum "$repo/payload/fixtures/tool.sh" | awk '{print $1}')"
 
 {
   printf 'payload/fixtures/conf.txt\t%s/.cache/an-conf.txt\t644\t%s\n' "$home" "$m_conf"
   printf 'payload/fixtures/note.md\t%s/.cache/an-note.md\t644\t%s\n' "$home" "$m_note"
   printf 'payload/fixtures/fresh.md\t%s/.cache/an-fresh.md\t644\t%s\n' "$home" "$m_fresh"
+  printf 'payload/fixtures/mode.txt\t%s/.cache/an-mode.txt\t644\t%s\n' "$home" "$m_mode"
+  printf 'payload/fixtures/tool.sh\t%s/.cache/an-dangling\t644\t%s\n' "$home" "$m_tool"
 } > "$repo/manifests/files.tsv"
 {
   echo "# schema=1"
@@ -36,9 +42,15 @@ m_fresh="$(md5sum "$repo/payload/fixtures/fresh.md" | awk '{print $1}')"
   printf 'payload/fixtures/fresh.md\t个人数据种子\n'
 } > "$repo/manifests/seed.tsv"
 
-# 预置：note 已有用户内容；conf 是被改过的内容；fresh 缺失
+# 预置：note 已有用户内容；conf 是被改过的内容；fresh 缺失；mode 内容相同但权限位被改；
+# dangling 是指向不存在路径的软链（install 会把它换成普通文件）。
 printf 'USER EDIT\n' > "$home/.cache/an-note.md"
 printf 'USER MODIFIED\n' > "$home/.cache/an-conf.txt"
+printf 'same content, wrong mode\n' > "$home/.cache/an-mode.txt"
+chmod 600 "$home/.cache/an-mode.txt"
+# 目标是软链（指向 $HOME 内的真实文件）：07 会解析到真实文件，链接本身保留。
+printf 'OLD LINK TARGET\n' > "$home/.cache/an-link-real"
+ln -s "$home/.cache/an-link-real" "$home/.cache/an-dangling"
 
 printf '#!/bin/sh\nexit 0\n' > "$stub/sudo"
 chmod +x "$stub/sudo"
@@ -70,16 +82,42 @@ fi
 # 3) 缺失 seed 初始化
 [[ "$(cat "$home/.cache/an-fresh.md")" == "fresh repo seed content" ]] || { echo "[FAIL] missing seed was not initialized"; exit 1; }
 
+# 5) 仅权限位不同：也要先备份（旧权限/属主只在 MANIFEST.tsv 里有记录）
+[[ "$(stat -c '%a' "$home/.cache/an-mode.txt")" == "644" ]] || { echo "[FAIL] mode-only change did not apply the manifest mode"; exit 1; }
+mode_bk="$(find "$home/.local/state/arch-noctalia/overwritten" -name an-mode.txt 2>/dev/null | head -1)"
+if [[ -z "$mode_bk" || "$(cat "$mode_bk")" != "same content, wrong mode" ]]; then
+  echo "[FAIL] mode-only change produced no backup copy"
+  exit 1
+fi
+manifest_tsv="$(find "$home/.local/state/arch-noctalia/overwritten" -name MANIFEST.tsv 2>/dev/null | head -1)"
+if [[ -z "$manifest_tsv" ]] || ! grep -qF "$home/.cache/an-mode.txt" "$manifest_tsv"; then
+  echo "[FAIL] MANIFEST.tsv has no record for the mode-only change"
+  exit 1
+fi
+
+# 6) 目标是软链：realpath 先解析到真实文件（链接保留），内容与备份都落在真实文件上。
+#    （审计曾假设「悬空软链会被 install 换成普通文件」，实测不成立：realpath -m 先解析链接。）
+[[ -L "$home/.cache/an-dangling" ]] || { echo "[FAIL] managed symlink was replaced instead of followed"; exit 1; }
+[[ "$(md5sum "$home/.cache/an-link-real" | awk '{print $1}')" == "$m_tool" ]] || {
+  echo "[FAIL] symlink destination was not updated to the repo content"
+  exit 1
+}
+link_bk="$(find "$home/.local/state/arch-noctalia/overwritten" -name an-link-real 2>/dev/null | head -1)"
+if [[ -z "$link_bk" || "$(cat "$link_bk")" != "OLD LINK TARGET" ]]; then
+  echo "[FAIL] symlink destination was overwritten without a backup"
+  exit 1
+fi
+
 # 4) 幂等
 if ! out2="$(run07 2>&1)"; then
   printf '%s\n' "$out2"
   echo "[FAIL] second run exited non-zero"
   exit 1
 fi
-printf '%s\n' "$out2" | grep -q 'files: 3 checked, 0 deployed, 1 unchanged, 2 kept (seed/runtime), 0 failed' || {
+printf '%s\n' "$out2" | grep -q 'files: 5 checked, 0 deployed, 3 unchanged, 2 kept (seed/runtime), 0 failed' || {
   echo "[FAIL] second run is not idempotent:"
   printf '%s\n' "$out2" | grep 'files:'
   exit 1
 }
 
-echo "ok: seed kept; overwrite backed up (old content preserved); missing seed initialized; re-run idempotent"
+echo "ok: seed kept; overwrite backed up (old content preserved); mode-only change backed up; symlink followed with destination backed up; missing seed initialized; re-run idempotent"

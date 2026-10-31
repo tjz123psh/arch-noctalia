@@ -112,4 +112,18 @@ grep -q '^\[options\]$' "$work/out3.conf" || { echo "append clobbered file"; exi
 mapfile -t rep3 < <(cn_servers_in_conf "$work/out3.conf")
 { [ "${#rep3[@]}" -eq 1 ] && [[ "${rep3[0]}" == *only.example* ]]; } || { echo "append content wrong"; exit 1; }
 
+# 6) 段头带行尾注释：检测与替换必须认同同一个段头，不能写出第二个 [archlinuxcn]
+#    （01 步用宽松正则检测，mirrors.sh 原先要求段头后无内容 → 会追加重复段且自检仍过）。
+conf4="$work/pacman4.conf"
+printf '# commented header\n[options]\nColor\n\n[archlinuxcn] # mine\nServer = https://old.example/archlinuxcn/$arch\n' > "$conf4"
+cn_replace_section "$conf4" > "$work/out4.conf" <<'BLK'
+[archlinuxcn]
+Server = https://fresh.example/archlinuxcn/$arch
+BLK
+hdr_count="$(grep -cE '^[[:space:]]*\[archlinuxcn\]' "$work/out4.conf")"
+[ "$hdr_count" -eq 1 ] || { echo "duplicate [archlinuxcn] header: ${hdr_count}"; exit 1; }
+if grep -q 'old\.example' "$work/out4.conf"; then echo "commented header was not replaced"; exit 1; fi
+mapfile -t rep4 < <(cn_servers_in_conf "$work/out4.conf")
+{ [ "${#rep4[@]}" -eq 1 ] && [[ "${rep4[0]}" == *fresh.example* ]]; } || { echo "commented-header replace content wrong"; exit 1; }
+
 echo "ok: mirrors parse/probe/order/rewrite/replace all good"

@@ -162,6 +162,9 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
   if [[ -n "$ftype" ]]; then
     exists=1
   fi
+  # supergfxd 的机器派生状态（见下面 runtime 例外）：每行重置一次，避免串行。
+  sgfx_restore_mode=0
+  sgfx_saved_mode=""
 
   # seed（个人数据种子）：已存在就保持现状，绝不覆盖；缺失才初始化。
   if (( exists == 1 )) && [[ -n "${AN_SEED[$repo_path]:-}" ]]; then
@@ -175,12 +178,16 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
   # /etc/nwg-hello/background.png 上的 u:pang:rw ACL（install 会重建 inode），此后换壁纸就写不进去。
   if (( exists == 1 )) && [[ -n "${AN_RUNTIME[$repo_path]:-}" ]]; then
     # 例外：/etc/supergfxd.conf 里的 hotplug_type=Asus 是安装器必须保证的值（README 的「切集显重启又回混合」坑）。
-    # 该键没落上时照常覆盖（先备份），不能因为它是运行时文件就放过。
+    # 但整份覆盖会连用户选的 mode（iGPU/Hybrid）一起打回仓库快照——那是同一个坑的另一半。
+    # 所以这里记下原 mode，照常部署后再回填（md5 复核在回填之前，不受影响；12 步对 runtime 名单只核存在性）。
     if [[ "$raw_target" != "/etc/supergfxd.conf" ]] || grep -q '"hotplug_type": "Asus"' "$target" 2>/dev/null; then
       info "kept (runtime - rewritten by the desktop): ${target}"
       kept=$((kept + 1))
       continue
     fi
+    sgfx_saved_mode="$(sed -n 's/.*"mode"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$target" 2>/dev/null | head -1)"
+    sgfx_restore_mode=1
+    info "supergfxd: hotplug_type missing - redeploying, local mode will be kept (${sgfx_saved_mode:-none})"
   fi
 
   actual_md5=""
@@ -212,6 +219,12 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
 
   if (( exists == 1 )); then
     if [[ "$actual_md5" == "$md5" ]]; then
+      # 只改权限位也是一次改动：内容相同也不能省备份——旧权限位只留在 MANIFEST.tsv 里。
+      if ! backup_overwritten "$target" "$ftype"; then
+        warn "skipping ${target}: refusing to change permissions without a backup copy"
+        failed=$((failed + 1))
+        continue
+      fi
       info "re-installing (mode or type differs): ${target}"
     elif [[ -L "$target" ]]; then
       info "replacing symlink (content differs): ${target} -> $(readlink -- "$target")"
@@ -254,6 +267,26 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
     actual_mode="$(t_perms "$target")"
     if [[ "$actual_mode" != "$mode" ]]; then
       warn "post-install verify failed (mode): ${target}"
+      failed=$((failed + 1))
+      continue
+    fi
+  fi
+
+  # supergfxd：把覆盖前用户选的 mode 回填（整份覆盖只是为了拿到 hotplug_type=Asus）。
+  if (( sgfx_restore_mode == 1 )); then
+    if [[ -n "$sgfx_saved_mode" ]]; then
+      if ! as_root sed -i "s/\"mode\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"mode\": \"${sgfx_saved_mode}\"/" "$target"; then
+        warn "supergfxd: could not restore mode ${sgfx_saved_mode} - check ${target} manually"
+        failed=$((failed + 1))
+        continue
+      fi
+      ok "supergfxd: hotplug_type=Asus restored, local mode kept (${sgfx_saved_mode})"
+    else
+      ok "supergfxd: hotplug_type=Asus restored (no previous mode found)"
+    fi
+    # 回填之后再确认一次：整份部署拿到的 hotplug_type 真的落上了（否则 iGPU 仍会回弹 Hybrid）。
+    if ! grep -q '"hotplug_type": "Asus"' "$target" 2>/dev/null; then
+      warn "supergfxd: hotplug_type missing after deploy - check ${target} manually"
       failed=$((failed + 1))
       continue
     fi

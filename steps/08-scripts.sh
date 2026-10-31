@@ -57,17 +57,35 @@ while IFS=$'\t' read -r name target; do
     info "replacing existing entry: ${lib}"
   fi
 
-  # 覆盖前备份：lib 位置原本若是**真实文件**（用户自己写的脚本，不是软链），先按 07 的同一套约定
-  # 存到 ${AN_STATE_DIR}/overwritten/<时间戳>/，避免 ln -sfn 把它静默吃掉。
-  if [[ -e "$lib" && ! -L "$lib" ]]; then
+  # 覆盖前备份：按 07 的同一套约定（内容副本 + MANIFEST.tsv；软链另记它原本指向哪）。
+  # 以前只备份「真实文件」、也不写 MANIFEST：既有软链被 ln -sfn 静默替换后无从追溯。
+  if [[ -e "$lib" || -L "$lib" ]]; then
     RUN_TS="${RUN_TS:-$(date +%Y%m%d-%H%M%S)}"
     backup_path="${AN_STATE_DIR}/overwritten/${RUN_TS}${lib}"
-    if ! { mkdir -p -- "$(dirname -- "$backup_path")" && cp -p -- "$lib" "$backup_path"; }; then
-      warn "backup failed for ${lib} - refusing to replace it"
+    if ! mkdir -p -- "$(dirname -- "$backup_path")"; then
+      warn "backup dir not writable for ${lib} - refusing to replace it"
       failed=$((failed + 1))
       continue
     fi
-    info "backed up replaced file: ${lib} -> ${backup_path}"
+    if [[ -L "$lib" ]]; then
+      if ! printf '%s\n' "$(readlink -- "$lib")" > "${backup_path}.symlink"; then
+        warn "backup failed for ${lib} (symlink record) - refusing to replace it"
+        failed=$((failed + 1))
+        continue
+      fi
+      # 能整份复制就再存一份（保留链接形态）；失败不影响上面那份指向记录。
+      cp -P -- "$lib" "$backup_path" 2>/dev/null || true
+      info "recorded replaced symlink: ${lib} -> $(readlink -- "$lib") (${backup_path}.symlink)"
+    else
+      if ! cp -p -- "$lib" "$backup_path"; then
+        warn "backup failed for ${lib} - refusing to replace it"
+        failed=$((failed + 1))
+        continue
+      fi
+      info "backed up replaced file: ${lib} -> ${backup_path}"
+    fi
+    printf '%s\t%s\t%s\t%s\n' "$(date -Is)" "$lib" "$(stat -c '%a %U:%G' -- "$lib" 2>/dev/null || printf '? ?:?')" "$backup_path" \
+      >> "${AN_STATE_DIR}/overwritten/${RUN_TS}/MANIFEST.tsv" 2>/dev/null || true
   fi
 
   if ! ln -sfn "$tgt" "$lib"; then
