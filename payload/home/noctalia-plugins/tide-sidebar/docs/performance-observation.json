@@ -138,13 +138,14 @@
       "reveal": 160,
       "page": 220,
       "toast": 180,
-      "wave": 320
+      "wave": 320,
+      "drawer": 260
     },
     "measured_frame_spans_ms": {
-      "open_fade": 83,
+      "drawer_open": 200,
       "page_slide_forward": 170,
       "page_slide_back": 170,
-      "close_fade": 100
+      "drawer_close": null
     },
     "reduced_motion": {
       "implementation": "window class + zero Revealer/Stack durations + gtk_enable_animations=false",
@@ -154,7 +155,7 @@
       ],
       "note": "Frames captured 60fps from wf-recorder; diff count over 450x985 with 2% fuzz; values are encoder/cursor noise, i.e. no animation."
     },
-    "evidence": "~/Pictures/tide-sidebar/motion/panel-motion.gif, page-switch-forward.png, page-switch-backward.png, panel-fade-frames.png, picker-stagger-frames.png, window-stagger-frames.png, reduced-motion-frames.png",
+    "evidence": "~/Pictures/tide-sidebar/motion/panel-motion.gif, page-switch-forward.png, page-switch-backward.png, panel-drawer-frames.png, picker-stagger-frames.png, window-stagger-frames.png, reduced-motion-frames.png",
     "limits": [
       "Frame spans are scene-diff clusters at 60fps and under-report the true duration slightly (threshold trims the tail).",
       "Recorded on one machine/session; not a frame-time/jank benchmark."
@@ -176,6 +177,11 @@
     "rejected": [
       "full-page opacity fade during the stack slide (shows the outgoing page through the incoming one under cairo)",
       "CSS keyframes on box-shadow/background-color (parsed but not rendered by this GTK version); only opacity keyframes are reliable"
-    ]
+    ],
+    "drawer": {
+      "type": "GtkRevealer SLIDE_RIGHT",
+      "note": "present() then wait for map + one 16ms tick before set_reveal_child(true); otherwise GTK snaps to the final width.",
+      "reduced_motion": "duration 0"
+    }
   }
 }

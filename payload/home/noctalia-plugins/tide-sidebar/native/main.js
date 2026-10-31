@@ -37,6 +37,7 @@ let state = {
 let sequence = 0, visible = false, currentPage = 'notes', lastControl = -1;
 let window, rootRevealer, stack, toastRevealer, toastLabel, toastTimer = 0;
 let views = {}, navigation = {}, fileMonitor = null, pendingRead = 0, closeSource = 0, heartbeat = 0;
+let revealStartSource = 0, revealMapHandler = 0;
 let viewFactory = null;
 let ensureView = () => null;
 let shellBox = null, appliedWidth = 0;
@@ -168,6 +169,10 @@ function reportGeometrySoon() {
     });
 }
 
+function cancelRevealStart() {
+    if (revealStartSource) { GLib.source_remove(revealStartSource); revealStartSource = 0; }
+    if (revealMapHandler) { window.disconnect(revealMapHandler); revealMapHandler = 0; }
+}
 function setVisible(wanted, page = null) {
     if (page) selectPage(page, false);
     if (wanted === visible) return;
@@ -177,15 +182,24 @@ function setVisible(wanted, page = null) {
         window.present();
         updatePage(true);
         views[currentPage]?.onShow?.();
-        rootRevealer.set_reveal_child(true);
+        cancelRevealStart();
+        // The layer surface maps asynchronously. Revealing in the same tick as
+        // present() makes GtkRevealer snap to its final width; start one frame later.
+        const startReveal = () => { revealStartSource = 0; rootRevealer.set_reveal_child(true); return GLib.SOURCE_REMOVE; };
+        const schedule = () => { revealStartSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, startReveal); };
+        if (window.get_mapped()) schedule();
+        else revealMapHandler = window.connect('map', () => {
+            window.disconnect(revealMapHandler); revealMapHandler = 0; schedule();
+        });
         send('visibility', {open: true, tab: currentPage});
         reportGeometrySoon();
     } else {
+        cancelRevealStart();
         views[currentPage]?.onHide?.();
         send('flush');
         send('visibility', {open: false, tab: currentPage});
         rootRevealer.set_reveal_child(false);
-        const fade = UI.motionMs(reducedMotion(), 'reveal');
+        const fade = UI.motionMs(reducedMotion(), 'drawer');
         closeSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, fade ? fade + 10 : 1, () => {
             closeSource = 0;
             if (!visible) window.hide();
@@ -201,7 +215,7 @@ function applyControl(control) {
     Gtk.Settings.get_default().gtk_enable_animations = !reduced;
     if (reduced) window.add_css_class('reduced-motion'); else window.remove_css_class('reduced-motion');
     stack.set_transition_duration(UI.motionMs(reduced, 'page'));
-    rootRevealer.set_transition_duration(UI.motionMs(reduced, 'reveal'));
+    rootRevealer.set_transition_duration(UI.motionMs(reduced, 'drawer'));
     toastRevealer.set_transition_duration(UI.motionMs(reduced, 'toast'));
     setVisible(control.visible === true, control.page || currentPage);
 }
@@ -338,7 +352,7 @@ app.connect('startup', () => {
     toastRevealer.connect('notify::child-revealed', () => { if (!toastRevealer.get_reveal_child() && !toastRevealer.get_child_revealed()) toastRevealer.set_visible(false); });
     toastLabel = new Gtk.Label({wrap: true, xalign: 0}); toastRevealer.set_child(toastLabel); right.append(toastRevealer);
     shell.append(rail); shell.append(right);
-    rootRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.CROSSFADE, transition_duration: UI.DURATION.reveal, hexpand: true, vexpand: true});
+    rootRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_RIGHT, transition_duration: UI.DURATION.drawer, hexpand: true, vexpand: true});
     rootRevealer.set_child(shell); window.set_child(rootRevealer);
     const keyboard = new Gtk.EventControllerKey();
     keyboard.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
