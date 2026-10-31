@@ -99,13 +99,12 @@ function M.new(api,base,onCommand,onError)
       self:control(nil,self.page,self.reducedMotion)
       for name,value in pairs(self.latest) do self.pending[name]=value end
       self:flush()
-      -- Software raster (cairo): same CSS palette, rounded corners and shadows,
-      -- but the GL driver stack (libLLVM/nvidia-gallium) never loads in this
-      -- process. Measured: RSS ~126 vs ~219 MiB, panel pixels identical outside
-      -- text AA, hidden idle 0.0% and a prewarmed open sample at 1.0% one core.
+      -- Session default renderer (GL): the page transition is a 220ms
+      -- Gtk.Stack slide; forcing cairo drops it to 48-72fps, so the smooth
+      -- baseline path wins over the ~100 MiB memory saving here.
       -- API32 runStream accepts a shell string, unlike runAsync's argv overload.
       -- Every argument is a quoted, owned path/constant; no note/password text enters it.
-      local arguments={"env","LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so","GDK_BACKEND=wayland","GSK_RENDERER=cairo","gjs","-m",api.pluginDir().."/native/main.js","--bridge-dir",self.dir,"--instance",self.instance}
+      local arguments={"env","LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so","GDK_BACKEND=wayland","gjs","-m",api.pluginDir().."/native/main.js","--bridge-dir",self.dir,"--instance",self.instance}
       local quoted={"exec"}
       for _,argument in ipairs(arguments) do table.insert(quoted,"'"..tostring(argument):gsub("'","'\\''").."'") end
       local callOK,launched=pcall(api.runStream,table.concat(quoted," "),function(line) self:receive(line) end)

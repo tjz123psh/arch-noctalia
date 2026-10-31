@@ -52,7 +52,7 @@ local g=Frontend.new(api,"/private-idle",function()end,function()end)
 g.idleExitMs=60000
 g:publish("notes",{ready=true})
 check(g:start(),"idle fixture child starts")
-check(spawned:find("GSK_RENDERER=cairo",1,true),"child is spawned with the software raster renderer")
+check(not spawned:find("GSK_RENDERER",1,true),"child uses the session renderer; forcing cairo caps page transitions at 48-72fps")
 local firstInstance=g.instance
 g:control("hide")
 clock=clock+59999;g:pulse()

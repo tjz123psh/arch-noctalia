@@ -188,12 +188,6 @@
       "hidden_rss_mib": 90.2,
       "hidden_idle_cpu_percent": 0.17
     },
-    "page_transition": {
-      "implementation": "two page snapshots composited into one 2W texture; one picture is moved",
-      "frames_measured": 34,
-      "duration_ms": 240,
-      "fps": 144,
-      "note": "Two live pages repaint at 48-72fps under cairo; a single wide texture stays at 144fps on the same 101 MiB process."
-    }
+    "page_transition_note": "Baseline Gtk.Stack SLIDE_LEFT_RIGHT under the default GL renderer: 34 frames / ~236 ms at 144 fps."
   }
 }

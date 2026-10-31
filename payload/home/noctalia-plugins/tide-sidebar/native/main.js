@@ -2,7 +2,6 @@ import Gtk from 'gi://Gtk?version=4.0';
 import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-import Graphene from 'gi://Graphene?version=1.0';
 import Layer from 'gi://Gtk4LayerShell?version=1.0';
 import * as UI from './ui.js';
 import {encodePackets} from './transport.mjs';
@@ -37,7 +36,6 @@ let state = {
 };
 let sequence = 0, visible = false, currentPage = 'notes', lastControl = -1;
 let window, stack, toastRevealer, toastLabel, toastTimer = 0;
-let pageTransitionLayer = null, pageSlidePicture = null, pageSlideTick = 0, pageSlideToken = 0;
 let views = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
 let drawerTimer = 0, drawerAnim = null;
 const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose, DRAWER_OPEN_MARGIN = -1;
@@ -133,145 +131,18 @@ function selectPage(name, save = true) {
     name = normalizePage(name);
     if (name === currentPage && stack?.get_visible_child_name() === name) { updatePage(true); return; }
     if (visible) views[currentPage]?.onHide?.();
-    // Build and update the incoming page *before* the slide starts: doing it
-    // after set_visible_child_name makes the time-based transition skip frames
-    // while the main loop lays out the new view.
     ensureView(name);
-    const previous = currentPage;
     currentPage = name;
-    updatePage(true);
+    stack.set_visible_child_name(name);
     for (const [page, button] of Object.entries(navigation)) {
         if (page === name) button.add_css_class('selected'); else button.remove_css_class('selected');
     }
-    // A full-width Stack slide paints two live pages every frame (~14-21ms
-    // under cairo). Freeze both pages into one wide texture and move that
-    // single texture instead; cairo then renders one blit per frame at 144fps.
-    const pageMs = visible ? UI.motionMs(reducedMotion(), 'page') : 0;
-    const direction = pageNames.indexOf(name) >= pageNames.indexOf(previous) ? -1 : 1;
-    if (visible && pageMs > 0) cancelPageSlide();
-    const snapshot = visible && pageMs > 0 ? snapshotStack() : null;
-    stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
-    stack.set_transition_duration(snapshot ? 0 : pageMs);
-    stack.set_visible_child_name(name);
-    if (snapshot) startPageSlide(snapshot, pageMs, direction);
-
-    if (visible) {
-        // Pulses, refocus and data refreshes would repaint the pages while the
-        // slide is running; let the slide finish first, then activate the page.
-        const token = ++pageShowToken;
-        const delay = Math.max(1, pageMs + 60);
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
-            if (token !== pageShowToken || !visible || currentPage !== name) return GLib.SOURCE_REMOVE;
-            views[name]?.onShow?.();
-            reportGeometrySoon();
-            return GLib.SOURCE_REMOVE;
-        });
-        send('visibility', {open: true, tab: name});
-    }
+    updatePage(true);
+    if (visible) { views[name]?.onShow?.(); send('visibility', {open: true, tab: name}); reportGeometrySoon(); }
     if (save) send('preferences', {tab: name, reducedMotion: state.preferences?.reducedMotion === true});
 }
-let geometrySource = 0, pageShowToken = 0;
-// A live Stack slide repaints both pages every frame; on cairo that measures
-// ~14-21ms/frame (48-72fps). Snapshot each page once, composite them into one
-// 2W texture, and move that single texture: still ~102 MiB, but 144fps.
-function snapshotStack() {
-    if (!stack || !window.get_renderer) return null;
-    const width = stack.get_width(), height = stack.get_height();
-    if (width <= 0 || height <= 0) return null;
-    for (const widget of [stack, stack.get_visible_child()]) {
-        if (!widget) continue;
-        const w = width, h = height;
-        try {
-            const paintable = new Gtk.WidgetPaintable({widget});
-            const snapshot = new Gtk.Snapshot();
-            paintable.snapshot(snapshot, w, h);
-            const node = snapshot.to_node();
-            if (!node) continue;
-            const rect = new Graphene.Rect();
-            rect.init(0, 0, w, h);
-            return {texture: window.get_renderer().render_texture(node, rect), width: w, height: h};
-        } catch (error) {
-            printerr('sidebar: page snapshot failed: ' + error.message);
-        }
-    }
-    return null;
-}
-function cancelPageSlide() {
-    pageSlideToken += 1;
-    if (pageSlideTick) { window.remove_tick_callback(pageSlideTick); pageSlideTick = 0; }
-    if (pageSlidePicture && pageTransitionLayer) { pageTransitionLayer.remove(pageSlidePicture); pageSlidePicture = null; }
-    if (pageTransitionLayer) pageTransitionLayer.set_visible(false);
-    if (stack) stack.set_visible(true);
-}
-function startPageSlide(outgoing, duration, direction) {
-    cancelPageSlide();
-    if (!pageTransitionLayer || !outgoing || !(duration > 0)) return;
-    const layer = pageTransitionLayer;
-    const oldPicture = Gtk.Picture.new_for_paintable(outgoing.texture);
-    oldPicture.set_size_request(outgoing.width, outgoing.height);
-    pageSlidePicture = oldPicture;
-    layer.put(oldPicture, 0, 0);
-    layer.set_visible(true);
-    const token = pageSlideToken;
-    // Let the switched-in page paint under the outgoing snapshot, then compose
-    // one wide texture (old | new). Sliding a single texture stays at 144fps;
-    // two overlapping full-page textures halve cairo's frame rate.
-    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 34, () => {
-        if (token !== pageSlideToken) return GLib.SOURCE_REMOVE;
-        const incoming = snapshotStack();
-        if (!incoming) { stack.set_visible(true); layer.remove(oldPicture); layer.set_visible(false); pageSlidePicture = null; return GLib.SOURCE_REMOVE; }
-        const w = outgoing.width, h = outgoing.height;
-        let wide = null;
-        try {
-            const snapshot = new Gtk.Snapshot();
-            const first = new Graphene.Rect(); first.init(0, 0, w, h);
-            const second = new Graphene.Rect(); second.init(w, 0, w, h);
-            const left = direction < 0 ? outgoing.texture : incoming.texture;
-            const right = direction < 0 ? incoming.texture : outgoing.texture;
-            snapshot.append_texture(left, first);
-            snapshot.append_texture(right, second);
-            const viewport = new Graphene.Rect(); viewport.init(0, 0, 2 * w, h);
-            wide = window.get_renderer().render_texture(snapshot.to_node(), viewport);
-        } catch (error) {
-            printerr('sidebar: page compose failed: ' + error.message);
-        }
-        if (!wide) { stack.set_visible(true); layer.remove(oldPicture); layer.set_visible(false); pageSlidePicture = null; return GLib.SOURCE_REMOVE; }
-        const picture = Gtk.Picture.new_for_paintable(wide);
-        picture.set_size_request(2 * w, h);
-        layer.remove(oldPicture);
-        pageSlidePicture = picture;
-        const startX = direction < 0 ? 0 : -w;
-        layer.put(picture, startX, 0);
-        stack.set_visible(false);
-        animateWideSlide({width: w, height: h}, picture, duration, token, direction);
-        return GLib.SOURCE_REMOVE;
-    });
-}
-function animateWideSlide(geometry, picture, duration, token, direction) {
-    const layer = pageTransitionLayer;
-    const w = geometry.width;
-    const startX = direction < 0 ? 0 : -w;
-    const endX = direction < 0 ? -w : 0;
-    let startTime = 0;
-    pageSlideTick = window.add_tick_callback((_widget, clock) => {
-        if (token !== pageSlideToken) { pageSlideTick = 0; return GLib.SOURCE_REMOVE; }
-        const now = clock.get_frame_time();
-        if (!startTime) startTime = now;
-        const t = Math.min(1, (now - startTime) / (duration * 1000));
-        const eased = easeInOutCubic(t);
-        if (picture) layer.move(picture, Math.round(startX + (endX - startX) * eased), 0);
-        if (t >= 1) {
-            pageSlideTick = 0;
-            pageSlideToken += 1;
-            stack.set_visible(true);
-            if (picture) layer.remove(picture);
-            pageSlidePicture = null;
-            layer.set_visible(false);
-            return GLib.SOURCE_REMOVE;
-        }
-        return GLib.SOURCE_CONTINUE;
-    });
-}
+let geometrySource = 0;
+
 function reportGeometrySoon() {
     if (checkOnly || !visible || geometrySource) return;
     geometrySource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 560, () => {
@@ -351,8 +222,6 @@ function setVisible(wanted, page = null) {
         send('visibility', {open: true, tab: currentPage});
         reportGeometrySoon();
     } else {
-        pageShowToken += 1;
-        cancelPageSlide();
         // The surface stays mapped off-screen; without this the hidden editor
         // keeps keyboard focus and its input is written to disk.
         window.set_focus(null);
@@ -518,12 +387,7 @@ app.connect('startup', () => {
     const right = UI.box(Gtk.Orientation.VERTICAL, 6, ['content-column']);
     right.set_hexpand(true); right.set_vexpand(true);
     stack = new Gtk.Stack({hexpand: true, vexpand: true, transition_type: Gtk.StackTransitionType.SLIDE_LEFT_RIGHT, transition_duration: UI.DURATION.page});
-    pageTransitionLayer = new Gtk.Fixed({hexpand: true, vexpand: true, can_target: false});
-    pageTransitionLayer.set_visible(false);
-    const stackHost = new Gtk.Overlay({hexpand: true, vexpand: true});
-    stackHost.set_child(stack);
-    stackHost.add_overlay(pageTransitionLayer);
-    right.append(stackHost);
+    right.append(stack);
     toastRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_UP, transition_duration: UI.DURATION.toast});
     toastRevealer.add_css_class('toast');
     toastRevealer.set_visible(false);

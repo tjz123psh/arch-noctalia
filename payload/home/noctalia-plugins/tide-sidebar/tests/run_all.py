@@ -67,9 +67,7 @@ def check_native_lifecycle():
         "view?.onHide?.()": "view cleanup must run on shutdown",
         "bytes.length > 16777216": "note channel limit must cover 160 x 64 KiB snapshots",
         "const from = Math.min(Layer.get_margin": "reopening must resume from the current margin",
-        "new Gtk.WidgetPaintable": "page transition must freeze pages instead of repainting two live pages",
-        "snapshot.append_texture": "page transition must composite one wide texture",
-        "pageTransitionLayer": "page transition must draw through the dedicated texture layer",
+        "stack.set_visible_child_name(name)": "page switch must use the baseline Stack slide",
     }
     missing = [message for token, message in required.items() if token not in js]
     if missing:
