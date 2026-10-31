@@ -178,8 +178,13 @@
       "CSS keyframes on box-shadow/background-color (parsed but not rendered by this GTK version); only opacity keyframes are reliable"
     ],
     "drawer": {
-      "type": "Gtk.Fixed child translation inside a fixed, always-mapped window",
-      "note": "The layer surface never moves or unmaps; a 16ms timer translates the shell by integer pixels inside a Gtk.Fixed. Hidden state keeps the shell outside the window and disables input targeting. The timer waits for window map + the first frame tick before starting, so cold starts cannot skip the 560ms animation.",
+      "type": "layer surface left-margin animation on the frame clock",
+      "duration_ms": {
+        "open": 620,
+        "close": 560
+      },
+      "easing": "ease-in-out cubic",
+      "note": "The surface stays mapped; each frame updates the layer-shell left margin so the compositor translates the already-rendered buffer. The shell is attached to the screen edge (square left corners, 24px right corners) and does not re-layout or re-rasterize glyphs/shadow during motion. Starting is deferred to the first frame after map, so a cold frontend cannot skip the animation. Hidden state keeps the surface off-screen and disables input targeting.",
       "hidden_rss_mib": 89.5,
       "hidden_idle_cpu_percent": 0.17
     }

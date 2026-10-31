@@ -37,9 +37,8 @@ let state = {
 let sequence = 0, visible = false, currentPage = 'notes', lastControl = -1;
 let window, stack, toastRevealer, toastLabel, toastTimer = 0;
 let views = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
-let drawer = null, drawerX = 0, shellHeight = 0, syncShellHeight = () => {};
-let drawerTimer = 0, drawerAnim = null, drawerGateTick = 0, drawerGateMap = 0;
-const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose, DRAWER_OPEN_MARGIN = 8;
+let drawerTick = 0, drawerAnim = null, drawerGateMap = 0;
+const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose;
 let viewFactory = null;
 let ensureView = () => null;
 let shellBox = null, appliedWidth = 0;
@@ -118,9 +117,9 @@ function applyConfig() {
     if (width === appliedWidth || !shellBox) return;
     appliedWidth = width;
     // The layer surface follows the widget's request, so the shell carries the width.
-    shellBox.set_size_request(width, shellHeight > 0 ? shellHeight : -1);
+    shellBox.set_size_request(width, -1);
     window.set_default_size(width, -1);
-    if (!visible) moveDrawer(drawerClosedOffset());
+    if (!visible) setDrawer(drawerClosedOffset());
 }
 function normalizePage(page) { return pageNames.includes(page) ? page : (pageAliases[page] || 'notes'); }
 function updatePage(force = false, changed = []) {
@@ -172,63 +171,47 @@ function reportGeometrySoon() {
     });
 }
 
-function drawerClosedOffset() { return -(appliedWidth + 28); }
+function drawerClosedOffset() { return -(appliedWidth + 8); }
 function easeOutCubic(t) { return 1 - (1 - t) ** 3; }
 function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2; }
-function moveDrawer(value) {
-    drawerX = Math.round(value);
-    if (drawer) drawer.move(shellBox, drawerX, 0);
+function setDrawer(value) {
+    Layer.set_margin(window, Layer.Edge.LEFT, Math.round(value));
 }
 function cancelDrawer() {
-    if (drawerTimer) { GLib.source_remove(drawerTimer); drawerTimer = 0; }
-    if (drawerGateTick) { window.remove_tick_callback(drawerGateTick); drawerGateTick = 0; }
+    if (drawerTick) { window.remove_tick_callback(drawerTick); drawerTick = 0; }
     if (drawerGateMap) { window.disconnect(drawerGateMap); drawerGateMap = 0; }
     drawerAnim = null;
 }
-// Wait for the first real frame after mapping before starting the timer;
-// otherwise a cold frontend paints only after the 560ms window has elapsed.
-function startDrawerOnFirstFrame(from, to, duration, easing) {
-    cancelDrawer();
-    moveDrawer(from);
-    if (!duration) { moveDrawer(to); return; }
-    const arm = () => {
-        drawerGateTick = window.add_tick_callback(() => {
-            drawerGateTick = 0;
-            if (!visible) return GLib.SOURCE_REMOVE;
-            animateDrawer(from, to, duration, easing);
-            return GLib.SOURCE_REMOVE;
-        });
-    };
-    if (window.get_mapped()) arm();
-    else drawerGateMap = window.connect('map', () => {
-        window.disconnect(drawerGateMap); drawerGateMap = 0;
-        arm();
-    });
-}
-// The window and its layer surface never move or unmap; only the shell is
-// translated inside a Gtk.Fixed. Integer positions + a 16ms timer keep the
-// content pixel-aligned and avoid the first-map/frame-clock hitch entirely.
+// Move the layer surface itself. The compositor translates the already-rendered
+// buffer, so glyphs and shadows are never re-rasterized mid-flight (no shimmer),
+// and the frame clock keeps the steps aligned with the display.
 function animateDrawer(from, to, duration, easing, done) {
     cancelDrawer();
-    moveDrawer(from);
-    if (!duration || from === to) {
-        moveDrawer(to);
-        if (done) done();
-        return;
-    }
-    const anim = {from, to, start: 0, duration, easing, done};
-    drawerAnim = anim;
-    drawerTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, () => {
-        if (drawerAnim !== anim) { drawerTimer = 0; return GLib.SOURCE_REMOVE; }
-        if (!anim.start) anim.start = GLib.get_monotonic_time();
-        const t = Math.min(1, (GLib.get_monotonic_time() - anim.start) / (anim.duration * 1000));
-        moveDrawer(anim.from + (anim.to - anim.from) * anim.easing(t));
-        if (t >= 1) {
-            drawerTimer = 0; drawerAnim = null;
-            if (anim.done) anim.done();
-            return GLib.SOURCE_REMOVE;
-        }
-        return GLib.SOURCE_CONTINUE;
+    setDrawer(from);
+    if (!duration || from === to) { setDrawer(to); if (done) done(); return; }
+    const start = () => {
+        const anim = {from, to, start: 0, duration, easing, done};
+        drawerAnim = anim;
+        drawerTick = window.add_tick_callback((_widget, clock) => {
+            if (drawerAnim !== anim) { drawerTick = 0; return GLib.SOURCE_REMOVE; }
+            const now = clock.get_frame_time();
+            if (!anim.start) anim.start = now;
+            const t = Math.min(1, (now - anim.start) / (anim.duration * 1000));
+            setDrawer(anim.from + (anim.to - anim.from) * anim.easing(t));
+            if (t >= 1) {
+                drawerTick = 0; drawerAnim = null;
+                if (anim.done) anim.done();
+                return GLib.SOURCE_REMOVE;
+            }
+            return GLib.SOURCE_CONTINUE;
+        });
+    };
+    // A cold frontend may not be mapped yet; start on the first real frame so
+    // the drawer window cannot elapse before the surface is on screen.
+    if (window.get_mapped()) start();
+    else drawerGateMap = window.connect('map', () => {
+        window.disconnect(drawerGateMap); drawerGateMap = 0;
+        start();
     });
 }
 function setVisible(wanted, page = null) {
@@ -237,20 +220,17 @@ function setVisible(wanted, page = null) {
     visible = wanted;
     if (visible) {
         window.set_can_target(true);
-        syncShellHeight();
         if (!window.get_mapped()) window.present();
-        const closed = drawerClosedOffset();
-        moveDrawer(closed);
         updatePage(true);
         views[currentPage]?.onShow?.();
-        startDrawerOnFirstFrame(closed, DRAWER_OPEN_MARGIN, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeOutCubic);
+        animateDrawer(drawerClosedOffset(), 0, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeInOutCubic);
         send('visibility', {open: true, tab: currentPage});
         reportGeometrySoon();
     } else {
         views[currentPage]?.onHide?.();
         send('flush');
         send('visibility', {open: false, tab: currentPage});
-        animateDrawer(drawerX, drawerClosedOffset(), reducedMotion() ? 0 : DRAWER_CLOSE_MS, easeInOutCubic, () => {
+        animateDrawer(Layer.get_margin(window, Layer.Edge.LEFT), drawerClosedOffset(), reducedMotion() ? 0 : DRAWER_CLOSE_MS, easeInOutCubic, () => {
             if (!visible) window.set_can_target(false);
         });
     }
@@ -352,9 +332,11 @@ app.connect('startup', () => {
     Layer.set_anchor(window, Layer.Edge.LEFT, true);
     Layer.set_anchor(window, Layer.Edge.TOP, true);
     Layer.set_anchor(window, Layer.Edge.BOTTOM, true);
-    Layer.set_margin(window, Layer.Edge.LEFT, 8);
-    Layer.set_margin(window, Layer.Edge.TOP, 8);
-    Layer.set_margin(window, Layer.Edge.BOTTOM, 8);
+    // The drawer is attached to the screen edge: no top/bottom/side breathing
+    // room; the shell's left corners are square and its right corners rounded.
+    Layer.set_margin(window, Layer.Edge.LEFT, 0);
+    Layer.set_margin(window, Layer.Edge.TOP, 0);
+    Layer.set_margin(window, Layer.Edge.BOTTOM, 0);
     Layer.set_keyboard_mode(window, Layer.KeyboardMode.ON_DEMAND);
     Layer.set_exclusive_zone(window, 0);
     window.connect('close-request', () => { setVisible(false); return true; });
@@ -399,17 +381,7 @@ app.connect('startup', () => {
     toastRevealer.connect('notify::child-revealed', () => { if (!toastRevealer.get_reveal_child() && !toastRevealer.get_child_revealed()) toastRevealer.set_visible(false); });
     toastLabel = new Gtk.Label({wrap: true, xalign: 0}); toastRevealer.set_child(toastLabel); right.append(toastRevealer);
     shell.append(rail); shell.append(right);
-    drawer = new Gtk.Fixed();
-    drawer.set_hexpand(true); drawer.set_vexpand(true);
-    drawer.put(shell, 0, 0);
-    window.set_child(drawer);
-    syncShellHeight = () => {
-        const height = window.get_height();
-        if (height > 0 && height !== shellHeight) {
-            shellHeight = height;
-            shellBox.set_size_request(appliedWidth, height);
-        }
-    };
+    window.set_child(shell);
     const keyboard = new Gtk.EventControllerKey();
     keyboard.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
     keyboard.connect('key-pressed', (_controller, key, _code, mods) => {
@@ -427,10 +399,9 @@ app.connect('startup', () => {
         print('native-check: GTK widgets and CSS constructed successfully');
         GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => { app.quit(); return GLib.SOURCE_REMOVE; });
     } else {
-        moveDrawer(drawerClosedOffset());
+        setDrawer(drawerClosedOffset());
         window.set_can_target(false);
         window.present();
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => { syncShellHeight(); return GLib.SOURCE_REMOVE; });
         watchBridge();
         send('frontend-ready');
         heartbeat = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 4, () => {
