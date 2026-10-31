@@ -178,13 +178,13 @@
       "CSS keyframes on box-shadow/background-color (parsed but not rendered by this GTK version); only opacity keyframes are reliable"
     ],
     "drawer": {
-      "type": "layer surface left-margin animation, step-based 16ms timer",
+      "type": "layer surface left-margin animation, 7ms timer (matched to the 144 Hz output)",
       "duration_ms": {
         "open": 620,
         "close": 560
       },
       "easing": "ease-in-out cubic",
-      "note": "The surface stays mapped and parked with 1px on screen: a fully off-screen layer is not composited until it is shown, which made the first visible frame the open position. Each 16ms step advances one fixed increment (no wall-clock catch-up), so a busy cold-start main loop pauses the drawer instead of skipping it. The compositor translates the already-rendered buffer; glyphs/shadow are not re-rasterized. Hidden state disables input targeting; the 1px edge line is intentional.",
+      "note": "The surface stays mapped and parked with one 1px border at alpha 0.004 on screen: a fully off-screen layer is not composited, and the first show would paint at the open position. The near-transparent pixel keeps the buffer warm while being invisible. Each 7ms step advances elapsed time with a cap, so a stall pauses the drawer instead of skipping it. The compositor translates the already-rendered buffer; glyphs/shadow are not re-rasterized. Hidden state disables input targeting.",
       "hidden_rss_mib": 90.2,
       "hidden_idle_cpu_percent": 0.17
     }

@@ -38,7 +38,7 @@ let sequence = 0, visible = false, currentPage = 'notes', lastControl = -1;
 let window, stack, toastRevealer, toastLabel, toastTimer = 0;
 let views = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
 let drawerTimer = 0, drawerAnim = null;
-const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose;
+const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose, DRAWER_OPEN_MARGIN = -1;
 let viewFactory = null;
 let ensureView = () => null;
 let shellBox = null, appliedWidth = 0;
@@ -183,34 +183,32 @@ function cancelDrawer() {
 }
 // Move the layer surface itself. The compositor translates the already-rendered
 // buffer, so glyphs and shadows are never re-rasterized mid-flight (no shimmer).
-// The closed surface keeps one pixel on screen: a fully off-screen layer is not
-// composited, and the first show would then paint directly at the open position.
+// The closed surface keeps one almost-transparent pixel on screen: a fully
+// off-screen layer is not composited, and the first show would then paint at
+// the open position. The 7ms timer matches this 144 Hz output (a 16ms timer
+// visibly repeats margins); elapsed time is capped so a stall pauses the drawer
+// instead of skipping it.
 function animateDrawer(from, to, duration, easing, done) {
     cancelDrawer();
     setDrawer(from);
     if (!duration || from === to) { setDrawer(to); if (done) done(); return; }
-    const begin = () => {
-        // Step-based, not wall-clock: a cold start blocks the main loop long
-        // enough that elapsed time can jump most of the drawer before the
-        // surface is composited. Advancing one step per callback means a stall
-        // pauses the motion instead of skipping it.
-        const steps = Math.max(1, Math.round(duration / 16));
-        const anim = {from, to, step: 0, steps, duration, easing, done};
-        drawerAnim = anim;
-        drawerTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, () => {
-            if (drawerAnim !== anim) { drawerTimer = 0; return GLib.SOURCE_REMOVE; }
-            anim.step += 1;
-            const t = Math.min(1, anim.step / anim.steps);
-            setDrawer(anim.from + (anim.to - anim.from) * anim.easing(t));
-            if (t >= 1) {
-                drawerTimer = 0; drawerAnim = null;
-                if (anim.done) anim.done();
-                return GLib.SOURCE_REMOVE;
-            }
-            return GLib.SOURCE_CONTINUE;
-        });
-    };
-    begin();
+    const anim = {from, to, elapsed: 0, last: 0, duration, easing, done};
+    drawerAnim = anim;
+    drawerTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 7, () => {
+        if (drawerAnim !== anim) { drawerTimer = 0; return GLib.SOURCE_REMOVE; }
+        const now = GLib.get_monotonic_time();
+        const delta = anim.last ? Math.min(14000, now - anim.last) : 7000;
+        anim.last = now;
+        anim.elapsed = Math.min(anim.duration * 1000, anim.elapsed + delta);
+        const t = Math.min(1, anim.elapsed / (anim.duration * 1000));
+        setDrawer(anim.from + (anim.to - anim.from) * anim.easing(t));
+        if (t >= 1) {
+            drawerTimer = 0; drawerAnim = null;
+            if (anim.done) anim.done();
+            return GLib.SOURCE_REMOVE;
+        }
+        return GLib.SOURCE_CONTINUE;
+    });
 }
 function setVisible(wanted, page = null) {
     if (page) selectPage(page, false);
@@ -221,7 +219,7 @@ function setVisible(wanted, page = null) {
         if (!window.get_mapped()) window.present();
         updatePage(true);
         views[currentPage]?.onShow?.();
-        animateDrawer(drawerClosedOffset(), 0, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeInOutCubic);
+        animateDrawer(drawerClosedOffset(), DRAWER_OPEN_MARGIN, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeInOutCubic);
         send('visibility', {open: true, tab: currentPage});
         reportGeometrySoon();
     } else {

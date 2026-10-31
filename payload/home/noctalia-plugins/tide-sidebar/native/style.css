@@ -22,7 +22,8 @@
   background-color: #FAF4E6;
   background-image: none;
   border: 1px solid rgba(96, 80, 32, 0.11);
-  border-left: none;
+  border-left: 1px solid rgba(250, 244, 230, 0.004);
+  background-clip: padding-box;
   border-radius: 0 24px 24px 0;
   box-shadow: inset -10px 0 16px -18px rgba(50, 42, 20, 0.16);
   padding: 14px;
