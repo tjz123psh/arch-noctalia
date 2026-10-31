@@ -60,6 +60,10 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
     if [[ -z "$ftype" ]]; then
       miss=$((miss + 1))
       warn "missing (runtime-managed): ${target}"
+    elif [[ "$ftype" != "regular file" ]]; then
+      # 内容会变，但类型不该变：目录/断链冒充目标不能被"存在"放过。
+      bad=$((bad + 1))
+      warn "not a regular file (runtime-managed): ${target}"
     else
       runtime=$((runtime + 1))
     fi
@@ -240,7 +244,9 @@ if (( ${#svc_inactive[@]} > 0 )); then
 fi
 
 # supergfxd.conf 是 runtime 名单（只核存在），但 hotplug_type=Asus 是安装器必须保证的值：单独抽查。
-if [[ -e /etc/supergfxd.conf ]] && ! grep -q '"hotplug_type": "Asus"' /etc/supergfxd.conf 2>/dev/null; then
+# 与逐行检查同一条解析（含 AN_TARGET_ROOT），沙箱演练才能真的验到这里。
+sgfx_target="$(an_resolve_target /etc/supergfxd.conf 2>/dev/null || true)"
+if [[ -n "$sgfx_target" && -e "$sgfx_target" ]] && ! grep -q '"hotplug_type": "Asus"' "$sgfx_target" 2>/dev/null; then
   misc_bad=$((misc_bad + 1))
   warn "supergfxd.conf does not carry hotplug_type=Asus - switching to iGPU will bounce back to Hybrid after reboot"
 fi

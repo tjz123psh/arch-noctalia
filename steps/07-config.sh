@@ -186,7 +186,7 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
   fi
 
   # 幂等跳过：常规文件且内容一致；支持权限位的文件系统上还要求权限位一致。
-  if [[ "$ftype" == "regular file" && ! -L "$target" && -n "$actual_md5" && "$actual_md5" == "$md5" ]]; then
+  if [[ "$ftype" == "regular file" && -n "$actual_md5" && "$actual_md5" == "$md5" ]]; then
     if (( mode_enforced == 0 )) || [[ "$(t_perms "$target")" == "$mode" ]]; then
       unchanged=$((unchanged + 1))
       continue

@@ -134,8 +134,10 @@ an_resolve_target() {
     warn "manifest target is not an absolute path: ${t}"
     return 1
   fi
-  # 纯词法归一化（realpath -m 不解析软链、也不要求路径存在）：/opt/../tmp/x → /tmp/x。
-  # 少了这一步，前缀白名单可以被 ".." 绕过，护栏就形同虚设。
+  # 归一化：realpath -m 会解析已存在路径上的软链（含末段），但不要求路径存在，
+  # 同时消掉 ".."：/opt/../tmp/x → /tmp/x（少了这一步，前缀白名单可被 ".." 绕过）。
+  # 注意：AN_TARGET_ROOT 前缀是在解析之后才拼上的，所以沙箱里的软链不会被跟随，
+  # 沙箱演练不能仿真软链目标（真实安装里 $target 恒为解析后的普通文件）。
   if ! norm="$(realpath -m -- "$t" 2>/dev/null)"; then
     warn "cannot normalise manifest target: ${t}"
     return 1
