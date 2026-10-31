@@ -120,24 +120,6 @@ backup_overwritten() { # $1=target  $2=ftype  → 0=有副本或无需副本，1
 }
 
 # 软链被替换前，把「它原本指向哪」记下来——cp 只能存内容，存不了链接本身。
-backup_symlink() { # $1=target  → 0=已记录，1=失败
-  local t="$1" rel base
-  [[ -n "$RUN_TS" ]] || RUN_TS="$(date +%Y%m%d-%H%M%S)"
-  rel="${t#/}"
-  base="${AN_STATE_DIR}/overwritten/${RUN_TS}/${rel}.symlink"
-  if ! mkdir -p -- "$(dirname -- "$base")"; then
-    warn "backup dir not writable: $(dirname -- "$base")"
-    return 1
-  fi
-  if ! printf "%s\n" "$(readlink -- "$t")" > "$base" 2>/dev/null; then
-    warn "backup failed (symlink): ${t}"
-    return 1
-  fi
-  # 能整份复制就再存一份（保留链接形态）；失败不影响上面那份指向记录。
-  cp -P -- "$t" "${base%.symlink}" 2>/dev/null || true
-  info "backed up symlink: ${t} -> $(readlink -- "$t") (recorded in ${base})"
-}
-
 checked=0
 deployed=0
 unchanged=0
@@ -150,6 +132,8 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
   fi
   checked=$((checked + 1))
   # 清单目标 → 实际路径（白名单校验 + 可选的 AN_TARGET_ROOT 沙箱重写）。
+  # 注意 an_resolve_target 用 realpath -m 解析软链：目标若是用户软链，写入落在真实文件上、
+  # 链接本身保留（见 docs/DETAILS.md）；因此下面的 target 不会再是软链。
   if ! target="$(an_resolve_target "$raw_target")"; then
     failed=$((failed + 1))
     continue
@@ -201,14 +185,6 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
     mode_skipped=$((mode_skipped + 1))
   fi
 
-  # 软链（用户把自己的 dotfile 链过来）：内容一致就保持链接不动。
-  # 不这么做的话 install 会 unlink 重建，链接被换成普通文件、而摘要仍显示 0 failed。
-  if [[ -L "$target" && -n "$actual_md5" && "$actual_md5" == "$md5" ]]; then
-    info "kept (symlink, identical content): ${target} -> $(readlink -- "$target")"
-    unchanged=$((unchanged + 1))
-    continue
-  fi
-
   # 幂等跳过：常规文件且内容一致；支持权限位的文件系统上还要求权限位一致。
   if [[ "$ftype" == "regular file" && ! -L "$target" && -n "$actual_md5" && "$actual_md5" == "$md5" ]]; then
     if (( mode_enforced == 0 )) || [[ "$(t_perms "$target")" == "$mode" ]]; then
@@ -226,13 +202,6 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
         continue
       fi
       info "re-installing (mode or type differs): ${target}"
-    elif [[ -L "$target" ]]; then
-      info "replacing symlink (content differs): ${target} -> $(readlink -- "$target")"
-      if ! backup_symlink "$target"; then
-        warn "skipping ${target}: refusing to replace a symlink without a record of where it pointed"
-        failed=$((failed + 1))
-        continue
-      fi
     else
       info "overwriting changed file: ${target}"
       if ! backup_overwritten "$target" "$ftype"; then

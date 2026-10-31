@@ -1,4 +1,8 @@
-# Noctalia 5.2.1 / plugin_api 32 SDK 核实笔记
+# Noctalia SDK 核实笔记（5.2.1 实测，宿主已升级 5.4.0）
+
+> 本笔记的逐项验证是在 noctalia 5.2.1 / plugin_api 32 上完成的。宿主现已为
+> 5.4.0（API 42），插件的 `plugin_api = 32` 仍按兼容层加载并跑通全部测试；
+> 新增 API 未使用，未逐项重测。
 
 结论：可以用原生 Luau 插件做侧栏、编辑、拖放、后台服务和轻量动画；没有 QML 服务对象、通用 canvas/shapes 或可自定义的 CSS 动画。以下按 v5.2.1 实际导出/属性白名单记录，避免套用旧版 Noctalia 或浏览器 API。
 

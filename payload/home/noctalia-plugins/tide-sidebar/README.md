@@ -1,6 +1,6 @@
 # 侧边栏工作台
 
-适配本机 Noctalia 5.2.1 + niri。界面按用户确认的[参考式样张](<design/reference-flat-proof.png>)制作：米白底、奶黄色块、橄榄拼接、自然波浪分色与轻投影；不再使用品牌口号、反光渐变和一格格描边按键。
+适配本机 Noctalia 5.4.0 + niri 26.04。界面按[实机视觉基准](<design/reference-flat-proof.png>)制作：米白底、奶黄色块、橄榄拼接、自然波浪分色与轻投影；不再使用品牌口号、反光渐变和一格格描边按键。
 
 ## 打开与关闭
 
@@ -76,7 +76,7 @@ noctalia msg plugin pang/tide-sidebar:backend all motion on
 noctalia msg plugin pang/tide-sidebar:backend all motion off
 ~~~
 
-收起满 15 分钟（可在插件设置里改成 0–120，0 为常驻）后前端退出，隐藏期间内存归零；后台服务继续跑便签、倒计时和通知，再打开约 0.4 秒冷启。前端用 GTK 自带的软件光栅（cairo）而不是 GL：调色板、圆角与投影照旧，但本进程不再加载 GL 驱动栈（libLLVM / NVIDIA gallium），常驻内存大幅下降。本机一次预热后的 6 秒观察：Noctalia 约 0.83%＋前端 0.17%，合计约单核 1.00%；收起后 0.83%＋0.00%，合计约 0.83%。原生前端 RSS 约 126 MiB（GL 路径曾约 217 MiB），仍是额外常驻界面的内存代价。它不是零开销，也不把 CPU 采样冒充 FPS 或输入延迟。
+收起满 15 分钟（可在插件设置里改成 0–120，0 为常驻）后前端退出，隐藏期间内存归零；后台服务继续跑便签、倒计时和通知，再打开约 0.4 秒冷启。前端用 GTK 自带的软件光栅（cairo）而不是 GL：调色板、圆角与投影照旧，但本进程不再加载 GL 驱动栈（libLLVM / NVIDIA gallium），常驻内存大幅下降。本机一次预热后的 6 秒观察：Noctalia 约 0.83%＋前端 0.17%，合计约单核 1.00%；收起后 0.83%＋0.00%，合计约 0.83%。打开后前端 RSS 约 98–115 MiB（只开便签约 98，四页都访问过约 109–114；GL 路径曾约 217 MiB），仍是额外常驻界面的内存代价。它不是零开销，也不把 CPU 采样冒充 FPS 或输入延迟。
 
 详见[性能记录及条件](<docs/performance-observation.json>)和[改版验收说明](<docs/reference-redesign.md>)。旧版样本包含开场动画、新版样本预热后才开始，不能据此声称严格减少了50%。
 

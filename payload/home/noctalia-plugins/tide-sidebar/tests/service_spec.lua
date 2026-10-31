@@ -100,7 +100,7 @@ local function boot(options)
     options = options or {}
     local h = {now=options.now or EPOCH,disk=options.disk or newDisk(),values={},history={},
         watchers={},requests={},notifications={},mkdirs={},reads={},encodeAttempts=0,
-        reject=options.reject or {}}
+        reject=options.reject or {},streams=0}
     local function label(argv) return argv[1] == "chmod" and "chmod" or argv[3] end
     function h:count(kind, pending)
         local count = 0
@@ -177,7 +177,23 @@ local function boot(options)
         end
         return h.disk.files[path]
     end
-    host.fileExists = function(path) return h.disk.files[path] ~= nil end
+    host.fileExists = function(path)
+        if options.stream and path:match("^/mock/plugin/native/") then return true end
+        return h.disk.files[path] ~= nil
+    end
+    host.renameFile = function(from, to)
+        if h.disk.files[from] == nil then return false end
+        h.disk.files[to] = h.disk.files[from]; h.disk.files[from] = nil; return true
+    end
+    if options.stream then
+        host.runStream = function(command, callback)
+            h.streams = h.streams + 1
+            h.lastStream = command
+            if options.stream == "fail" then return false end
+            h.streamCallback = callback
+            return true
+        end
+    end
     host.writeFile = function(path, raw)
         assert(type(raw) == "string", "writeFile expects bytes")
         h.disk.writes[#h.disk.writes + 1] = {path=path,raw=raw}
@@ -284,6 +300,40 @@ test("real entry installs callbacks and gates writes on initialization", functio
     equal(h:notes().model.notes[1].title, "随手记")
     equal(h:timer().ready, true)
     equal(h:count("snapshot"), 1)
+end)
+
+test("idle exit is wired from config and respawns the native child", function()
+    local h = boot({config={idle_exit_minutes=1}, stream=true})
+    h:initialize()
+    h:reply("chmod")
+    equal(h.streams, 1)
+    h:tick(59000)
+    equal(h.streams, 1)
+    h:tick(2000)
+    h:tick(1000)
+    equal(h.streams, 1)
+    h:send({action="frontend-show", page="notes"})
+    h:reply("chmod")
+    equal(h.streams, 2)
+    -- 0 disables the release: the child stays resident across a long hidden wait.
+    local off = boot({config={idle_exit_minutes=0}, stream=true})
+    off:initialize()
+    off:reply("chmod")
+    off:tick(3600000)
+    equal(off.streams, 1)
+end)
+
+test("a failing native child is surfaced once, not on every retry", function()
+    local h = boot({stream="fail"})
+    h:initialize()
+    h:reply("chmod")
+    equal(h.streams, 1)
+    equal(#h.notifications, 1)
+    equal(h.notifications[1].title, "侧栏界面无法启动")
+    h:send({action="frontend-show", page="notes"})
+    h:reply("chmod")
+    equal(h.streams, 2)
+    equal(#h.notifications, 1)
 end)
 
 test("permission failure blocks persistence and reports both consumers", function()

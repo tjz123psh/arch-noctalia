@@ -157,23 +157,18 @@ if ! run_a >/dev/null 2>&1; then bad "third run (supergfxd repair) exited non-ze
 grep -q '"hotplug_type": "Asus"' "$aroot/etc/supergfxd.conf" \
   || bad "supergfxd.conf hotplug_type was not repaired back to Asus"
 
-# ---------- D. 软链：内容一致保持链接；内容不同才替换，并留下「原本指向哪」 ----------
+# ---------- D. 软链：realpath 解析到真实文件（写穿、链接保留），白名单外拒绝 ----------
 dstore="$sandbox/d-store"; mkdir -p "$dstore"
-link_t="$aroot/home/pang/.bash_profile"
-cp -p -- "$link_t" "$dstore/same.conf"
-printf 'LOCAL OVERRIDE\n' > "$dstore/diff.conf"
-rm -f -- "$link_t"; ln -s "$dstore/same.conf" "$link_t"
-if ! outd1="$(run_a 2>&1)"; then bad "symlink(identical) run exited non-zero"; fi
-[[ -L "$link_t" ]] || bad "identical-content symlink was replaced by a regular file"
-grep -q 'kept (symlink, identical content)' <<<"$outd1" || bad "kept (symlink) message missing"
-
-rm -f -- "$link_t"; ln -s "$dstore/diff.conf" "$link_t"
-if ! run_a >/dev/null 2>&1; then bad "symlink(differs) run exited non-zero"; fi
-[[ ! -L "$link_t" ]] || bad "a symlink with different content should have been replaced"
-[[ "$(cat "$link_t")" == "$(cat "$ROOT_DIR/payload/home/.bash_profile")" ]] || bad "symlink target was not restored to the manifest content"
-link_rec="$(find "$ahome/.local/state/arch-noctalia/overwritten" -name '*.symlink' -print -quit 2>/dev/null || true)"
-[[ -n "$link_rec" ]] || bad "no *.symlink record was written for the replaced symlink"
-[[ "$(cat "$link_rec")" == "$dstore/diff.conf" ]] || bad "the *.symlink record does not point at the original target"
+printf 'SAME\n' > "$dstore/target.conf"
+ln -sfn "$dstore/target.conf" "$dstore/link"
+resolved="$(AN_TARGET_ALLOW="$sandbox/" bash -c 'source "$1/lib/common.sh"; an_resolve_target "$2"' _ "$ROOT_DIR" "$dstore/link" 2>/dev/null || true)"
+[[ "$resolved" == "$dstore/target.conf" ]]     || bad "symlink target was not resolved to its destination (got: ${resolved:-none})"
+printf 'PAYLOAD\n' > "$dstore/target.conf"
+[[ -L "$dstore/link" ]] || bad "writing to the resolved destination replaced the link itself"
+ln -sfn /usr/share/zoneinfo/UTC "$dstore/escape"
+if AN_TARGET_ALLOW="$sandbox/" bash -c 'source "$1/lib/common.sh"; an_resolve_target "$2"' _ "$ROOT_DIR" "$dstore/escape" >/dev/null 2>&1; then
+    bad "a symlink pointing outside the allowed prefixes was accepted"
+fi
 
 # ---------- E. 备份失败 → 不覆盖（fail-closed） ----------
 E="$sandbox/e"; erepo="$E/repo"; eroot="$E/root"; ehome="$eroot/home/pang"; estub="$E/stub-bin"; estate="$E/state-ro"

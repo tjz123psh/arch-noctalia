@@ -188,7 +188,13 @@ export function createNotes(ctx) {
     listTabs.append(normalTab); listTabs.append(trashTab); listTabs.append(listCount); listShell.append(listTabs);
     const listStack = new Gtk.Stack({transition_type: Gtk.StackTransitionType.CROSSFADE, transition_duration: 120});
     const normalList = U.box(Gtk.Orientation.VERTICAL, 3), recycleList = U.box(Gtk.Orientation.VERTICAL, 3);
-    const emptyList = U.label('还没有便签', ['caption']), emptyTrash = U.label('回收站是空的', ['caption']);
+    function listEmpty(text) {
+        const box = U.box(Gtk.Orientation.VERTICAL, 4, ['list-empty']);
+        box.append(U.icon('note', 18));
+        const caption = U.label(text, ['caption']); caption.set_xalign(0.5); box.append(caption);
+        return box;
+    }
+    const emptyList = listEmpty('还没有便签'), emptyTrash = listEmpty('回收站是空的');
     normalList.append(emptyList); recycleList.append(emptyTrash);
     function listScroller(child) {
         const scroller = new Gtk.ScrolledWindow({hexpand: true, propagate_natural_height: true, max_content_height: 174});

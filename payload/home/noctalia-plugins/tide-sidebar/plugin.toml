@@ -1,6 +1,6 @@
 id = "pang/tide-sidebar"
 name = "侧边栏工作台"
-version = "2.2.0"
+version = "2.3.0"
 plugin_api = 32
 author = "pang"
 license = "MIT"

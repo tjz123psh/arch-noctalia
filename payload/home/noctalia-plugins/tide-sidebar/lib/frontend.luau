@@ -137,7 +137,7 @@ function M.new(api,base,onCommand,onError)
   end
   function self:pulse()
     local t=api.nowMs()
-    if self.started and not self.visible and (self.idleExitMs or 0)>0 then
+    if not self.relaunchAt and self.started and not self.visible and (self.idleExitMs or 0)>0 then
       local since=self.hiddenAt or self.startedAt
       if since>0 and t-since>=self.idleExitMs then self:idleQuit() end
     end

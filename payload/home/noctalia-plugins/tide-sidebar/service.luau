@@ -393,7 +393,17 @@ command=function(c)
     frontend:control(nil,normalizePage(preferences.tab),reducedMotion())
   end
 end
-frontend=Frontend.new(noctalia,base,function(value) command(value) end,function(message) feedback(false,message,"") end)
+local lastFrontendError,lastFrontendErrorAt="",0
+local function frontendFailure(message)
+  feedback(false,message,"")
+  local t=now()
+  if message~=lastFrontendError or t-lastFrontendErrorAt>600000 then
+    lastFrontendError=message;lastFrontendErrorAt=t
+    -- The in-panel toast cannot appear when the panel itself failed to start.
+    noctalia.notify("侧栏界面无法启动",message)
+  end
+end
+frontend=Frontend.new(noctalia,base,function(value) command(value) end,frontendFailure)
 frontend.idleExitMs=config.idleExitMinutes*60000
 noctalia.state.watch("command",function(value) command(value);frontend:flush() end)
 noctalia.state.watch("visibility",function(value)

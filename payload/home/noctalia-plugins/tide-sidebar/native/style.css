@@ -2,7 +2,7 @@
  * One palette, one rhythm: paper shell, olive accent, mint for system pages.
  * Depth comes from 1px warm borders + two-layer soft shadows; no gloss, no gradients.
  * Tokens (kept literal because GTK CSS has no custom properties):
- *   ink #2F2918 · ink-soft #4C432C · muted #8B8168 · faint #A79C82
+ *   ink #2F2918 · ink-soft #4C432C · muted #71674F · faint #A79C82
  *   paper #FAF4E6 · rail #F0E6C9 · border rgba(96,80,32,.11)
  *   note #FFEDB8 · calc #FFE9A8 · olive #6D5E1B · mint #E9F2E4 · mint-ink #3F654A
  *   radius: shell 24 · card 18 · control 10-12 · pill 999
@@ -55,16 +55,16 @@
   box-shadow: 0 1px 2px rgba(74, 62, 28, 0.08);
 }
 .tide-window .nav-label { font-size: 10px; font-weight: 500; }
-.tide-window .motion-button, .tide-window .close-button { color: #8B8168; margin-top: 2px; }
+.tide-window .motion-button, .tide-window .close-button { color: #71674F; margin-top: 2px; }
 .tide-window .close-button:hover { background-color: rgba(120, 103, 28, 0.08); color: #4C432C; }
 
 /* ---------- type scale ---------- */
 .tide-window .title,
 .tide-window .page-title { font-size: 18px; font-weight: 600; color: #2F2918; letter-spacing: 0.01em; }
 .tide-window .section-title { font-size: 14px; font-weight: 600; color: #2F2918; }
-.tide-window .subtitle { color: #8B8168; }
-.tide-window .muted, .tide-window .field-muted { color: #8B8168; }
-.tide-window .caption, .tide-window .status-label, .tide-window .status { font-size: 11px; color: #8B8168; }
+.tide-window .subtitle { color: #71674F; }
+.tide-window .muted, .tide-window .field-muted { color: #71674F; }
+.tide-window .caption, .tide-window .status-label, .tide-window .status { font-size: 11px; color: #71674F; }
 .tide-window .field-label { font-size: 11px; font-weight: 500; color: #7A6E4E; letter-spacing: 0.02em; }
 .tide-window .warning, .tide-window .status-error, .tide-window .error { color: #9A4A33; }
 .tide-window .status-success { color: #476D50; }
@@ -278,7 +278,7 @@
 }
 .tide-window .equals-button:hover { background-color: #5B4F15; }
 .tide-window .tools-history { padding: 2px 14px 12px; }
-.tide-window .history-row { font-size: 11px; color: #8B8168; padding: 2px 0; }
+.tide-window .history-row { font-size: 11px; color: #71674F; padding: 2px 0; }
 .tide-window .tools-history .section-title { font-size: 12px; color: #6F6244; }
 
 /* ---------- tools: countdown ---------- */
@@ -397,6 +397,9 @@
 .tide-window .window-row .muted { font-size: 11px; color: #7C8F7A; }
 .tide-window .window-row image { color: #476D50; }
 .tide-window .window-card .muted { color: #7C8F7A; }
+.tide-window .list-empty { padding: 10px 6px; }
+.tide-window .list-empty image { color: #A79C82; }
+.tide-window .editor-scroll:focus-within { box-shadow: inset 0 0 0 1px rgba(109, 94, 27, 0.20); }
 .tide-window .empty-state { padding: 20px 12px; }
 .tide-window .empty-state image { color: #9CB29A; }
 .tide-window .empty-title { font-size: 13px; font-weight: 600; color: #4C6B52; }

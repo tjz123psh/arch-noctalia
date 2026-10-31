@@ -60,5 +60,36 @@
       "Latency sampled by polling `niri msg layers` every ~10 ms, so the measured 429 ms includes polling overhead.",
       "One machine, one session; not a cold-disk measurement."
     ]
+  },
+  "icon_theme": {
+    "date": "2026-10-31",
+    "change": "Pin gtk-icon-theme-name=Adwaita inside this process; every icon used is *-symbolic and already resolved from the built-in theme.",
+    "measured": "Same state (lazy views, notes page open): Papirus-Dark 117660 KiB vs Adwaita 100856 KiB RSS (-16.4 MiB); screenshot comparison of all four pages shows the same glyphs.",
+    "limits": [
+      "One machine/session; other apps keep the session icon theme."
+    ]
+  },
+  "lazy_views": {
+    "date": "2026-10-31",
+    "change": "Build a page tree on first use instead of constructing all four at startup.",
+    "measured": {
+      "cold_start_median_ms_eager": 395,
+      "cold_start_median_ms_lazy": 382,
+      "samples": 5
+    },
+    "limits": [
+      "Probe spawns the real front end and polls `niri msg layers` every ~5 ms; values include polling overhead."
+    ]
+  },
+  "frontend_memory": {
+    "date": "2026-10-31",
+    "renderer": "cairo + Adwaita icon theme + lazy pages",
+    "notes_only_rss_mib": 98.5,
+    "all_pages_visited_rss_mib": [
+      106.2,
+      114.5
+    ],
+    "pss_mib_notes_only": 55.1,
+    "note": "All-pages figures vary a few MiB with mozjs GC/fragmentation across runs; both are far below the 126 MiB cairo baseline before the icon/lazy work."
   }
 }
