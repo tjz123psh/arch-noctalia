@@ -116,15 +116,54 @@ export function createNotes(ctx) {
         refreshStatus();
         return accepted;
     }
+    function createTaggedBuffer(initialText) {
+        const table = new Gtk.TextTagTable();
+        const tags = {
+            h1: new Gtk.TextTag({name: 'md_h1', weight: Pango.Weight.BOLD, size: 16 * Pango.SCALE}),
+            h2: new Gtk.TextTag({name: 'md_h2', weight: Pango.Weight.BOLD, size: 14 * Pango.SCALE}),
+            todoBox: new Gtk.TextTag({name: 'md_todo_box', weight: Pango.Weight.BOLD, foreground: '#6D5E1B'}),
+            todoDone: new Gtk.TextTag({name: 'md_todo_done', strikethrough: true, foreground: '#8A7E64'}),
+        };
+        for (const tag of Object.values(tags)) table.add(tag);
+        const buffer = new Gtk.TextBuffer({tag_table: table});
+        buffer.set_text(initialText, -1);
+        buffer.set_enable_undo(true);
+        applyMarkdownFormatting(buffer, tags);
+        return {buffer, tags};
+    }
+
+    function applyMarkdownFormatting(buffer, tags) {
+        const [start, end] = buffer.get_bounds();
+        for (const tag of Object.values(tags)) buffer.remove_tag(tag, start, end);
+        const text = buffer.get_text(start, end, true);
+        const lines = text.split('\n');
+        let offset = 0;
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const lineLen = line.length;
+            if (/^#\s+/.test(line)) {
+                buffer.apply_tag(tags.h1, buffer.get_iter_at_offset(offset), buffer.get_iter_at_offset(offset + lineLen));
+            } else if (/^##\s+/.test(line)) {
+                buffer.apply_tag(tags.h2, buffer.get_iter_at_offset(offset), buffer.get_iter_at_offset(offset + lineLen));
+            } else if (line.includes('[x]') || line.includes('[X]')) {
+                const boxIdx = line.indexOf('[x]') >= 0 ? line.indexOf('[x]') : line.indexOf('[X]');
+                buffer.apply_tag(tags.todoBox, buffer.get_iter_at_offset(offset + boxIdx), buffer.get_iter_at_offset(offset + boxIdx + 3));
+                buffer.apply_tag(tags.todoDone, buffer.get_iter_at_offset(offset + boxIdx + 3), buffer.get_iter_at_offset(offset + lineLen));
+            } else if (line.includes('[ ]')) {
+                const boxIdx = line.indexOf('[ ]');
+                buffer.apply_tag(tags.todoBox, buffer.get_iter_at_offset(offset + boxIdx), buffer.get_iter_at_offset(offset + boxIdx + 3));
+            }
+            offset += lineLen + 1;
+        }
+    }
+
     function ensureBuffer(id) {
         const draft = drafts.get(id);
         if (!draft) return null;
         let record = buffers.get(id);
         if (!record) {
-            const buffer = new Gtk.TextBuffer();
-            buffer.set_text(draft.body, -1);
-            buffer.set_enable_undo(true);
-            record = {buffer, suppressed: false, actionDepth: 0};
+            const {buffer, tags} = createTaggedBuffer(draft.body);
+            record = {buffer, tags, suppressed: false, actionDepth: 0};
             buffers.set(id, record);
             record.beginSignal = buffer.connect('begin-user-action', () => record.actionDepth++);
             record.endSignal = buffer.connect('end-user-action', () => {
@@ -133,12 +172,10 @@ export function createNotes(ctx) {
             });
             record.signal = buffer.connect('changed', () => {
                 if (record.suppressed) return;
+                applyMarkdownFormatting(buffer, record.tags);
                 const body = textOf(buffer);
                 if (!drafts.edit(id, body)) return;
                 localError = '';
-                // Send immediately, or at the end of this synchronous GTK user action.
-                // A replace-selection/paste must not send its intermediate empty body.
-                // No timer delay: the service alone owns the 500ms disk debounce.
                 if (record.actionDepth === 0) sendDraft(id);
                 refreshStatus();
             });
@@ -147,6 +184,7 @@ export function createNotes(ctx) {
             record.buffer.begin_irreversible_action();
             record.buffer.set_text(draft.body, -1);
             record.buffer.end_irreversible_action();
+            applyMarkdownFormatting(record.buffer, record.tags);
             record.suppressed = false;
         }
         return record.buffer;
@@ -246,13 +284,17 @@ export function createNotes(ctx) {
     // Keep the paper uncluttered: the reference's bottom pencil opens native actions.
     const editPopover = new Gtk.Popover({has_arrow: false, autohide: true});
     const actions = U.box(Gtk.Orientation.VERTICAL, 3, ['note-actions']);
+    const pinButton = U.button('置顶便签', 'check', () => { editPopover.popdown(); togglePin(); }, ['note-menu-action']);
+    pinButton.set_tooltip_text('在列表顶部优先显示');
+    const todoButton = U.button('待办打勾 (Ctrl+D)', 'check', () => { editPopover.popdown(); toggleCurrentTodo(); }, ['note-menu-action']);
+    todoButton.set_tooltip_text('切换当前行待办完成状态');
     const renameButton = U.button('重命名', 'pencil', () => { editPopover.popdown(); beginRename(); }, ['note-menu-action']);
     renameButton.set_tooltip_text('重命名便签');
     const copyButton = U.button('复制正文', 'copy', () => { editPopover.popdown(); copyBody(); }, ['note-menu-action']);
     copyButton.set_tooltip_text('复制正文');
     const deleteButton = U.button('移到回收站', 'trash', () => { editPopover.popdown(); deleteNote(); }, ['note-menu-action', 'danger-button']);
     deleteButton.set_tooltip_text('移到回收站');
-    actions.append(renameButton); actions.append(copyButton); actions.append(deleteButton); editPopover.set_child(actions);
+    actions.append(pinButton); actions.append(todoButton); actions.append(renameButton); actions.append(copyButton); actions.append(deleteButton); editPopover.set_child(actions);
 
     const renameRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: U.DURATION.reveal});
     const renameRow = U.box(Gtk.Orientation.HORIZONTAL, 5, ['rename-row']);
@@ -296,10 +338,88 @@ export function createNotes(ctx) {
     undoRow.append(U.iconButton('x', () => { undoDismissed = true; undoRevealer.set_reveal_child(false); }, '关闭提示'));
     undoRevealer.set_child(undoRow); page.append(undoRevealer);
 
+    function togglePin() {
+        const note = current();
+        if (!note || !ready) return;
+        const curTitle = note.title || '';
+        const isPinned = curTitle.startsWith('★ ');
+        const newTitle = isPinned ? curTitle.slice(2).trim() : ('★ ' + curTitle).trim();
+        if (!flushAll()) return;
+        send('note-rename', {id: note.id, title: newTitle});
+    }
+
+    function toggleCurrentTodo() {
+        const note = current();
+        if (!note || !ready) return;
+        const buffer = editor.get_buffer();
+        const mark = buffer.get_insert();
+        const iter = buffer.get_iter_at_mark(mark);
+        const lineIdx = iter.get_line();
+        const lineStart = buffer.get_iter_at_line(lineIdx);
+        const lineEnd = lineStart.copy();
+        if (!lineEnd.ends_line()) lineEnd.forward_to_line_end();
+        const lineText = buffer.get_text(lineStart, lineEnd, true);
+
+        if (lineText.includes('[ ]')) {
+            const newText = lineText.replace('[ ]', '[x]');
+            buffer.begin_user_action();
+            buffer.delete(lineStart, lineEnd);
+            buffer.insert(lineStart, newText, -1);
+            buffer.end_user_action();
+            footerWave.pulse(360, 0.5);
+        } else if (lineText.includes('[x]') || lineText.includes('[X]')) {
+            const newText = lineText.replace(/\[[xX]\]/, '[ ]');
+            buffer.begin_user_action();
+            buffer.delete(lineStart, lineEnd);
+            buffer.insert(lineStart, newText, -1);
+            buffer.end_user_action();
+            footerWave.pulse(320, 0.4);
+        } else {
+            buffer.begin_user_action();
+            buffer.insert(lineStart, '- [ ] ', -1);
+            buffer.end_user_action();
+            footerWave.pulse(320, 0.4);
+        }
+    }
+
+    function handleSmartTodoEnter() {
+        const buffer = editor.get_buffer();
+        const mark = buffer.get_insert();
+        const iter = buffer.get_iter_at_mark(mark);
+        const lineIdx = iter.get_line();
+        const lineStart = buffer.get_iter_at_line(lineIdx);
+        const lineEnd = lineStart.copy();
+        if (!lineEnd.ends_line()) lineEnd.forward_to_line_end();
+        const lineText = buffer.get_text(lineStart, lineEnd, true);
+
+        const match = lineText.match(/^(\s*-\s*\[[ xX]\]\s*)/);
+        if (match) {
+            const prefix = match[1];
+            if (lineText.trim() === prefix.trim()) {
+                buffer.begin_user_action();
+                buffer.delete(lineStart, lineEnd);
+                buffer.end_user_action();
+                return true;
+            }
+            buffer.begin_user_action();
+            buffer.insert_at_cursor('\n- [ ] ');
+            buffer.end_user_action();
+            return true;
+        }
+        return false;
+    }
+
     const keys = new Gtk.EventControllerKey();
     keys.connect('key-pressed', (_controller, keyval, _keycode, modifiers) => {
         if ((modifiers & Gdk.ModifierType.CONTROL_MASK) && (keyval === Gdk.KEY_s || keyval === Gdk.KEY_S)) {
             flushAll(); return true;
+        }
+        if ((modifiers & Gdk.ModifierType.CONTROL_MASK) && (keyval === Gdk.KEY_d || keyval === Gdk.KEY_D)) {
+            toggleCurrentTodo(); return true;
+        }
+        if (!(modifiers & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK))
+            && (keyval === Gdk.KEY_Return || keyval === Gdk.KEY_KP_Enter)) {
+            if (handleSmartTodoEnter()) return true;
         }
         return false;
     });
@@ -468,7 +588,14 @@ export function createNotes(ctx) {
         });
     }
     function syncLists() {
-        reconcileRows(normalList, rows, notes, false, emptyList);
+        const sortedNotes = notes.slice().sort((a, b) => {
+            const aPin = (a.title || '').startsWith('★ ');
+            const bPin = (b.title || '').startsWith('★ ');
+            if (aPin && !bPin) return -1;
+            if (!aPin && bPin) return 1;
+            return 0;
+        });
+        reconcileRows(normalList, rows, sortedNotes, false, emptyList);
         reconcileRows(recycleList, trashRows, trash, true, emptyTrash);
         selectList(listStack.get_visible_child_name() || 'notes');
     }
