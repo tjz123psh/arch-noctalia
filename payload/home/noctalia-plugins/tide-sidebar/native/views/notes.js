@@ -322,14 +322,16 @@ export function createNotes(ctx) {
     const footerLayer = new Gtk.Overlay({hexpand: true}); footerLayer.add_css_class('note-footer-layer');
     const footerWave = U.waveFooter('#F6E2A4', 54, 22); footerWave.add_css_class('note-footer-wave');
     footerLayer.set_child(footerWave);
-    const footer = U.box(Gtk.Orientation.HORIZONTAL, 10, ['note-footer']);
+    const footer = U.box(Gtk.Orientation.HORIZONTAL, 8, ['note-footer']);
     footer.set_halign(Gtk.Align.FILL); footer.set_valign(Gtk.Align.END);
     const count = U.label('0 字', ['caption']);
+    const addTodoBtn = U.button('待办', 'check', () => { toggleCurrentTodo(); editor.grab_focus(); }, ['note-todo-btn']);
+    addTodoBtn.set_tooltip_text('插入待办项或切换打勾 (Ctrl+D)');
     const status = U.label('正在连接…', ['status-label']); status.set_hexpand(true); status.set_xalign(1);
     const actionsButton = new Gtk.MenuButton({tooltip_text: '便签操作'});
     actionsButton.add_css_class('note-actions-button'); actionsButton.set_icon_name('document-edit-symbolic');
     actionsButton.set_always_show_arrow(false); actionsButton.set_popover(editPopover);
-    footer.append(count); footer.append(status); footer.append(actionsButton);
+    footer.append(count); footer.append(addTodoBtn); footer.append(status); footer.append(actionsButton);
     footerLayer.add_overlay(footer); footerLayer.set_measure_overlay(footer, false); card.append(footerLayer);
     const undoRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: U.DURATION.reveal});
     const undoRow = U.box(Gtk.Orientation.HORIZONTAL, 7, ['undo-row']);
@@ -348,13 +350,10 @@ export function createNotes(ctx) {
         send('note-rename', {id: note.id, title: newTitle});
     }
 
-    function toggleCurrentTodo() {
+    function toggleLineTodoAt(lineIdx) {
         const note = current();
-        if (!note || !ready) return;
+        if (!note || !ready) return false;
         const buffer = editor.get_buffer();
-        const mark = buffer.get_insert();
-        const iter = buffer.get_iter_at_mark(mark);
-        const lineIdx = iter.get_line();
         const lineStart = buffer.get_iter_at_line(lineIdx);
         const lineEnd = lineStart.copy();
         if (!lineEnd.ends_line()) lineEnd.forward_to_line_end();
@@ -367,6 +366,7 @@ export function createNotes(ctx) {
             buffer.insert(lineStart, newText, -1);
             buffer.end_user_action();
             footerWave.pulse(360, 0.5);
+            return true;
         } else if (lineText.includes('[x]') || lineText.includes('[X]')) {
             const newText = lineText.replace(/\[[xX]\]/, '[ ]');
             buffer.begin_user_action();
@@ -374,7 +374,20 @@ export function createNotes(ctx) {
             buffer.insert(lineStart, newText, -1);
             buffer.end_user_action();
             footerWave.pulse(320, 0.4);
-        } else {
+            return true;
+        }
+        return false;
+    }
+
+    function toggleCurrentTodo() {
+        const note = current();
+        if (!note || !ready) return;
+        const buffer = editor.get_buffer();
+        const mark = buffer.get_insert();
+        const iter = buffer.get_iter_at_mark(mark);
+        const lineIdx = iter.get_line();
+        if (!toggleLineTodoAt(lineIdx)) {
+            const lineStart = buffer.get_iter_at_line(lineIdx);
             buffer.begin_user_action();
             buffer.insert(lineStart, '- [ ] ', -1);
             buffer.end_user_action();
@@ -423,6 +436,17 @@ export function createNotes(ctx) {
         }
         return false;
     });
+    const editorClick = new Gtk.GestureClick();
+    editorClick.connect('pressed', (_gesture, _n, x, y) => {
+        const [iter] = editor.get_iter_at_location(x, y);
+        if (!iter) return;
+        const lineIdx = iter.get_line();
+        const offset = iter.get_line_offset();
+        if (offset <= 7) {
+            toggleLineTodoAt(lineIdx);
+        }
+    });
+    editor.add_controller(editorClick);
     editor.add_controller(keys);
     const renameKeys = new Gtk.EventControllerKey();
     renameKeys.connect('key-pressed', (_controller, keyval) => {
