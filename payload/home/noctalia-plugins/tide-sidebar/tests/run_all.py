@@ -67,14 +67,17 @@ def check_native_lifecycle():
         "view?.onHide?.()": "view cleanup must run on shutdown",
         "bytes.length > 16777216": "note channel limit must cover 160 x 64 KiB snapshots",
         "const from = Math.min(Layer.get_margin": "reopening must resume from the current margin",
+        "new Gtk.WidgetPaintable": "page transition must freeze pages instead of repainting two live pages",
+        "snapshot.append_texture": "page transition must composite one wide texture",
+        "pageTransitionLayer": "page transition must draw through the dedicated texture layer",
     }
     missing = [message for token, message in required.items() if token not in js]
     if missing:
         raise SystemExit("native lifecycle contract missing: " + "; ".join(missing))
     if "Number(control.serial)" in js:
         raise SystemExit("native/main.js compares control serials without a finite guard")
-    if "Gtk.Fixed" in js:
-        raise SystemExit("native/main.js reintroduced Gtk.Fixed (re-rasterizes the drawer)")
+    if "drawer = new Gtk.Fixed" in js or "syncShellHeight" in js:
+        raise SystemExit("native/main.js reintroduced the Gtk.Fixed drawer")
     if "DRAWER_OPEN_MARGIN = -1" not in js or "appliedWidth - 1" not in js:
         raise SystemExit("drawer no longer parks one (nearly invisible) pixel on screen")
     if "timeout_add(GLib.PRIORITY_DEFAULT, 7" not in js:
