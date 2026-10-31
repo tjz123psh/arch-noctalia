@@ -104,5 +104,31 @@
       "empty_state_icon": "3.36:1 (non-text 3:1)"
     },
     "keyboard": "native_keyboard_spec drives real wtype input and a Tab focus-chain check (minutes -> seconds -> next); Ctrl+1-4 page switching and Esc closing were verified manually on this machine."
+  },
+  "startup_profile": {
+    "date": "2026-10-31",
+    "method": "instrumented copy of native/main.js with GLib timestamp marks, run as `--check` (constructs all views, never presents)",
+    "stages_ms": {
+      "after_modules": 9,
+      "after_css": 308,
+      "after_window": 310,
+      "after_views": 330,
+      "after_select_page": 331,
+      "check_all_pages_done": 332
+    },
+    "note": "The bulk is GJS/GTK startup before the CSS mark; lazy views removed ~16 ms of page construction. spawn->layer median with polling is 382 ms, and 69 ms of that is process creation.",
+    "limits": [
+      "Single machine/session; `--check` skips present/first-frame, so these marks do not cover the last ~50 ms of show."
+    ],
+    "after_final_tweaks": {
+      "date": "2026-10-31",
+      "probe_ms": [
+        368,
+        378,
+        376
+      ],
+      "median": 376,
+      "note": "Same niri-polling probe after removing the duplicate initial update and applying config before control; earlier median 382."
+    }
   }
 }

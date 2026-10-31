@@ -221,8 +221,15 @@ function flushReads() {
     const names = [...dirtyFiles]; dirtyFiles.clear();
     // State before control: opening never renders old data from the preceding service instance.
     names.sort((a, b) => (a === 'control' ? 1 : 0) - (b === 'control' ? 1 : 0));
-    const changed = names.filter(readChannel);
+    const changed = [];
+    for (const name of names) {
+        if (name === 'control') continue;
+        if (readChannel(name)) changed.push(name);
+    }
+    // Width first: the control packet below may present the window; applying the
+    // configured width afterwards would map at 450 and then resize.
     applyConfig();
+    if (names.includes('control')) readChannel('control');
     updatePage(false, changed);
     return GLib.SOURCE_REMOVE;
 }
@@ -291,7 +298,8 @@ app.connect('startup', () => {
         const view = viewFactory[name]();
         views[name] = view;
         stack.add_named(view.widget, name);
-        view.update(state);
+        // selectPage()/--check update right after creation; doing it here twice
+        // built the initial notes page against an empty snapshot for nothing.
         return view;
     };
     const shell = UI.box(Gtk.Orientation.HORIZONTAL, 12, ['sidebar-shell']);
