@@ -1,206 +1,401 @@
-/* Approved flat reference: process-local styles only. */
+/* tide-sidebar — warm paper workstation.
+ * One palette, one rhythm: paper shell, olive accent, mint for system pages.
+ * Depth comes from 1px warm borders + two-layer soft shadows; no gloss, no gradients.
+ * Tokens (kept literal because GTK CSS has no custom properties):
+ *   ink #2F2918 · ink-soft #4C432C · muted #8B8168 · faint #A79C82
+ *   paper #FAF4E6 · rail #F0E6C9 · border rgba(96,80,32,.11)
+ *   note #FFEDB8 · calc #FFE9A8 · olive #6D5E1B · mint #E9F2E4 · mint-ink #3F654A
+ *   radius: shell 24 · card 18 · control 10-12 · pill 999
+ *   spacing: 4 / 6 / 8 / 12 / 16 / 20
+ */
+
+/* ---------- window & shell ---------- */
 .tide-window {
-  color: #332D1F;
+  color: #2F2918;
   background-color: transparent;
   background-image: none;
   font-family: "Noto Sans CJK SC", sans-serif;
   font-size: 13px;
+  padding: 6px;
 }
 .tide-window .sidebar-shell {
-  background-color: #FBF5E9;
+  background-color: #FAF4E6;
   background-image: none;
-  border: none;
-  border-radius: 20px;
-  box-shadow: none;
-  padding: 16px;
+  border: 1px solid rgba(96, 80, 32, 0.11);
+  border-radius: 24px;
+  box-shadow: 0 2px 5px rgba(50, 42, 20, 0.10), 0 16px 36px rgba(50, 42, 20, 0.16);
+  padding: 14px;
 }
-.tide-window .tab-rail { background-color: #EFE6CC; border: none; border-radius: 17px; padding: 5px; }
+.tide-window .content-column { min-width: 0; }
+
+/* ---------- navigation rail ---------- */
+.tide-window .tab-rail {
+  background-color: #F0E6C9;
+  border: 1px solid rgba(96, 80, 32, 0.09);
+  border-radius: 18px;
+  padding: 6px;
+}
+.tide-window .nav-button {
+  min-width: 32px;
+  min-height: 48px;
+  padding: 4px 2px;
+  border-radius: 13px;
+  color: #7C7257;
+  background-color: transparent;
+  border: 1px solid transparent;
+  transition: background-color 140ms ease-out, color 140ms ease-out;
+}
+.tide-window .nav-button:hover { background-color: rgba(120, 103, 28, 0.08); color: #5C533B; }
+.tide-window .nav-button:active { background-color: rgba(120, 103, 28, 0.14); }
+.tide-window .nav-button.selected,
+.tide-window .nav-button:checked {
+  background-color: #FFF6DA;
+  border-color: rgba(150, 120, 40, 0.20);
+  color: #6D5E1B;
+  box-shadow: 0 1px 2px rgba(74, 62, 28, 0.08);
+}
+.tide-window .nav-label { font-size: 10px; font-weight: 500; }
+.tide-window .motion-button, .tide-window .close-button { color: #8B8168; margin-top: 2px; }
+.tide-window .close-button:hover { background-color: rgba(120, 103, 28, 0.08); color: #4C432C; }
+
+/* ---------- type scale ---------- */
+.tide-window .title,
+.tide-window .page-title { font-size: 18px; font-weight: 600; color: #2F2918; letter-spacing: 0.01em; }
+.tide-window .section-title { font-size: 14px; font-weight: 600; color: #2F2918; }
+.tide-window .subtitle { color: #8B8168; }
+.tide-window .muted, .tide-window .field-muted { color: #8B8168; }
+.tide-window .caption, .tide-window .status-label, .tide-window .status { font-size: 11px; color: #8B8168; }
+.tide-window .field-label { font-size: 11px; font-weight: 500; color: #7A6E4E; letter-spacing: 0.02em; }
+.tide-window .warning, .tide-window .status-error, .tide-window .error { color: #9A4A33; }
+.tide-window .status-success { color: #476D50; }
+.tide-window .page-header { padding: 1px 0 2px; min-height: 34px; }
+
+/* ---------- buttons ---------- */
 .tide-window button {
-  color: #332D1F;
+  color: #3B3320;
   background-color: transparent;
   background-image: none;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 10px;
   box-shadow: none;
-  min-height: 26px;
-  padding: 5px 9px;
-  transition: background-color 120ms ease-out, color 120ms ease-out;
+  min-height: 30px;
+  padding: 5px 10px;
+  transition: background-color 120ms ease-out, color 120ms ease-out, border-color 120ms ease-out;
 }
-.tide-window button:hover { background-color: rgba(120, 103, 28, 0.09); }
-.tide-window button:active { background-color: rgba(120, 103, 28, 0.16); }
-.tide-window button:disabled { opacity: 0.60; }
-.tide-window button:focus-visible { outline: 1px solid #78671C; outline-offset: 1px; box-shadow: none; }
+.tide-window button:hover { background-color: rgba(120, 103, 28, 0.08); }
+.tide-window button:active { background-color: rgba(120, 103, 28, 0.15); }
+.tide-window button:disabled { opacity: 0.55; }
+.tide-window button:focus-visible { outline: 2px solid rgba(109, 94, 27, 0.55); outline-offset: 1px; }
 .tide-window button label { color: inherit; }
-.tide-window .icon-button { min-width: 25px; min-height: 25px; padding: 4px; }
-.tide-window .nav-button { min-width: 24px; min-height: 43px; padding: 4px; color: #7B725B; border-radius: 12px; }
-.tide-window .nav-label { font-size: 10px; }
-.tide-window .nav-button:hover { background-color: #F4E7BC; }
-.tide-window .nav-button.selected, .tide-window .nav-button:checked { background-color: #F4E7BC; color: #78671C; }
-.tide-window .motion-button, .tide-window .close-button { color: #7B725B; background-color: transparent; }
-.tide-window .page-header { padding: 0 0 1px; }
-.tide-window .title, .tide-window .page-title { font-size: 20px; font-weight: 600; color: #332D1F; }
-.tide-window .section-title { font-size: 15px; font-weight: 500; color: #332D1F; }
-.tide-window .subtitle, .tide-window .muted, .tide-window .field-muted { color: #7B725B; }
-.tide-window .caption, .tide-window .status-label, .tide-window .status { font-size: 11px; color: #7B725B; }
-.tide-window .field-label { font-size: 12px; font-weight: 500; color: #675826; }
+.tide-window .icon-button { min-width: 30px; min-height: 30px; padding: 5px; border-radius: 10px; }
+.tide-window .soft-button { color: #6D5E1B; }
+.tide-window .danger, .tide-window .danger-button, .tide-window .destructive-action { color: #9A4A33; }
+.tide-window .danger:hover, .tide-window .danger-button:hover { background-color: rgba(154, 74, 51, 0.10); }
+.tide-window .primary, .tide-window .primary-button, .tide-window .suggested-action {
+  color: #FFF7DD;
+  background-color: #6D5E1B;
+  border-radius: 11px;
+  min-height: 32px;
+  font-weight: 500;
+}
+.tide-window .primary:hover, .tide-window .primary-button:hover, .tide-window .suggested-action:hover { background-color: #5B4F15; }
+.tide-window button:checked, .tide-window button.selected { color: #6D5E1B; background-color: #FFF6DA; }
+
+/* ---------- cards ---------- */
 .tide-window .card {
-  background-color: #FFE49A;
+  background-color: #FFE9A8;
   background-image: none;
-  border: none;
-  border-radius: 22px;
-  box-shadow: 0 3px 7px rgba(81, 70, 49, 0.20);
+  border: 1px solid rgba(96, 80, 32, 0.09);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(74, 62, 28, 0.06), 0 7px 18px rgba(74, 62, 28, 0.07);
   padding: 16px;
 }
-.tide-window .tools-card { background-color: #FFE49A; padding: 0; }
-.tide-window .notes-card { background-color: #FFEAB2; padding: 0; }
-.tide-window .timer-card { background-color: #78671C; padding: 0; min-height: 239px; }
-.tide-window .hotspot-card { background-color: #E1EEDD; color: #476D50; padding: 14px; }
-.tide-window .window-card { background-color: #CDE8BC; color: #476D50; }
-.tide-window .primary-button, .tide-window .primary, .tide-window .suggested-action {
-  color: #FFF4CD; background-color: #78671C; border-radius: 12px;
-}
-.tide-window .primary-button:hover, .tide-window .primary:hover, .tide-window .suggested-action:hover { background-color: #675826; }
-.tide-window .soft-button { color: #78671C; background-color: transparent; }
-.tide-window .danger, .tide-window .danger-button, .tide-window .destructive-action { color: #8A4430; background-color: transparent; }
-.tide-window .danger:hover, .tide-window .danger-button:hover { background-color: rgba(138, 68, 48, 0.10); }
-.tide-window button:checked, .tide-window button.selected { color: #78671C; background-color: #F4E7BC; }
-/* These are real native inputs. Their paper is the parent, not an inner frame. */
-.tide-window entry, .tide-window spinbutton {
-  color: #332D1F;
-  background-color: rgba(251, 245, 233, 0.34);
+.tide-window .notes-card { background-color: #FFEDB8; padding: 0; }
+.tide-window .tools-card { background-color: #FFE9A8; padding: 0; }
+.tide-window .timer-card { background-color: #6D5E1B; border-color: rgba(60, 50, 10, 0.25); padding: 0; }
+.tide-window .stopwatch-card { background-color: #E6F1E1; border-color: rgba(71, 109, 80, 0.12); padding: 11px 14px; }
+.tide-window .hotspot-card { background-color: #E9F2E4; color: #3F654A; border-color: rgba(71, 109, 80, 0.12); padding: 15px; }
+.tide-window .window-card { background-color: #EDF4E7; color: #3F654A; border-color: rgba(71, 109, 80, 0.10); }
+
+/* ---------- inputs, text, scroll ---------- */
+.tide-window entry, .tide-window spinbutton, .tide-window searchentry {
+  color: #2F2918;
+  background-color: rgba(255, 255, 255, 0.42);
   background-image: none;
-  border: none;
-  border-radius: 7px;
+  border: 1px solid rgba(96, 80, 32, 0.13);
+  border-radius: 10px;
   box-shadow: none;
   outline: none;
-  min-height: 27px;
-  padding: 5px 8px;
-  caret-color: #78671C;
+  min-height: 32px;
+  padding: 5px 10px;
+  caret-color: #6D5E1B;
 }
-.tide-window entry text, .tide-window spinbutton text { color: #332D1F; background-color: transparent; background-image: none; caret-color: #78671C; }
+.tide-window entry text, .tide-window spinbutton text, .tide-window searchentry text {
+  color: #2F2918; background-color: transparent; background-image: none; caret-color: #6D5E1B;
+}
 .tide-window entry:focus-within, .tide-window entry:focus, .tide-window spinbutton:focus-within,
-.tide-window entry text:focus, .tide-window entry text:focus-within { outline: none; box-shadow: none; }
-.tide-window entry placeholder { color: #8C794D; }
+.tide-window searchentry:focus-within,
+.tide-window entry text:focus, .tide-window entry text:focus-within { outline: none; box-shadow: none; border-color: rgba(109, 94, 27, 0.38); }
+.tide-window entry placeholder, .tide-window searchentry placeholder { color: #A79C82; }
 .tide-window textview, .tide-window textview text, .tide-window textview text preedit {
-  color: #332D1F; background-color: transparent; background-image: none; caret-color: #78671C;
+  color: #332D1F; background-color: transparent; background-image: none;
+  border: none; border-radius: 0; box-shadow: none; outline: none; padding: 0;
 }
+.tide-window .notes-paper, .tide-window .notes-paper text { color: #332D1F; background-color: transparent; font-size: 14px; }
 .tide-window textview:focus, .tide-window textview:focus-within, .tide-window textview text:focus { outline: none; box-shadow: none; }
-.tide-window selection, .tide-window entry text selection, .tide-window textview text selection { color: #332D1F; background-color: #ECD081; }
-.tide-window viewport, .tide-window scrolledwindow { background-color: transparent; background-image: none; border: none; box-shadow: none; }
-.tide-window .notes-page { padding: 0; }
-.tide-window .note-add-button { color: #78671C; min-width: 26px; min-height: 26px; padding: 2px; background-color: transparent; }
-.tide-window .note-selector { min-height: 0; padding: 0; background-color: transparent; border-radius: 12px; }
-.tide-window .note-selector > button { min-height: 20px; padding: 5px 14px; background-color: #F4E7BC; border-radius: 12px; }
-.tide-window .note-selector > button:hover, .tide-window .note-selector > button:checked { background-color: #F4E7BC; color: #332D1F; }
-.tide-window .note-selector image { color: #78671C; }
-.tide-window .note-selector-title { font-size: 14px; font-weight: 500; }
-.tide-window .notes-toolbar { padding: 14px 18px 6px; }
-.tide-window .note-title { font-size: 21px; font-weight: 500; color: #332D1F; }
-.tide-window .notes-paper-shell, .tide-window .editor-scroll {
-  background-color: transparent; background-image: none; border: none; border-radius: 0; box-shadow: none; padding: 0;
+.tide-window selection, .tide-window entry text selection, .tide-window textview text selection {
+  color: #2F2918; background-color: #E7CE86;
 }
-.tide-window .notes-paper, .tide-window .notes-paper text { color: #332D1F; background-color: transparent; font-size: 16px; }
-.tide-window .rename-row { padding: 0 18px 8px; }
-.tide-window .note-footer-layer { padding: 0; margin: 0; }
-.tide-window .note-footer { padding: 0 10px 8px 18px; background-color: transparent; }
-.tide-window .note-footer > label { font-size: 11px; color: #675826; }
-.tide-window .note-footer .status-label { margin-right: 12px; }
-.tide-window .note-actions-button > button { min-height: 28px; min-width: 28px; padding: 5px; border-radius: 13px; color: #FFF4CF; background-color: #78671C; }
-.tide-window .note-actions-button > button:hover { background-color: #675826; }
-.tide-window popover contents { background-color: #FBF5E9; border: 1px solid #EFE6CC; border-radius: 14px; box-shadow: 0 3px 7px rgba(81, 70, 49, 0.16); padding: 6px; }
-.tide-window .note-menu-action { min-height: 27px; padding: 5px 10px; background-color: transparent; }
-.tide-window .notes-list-shell { background-color: #F4E7BC; border: none; border-radius: 12px; padding: 7px; }
-.tide-window .list-tab { min-height: 22px; padding: 3px 8px; font-size: 11px; }
-.tide-window .list-tab.active { color: #78671C; background-color: #ECD081; }
-.tide-window .note-row { background-color: transparent; border-radius: 8px; padding: 1px 2px; }
-.tide-window .note-row.active { background-color: #FFE49A; }
-.tide-window .note-row.drop-target { background-color: #ECD081; }
-.tide-window .note-select-button { background-color: transparent; min-height: 25px; padding: 4px 3px; }
-.tide-window .note-list-title { color: #332D1F; font-size: 12px; }
-.tide-window .note-row .icon-button { min-width: 22px; min-height: 22px; padding: 2px; }
-.tide-window .note-grip { color: #8C794D; padding: 4px 2px; }
-.tide-window .empty-state { padding: 22px 18px; }
-.tide-window .empty-title { color: #332D1F; font-size: 17px; font-weight: 500; }
-.tide-window .undo-row { background-color: #F4E7BC; border-radius: 10px; padding: 5px 8px; }
-.tide-window .undo-row label { color: #675826; font-size: 11px; }
-.tide-window .inline-notice { background-color: #F4E7BC; border: none; border-radius: 9px; padding: 7px 9px; }
-.tide-window .inline-notice.error { background-color: #F4E7BC; }
-.tide-window .status-error, .tide-window .inline-notice.error label, .tide-window .note-footer .status-error { color: #8A4430; }
-.tide-window .status-success { color: #78671C; }
-.tide-window .warning { color: #675826; }
-/* Calculator: one yellow surface, with a shared operator strip. */
-.tide-window .calc-display-pane { padding: 14px 16px 4px; }
-.tide-window .calc-expression, .tide-window .calc-expression text { color: #69592D; background-color: transparent; min-height: 26px; padding: 2px 0; font-size: 18px; }
-.tide-window .display, .tide-window .result-display { color: #332D1F; font-size: 42px; font-weight: 500; font-feature-settings: "tnum"; }
-.tide-window .calc-wave { padding: 0; margin: 0; }
-.tide-window .calc-keypad-pane { padding: 10px 16px 16px; }
-.tide-window .number-keypad { padding: 5px 0; }
-.tide-window .key-button { color: #332D1F; background-color: transparent; min-height: 31px; padding: 4px; border: none; border-radius: 11px; box-shadow: none; font-size: 23px; }
-.tide-window .key-button:hover { background-color: rgba(120, 103, 28, 0.08); }
-.tide-window .key-button:active { background-color: rgba(120, 103, 28, 0.15); }
-.tide-window .small-key, .tide-window .ans-button, .tide-window .key-memory { font-size: 16px; }
-.tide-window .operator-column { min-width: 46px; background-color: #E9CE80; border-radius: 15px; padding: 5px; }
-.tide-window .operator-column .key-button { min-width: 34px; }
-.tide-window .equals-button, .tide-window .operator-column .equals-button { color: #FFF4CD; background-color: #78671C; border-radius: 13px; }
-.tide-window .equals-button:hover, .tide-window .operator-column .equals-button:hover { background-color: #675826; }
-.tide-window .calc-history-pane { padding: 0 16px 12px; }
-.tide-window .tools-history { color: #7B725B; font-size: 11px; }
-.tide-window .tools-page .history-row { padding: 3px 0; font-size: 12px; }
-/* Timer: the olive title pane and yellow content pane join without a gap. */
-.tide-window .timer-label-pane { min-width: 76px; padding: 16px; }
-.tide-window .timer-label-pane label, .tide-window .timer-title { color: #FFFAE7; }
-.tide-window .timer-title { font-size: 20px; font-weight: 600; }
-.tide-window .timer-label-pane .timer-status { color: #ECE4BD; font-size: 12px; }
-.tide-window .timer-content-pane { background-color: #FFE49A; border-radius: 22px; padding: 16px; }
-.tide-window .timer-display { color: #332D1F; font-size: 40px; font-weight: 500; font-feature-settings: "tnum"; }
-.tide-window .duration-field, .tide-window .duration-field text { color: #332D1F; background-color: transparent; min-width: 24px; min-height: 27px; padding: 2px 0; font-size: 22px; font-feature-settings: "tnum"; }
-.tide-window .timer-content-pane .caption { color: #7B725B; font-size: 10px; }
-.tide-window .timer-content-pane .status-error { color: #8A4430; }
-.tide-window .timer-actions .soft-button { color: #78671C; }
-.tide-window .timer-presets .preset-button, .tide-window .tools-page .preset-button { color: #7B725B; background-color: transparent; min-height: 22px; padding: 5px 8px; font-size: 13px; }
-.tide-window .timer-presets .preset-button.selected, .tide-window .tools-page .preset-button.selected { color: #78671C; background-color: transparent; font-weight: 500; }
-/* Reset the whole native chain: theme fill margins were -1px on both sides. */
-.tide-window progressbar, .tide-window progressbar trough, .tide-window progressbar progress {
-  min-height: 2px; padding: 0; margin: 0; border: none; box-shadow: none; background-image: none;
-}
-.tide-window progressbar trough { background-color: rgba(143, 167, 122, 0.18); border-radius: 2px; }
-.tide-window progressbar progress { min-width: 0; background-color: #8FA77A; border-radius: 2px; }
-.tide-window .hotspot-card label, .tide-window .hotspot-card .section-title, .tide-window .hotspot-card .field-label, .tide-window .hotspot-card .muted, .tide-window .hotspot-card .field-muted, .tide-window .hotspot-card .status, .tide-window .hotspot-card .warning { color: #476D50; }
-.tide-window .hotspot-card button { color: #476D50; }
-.tide-window .hotspot-card button label { color: inherit; }
-.tide-window .hotspot-card entry, .tide-window .hotspot-card spinbutton { color: #476D50; background-color: #F2F7EA; caret-color: #476D50; }
-.tide-window .hotspot-card entry text, .tide-window .hotspot-card spinbutton text { color: #476D50; background-color: transparent; caret-color: #476D50; }
-.tide-window .hotspot-card .primary, .tide-window .hotspot-card .primary-button { color: #FBF5E9; background-color: #476D50; }
-.tide-window .hotspot-card button:checked, .tide-window .hotspot-card button.selected { color: #332D1F; background-color: #8FA77A; }
-.tide-window .hotspot-card .danger, .tide-window .hotspot-card .danger-button, .tide-window .hotspot-card .status-error { color: #8A4430; }
-.tide-window .window-card label, .tide-window .window-card .section-title, .tide-window .window-card .muted, .tide-window .window-card .field-muted, .tide-window .window-card .status { color: #476D50; }
-.tide-window .window-card button { color: #476D50; }
-.tide-window .window-card button label { color: inherit; }
-.tide-window .window-card .primary, .tide-window .window-card .primary-button { color: #FFF4CD; background-color: #476D50; }
-.tide-window .window-row { background-color: transparent; border: none; border-radius: 10px; padding: 6px; }
-.tide-window .window-row.selected { background-color: #8FA77A; }
-/* Keep native overlay/AUTOMATIC behavior; only the paint and cross-axis geometry change. */
 .tide-window scrollbar, .tide-window scrollbar range, .tide-window scrollbar trough, .tide-window scrollbar slider {
-  background-color: transparent; background-image: none; box-shadow: none; border: none; padding: 0; margin: 0;
+  background-color: transparent; background-image: none; border: none; box-shadow: none;
 }
 .tide-window scrollbar.vertical, .tide-window scrollbar.vertical range, .tide-window scrollbar.vertical trough { min-width: 6px; }
 .tide-window scrollbar.horizontal, .tide-window scrollbar.horizontal range, .tide-window scrollbar.horizontal trough { min-height: 6px; }
-.tide-window scrollbar slider { background-color: rgba(71, 109, 80, 0.30); border-radius: 8px; }
-.tide-window scrollbar.vertical slider { min-width: 4px; min-height: 24px; margin: 0 1px; }
-.tide-window scrollbar.horizontal slider { min-height: 4px; min-width: 24px; margin: 1px 0; }
-.tide-window scrollbar slider:hover, .tide-window scrollbar slider:active { background-color: rgba(71, 109, 80, 0.55); }
-/* Overlay scrollbars paint at the scroller's own edge, which used to be exactly the
-   card edge, so the slider looked glued onto the cards. Reserving a gutter inside
-   each scroller keeps the slider on its own, clear of the content blocks. */
+.tide-window scrollbar slider { background-color: rgba(109, 94, 27, 0.28); border-radius: 999px; }
+.tide-window scrollbar.vertical slider { min-width: 4px; min-height: 28px; margin: 0 1px; }
+.tide-window scrollbar.horizontal slider { min-height: 4px; min-width: 28px; margin: 1px 0; }
+.tide-window scrollbar slider:hover, .tide-window scrollbar slider:active { background-color: rgba(109, 94, 27, 0.5); }
+/* The gutter keeps the overlay scrollbar off the card edge (see reference-redesign.md). */
 .tide-window .scroll-gutter { padding-right: 12px; }
-.tide-window .stopwatch-card { background-color: #F2F7EA; color: #476D50; }
-.tide-window .stopwatch-card .section-title, .tide-window .stopwatch-display, .tide-window .stopwatch-status { color: #476D50; }
-/* The view applies its existing 0.8 Pango scale; do not scale the display a second time. */
-.tide-window .stopwatch-display { font-feature-settings: "tnum"; }
-.tide-window .stopwatch-actions .primary-button, .tide-window .stopwatch-actions .primary { color: #FBF5E9; background-color: #476D50; }
-.tide-window .stopwatch-actions .soft-button, .tide-window .lap-row, .tide-window .stopwatch-lap-row { color: #476D50; }
-.tide-window .stopwatch-error { color: #8A4430; }
-.tide-window separator { background-color: #EFE6CC; min-height: 1px; }
-.tide-window .toast { background-color: #F4E7BC; color: #675826; border: none; border-radius: 12px; padding: 9px 12px; box-shadow: 0 3px 7px rgba(81, 70, 49, 0.16); }
-.tide-window .toast.error { color: #8A4430; }
+.tide-window separator { background-color: rgba(96, 80, 32, 0.10); min-height: 1px; }
+.tide-window progressbar, .tide-window progressbar trough, .tide-window progressbar progress {
+  min-height: 2px; padding: 0; margin: 0; border: none; box-shadow: none; background-image: none;
+}
+.tide-window progressbar trough { background-color: rgba(109, 94, 27, 0.16); border-radius: 2px; }
+.tide-window progressbar progress { min-width: 0; background-color: #6D5E1B; border-radius: 2px; }
+
+/* ---------- notes page ---------- */
+.tide-window .notes-page { padding: 0; }
+.tide-window .note-selector {
+  min-height: 0;
+  padding: 0;
+  background-color: transparent;
+  background-image: none;
+  border: none;
+  border-radius: 12px;
+  box-shadow: none;
+}
+/* The inner button carries the pill; the border is an inset shadow so the
+   allocated height stays label + 10 (design lock in native_notes_spec). */
+.tide-window .note-selector > button {
+  min-height: 20px;
+  padding: 5px 14px;
+  background-color: rgba(120, 103, 28, 0.07);
+  border: none;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(120, 103, 28, 0.13);
+}
+.tide-window .note-selector > button:hover { background-color: rgba(120, 103, 28, 0.12); }
+.tide-window .note-selector > button:checked { background-color: rgba(120, 103, 28, 0.12); }
+.tide-window .note-selector image { color: #6D5E1B; }
+.tide-window .note-selector-title { font-size: 13px; font-weight: 500; color: #4C432C; }
+.tide-window .note-add-button { color: #6D5E1B; }
+.tide-window .notes-card { box-shadow: 0 1px 2px rgba(74, 62, 28, 0.05), 0 8px 20px rgba(74, 62, 28, 0.08); }
+.tide-window .notes-toolbar { padding: 15px 14px 2px 18px; }
+.tide-window .note-title { font-size: 16px; font-weight: 600; color: #2F2918; }
+.tide-window .editor-scroll { padding: 0; }
+.tide-window .rename-row { padding: 0 14px 8px 18px; }
+.tide-window .note-footer-layer { padding: 0; margin: 0; }
+.tide-window .note-footer { padding: 0 12px 10px 18px; background-color: transparent; }
+.tide-window .note-footer > label { font-size: 11px; color: #7B6C3E; }
+.tide-window .note-footer .status-label { margin-right: 12px; }
+.tide-window .note-actions-button > button {
+  min-height: 38px; min-width: 38px; padding: 8px; border-radius: 999px;
+  color: #FFF7DD; background-color: #6D5E1B;
+  box-shadow: 0 2px 5px rgba(60, 50, 10, 0.28);
+}
+.tide-window .note-actions-button > button:hover { background-color: #5B4F15; }
+.tide-window .inline-notice {
+  padding: 8px 10px; border-radius: 10px;
+  background-color: rgba(154, 74, 51, 0.08);
+  border: 1px solid rgba(154, 74, 51, 0.14);
+}
+.tide-window .inline-notice label { color: #8A4430; }
+
+/* notes picker popover */
+.tide-window popover contents {
+  background-color: #FBF5E9;
+  border: 1px solid rgba(96, 80, 32, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 3px 8px rgba(74, 62, 28, 0.10), 0 16px 32px rgba(74, 62, 28, 0.14);
+  padding: 8px;
+}
+.tide-window .notes-list-shell { background-color: #F6EDD4; border: none; border-radius: 14px; padding: 8px; }
+.tide-window .list-tab { min-height: 24px; padding: 3px 9px; font-size: 11px; border-radius: 8px; }
+.tide-window .list-tab.active { color: #6D5E1B; background-color: #FFEDB8; font-weight: 500; }
+.tide-window .note-row { background-color: transparent; border-radius: 9px; padding: 2px; }
+.tide-window .note-row:hover { background-color: rgba(120, 103, 28, 0.07); }
+.tide-window .note-list-title { font-size: 12px; }
+.tide-window .note-menu-action { min-height: 28px; padding: 5px 10px; background-color: transparent; }
+.tide-window .note-menu-action:hover { background-color: rgba(120, 103, 28, 0.08); }
+.tide-window .note-grip { color: #A79C82; }
+.tide-window .undo-row { color: #6D5E1B; }
+
+/* ---------- tools: calculator ---------- */
+.tide-window .tools-page { padding: 0; }
+.tide-window .calc-display-pane { padding: 13px 16px 4px 18px; }
+.tide-window .calc-expression {
+  background-color: transparent; background-image: none;
+  border: none; border-radius: 0; box-shadow: none;
+  padding: 2px 0; min-height: 24px;
+  font-size: 16px; color: #5C533B;
+}
+.tide-window .calc-expression:focus, .tide-window .calc-expression:focus-within,
+.tide-window .calc-expression:hover { background-color: transparent; border: none; }
+.tide-window .calc-expression placeholder { color: #A79C82; }
+.tide-window .result-display {
+  font-size: 38px; font-weight: 600; color: #2F2918;
+  font-feature-settings: "tnum"; letter-spacing: -0.01em;
+}
+.tide-window .calc-keypad-pane { padding: 10px 12px 14px; }
+.tide-window .key-button {
+  font-size: 20px; font-weight: 500; color: #3B3320;
+  min-height: 31px; border-radius: 10px;
+}
+.tide-window .key-button:hover { background-color: rgba(120, 103, 28, 0.10); }
+.tide-window .key-memory, .tide-window .ans-button, .tide-window .small-key { font-size: 13px; font-weight: 500; color: #5C533B; }
+.tide-window .operator-column {
+  background-color: rgba(109, 94, 27, 0.09);
+  border-radius: 14px;
+  padding: 3px;
+}
+.tide-window .operator-column .key-button { font-size: 19px; color: #4C432C; }
+.tide-window .operator-key { color: #4C432C; }
+.tide-window .equals-button {
+  background-color: #6D5E1B; color: #FFF7DD; border-radius: 11px; font-weight: 600;
+}
+.tide-window .equals-button:hover { background-color: #5B4F15; }
+.tide-window .tools-history { padding: 2px 14px 12px; }
+.tide-window .history-row { font-size: 11px; color: #8B8168; padding: 2px 0; }
+.tide-window .tools-history .section-title { font-size: 12px; color: #6F6244; }
+
+/* ---------- tools: countdown ---------- */
+.tide-window .timer-card { min-height: 214px; }
+.tide-window .timer-label-pane { padding: 14px 2px 14px 14px; min-width: 82px; }
+.tide-window .timer-title { font-size: 15px; font-weight: 600; color: #FFF3CF; }
+.tide-window .timer-status { font-size: 11px; color: rgba(255, 243, 207, 0.72); }
+.tide-window .timer-content-pane {
+  background-color: #FFE9A8;
+  border-radius: 16px;
+  margin: 4px;
+  padding: 9px 12px 9px;
+}
+.tide-window .timer-display {
+  font-size: 36px; font-weight: 600; color: #2F2918;
+  font-feature-settings: "tnum"; letter-spacing: -0.01em;
+}
+.tide-window .timer-duration-row { margin: 0; }
+.tide-window .duration-field {
+  min-height: 29px; border-radius: 9px; padding: 2px;
+  background-color: rgba(255, 255, 255, 0.45);
+  border-color: rgba(96, 80, 32, 0.12);
+  font-size: 15px; font-weight: 500;
+}
+.tide-window .timer-duration-row .caption { color: #7B6C3E; }
+.tide-window .timer-presets { margin-top: 2px; }
+.tide-window .preset-button {
+  min-height: 27px; border-radius: 9px; font-size: 11px; font-weight: 500;
+  color: #5C533B;
+  background-color: rgba(255, 255, 255, 0.34);
+  border: 1px solid rgba(120, 103, 28, 0.14);
+}
+.tide-window .preset-button:hover { background-color: rgba(255, 255, 255, 0.65); border-color: rgba(120, 103, 28, 0.24); }
+.tide-window .timer-actions .primary { background-color: #6D5E1B; }
+.tide-window .timer-actions .soft-button { color: #6D5E1B; }
+
+/* ---------- tools: stopwatch ---------- */
+.tide-window .stopwatch-card .section-title { color: #3F654A; }
+.tide-window .stopwatch-display {
+  font-size: 34px; font-weight: 600; color: #3F654A;
+  font-feature-settings: "tnum"; letter-spacing: -0.01em;
+}
+.tide-window .stopwatch-status { color: #7C8F7A; font-size: 11px; }
+.tide-window .stopwatch-actions .primary, .tide-window .stopwatch-actions .primary-button {
+  color: #FBF5E9; background-color: #476D50;
+}
+.tide-window .stopwatch-actions .primary:hover { background-color: #3C5F45; }
+.tide-window .stopwatch-actions .soft-button { color: #476D50; }
+.tide-window .lap-row, .tide-window .stopwatch-lap-row { color: #476D50; font-size: 11px; }
+.tide-window .stopwatch-error { color: #9A4A33; }
+
+/* ---------- hotspot ---------- */
+.tide-window .hotspot-card .section-title { color: #35573D; }
+.tide-window .hotspot-card .muted, .tide-window .hotspot-card .caption,
+.tide-window .hotspot-card .field-muted { color: #7C8F7A; }
+.tide-window .hotspot-card .field-label { color: #4C6B52; }
+.tide-window .hotspot-card image { color: #476D50; }
+.tide-window .hotspot-card button { color: #3F654A; }
+.tide-window .hotspot-card button label { color: inherit; }
+.tide-window .hotspot-card entry, .tide-window .hotspot-card spinbutton, .tide-window .hotspot-card searchentry {
+  color: #35573D;
+  background-color: rgba(255, 255, 255, 0.55);
+  border-color: rgba(71, 109, 80, 0.16);
+  caret-color: #476D50;
+}
+.tide-window .hotspot-card entry text, .tide-window .hotspot-card spinbutton text { color: #35573D; background-color: transparent; }
+.tide-window .hotspot-card .primary, .tide-window .hotspot-card .primary-button {
+  color: #FBF5E9; background-color: #476D50; min-height: 34px;
+}
+.tide-window .hotspot-card .primary:hover { background-color: #3C5F45; }
+.tide-window .hotspot-card .danger, .tide-window .hotspot-card .danger-button,
+.tide-window .hotspot-card .status-error { color: #9A4A33; }
+.tide-window .status-summary image {
+  background-color: rgba(71, 109, 80, 0.12);
+  border-radius: 999px;
+  padding: 7px;
+  color: #476D50;
+}
+.tide-window .status-row { min-height: 26px; }
+.tide-window .status-row + .status-row { border-top: 1px solid rgba(71, 109, 80, 0.08); }
+.tide-window .status-row label { font-size: 11px; }
+.tide-window .status-row label + label { font-size: 12px; font-weight: 500; }
+
+/* segmented control (band picker) */
+.tide-window .segmented {
+  background-color: rgba(71, 109, 80, 0.10);
+  border-radius: 11px;
+  padding: 3px;
+}
+.tide-window .segmented > button {
+  min-height: 30px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  color: #4C6B52; border: none;
+}
+.tide-window .segmented > button:hover { background-color: rgba(255, 255, 255, 0.45); }
+.tide-window .segmented > button:checked {
+  color: #35573D; background-color: #FBF6EA;
+  box-shadow: 0 1px 2px rgba(46, 62, 46, 0.12);
+}
+
+/* ---------- windows ---------- */
+.tide-window .window-row {
+  padding: 8px 10px;
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(71, 109, 80, 0.10);
+  box-shadow: none;
+}
+.tide-window .window-row:hover { background-color: rgba(255, 255, 255, 0.62); }
+.tide-window .window-row.selected {
+  background-color: #FBF6EA;
+  border-color: rgba(71, 109, 80, 0.28);
+  box-shadow: inset 3px 0 0 #476D50;
+}
+.tide-window .window-row button { min-height: 28px; }
+.tide-window .window-row button label { font-weight: 500; }
+.tide-window .window-row .muted { font-size: 11px; color: #7C8F7A; }
+.tide-window .window-row image { color: #476D50; }
+.tide-window .window-card .muted { color: #7C8F7A; }
+.tide-window .empty-state { padding: 20px 12px; }
+.tide-window .empty-state image { color: #9CB29A; }
+.tide-window .empty-title { font-size: 13px; font-weight: 600; color: #4C6B52; }
+.tide-window .empty-state .caption { color: #7C8F7A; }
+.tide-window .window-close { color: #9A4A33; }
+
+/* ---------- feedback ---------- */
+.tide-window .toast {
+  background-color: #4A4028; color: #FFF7DD;
+  border: none; border-radius: 12px; padding: 9px 12px;
+  box-shadow: 0 2px 6px rgba(50, 42, 20, 0.18), 0 10px 24px rgba(50, 42, 20, 0.18);
+}
+.tide-window .toast.error { background-color: #7E3B27; color: #FFF1E8; }
 .tide-window .reduced-motion *, .tide-window.reduced-motion * { transition-duration: 0ms; animation-duration: 0ms; }

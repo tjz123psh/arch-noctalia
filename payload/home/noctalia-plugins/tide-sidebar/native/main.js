@@ -275,12 +275,12 @@ app.connect('startup', () => {
     window.connect('close-request', () => { setVisible(false); return true; });
     const ctx = {ui: UI, send, toast, copy, runHelper, writePrivateRequest, close: () => setVisible(false), getState: () => state, isVisible: () => visible, config: () => state.config};
     views = {notes: createNotes(ctx), tools: createTools(ctx), hotspot: createHotspot(ctx), windows: createWindows(ctx)};
-    const shell = UI.box(Gtk.Orientation.HORIZONTAL, 10, ['sidebar-shell']);
+    const shell = UI.box(Gtk.Orientation.HORIZONTAL, 12, ['sidebar-shell']);
     shellBox = shell;
     shell.set_size_request(450, -1);
     applyConfig();
     const rail = UI.box(Gtk.Orientation.VERTICAL, 7, ['tab-rail']);
-    rail.set_size_request(42, -1);
+    rail.set_size_request(46, -1);
     const descriptions = {notes: ['便签', 'note'], tools: ['工具', 'calculator'], hotspot: ['热点', 'wifi'], windows: ['窗口', 'apps']};
     for (const page of pageNames) {
         const [text, glyph] = descriptions[page];

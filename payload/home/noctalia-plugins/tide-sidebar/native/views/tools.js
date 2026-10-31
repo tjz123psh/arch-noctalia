@@ -50,7 +50,7 @@ function stopwatchText(elapsedMs) {
 
 export function createTools(ctx) {
     const {ui} = ctx;
-    const page = ui.box(Gtk.Orientation.VERTICAL, 20, ['tools-page', 'scroll-gutter']);
+    const page = ui.box(Gtk.Orientation.VERTICAL, 16, ['tools-page', 'scroll-gutter']);
     page.set_valign(Gtk.Align.FILL);
     page.set_hexpand(true);
     page.set_vexpand(true);
@@ -96,7 +96,7 @@ export function createTools(ctx) {
     calcMessage.set_ellipsize(Pango.EllipsizeMode.NONE);
     calcMessage.set_visible(false);
     calcDisplayPane.append(calcMessage);
-    const calcWave = ui.waveBand('#F1D68B', 20);
+    const calcWave = ui.waveBand('#F6E0A0', 20);
     calcWave.add_css_class('calc-wave');
     calculator.append(calcWave);
 

@@ -28,7 +28,7 @@ function namedButton(ui, text, glyph, handler, names = []) {
     return {button, label};
 }
 function pageHeader(ui, title, onRefresh) {
-    const row = ui.box('horizontal', 8, ['scroll-gutter']);
+    const row = ui.box('horizontal', 8, ['page-header', 'scroll-gutter']);
     const label = ui.label(title, ['page-title']);
     label.set_hexpand(true);
     const refresh = ui.iconButton('refresh', onRefresh, '刷新');
@@ -58,8 +58,8 @@ export function createHotspot(ctx) {
     widget.append(scrolled(body));
 
     const statusCard = ui.card(['hotspot-card']);
-    const summary = ui.box('horizontal', 10);
-    summary.append(ui.icon('wifi', 30));
+    const summary = ui.box('horizontal', 10, ['status-summary']);
+    summary.append(ui.icon('wifi', 22));
     const summaryText = ui.box('vertical', 4);
     summaryText.set_hexpand(true);
     const status = ui.label('正在获取状态', ['section-title', 'status']);
@@ -67,7 +67,7 @@ export function createHotspot(ctx) {
     summaryText.append(status); summaryText.append(networkName); summary.append(summaryText);
     statusCard.append(summary);
     function detail(name) {
-        const row = ui.box('horizontal', 12);
+        const row = ui.box('horizontal', 12, ['status-row']);
         const caption = ui.label(name, ['muted']); caption.set_hexpand(true);
         const value = ui.label('—'); value.set_xalign(1);
         row.append(caption); row.append(value); statusCard.append(row);
@@ -97,7 +97,7 @@ export function createHotspot(ctx) {
     password.set_tooltip_text('新密码只留在本页，离开后清除');
     form.append(password);
     form.append(ui.label('期望频段', ['field-label']));
-    const bands = ui.box('horizontal', 8);
+    const bands = ui.box('horizontal', 8, ['segmented']);
     const band24 = ui.classes(new Gtk.ToggleButton({label: '2.4 GHz', hexpand: true}), ['glass-button']);
     const band5 = ui.classes(new Gtk.ToggleButton({label: '5 GHz', hexpand: true}), ['glass-button']);
     band5.set_group(band24);
