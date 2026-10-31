@@ -91,5 +91,18 @@
     ],
     "pss_mib_notes_only": 55.1,
     "note": "All-pages figures vary a few MiB with mozjs GC/fragmentation across runs; both are far below the 126 MiB cairo baseline before the icon/lazy work."
+  },
+  "accessibility": {
+    "date": "2026-10-31",
+    "focus": "visible rings on buttons/entries/segmented; editor uses :focus-within inset ring on the scrolled paper",
+    "contrast_wcag": {
+      "body": "5.1:1",
+      "caption_11px": "5.1:1",
+      "placeholder": "4.85:1",
+      "mint_secondary": "4.75:1",
+      "nav_label": "4.86:1",
+      "empty_state_icon": "3.36:1 (non-text 3:1)"
+    },
+    "keyboard": "native_keyboard_spec drives real wtype input and a Tab focus-chain check (minutes -> seconds -> next); Ctrl+1-4 page switching and Esc closing were verified manually on this machine."
   }
 }

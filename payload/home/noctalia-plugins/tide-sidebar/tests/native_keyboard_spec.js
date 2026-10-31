@@ -67,13 +67,36 @@ app.connect('activate', () => {
                         if (!process.get_successful()) throw new Error('native keyboard helper failed');
                         after(120, () => {
                             if (fields[1].get_text() !== '45') throw new Error('real keyboard input did not replace 25 with 45');
-                            const start = walk(view.widget, item => item instanceof Gtk.Button && item.get_visible() && labelOf(item) === '开始')[0];
-                            if (!start) throw new Error('countdown start action missing');
-                            start.emit('clicked');
-                            const command = sent.find(item => item.action === 'timer-start');
-                            if (!command || command.durationMs !== 2700000) throw new Error('typed 45 minutes did not produce the correct start request');
-                            print('native-keyboard-spec: mapped real Gtk.Entry received wtype 45; mock start request = 2700000ms; no production timer changed');
-                            finish();
+                            // Tab must walk the real focus chain: minutes -> seconds -> the next widget.
+                            const tab = Gio.Subprocess.new(['wtype', '-k', 'Tab'], Gio.SubprocessFlags.STDOUT_SILENCE | Gio.SubprocessFlags.STDERR_PIPE);
+                            tab.wait_async(null, (tabProcess, tabResult) => {
+                                try {
+                                    tabProcess.wait_finish(tabResult);
+                                    if (!tabProcess.get_successful()) throw new Error('Tab helper failed');
+                                    after(120, () => {
+                                        const focusWithin = entry => { for (let item = win.get_focus(); item; item = item.get_parent()) if (item === entry) return true; return false; };
+                                        if (!focusWithin(fields[2])) throw new Error('Tab did not move focus to the next duration field');
+                                        const onward = Gio.Subprocess.new(['wtype', '-k', 'Tab'], Gio.SubprocessFlags.STDOUT_SILENCE | Gio.SubprocessFlags.STDERR_PIPE);
+                                        onward.wait_async(null, (onwardProcess, onwardResult) => {
+                                            try {
+                                                onwardProcess.wait_finish(onwardResult);
+                                                if (!onwardProcess.get_successful()) throw new Error('second Tab helper failed');
+                                                after(120, () => {
+                                                    if (focusWithin(fields[2])) throw new Error('second Tab stayed inside the duration field');
+                                                    if (!win.get_focus()) throw new Error('second Tab left no focus widget');
+                                                    const start = walk(view.widget, item => item instanceof Gtk.Button && item.get_visible() && labelOf(item) === '开始')[0];
+                                                    if (!start) throw new Error('countdown start action missing');
+                                                    start.emit('clicked');
+                                                    const command = sent.find(item => item.action === 'timer-start');
+                                                    if (!command || command.durationMs !== 2700000) throw new Error('typed 45 minutes did not produce the correct start request');
+                                                    print('native-keyboard-spec: wtype 45 -> 2700000ms; Tab walked minutes->seconds->next; no production timer changed');
+                                                    finish();
+                                                });
+                                            } catch (error) { finish(error.message); }
+                                        });
+                                    });
+                                } catch (error) { finish(error.message); }
+                            });
                         });
                     } catch (error) { finish(error.message); }
                 });
