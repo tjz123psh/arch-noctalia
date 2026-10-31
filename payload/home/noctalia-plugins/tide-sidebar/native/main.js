@@ -35,9 +35,10 @@ let state = {
         confirmWindowClose: true, hotspotDefaultSsid: '', hotspotDefaultBand: 'bg', defaultTab: 'notes'},
 };
 let sequence = 0, visible = false, currentPage = 'notes', lastControl = -1;
-let window, rootRevealer, stack, toastRevealer, toastLabel, toastTimer = 0;
-let views = {}, navigation = {}, fileMonitor = null, pendingRead = 0, closeSource = 0, heartbeat = 0;
-let revealStartSource = 0, revealMapHandler = 0;
+let window, stack, toastRevealer, toastLabel, toastTimer = 0;
+let views = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
+let drawerTick = 0, drawerAnim = null, drawerOpenSource = 0, drawerOpenMap = 0;
+const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose, DRAWER_OPEN_MARGIN = 8;
 let viewFactory = null;
 let ensureView = () => null;
 let shellBox = null, appliedWidth = 0;
@@ -118,6 +119,7 @@ function applyConfig() {
     // The layer surface follows the widget's request, so the shell carries the width.
     shellBox.set_size_request(width, -1);
     window.set_default_size(width, -1);
+    if (!visible) Layer.set_margin(window, Layer.Edge.LEFT, drawerClosedMargin());
 }
 function normalizePage(page) { return pageNames.includes(page) ? page : (pageAliases[page] || 'notes'); }
 function updatePage(force = false, changed = []) {
@@ -146,7 +148,7 @@ function selectPage(name, save = true) {
 let geometrySource = 0;
 function reportGeometrySoon() {
     if (checkOnly || !visible || geometrySource) return;
-    geometrySource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 450, () => {
+    geometrySource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 560, () => {
         geometrySource = 0;
         if (!visible) return GLib.SOURCE_REMOVE;
         const value = {page: currentPage, windowWidth: window.get_width(), windowHeight: window.get_height(), stackHeight: stack.get_height()};
@@ -169,42 +171,71 @@ function reportGeometrySoon() {
     });
 }
 
-function cancelRevealStart() {
-    if (revealStartSource) { GLib.source_remove(revealStartSource); revealStartSource = 0; }
-    if (revealMapHandler) { window.disconnect(revealMapHandler); revealMapHandler = 0; }
+function drawerClosedMargin() { return -(appliedWidth + 28); }
+function easeOutCubic(t) { return 1 - (1 - t) ** 3; }
+function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2; }
+function cancelOpenSchedule() {
+    if (drawerOpenSource) { GLib.source_remove(drawerOpenSource); drawerOpenSource = 0; }
+    if (drawerOpenMap) { window.disconnect(drawerOpenMap); drawerOpenMap = 0; }
+}
+function cancelDrawer() {
+    if (drawerTick) { window.remove_tick_callback(drawerTick); drawerTick = 0; }
+    drawerAnim = null;
+}
+// The drawer moves the whole layer surface, so cairo never re-rasterises the
+// content mid-flight: no clipped shadow, no per-frame glyph re-layout.
+function animateDrawer(to, duration, easing, done) {
+    cancelDrawer();
+    const from = Layer.get_margin(window, Layer.Edge.LEFT);
+    if (!duration || from === to) {
+        Layer.set_margin(window, Layer.Edge.LEFT, to);
+        if (done) done();
+        return;
+    }
+    const anim = {from, to, start: GLib.get_monotonic_time(), duration, easing, done};
+    drawerAnim = anim;
+    drawerTick = window.add_tick_callback(() => {
+        if (drawerAnim !== anim) return GLib.SOURCE_REMOVE;
+        const t = Math.min(1, (GLib.get_monotonic_time() - anim.start) / (anim.duration * 1000));
+        const value = Math.round(anim.from + (anim.to - anim.from) * anim.easing(t));
+        if (value !== Layer.get_margin(window, Layer.Edge.LEFT)) Layer.set_margin(window, Layer.Edge.LEFT, value);
+        if (t >= 1) {
+            drawerTick = 0; drawerAnim = null;
+            if (anim.done) anim.done();
+            return GLib.SOURCE_REMOVE;
+        }
+        return GLib.SOURCE_CONTINUE;
+    });
+}
+function scheduleOpen() {
+    cancelOpenSchedule();
+    const go = () => { drawerOpenSource = 0; if (visible) animateDrawer(DRAWER_OPEN_MARGIN, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeOutCubic); };
+    if (window.get_mapped()) drawerOpenSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, () => { go(); return GLib.SOURCE_REMOVE; });
+    else drawerOpenMap = window.connect('map', () => {
+        window.disconnect(drawerOpenMap); drawerOpenMap = 0;
+        drawerOpenSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, () => { go(); return GLib.SOURCE_REMOVE; });
+    });
 }
 function setVisible(wanted, page = null) {
     if (page) selectPage(page, false);
     if (wanted === visible) return;
     visible = wanted;
-    if (closeSource) { GLib.source_remove(closeSource); closeSource = 0; }
+    cancelOpenSchedule();
     if (visible) {
+        if (!window.get_mapped()) Layer.set_margin(window, Layer.Edge.LEFT, drawerClosedMargin());
         window.present();
         updatePage(true);
         views[currentPage]?.onShow?.();
-        cancelRevealStart();
-        // The layer surface maps asynchronously. Revealing in the same tick as
-        // present() makes GtkRevealer snap to its final width; start one frame later.
-        const startReveal = () => { revealStartSource = 0; rootRevealer.set_reveal_child(true); return GLib.SOURCE_REMOVE; };
-        const schedule = () => { revealStartSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, startReveal); };
-        if (window.get_mapped()) schedule();
-        else revealMapHandler = window.connect('map', () => {
-            window.disconnect(revealMapHandler); revealMapHandler = 0; schedule();
-        });
+        scheduleOpen();
         send('visibility', {open: true, tab: currentPage});
         reportGeometrySoon();
     } else {
-        cancelRevealStart();
         views[currentPage]?.onHide?.();
         send('flush');
         send('visibility', {open: false, tab: currentPage});
-        rootRevealer.set_reveal_child(false);
-        const fade = UI.motionMs(reducedMotion(), 'drawer');
-        closeSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, fade ? fade + 10 : 1, () => {
-            closeSource = 0;
-            if (!visible) window.hide();
-            return GLib.SOURCE_REMOVE;
-        });
+        const current = Layer.get_margin(window, Layer.Edge.LEFT);
+        if (!window.get_mapped() || current <= drawerClosedMargin() + 2) window.hide();
+        else animateDrawer(drawerClosedMargin(), reducedMotion() ? 0 : DRAWER_CLOSE_MS, easeInOutCubic, () => window.hide());
     }
 }
 function applyControl(control) {
@@ -215,7 +246,6 @@ function applyControl(control) {
     Gtk.Settings.get_default().gtk_enable_animations = !reduced;
     if (reduced) window.add_css_class('reduced-motion'); else window.remove_css_class('reduced-motion');
     stack.set_transition_duration(UI.motionMs(reduced, 'page'));
-    rootRevealer.set_transition_duration(UI.motionMs(reduced, 'drawer'));
     toastRevealer.set_transition_duration(UI.motionMs(reduced, 'toast'));
     setVisible(control.visible === true, control.page || currentPage);
 }
@@ -277,8 +307,8 @@ function shutdown() {
     fileMonitor?.cancel();
     if (heartbeat) GLib.source_remove(heartbeat);
     if (pendingRead) GLib.source_remove(pendingRead);
-    if (closeSource) GLib.source_remove(closeSource);
     if (geometrySource) GLib.source_remove(geometrySource);
+    cancelOpenSchedule(); cancelDrawer();
     for (const proc of helperProcesses) proc.force_exit();
     app.quit();
 }
@@ -352,8 +382,7 @@ app.connect('startup', () => {
     toastRevealer.connect('notify::child-revealed', () => { if (!toastRevealer.get_reveal_child() && !toastRevealer.get_child_revealed()) toastRevealer.set_visible(false); });
     toastLabel = new Gtk.Label({wrap: true, xalign: 0}); toastRevealer.set_child(toastLabel); right.append(toastRevealer);
     shell.append(rail); shell.append(right);
-    rootRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_RIGHT, transition_duration: UI.DURATION.drawer, hexpand: true, vexpand: true});
-    rootRevealer.set_child(shell); window.set_child(rootRevealer);
+    window.set_child(shell);
     const keyboard = new Gtk.EventControllerKey();
     keyboard.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
     keyboard.connect('key-pressed', (_controller, key, _code, mods) => {

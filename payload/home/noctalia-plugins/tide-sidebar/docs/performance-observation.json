@@ -139,13 +139,12 @@
       "page": 220,
       "toast": 180,
       "wave": 320,
-      "drawer": 260
+      "drawer_open": 560,
+      "drawer_close": 500
     },
     "measured_frame_spans_ms": {
-      "drawer_open": 200,
       "page_slide_forward": 170,
-      "page_slide_back": 170,
-      "drawer_close": null
+      "page_slide_back": 170
     },
     "reduced_motion": {
       "implementation": "window class + zero Revealer/Stack durations + gtk_enable_animations=false",
@@ -179,8 +178,8 @@
       "CSS keyframes on box-shadow/background-color (parsed but not rendered by this GTK version); only opacity keyframes are reliable"
     ],
     "drawer": {
-      "type": "GtkRevealer SLIDE_RIGHT",
-      "note": "present() then wait for map + one 16ms tick before set_reveal_child(true); otherwise GTK snaps to the final width.",
+      "type": "Gtk4LayerShell LEFT margin, frame-synced tick",
+      "note": "Moves the whole layer surface in integer pixels instead of clipping the shell with GtkRevealer; avoids per-frame text re-layout and clipped shadows. Window maps at the closed margin, then starts after map + 16 ms.",
       "reduced_motion": "duration 0"
     }
   }
