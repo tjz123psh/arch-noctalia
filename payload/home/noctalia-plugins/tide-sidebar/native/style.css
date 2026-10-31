@@ -43,7 +43,7 @@
   color: #6B6249;
   background-color: transparent;
   border: 1px solid transparent;
-  transition: background-color 140ms ease-out, color 140ms ease-out;
+  transition: background-color 120ms ease-out, color 120ms ease-out, box-shadow 120ms ease-out;
 }
 .tide-window .nav-button:hover { background-color: rgba(120, 103, 28, 0.08); color: #5C533B; }
 .tide-window .nav-button:active { background-color: rgba(120, 103, 28, 0.14); }
@@ -80,7 +80,7 @@
   box-shadow: none;
   min-height: 30px;
   padding: 5px 10px;
-  transition: background-color 120ms ease-out, color 120ms ease-out, border-color 120ms ease-out;
+  transition: background-color 120ms ease-out, color 120ms ease-out, border-color 120ms ease-out, box-shadow 120ms ease-out;
 }
 .tide-window button:hover { background-color: rgba(120, 103, 28, 0.08); }
 .tide-window button:active { background-color: rgba(120, 103, 28, 0.15); }

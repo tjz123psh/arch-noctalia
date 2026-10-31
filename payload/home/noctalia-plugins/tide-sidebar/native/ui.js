@@ -18,6 +18,12 @@ const icons = {
     'rotate-clockwise': 'view-refresh-symbolic', power: 'system-shutdown-symbolic',
     'grip-vertical': 'list-drag-handle-symbolic', wind: 'preferences-desktop-accessibility-symbolic',
 };
+// Motion vocabulary: one duration per intent. GTK CSS has no variables, so the
+// CSS side mirrors these values in style.css and --reduced-motion zeroes both.
+export const DURATION = {fast: 120, reveal: 160, page: 220, toast: 180};
+export function motionMs(reduced, name) {
+    return reduced === true ? 0 : (DURATION[name] ?? DURATION.reveal);
+}
 export function classes(widget, names = []) {
     for (const name of typeof names === 'string' ? names.split(/\s+/) : names)
         if (name) widget.add_css_class(name);

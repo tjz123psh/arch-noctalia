@@ -54,6 +54,7 @@ function send(action, values = {}) {
     try { for (const line of encodePackets(message)) print(line); }
     catch (_) { toast('请求内容过大，尚未保存', true); }
 }
+const reducedMotion = () => state.preferences?.reducedMotion === true;
 function toast(text, isError = false) {
     if (!toastLabel) return;
     toastLabel.set_label(String(text || ''));
@@ -62,7 +63,8 @@ function toast(text, isError = false) {
     toastRevealer.remove_css_class(isError ? 'success' : 'error');
     toastRevealer.add_css_class(isError ? 'error' : 'success');
     if (toastTimer) GLib.source_remove(toastTimer);
-    toastTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 5000, () => { toastTimer = 0; toastRevealer.set_reveal_child(false); return GLib.SOURCE_REMOVE; });
+    const stay = isError ? 6000 : 3600;
+    toastTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, stay, () => { toastTimer = 0; toastRevealer.set_reveal_child(false); return GLib.SOURCE_REMOVE; });
 }
 function copy(text) {
     // Verified on this machine: GJS boxes the JS string into the GValue that
@@ -126,6 +128,10 @@ function selectPage(name, save = true) {
     name = normalizePage(name);
     if (name === currentPage && stack?.get_visible_child_name() === name) { updatePage(true); return; }
     if (visible) views[currentPage]?.onHide?.();
+    // GTK4 has no SLIDE_RIGHT_LEFT; SLIDE_LEFT_RIGHT already reverses direction
+    // from the children's order, so earlier pages slide back in from the left.
+    stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
+    stack.set_transition_duration(visible ? UI.motionMs(reducedMotion(), 'page') : 0);
     currentPage = name;
     ensureView(name);
     stack.set_visible_child_name(name);
@@ -179,7 +185,8 @@ function setVisible(wanted, page = null) {
         send('flush');
         send('visibility', {open: false, tab: currentPage});
         rootRevealer.set_reveal_child(false);
-        closeSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, state.preferences?.reducedMotion ? 1 : 190, () => {
+        const fade = UI.motionMs(reducedMotion(), 'reveal');
+        closeSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, fade ? fade + 10 : 1, () => {
             closeSource = 0;
             if (!visible) window.hide();
             return GLib.SOURCE_REMOVE;
@@ -192,8 +199,10 @@ function applyControl(control) {
     if (control.quit) { shutdown(); return; }
     const reduced = control.reducedMotion === true;
     Gtk.Settings.get_default().gtk_enable_animations = !reduced;
-    stack.set_transition_duration(reduced ? 0 : 220);
-    rootRevealer.set_transition_duration(reduced ? 0 : 180);
+    if (reduced) window.add_css_class('reduced-motion'); else window.remove_css_class('reduced-motion');
+    stack.set_transition_duration(UI.motionMs(reduced, 'page'));
+    rootRevealer.set_transition_duration(UI.motionMs(reduced, 'reveal'));
+    toastRevealer.set_transition_duration(UI.motionMs(reduced, 'toast'));
     setVisible(control.visible === true, control.page || currentPage);
 }
 function readChannel(name) {
@@ -321,15 +330,15 @@ app.connect('startup', () => {
     rail.append(UI.iconButton('chevron-left', () => setVisible(false), '收起 · Super+Shift+W', ['close-button']));
     const right = UI.box(Gtk.Orientation.VERTICAL, 6, ['content-column']);
     right.set_hexpand(true); right.set_vexpand(true);
-    stack = new Gtk.Stack({hexpand: true, vexpand: true, transition_type: Gtk.StackTransitionType.SLIDE_LEFT_RIGHT, transition_duration: 220});
+    stack = new Gtk.Stack({hexpand: true, vexpand: true, transition_type: Gtk.StackTransitionType.SLIDE_LEFT_RIGHT, transition_duration: UI.DURATION.page});
     right.append(stack);
-    toastRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_UP, transition_duration: 180});
+    toastRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_UP, transition_duration: UI.DURATION.toast});
     toastRevealer.add_css_class('toast');
     toastRevealer.set_visible(false);
     toastRevealer.connect('notify::child-revealed', () => { if (!toastRevealer.get_reveal_child() && !toastRevealer.get_child_revealed()) toastRevealer.set_visible(false); });
     toastLabel = new Gtk.Label({wrap: true, xalign: 0}); toastRevealer.set_child(toastLabel); right.append(toastRevealer);
     shell.append(rail); shell.append(right);
-    rootRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.CROSSFADE, transition_duration: 180, hexpand: true, vexpand: true});
+    rootRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.CROSSFADE, transition_duration: UI.DURATION.reveal, hexpand: true, vexpand: true});
     rootRevealer.set_child(shell); window.set_child(rootRevealer);
     const keyboard = new Gtk.EventControllerKey();
     keyboard.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);

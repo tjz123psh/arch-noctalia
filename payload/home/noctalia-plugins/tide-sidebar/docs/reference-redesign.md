@@ -29,6 +29,14 @@
 
 切换后预热 6 秒观测：Noctalia 0.83% + 原生前端 0.17%，合计约单核 1.00%；收起 0.83% + 0.00%，合计约 0.83%。前端 RSS 约 98–115 MiB（只开便签约 98，四页访问过约 109–114；图标固定 Adwaita、页面按需构建；GL 路径约 217 MiB）。四页截图逐像素比对：面板主体 0.000% 差异（文字抗锯齿与光标/正文变化不计），观感一致。见[观测记录](<performance-observation.json>)。旧采样包含开场动画，新采样在 1.1 秒预热后开始，不能据此宣称严格降低了 50% 或给出 FPS；离屏构造测试也不替代真实流畅度验收。
 
+## 动效
+
+- 一套时长语汇：交互 120ms（悬停/按下/选中）、展开 160ms（提示条、重命名、撤销、确认卡、面板淡入淡出）、切页 220ms、toast 180ms、波浪 320ms；CSS 过渡与 GTK Revealer 使用同一组值。
+- 切页方向跟随导航顺序（rail 或 Ctrl+1–4）：向后是从右侧滑入，向前反向滑出；隐藏状态下切页时长为 0，不会在下次打开时补放动画。
+- 面板开合为 160ms 交叉淡入淡出；收起后延迟 170ms 再 unmapped，避免淡出被截断；toast 信息停留 3.6s、错误 6s 后滑出。
+- 减少动效（插件设置或 `motion off`）：窗口加 `.reduced-motion`，CSS 过渡/动画归零、所有 Revealer 时长 0、波浪停止脉冲。逐帧对比：切页/开合前后帧像素差 0.2–4 px（编码噪声），可视为完全静止。
+- 录屏证据：`~/Pictures/tide-sidebar/motion/panel-motion.gif`（正常开合与切页）、`page-switch-forward.png` / `page-switch-backward.png`（双向 220ms 滑动逐帧）、`panel-fade-frames.png`（160ms 开合）、`reduced-motion-frames.png`（同样动作下的静止帧）。
+
 ## 可达性与键盘
 
 - 焦点指示：按钮/输入框/分段控件有暖色焦点环；便签正文用 `.editor-scroll:focus-within` 的内描边，不改变纸面尺寸；Gtk.SearchEntry 在 GTK4 里就是 `entry` 节点，旧的 `searchentry` 选择器已删除。

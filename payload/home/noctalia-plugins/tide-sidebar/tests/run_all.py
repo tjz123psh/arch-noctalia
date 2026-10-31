@@ -29,6 +29,16 @@ def run(argv):
 WRITE_ONLY_CHANNELS = {"geometry"}
 
 
+def check_motion_enums():
+    """GTK4 has no SLIDE_RIGHT_LEFT; passing it silently becomes NONE (instant switch)."""
+    js = (PLUGIN / "native/main.js").read_text(encoding="utf-8")
+    if "Gtk.StackTransitionType.SLIDE_RIGHT_LEFT" in js:
+        raise SystemExit("native/main.js uses Gtk.StackTransitionType.SLIDE_RIGHT_LEFT, which does not exist in GTK4")
+    if "Gtk.StackTransitionType.SLIDE_LEFT_RIGHT" not in js:
+        raise SystemExit("native/main.js lost the (valid) SLIDE_LEFT_RIGHT page transition")
+    print("PASS: page transitions use a GTK4 enum that exists")
+
+
 def check_channel_parity():
     """Every published snapshot channel must be one the native front end reads."""
     lua = (PLUGIN / "lib/frontend.luau").read_text(encoding="utf-8")
@@ -121,6 +131,7 @@ for name in sources + ["README.md", "open.sh", "translations/en.json", "translat
         raise SystemExit("Unexpected control character in " + name)
 check_plugin_settings()
 check_channel_parity()
+check_motion_enums()
 check_documentation_links()
 run(["bash", "-n", str(PLUGIN / "open.sh")])
 run(["luac", "-p", *[str(PLUGIN / name) for name in sources]])

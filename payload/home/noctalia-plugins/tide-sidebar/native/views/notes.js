@@ -207,7 +207,7 @@ export function createNotes(ctx) {
     listStack.set_visible_child_name('notes');
     listShell.append(listStack); listPopover.set_child(listShell);
 
-    const noticeRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: 140});
+    const noticeRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: U.DURATION.reveal});
     const noticeBox = U.box(Gtk.Orientation.VERTICAL, 0, ['inline-notice']);
     const noticeText = U.label('', ['caption']); noticeText.set_wrap(true); noticeText.set_ellipsize(Pango.EllipsizeMode.NONE);
     noticeBox.append(noticeText); noticeRevealer.set_child(noticeBox); page.append(noticeRevealer);
@@ -227,7 +227,7 @@ export function createNotes(ctx) {
     deleteButton.set_tooltip_text('移到回收站');
     actions.append(renameButton); actions.append(copyButton); actions.append(deleteButton); editPopover.set_child(actions);
 
-    const renameRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: 150});
+    const renameRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: U.DURATION.reveal});
     const renameRow = U.box(Gtk.Orientation.HORIZONTAL, 5, ['rename-row']);
     const renameEntry = new Gtk.Entry({hexpand: true, placeholder_text: '便签名称'});
     renameEntry.connect('activate', commitRename);
@@ -262,7 +262,7 @@ export function createNotes(ctx) {
     actionsButton.set_always_show_arrow(false); actionsButton.set_popover(editPopover);
     footer.append(count); footer.append(status); footer.append(actionsButton);
     footerLayer.add_overlay(footer); footerLayer.set_measure_overlay(footer, false); card.append(footerLayer);
-    const undoRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: 160});
+    const undoRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: U.DURATION.reveal});
     const undoRow = U.box(Gtk.Orientation.HORIZONTAL, 7, ['undo-row']);
     const undoText = U.label('已移到回收站', ['caption']); undoText.set_hexpand(true);
     undoRow.append(undoText); undoRow.append(U.button('撤销', 'arrow-back-up', () => restoreNote(deletedId), ['soft-button']));
@@ -442,7 +442,10 @@ export function createNotes(ctx) {
     function update(state) {
         const next = state?.notes || {};
         const reduced = state?.preferences?.reducedMotion === true;
-        listStack.set_transition_duration(reduced ? 0 : 120);
+        listStack.set_transition_duration(U.motionMs(reduced, 'fast'));
+        noticeRevealer.set_transition_duration(U.motionMs(reduced, 'reveal'));
+        renameRevealer.set_transition_duration(U.motionMs(reduced, 'reveal'));
+        undoRevealer.set_transition_duration(U.motionMs(reduced, 'reveal'));
         const nextReady = next.ready === true && !!next.model;
         if (!nextReady) {
             if (wasReady) drafts.reconnect();

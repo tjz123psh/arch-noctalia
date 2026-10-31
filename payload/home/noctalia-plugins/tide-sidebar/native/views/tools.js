@@ -484,7 +484,7 @@ export function createTools(ctx) {
     applyDurationButton.set_visible(false);
     applyDurationButton.set_tooltip_text('确认后才会替换当前倒计时；只改输入不会改变正在运行或暂停的计时');
     timerContentPane.append(applyDurationButton);
-    const durationConfirmation = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: 160});
+    const durationConfirmation = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: ui.DURATION.reveal});
     durationConfirmation.add_css_class('timer-apply-confirmation');
     durationConfirmation.set_visible(false);
     durationConfirmation.connect('notify::child-revealed', () => {
@@ -787,6 +787,7 @@ export function createTools(ctx) {
     return {
         widget,
         update(state) {
+            durationConfirmation.set_transition_duration(ui.motionMs(state?.preferences?.reducedMotion === true, 'reveal'));
             applyPresets(state?.config?.timerPresets);
             updateCalculation(state?.calc);
             updateTimer(state?.timer);

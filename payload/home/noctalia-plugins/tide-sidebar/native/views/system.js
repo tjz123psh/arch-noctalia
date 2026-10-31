@@ -114,7 +114,7 @@ export function createHotspot(ctx) {
     formActions.append(apply); formActions.append(reset); form.append(formActions);
     body.append(form);
 
-    const confirm = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: 180});
+    const confirm = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: ui.DURATION.reveal});
     const confirmCard = ui.card(['hotspot-card']);
     const confirmTitle = ui.label('', ['section-title']);
     const confirmDescription = paragraph(ui, '', ['warning']);
@@ -139,7 +139,7 @@ export function createHotspot(ctx) {
         catch (_) { ctx.toast('未能复制密码', true); }
     }, '复制已显示的密码');
     savedButtons.append(revealButton.button); savedButtons.append(copy); saved.append(savedButtons);
-    const secretBox = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: 150});
+    const secretBox = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: ui.DURATION.reveal});
     const savedPassword = ui.classes(new Gtk.Entry({editable: false, hexpand: true}), ['field-muted']);
     savedPassword.set_tooltip_text('临时显示的已保存密码');
     secretBox.set_child(savedPassword); saved.append(secretBox);
@@ -378,7 +378,7 @@ export function createHotspot(ctx) {
         ui.setLabel(statusError, clean(h.error)); show(statusError, !!clean(h.error));
         const warnings = [...new Set([clean(h.warning), clean(h.operationWarning)].filter(Boolean))].join('\n');
         ui.setLabel(operationWarning, warnings); show(operationWarning, !!warnings);
-        const duration = state?.preferences?.reducedMotion === true ? 0 : 180;
+        const duration = ui.motionMs(state?.preferences?.reducedMotion === true, 'reveal');
         confirm.set_transition_duration(duration); secretBox.set_transition_duration(duration);
         if (intent && !stateAllows(intent)) cancelConfirmation();
         updateControls();
@@ -417,7 +417,7 @@ export function createWindows(ctx) {
     widget.append(search);
     const errorLabel = paragraph(ui, '', ['warning', 'scroll-gutter']); show(errorLabel, false); widget.append(errorLabel);
 
-    const confirmation = ui.classes(new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: 180}), ['scroll-gutter']);
+    const confirmation = ui.classes(new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: ui.DURATION.reveal}), ['scroll-gutter']);
     const confirmCard = ui.card(['window-card']);
     confirmCard.append(ui.label('关闭这个窗口？', ['section-title']));
     const confirmName = paragraph(ui, '', []); confirmCard.append(confirmName);
@@ -530,7 +530,7 @@ export function createWindows(ctx) {
         ui.setLabel(errorLabel, error); show(errorLabel, !!error);
         sensitive(header.refresh, shown);
         sensitive(close, shown && !!pendingId && !error);
-        confirmation.set_transition_duration(state?.preferences?.reducedMotion === true ? 0 : 180);
+        confirmation.set_transition_duration(ui.motionMs(state?.preferences?.reducedMotion === true, 'reveal'));
         applyFilter();
     }
     function onShow() {
