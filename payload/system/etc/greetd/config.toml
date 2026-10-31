@@ -2,5 +2,5 @@
 vt = 1
 
 [default_session]
-command = "niri -c /etc/nwg-hello/niri.kdl"
+command = "niri -c /etc/nwg-hello/noctalia-greeter.kdl"
 user = "greeter"

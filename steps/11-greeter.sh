@@ -20,7 +20,7 @@ BG="/etc/nwg-hello/background.png"
 # --- 1) 资产 ---
 assets=(
   /etc/greetd/config.toml
-  /etc/nwg-hello/niri.kdl
+  /etc/nwg-hello/noctalia-greeter.kdl
   /etc/nwg-hello/nwg-hello.css
   /etc/nwg-hello/nwg-hello.json
   "$BG"
@@ -35,6 +35,14 @@ for f in "${assets[@]}"; do
 done
 (( missing == 0 )) || die "greeter assets incomplete — stage 07 should have deployed them; re-run ./install.sh --run"
 info "greeter assets: present"
+
+# 1a) 接线：greetd 必须启动安装器管的那份 niri 配置。定制之所以不放 /etc/nwg-hello/niri.kdl，是因为
+#     那个文件归 nwg-hello 包、且不在包的备份列表里，升级会整份覆盖（2026-10-30 0.5.0→0.5.1 实测丢过 144Hz 钉死）。
+#     /etc/greetd/config.toml 是包的 backup 文件（保留本机版本 + .pacnew），改得住。这里只告警：
+#     内容本身由 12 步按 files.tsv 核 md5，被改过会在自检里报出来。
+if ! grep -qF 'niri -c /etc/nwg-hello/noctalia-greeter.kdl' /etc/greetd/config.toml 2>/dev/null; then
+  warn "greetd does not launch /etc/nwg-hello/noctalia-greeter.kdl - the login session ignores this repo's settings (stage 07 deploys /etc/greetd/config.toml)"
+fi
 
 # 1b) 用户头像软链：桌面与登录界面按 ~/.face 取头像（样本机即软链到 /var/lib/avatars/pang/.face，
 #     真实文件由 07 部署）。补这一步，新机器才会有一模一样的头像入口。

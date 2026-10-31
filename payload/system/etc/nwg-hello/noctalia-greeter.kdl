@@ -1,0 +1,32 @@
+// arch-noctalia 登录界面（greetd → niri）会话配置。2026-10-31 起由安装器全权管理。
+// 基线抄自 nwg-hello 0.5.1 的 /etc/nwg-hello/niri.kdl（spawn-at-startup / hotkey-overlay / gestures /
+// layout / include / cursor 全部一致）。升级 nwg-hello 后若上游改了这份基线（新增 spawn、环境变量等），
+// 需要把差异手工抄进来——这是「不碰包文件」的代价。
+//
+// 为什么不直接写 /etc/nwg-hello/niri.kdl：那个文件归 nwg-hello 包所有，而且**不在包的备份列表**里
+// （pacman 本地库 %BACKUP% 只有 hyprland.conf / sway-config）。0.5.0 → 0.5.1（2026-10-30）实测：
+// 升级直接整份覆盖，安装器钉的 144Hz 与背景色当场丢失，之后每次升级都会再来一次。
+// 反过来 /etc/greetd/config.toml 是 backup 文件（pacman 保留本机版本、只给 .pacnew），所以
+// 「登录会话用哪份 niri 配置」写在那里、配置本体放这个自有路径，升级就吃不掉了。
+spawn-at-startup "sh" "-c" "nwg-hello; niri msg action quit --skip-confirmation"
+hotkey-overlay { skip-at-startup; }
+gestures { hot-corners { off; }; }
+layout { background-color "#0b0b12"; }
+
+// 内屏接口名随显卡模式变化：核显/Hybrid = eDP-1，MUX 独显 = eDP-2
+// 两个都钉 144Hz；不写刷新率时 niri 用驱动 preferred（NVIDIA 那边只有 60Hz）——2026-10-17
+output "eDP-1" {
+    mode "1920x1080@144.063"
+}
+output "eDP-2" {
+    mode "1920x1080@144.063"
+}
+
+// 本机手写覆盖入口（安装器不部署这个文件，缺失时 niri 直接忽略）
+include optional=true "/etc/nwg-hello/niri_overrides.kdl"
+
+// 指针主题（2026-10-03，与用户会话一致）
+cursor {
+    xcursor-theme "capitaine-cursors"
+    xcursor-size 24
+}

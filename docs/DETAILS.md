@@ -32,7 +32,8 @@
   在线字幕：`scripts/assrt.lua` 从 assrt.net 搜字幕（按 `a` 触发）——上游没有许可证文件，为免版权问题**不入公开仓库**（见 `excluded.tsv`）；需要在 `script-opts/assrt.conf` 填自己的 API token（assrt.net 注册后免费获取）。
 - 显卡模式（supergfxd）：`/etc/supergfxd.conf` 设 `hotplug_type: "Asus"`（上游 / Arch Wiki 建议值）。ASUS 的 `dgpu_disable` 机制下，若该值为 `None`，supergfxd 开机会把「集显」判成状态错乱、强行把 dgpu_disable 写回 0 并回到 Hybrid —— 表现就是「切集显 → 重启 → 又变混合」。该文件列 `files.tsv` + `runtime-regenerated.tsv`（`mode` 字段由 supergfxd 自写，只核存在性）。
 - AI agent 技能共享库：`~/.agents/skills/`（Agent Skills 规范的用户级位置，**DSH 与 pi 都原生读取**）；共用技能放这里、工具专属的留在 `~/.dsh/skills` 与 `~/.pi/agent/skills`；库本体是独立 git 仓库（见 `excluded.tsv` 记账）。共用脚本（`context.mjs` / `palette.mjs` / `pseudoloc.py`）在 `~/.agents/skills/_shared/scripts/`。当前分布：共用 18 个、DSH 专属 2 个（`~/.dsh/skills`）、pi 专属 1 个（`~/.pi/agent/skills/batch`）。
-- 内屏刷新率：niri 的 `~/.config/niri/conf.d/outputs.kdl` 与登录界面的 `/etc/nwg-hello/niri.kdl` 都**显式钉 `1920x1080@144.063`**，并**给核显（eDP-1）与 MUX 独显（eDP-2）两个接口名各写一段** —— MUX 切到独显后面板接口名会变，而 `mode` 只写「1920x1080」不带刷新率时 niri 用驱动的 preferred 模式（NVIDIA 那边 preferred 只有 60.061Hz，AMD 那边恰是 144Hz，所以以前没暴露）。
+- 登录界面会话配置放**安装器自有路径** `/etc/nwg-hello/noctalia-greeter.kdl`，由 `/etc/greetd/config.toml`（包的 backup 文件，pacman 只给 `.pacnew`）指过去。**不要写回包自带的 `/etc/nwg-hello/niri.kdl`**：它不在 nwg-hello 的备份列表里，0.5.0→0.5.1（2026-10-30）升级把它整份覆盖，144Hz 钉死与背景色当场丢失且没有 `.pacnew` 可循；`tests/test-greeter-wiring.sh` 锁住这条接线。升级 nwg-hello 后若上游改了登录会话基线（新增 spawn / 环境变量），要把差异手工抄进那份自有配置。
+- 内屏刷新率：niri 的 `~/.config/niri/conf.d/outputs.kdl` 与登录界面的 `/etc/nwg-hello/noctalia-greeter.kdl` 都**显式钉 `1920x1080@144.063`**，并**给核显（eDP-1）与 MUX 独显（eDP-2）两个接口名各写一段** —— MUX 切到独显后面板接口名会变，而 `mode` 只写「1920x1080」不带刷新率时 niri 用驱动的 preferred 模式（NVIDIA 那边 preferred 只有 60.061Hz，AMD 那边恰是 144Hz，所以以前没暴露）。
 - 环境适配：ESP 等 vfat 挂载不做权限位校验、系统文件读取自动走 root；**不改你的挂载设置**。
 - 外观：毛玻璃等 GTK 样式以样式类限定作用域（`gtk.css` 追加段，只影响指定程序）；程序的"系统默认值"以 GSettings vendor override 随 07 部署（`/usr/share/glib-2.0/schemas/*.gschema.override`），07 末尾统一 `glib-compile-schemas` 生效——你在程序里改过的值（dconf）优先，不会被覆盖。
 - 未纳管项有账可查：`manifests/excluded.tsv` 记录**手动安装项**（需自行安装，安装器带上会出问题，如 AUR 交互构建、按机器定制、需登录/许可）、安全排除项与各类缓存/生成目录的解释；实际纳管的内容见 `files.tsv` / `packages.tsv` / `aur.tsv`。
@@ -57,7 +58,7 @@
 - **字体是仓库体积的大头**：Maple Mono NF CN 四款 + 资源汉圆体三款共约 123MB（工作区 147MB）；这是“没有离线包、全从 git 拉”的代价。
 - **破坏性操作只验证到预演**：维护脚本里真会删数据的（`clean`、快照恢复）测试只覆盖沙箱与 dry-run，实际执行仍需人工在终端确认。
 
-- **排障历史不入安装器**：`~/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md`（本机累积的事故记录）已从 payload 与 `files.tsv` 移除，重装后不会带回。技能本体（`SKILL.md`、`local-patterns.md`）仍随安装器部署，所以重装的机器上该技能里指向历史的章节索引会查不到对应文件。要找回历史：`git log --diff-filter=D -- payload/home/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md` 取回旧版本。
+- **排障历史不入安装器**：`~/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md`（本机累积的事故记录）已从 payload 与 `files.tsv` 移除，重装后不会带回。技能本体（`SKILL.md`、`local-patterns.md`）原也随安装器部署，但 2026-10-28（`b72afef`）把整个 `~/.agents` 技能库移出安装器、改为用户手工维护（见 `excluded.tsv`）：新机器上 `~/.agents/skills/nvim-troubleshooting/` 需要从它自己的仓库恢复，该技能里指向历史的章节索引将查不到对应文件。要找回历史：`git log --diff-filter=D -- payload/home/.agents/skills/nvim-troubleshooting/references/nvim-troubleshooting-history.md` 取回旧版本。
 
 ## 录屏（screenrec-menu）
 

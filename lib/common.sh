@@ -151,6 +151,13 @@ fs_of_target() {
   stat -f -c '%T' -- "$p" 2>/dev/null || printf ''
 }
 
+# /etc/default/grub 的受管内容允许一处机器相关派生：07 在非 btrfs 根上会摘掉 rootfstype=<fs>
+# （不摘的话生成的菜单起不来，见 steps/07-config.sh 的 GRUB 段）。12 比对内容时用本函数把两侧的
+# rootfstype=<值> 归一到同一形态；除此之外的任何差异仍然照常报错。
+grub_defaults_canonical() { # $1=文件路径
+  sed -E 's/[[:space:]]*rootfstype=[^[:space:]"]+//g' -- "${1:?grub_defaults_canonical needs a file}"
+}
+
 # FAT 系文件系统没有 Unix 权限位——权限由挂载选项（fmask/dmask）统一决定，不能逐文件校验/设置。
 fs_has_unix_perms() { # $1=fs type（如 vfat/exfat/btrfs）
   case "${1:-}" in

@@ -46,7 +46,8 @@ if (( ${#aur_pending[@]} == 0 && ${#repo_pending[@]} == 0 )); then
   ok "Stage 05 aur: nothing to do"
 else
   if (( ${#aur_pending[@]} > 0 )) && ! have paru; then
-    die "paru is required for AUR packages but was not found - stage 01 installs it from archlinuxcn; re-run from stage 01: ./install.sh --run --from 01"
+    # 注意：--from 01 只跳过排在 01 之前的步骤，已记账的 01 仍会被跳过（--from 不清账），所以这里必须用 --redo 01。
+    die "paru is required for AUR packages but was not found - stage 01 installs it from archlinuxcn; install paru manually, or re-run stage 01 and everything after it with: ./install.sh --redo 01"
   fi
   info "selected ${explicit_total} explicit packages; ${#aur_pending[@]} AUR + ${#repo_pending[@]} repo still to install (machine=${machine})"
   failed=()

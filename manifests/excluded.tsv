@@ -218,7 +218,7 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 # · 内屏刷新率（2026-10-17）：niri 输出与登录界面都钉 1920x1080@144.063，且同时写 eDP-1（核显/Hybrid）与 eDP-2（AsusMuxDgpu）两段。
 #   背景：MUX 切独显后面板接口名由 eDP-1 变 eDP-2；niri 的 mode 若不写刷新率就取驱动 preferred ——
 #   NVIDIA 的 preferred 是 60.061Hz（AMD 是 144Hz），所以切独显后才掉到 60Hz。
-#   两个文件都在 files.tsv：home/.config/niri/conf.d/outputs.kdl 与 system/etc/nwg-hello/niri.kdl —— 重装即恢复。
+#   两个文件都在 files.tsv：home/.config/niri/conf.d/outputs.kdl 与 system/etc/nwg-hello/noctalia-greeter.kdl —— 重装即恢复。
 # · 显卡模式（2026-10-16）：/etc/supergfxd.conf 的 hotplug_type 由 None 改为 Asus（上游 / Arch Wiki 建议值）。
 #   原因：ASUS 的 dgpu_disable 机制下，hotplug_type≠Asus 时 supergfxd 开机看到 dgpu_disable=true 会判定状态错乱，
 #   强行把 dgpu_disable 写回 0 并回到 Hybrid —— 表现为『切集显 → 重启 → 又变混合』（journal 有对应 WARN）。
@@ -228,7 +228,10 @@ dir	/home/pang/.local/state/arch-noctalia	安装器自身状态目录（steps.do
 #   属用户数据、非缓存（见上面 plugins/** 的 pattern 行）。安装器原先在 ~/Documents/notes/ 种的两个空模板（便签.md、便签-2.md）
 #   与该功能无关、且已确认是旧遗留，2026-10-15 随用户删除该目录从 files.tsv/seed.tsv 与 payload 一并移除。
 # · nwg-hello 0.5.0（2026-10-15 升级）起包内自带 /etc/nwg-hello/niri.kdl，与纳管的同名文件冲突（pacman 拒绝覆盖无主文件 → 整笔更新中止）。
-#   处理：备份本机文件 → 挪开 → pacman -Syu → 放回本机版本；此后该文件属『被修改的包文件』，升级只生成 niri.kdl.pacnew（预期状态）。
+#   **2026-10-30 更正**：该文件不在 nwg-hello 的备份列表（pacman 本地库 %BACKUP% 只有 hyprland.conf / sway-config），
+#   0.5.0→0.5.1 升级直接整份覆盖、既没有 .pacnew 也不会保留本机版本，安装器钉的 144Hz 与背景色当场丢失（已实测）。
+#   处理：登录会话配置改放自有路径 system/etc/nwg-hello/noctalia-greeter.kdl（在 files.tsv），
+#   由 /etc/greetd/config.toml（包的 backup 文件）指过去；不要再纳管 /etc/nwg-hello/niri.kdl。
 #   0.5.0 新增：原生 niri 支持（本机正用）、登录提示音（/var/cache/nwg-hello/sound.json 已由包用 tmpfiles 初始化；播放需可选依赖 gsound，本机未装）。
 # · Firefox 从安装器移除（用户拍板，2026-10-12）：packages.tsv 删掉 firefox 行；本文件删掉
 #   /home/pang/.config/mozilla 的 dir 行（该目录随本机一并删除）。样本机的 firefox 包、~/.config/mozilla

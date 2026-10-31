@@ -3,6 +3,8 @@
 # 对照 manifests/files.tsv 检查每个目标路径存在、是常规文件、md5 与记录一致
 #   （seed 行：个人数据种子，只核对存在性、跳过内容核对——内容可能被用户编辑；
 #    系统文件普通用户读不到时回退 root 读——ESP/0077 掩码场景，见 lib/common.sh）；
+#   `/etc/default/grub` 例外：07 在非 btrfs 根上会摘掉 `rootfstype=<fs>`（否则菜单起不来），
+#   比对时按 `grub_defaults_canonical` 归一，除此之外的差异照常报错；
 # 对照 manifests/packages.tsv（同一套机型/模块过滤）检查缺失的包；
 # 对照 manifests/bin-links.tsv 检查 ~/bin 软链层（存在且可执行）；
 # 服务状态清点：所管服务必须 enabled；当前未运行只提示不算失败（可能待重启/无硬件）；
@@ -76,9 +78,17 @@ while IFS=$'\t' read -r repo_path raw_target mode md5; do
   fi
   actual="$(t_md5 "$target")"
   if [[ "$actual" != "$md5" ]]; then
-    bad=$((bad + 1))
-    warn "md5 mismatch: ${target}"
-    continue
+    # 唯一的允许派生：07 在非 btrfs 根上会摘掉 GRUB_CMDLINE_LINUX 里的 rootfstype=<fs>
+    # （不摘则生成的菜单起不来，见 steps/07-config.sh）。这里拿归一味比较；
+    # 除 rootfstype 以外的任何差异仍然照常报错。
+    if [[ "$raw_target" == "/etc/default/grub" ]] \
+      && [[ "$(grub_defaults_canonical "$target" 2>/dev/null)" == "$(grub_defaults_canonical "${AN_ROOT_DIR}/${repo_path}" 2>/dev/null)" ]]; then
+      info "content adapted to the local root filesystem (rootfstype): ${target}"
+    else
+      bad=$((bad + 1))
+      warn "md5 mismatch: ${target}"
+      continue
+    fi
   fi
   # 内容对了还要看权限位（只有支持 Unix 权限位的文件系统才核；vfat/ESP 由挂载选项决定）。
   if fs_has_unix_perms "$(fs_of_target "$target")" && [[ "$(t_perms "$target")" != "$mode" ]]; then
