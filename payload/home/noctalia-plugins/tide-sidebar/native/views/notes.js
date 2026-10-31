@@ -78,6 +78,7 @@ export function createNotes(ctx) {
     let awaitingDelete = false, undoDismissed = false;
     let ready = false, wasReady = false, shown = false, localError = '';
     let pendingAdd = null, pendingAddSource = 0;
+    let wasSaving = false;
     const setLabel = (widget, text) => { text = String(text ?? ''); if (widget.get_label() !== text) widget.set_label(text); };
     const mark = (widget, name, enabled) => enabled ? widget.add_css_class(name) : widget.remove_css_class(name);
     const current = () => notes.find(note => note.id === activeId);
@@ -391,8 +392,12 @@ export function createNotes(ctx) {
         const info = problem || snapshot.warning || (!ready ? '正在连接便签服务…' : '');
         setLabel(noticeText, info); mark(noticeBox, 'error', !!problem); noticeRevealer.set_reveal_child(!!info);
         const label = problem ? '未保存' : pendingAdd ? '正在新建…' : !ready ? '尚未就绪'
-            : draft?.dirty ? '等待后台确认…' : snapshot.saving ? '保存中…' : '已保存';
+            : draft?.dirty ? '等待后台确认…' : snapshot.saving ? '保存中…' : '● 已保存';
         setLabel(status, label); mark(status, 'status-error', !!problem);
+        if (label === '● 已保存' && wasSaving && shown) {
+            footerWave.pulse(380, 0.45);
+        }
+        wasSaving = snapshot.saving === true || draft?.dirty === true;
         setLabel(count, (note ? editor.get_buffer().get_char_count() : 0) + ' 字');
         editor.set_editable(ready && !!note && !pendingAdd);
         editor.set_cursor_visible(ready && !!note && !pendingAdd);

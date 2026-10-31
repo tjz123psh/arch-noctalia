@@ -382,6 +382,7 @@ export function createHotspot(ctx) {
         if ((!initialized || !editing) && !busy() && !intent && typeof h.ssid === 'string' && h.ssid) resetFields();
         if (initialized && !hasChanges()) editing = false;
         ui.setLabel(status, busy() ? '正在处理热点操作' : h.on === true ? '热点已开启' : h.on === false ? '热点已关闭' : current.loading ? '正在读取热点状态…' : '暂时无法确认状态');
+        css(statusCard, 'hotspot-active', h.on === true);
         ui.setLabel(networkName, clean(h.ssid) || (current.loading ? '正在获取网络信息…' : '尚未设置热点名称'));
         ui.setLabel(actualBand.value, h.on === true ? (h.band === 'a' ? '5 GHz' : h.band === 'bg' ? '2.4 GHz' : '未知') : '—');
         ui.setLabel(iface.value, clean(h.iface) || '—');

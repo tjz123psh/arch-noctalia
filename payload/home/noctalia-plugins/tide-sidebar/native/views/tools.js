@@ -612,7 +612,10 @@ export function createTools(ctx) {
         // unrelated calculator reply. No duplicate progress invalidations.
         const fraction = Math.min(1, Math.ceil(remaining / 1000) / Math.max(1, Math.ceil(durationMs / 1000)));
         if (fraction !== lastFraction) { progress.set_fraction(fraction); lastFraction = fraction; }
-        setLabel(timerStatus, timerReady ? ({idle: '未开始', running: '计时中', paused: '已暂停', finished: '已完成'}[status]) : '加载中');
+        const statusText = timerReady ? ({idle: '未开始', running: '● 计时中', paused: '已暂停', finished: '已完成'}[status]) : '加载中';
+        setLabel(timerStatus, statusText);
+        setClass(timerCard, 'timer-running', timerReady && status === 'running');
+        setClass(timerCard, 'timer-finished', timerReady && status === 'finished');
         setVisible(startButton, status !== 'running' && status !== 'paused');
         setVisible(pauseButton, status === 'running');
         setVisible(resumeButton, status === 'paused');
@@ -772,6 +775,13 @@ export function createTools(ctx) {
         setVisible(noStopwatchLaps, laps.length === 0);
         setVisible(stopwatchHistory, laps.length > 0);
         if (!laps.length && stopwatchHistory.get_expanded()) stopwatchHistory.set_expanded(false);
+        let minSplit = Infinity, maxSplit = -Infinity;
+        if (laps.length >= 2) {
+            for (const l of laps) {
+                if (l.splitMs < minSplit) minSplit = l.splitMs;
+                if (l.splitMs > maxSplit) maxSplit = l.splitMs;
+            }
+        }
         stopwatchLapRows.forEach((item, index) => {
             const lap = records[index];
             setVisible(item.row, !!lap);
@@ -779,6 +789,12 @@ export function createTools(ctx) {
             setLabel(item.index, '#' + String(lap.index).padStart(2, '0'));
             setLabel(item.total, stopwatchText(lap.totalMs));
             setLabel(item.split, '+' + stopwatchText(lap.splitMs));
+            item.row.remove_css_class('lap-fastest');
+            item.row.remove_css_class('lap-slowest');
+            if (laps.length >= 2 && minSplit !== maxSplit) {
+                if (lap.splitMs === minSplit) item.row.add_css_class('lap-fastest');
+                else if (lap.splitMs === maxSplit) item.row.add_css_class('lap-slowest');
+            }
         });
     }
     function renderStopwatch() {

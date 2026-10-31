@@ -400,6 +400,12 @@
 }
 .tide-window .timer-actions .primary { background-color: #6D5E1B; }
 .tide-window .timer-actions .soft-button { color: #6D5E1B; }
+.tide-window .timer-card.timer-running .timer-content-pane {
+  box-shadow: 0 0 16px rgba(109, 94, 27, 0.25);
+}
+.tide-window .timer-card.timer-running .timer-status {
+  color: #FFF3CF; font-weight: 600;
+}
 
 /* ---------- tools: stopwatch ---------- */
 .tide-window .stopwatch-card .section-title { color: #3F654A; }
@@ -413,7 +419,20 @@
 }
 .tide-window .stopwatch-actions .primary:hover { background-color: #3C5F45; }
 .tide-window .stopwatch-actions .soft-button { color: #476D50; }
-.tide-window .lap-row, .tide-window .stopwatch-lap-row { color: #476D50; font-size: 11px; }
+.tide-window .lap-row, .tide-window .stopwatch-lap-row {
+  color: #476D50; font-size: 11px;
+  padding: 3px 6px; border-radius: 6px;
+  transition: background-color 140ms ease-out, color 140ms ease-out;
+}
+.tide-window .stopwatch-lap-row:hover { background-color: rgba(71, 109, 80, 0.08); }
+.tide-window .stopwatch-lap-row.lap-fastest {
+  background-color: rgba(71, 109, 80, 0.14);
+  color: #2E7D32; font-weight: 600;
+}
+.tide-window .stopwatch-lap-row.lap-slowest {
+  background-color: rgba(181, 74, 30, 0.12);
+  color: #B23D26; font-weight: 600;
+}
 .tide-window .stopwatch-error { color: #9A4A33; }
 
 /* ---------- hotspot ---------- */
@@ -442,6 +461,12 @@
   border-radius: 999px;
   padding: 7px;
   color: #476D50;
+  transition: background-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+.tide-window .hotspot-card.hotspot-active .status-summary image {
+  background-color: rgba(71, 109, 80, 0.22);
+  color: #2E7D32;
+  box-shadow: 0 0 12px rgba(46, 125, 50, 0.38);
 }
 .tide-window .status-row { min-height: 26px; }
 .tide-window .status-row + .status-row { border-top: 1px solid rgba(71, 109, 80, 0.08); }
