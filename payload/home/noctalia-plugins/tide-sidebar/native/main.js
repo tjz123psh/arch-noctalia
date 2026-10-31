@@ -38,7 +38,7 @@ let sequence = 0, visible = false, currentPage = 'notes', lastControl = -1;
 let window, stack, toastRevealer, toastLabel, toastTimer = 0;
 let views = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
 let drawer = null, drawerX = 0, shellHeight = 0, syncShellHeight = () => {};
-let drawerTimer = 0, drawerAnim = null;
+let drawerTimer = 0, drawerAnim = null, drawerGateTick = 0, drawerGateMap = 0;
 const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose, DRAWER_OPEN_MARGIN = 8;
 let viewFactory = null;
 let ensureView = () => null;
@@ -181,7 +181,29 @@ function moveDrawer(value) {
 }
 function cancelDrawer() {
     if (drawerTimer) { GLib.source_remove(drawerTimer); drawerTimer = 0; }
+    if (drawerGateTick) { window.remove_tick_callback(drawerGateTick); drawerGateTick = 0; }
+    if (drawerGateMap) { window.disconnect(drawerGateMap); drawerGateMap = 0; }
     drawerAnim = null;
+}
+// Wait for the first real frame after mapping before starting the timer;
+// otherwise a cold frontend paints only after the 560ms window has elapsed.
+function startDrawerOnFirstFrame(from, to, duration, easing) {
+    cancelDrawer();
+    moveDrawer(from);
+    if (!duration) { moveDrawer(to); return; }
+    const arm = () => {
+        drawerGateTick = window.add_tick_callback(() => {
+            drawerGateTick = 0;
+            if (!visible) return GLib.SOURCE_REMOVE;
+            animateDrawer(from, to, duration, easing);
+            return GLib.SOURCE_REMOVE;
+        });
+    };
+    if (window.get_mapped()) arm();
+    else drawerGateMap = window.connect('map', () => {
+        window.disconnect(drawerGateMap); drawerGateMap = 0;
+        arm();
+    });
 }
 // The window and its layer surface never move or unmap; only the shell is
 // translated inside a Gtk.Fixed. Integer positions + a 16ms timer keep the
@@ -221,8 +243,7 @@ function setVisible(wanted, page = null) {
         moveDrawer(closed);
         updatePage(true);
         views[currentPage]?.onShow?.();
-        if (reducedMotion()) animateDrawer(closed, DRAWER_OPEN_MARGIN, 0, easeOutCubic);
-        else animateDrawer(closed, DRAWER_OPEN_MARGIN, DRAWER_OPEN_MS, easeOutCubic);
+        startDrawerOnFirstFrame(closed, DRAWER_OPEN_MARGIN, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeOutCubic);
         send('visibility', {open: true, tab: currentPage});
         reportGeometrySoon();
     } else {

@@ -179,7 +179,7 @@
     ],
     "drawer": {
       "type": "Gtk.Fixed child translation inside a fixed, always-mapped window",
-      "note": "The layer surface never moves or unmaps; a 16ms timer translates the shell by integer pixels inside a Gtk.Fixed. Hidden state keeps the shell outside the window and disables input targeting. The timer starts on the first frame so a slow first paint cannot skip the animation.",
+      "note": "The layer surface never moves or unmaps; a 16ms timer translates the shell by integer pixels inside a Gtk.Fixed. Hidden state keeps the shell outside the window and disables input targeting. The timer waits for window map + the first frame tick before starting, so cold starts cannot skip the 560ms animation.",
       "hidden_rss_mib": 89.5,
       "hidden_idle_cpu_percent": 0.17
     }
