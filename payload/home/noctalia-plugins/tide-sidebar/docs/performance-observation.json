@@ -179,8 +179,9 @@
     ],
     "drawer": {
       "type": "Gtk4LayerShell LEFT margin, frame-synced tick",
-      "note": "Moves the whole layer surface in integer pixels instead of clipping the shell with GtkRevealer; avoids per-frame text re-layout and clipped shadows. Window maps at the closed margin, then starts after map + 16 ms.",
-      "reduced_motion": "duration 0"
+      "note": "The window stays mapped for the whole frontend lifetime (parked off-screen with can_target=false when hidden). Opening sets the closed margin and animates to 8; the tick timestamp starts on the first rendered frame, so a slow first surface frame cannot eat the animation.",
+      "hidden_rss_mib": 87.6,
+      "hidden_idle_cpu_percent": 0.12
     }
   }
 }

@@ -37,7 +37,7 @@ let state = {
 let sequence = 0, visible = false, currentPage = 'notes', lastControl = -1;
 let window, stack, toastRevealer, toastLabel, toastTimer = 0;
 let views = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
-let drawerTick = 0, drawerAnim = null, drawerOpenSource = 0, drawerOpenMap = 0;
+let drawerTick = 0, drawerAnim = null;
 const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose, DRAWER_OPEN_MARGIN = 8;
 let viewFactory = null;
 let ensureView = () => null;
@@ -174,28 +174,25 @@ function reportGeometrySoon() {
 function drawerClosedMargin() { return -(appliedWidth + 28); }
 function easeOutCubic(t) { return 1 - (1 - t) ** 3; }
 function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2; }
-function cancelOpenSchedule() {
-    if (drawerOpenSource) { GLib.source_remove(drawerOpenSource); drawerOpenSource = 0; }
-    if (drawerOpenMap) { window.disconnect(drawerOpenMap); drawerOpenMap = 0; }
-}
 function cancelDrawer() {
     if (drawerTick) { window.remove_tick_callback(drawerTick); drawerTick = 0; }
     drawerAnim = null;
 }
 // The drawer moves the whole layer surface, so cairo never re-rasterises the
 // content mid-flight: no clipped shadow, no per-frame glyph re-layout.
-function animateDrawer(to, duration, easing, done) {
+function animateDrawer(from, to, duration, easing, done) {
     cancelDrawer();
-    const from = Layer.get_margin(window, Layer.Edge.LEFT);
+    Layer.set_margin(window, Layer.Edge.LEFT, from);
     if (!duration || from === to) {
         Layer.set_margin(window, Layer.Edge.LEFT, to);
         if (done) done();
         return;
     }
-    const anim = {from, to, start: GLib.get_monotonic_time(), duration, easing, done};
+    const anim = {from, to, start: 0, duration, easing, done};
     drawerAnim = anim;
     drawerTick = window.add_tick_callback(() => {
         if (drawerAnim !== anim) return GLib.SOURCE_REMOVE;
+        if (!anim.start) anim.start = GLib.get_monotonic_time();
         const t = Math.min(1, (GLib.get_monotonic_time() - anim.start) / (anim.duration * 1000));
         const value = Math.round(anim.from + (anim.to - anim.from) * anim.easing(t));
         if (value !== Layer.get_margin(window, Layer.Edge.LEFT)) Layer.set_margin(window, Layer.Edge.LEFT, value);
@@ -207,35 +204,28 @@ function animateDrawer(to, duration, easing, done) {
         return GLib.SOURCE_CONTINUE;
     });
 }
-function scheduleOpen() {
-    cancelOpenSchedule();
-    const go = () => { drawerOpenSource = 0; if (visible) animateDrawer(DRAWER_OPEN_MARGIN, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeOutCubic); };
-    if (window.get_mapped()) drawerOpenSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, () => { go(); return GLib.SOURCE_REMOVE; });
-    else drawerOpenMap = window.connect('map', () => {
-        window.disconnect(drawerOpenMap); drawerOpenMap = 0;
-        drawerOpenSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, () => { go(); return GLib.SOURCE_REMOVE; });
-    });
-}
 function setVisible(wanted, page = null) {
     if (page) selectPage(page, false);
     if (wanted === visible) return;
     visible = wanted;
-    cancelOpenSchedule();
     if (visible) {
-        if (!window.get_mapped()) Layer.set_margin(window, Layer.Edge.LEFT, drawerClosedMargin());
-        window.present();
+        window.set_can_target(true);
+        if (!window.get_mapped()) window.present();
+        const closed = drawerClosedMargin();
+        Layer.set_margin(window, Layer.Edge.LEFT, closed);
         updatePage(true);
         views[currentPage]?.onShow?.();
-        scheduleOpen();
+        if (reducedMotion()) animateDrawer(closed, DRAWER_OPEN_MARGIN, 0, easeOutCubic);
+        else animateDrawer(closed, DRAWER_OPEN_MARGIN, DRAWER_OPEN_MS, easeOutCubic);
         send('visibility', {open: true, tab: currentPage});
         reportGeometrySoon();
     } else {
         views[currentPage]?.onHide?.();
         send('flush');
         send('visibility', {open: false, tab: currentPage});
-        const current = Layer.get_margin(window, Layer.Edge.LEFT);
-        if (!window.get_mapped() || current <= drawerClosedMargin() + 2) window.hide();
-        else animateDrawer(drawerClosedMargin(), reducedMotion() ? 0 : DRAWER_CLOSE_MS, easeInOutCubic, () => window.hide());
+        animateDrawer(Layer.get_margin(window, Layer.Edge.LEFT), drawerClosedMargin(), reducedMotion() ? 0 : DRAWER_CLOSE_MS, easeInOutCubic, () => {
+            if (!visible) window.set_can_target(false);
+        });
     }
 }
 function applyControl(control) {
@@ -308,7 +298,7 @@ function shutdown() {
     if (heartbeat) GLib.source_remove(heartbeat);
     if (pendingRead) GLib.source_remove(pendingRead);
     if (geometrySource) GLib.source_remove(geometrySource);
-    cancelOpenSchedule(); cancelDrawer();
+    cancelDrawer();
     for (const proc of helperProcesses) proc.force_exit();
     app.quit();
 }
@@ -400,6 +390,9 @@ app.connect('startup', () => {
         print('native-check: GTK widgets and CSS constructed successfully');
         GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => { app.quit(); return GLib.SOURCE_REMOVE; });
     } else {
+        Layer.set_margin(window, Layer.Edge.LEFT, drawerClosedMargin());
+        window.set_can_target(false);
+        window.present();
         watchBridge();
         send('frontend-ready');
         heartbeat = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 4, () => {
