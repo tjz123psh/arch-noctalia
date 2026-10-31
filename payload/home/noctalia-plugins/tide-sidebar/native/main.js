@@ -37,7 +37,7 @@ let state = {
 let sequence = 0, visible = false, currentPage = 'notes', lastControl = -1;
 let window, stack, toastRevealer, toastLabel, toastTimer = 0;
 let views = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
-let drawerTick = 0, drawerAnim = null, drawerGateMap = 0;
+let drawerTimer = 0, drawerAnim = null;
 const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose;
 let viewFactory = null;
 let ensureView = () => null;
@@ -171,48 +171,46 @@ function reportGeometrySoon() {
     });
 }
 
-function drawerClosedOffset() { return -(appliedWidth + 8); }
+function drawerClosedOffset() { return -Math.max(0, appliedWidth - 1); }
 function easeOutCubic(t) { return 1 - (1 - t) ** 3; }
 function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2; }
 function setDrawer(value) {
     Layer.set_margin(window, Layer.Edge.LEFT, Math.round(value));
 }
 function cancelDrawer() {
-    if (drawerTick) { window.remove_tick_callback(drawerTick); drawerTick = 0; }
-    if (drawerGateMap) { window.disconnect(drawerGateMap); drawerGateMap = 0; }
+    if (drawerTimer) { GLib.source_remove(drawerTimer); drawerTimer = 0; }
     drawerAnim = null;
 }
 // Move the layer surface itself. The compositor translates the already-rendered
-// buffer, so glyphs and shadows are never re-rasterized mid-flight (no shimmer),
-// and the frame clock keeps the steps aligned with the display.
+// buffer, so glyphs and shadows are never re-rasterized mid-flight (no shimmer).
+// The closed surface keeps one pixel on screen: a fully off-screen layer is not
+// composited, and the first show would then paint directly at the open position.
 function animateDrawer(from, to, duration, easing, done) {
     cancelDrawer();
     setDrawer(from);
     if (!duration || from === to) { setDrawer(to); if (done) done(); return; }
-    const start = () => {
-        const anim = {from, to, start: 0, duration, easing, done};
+    const begin = () => {
+        // Step-based, not wall-clock: a cold start blocks the main loop long
+        // enough that elapsed time can jump most of the drawer before the
+        // surface is composited. Advancing one step per callback means a stall
+        // pauses the motion instead of skipping it.
+        const steps = Math.max(1, Math.round(duration / 16));
+        const anim = {from, to, step: 0, steps, duration, easing, done};
         drawerAnim = anim;
-        drawerTick = window.add_tick_callback((_widget, clock) => {
-            if (drawerAnim !== anim) { drawerTick = 0; return GLib.SOURCE_REMOVE; }
-            const now = clock.get_frame_time();
-            if (!anim.start) anim.start = now;
-            const t = Math.min(1, (now - anim.start) / (anim.duration * 1000));
+        drawerTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, () => {
+            if (drawerAnim !== anim) { drawerTimer = 0; return GLib.SOURCE_REMOVE; }
+            anim.step += 1;
+            const t = Math.min(1, anim.step / anim.steps);
             setDrawer(anim.from + (anim.to - anim.from) * anim.easing(t));
             if (t >= 1) {
-                drawerTick = 0; drawerAnim = null;
+                drawerTimer = 0; drawerAnim = null;
                 if (anim.done) anim.done();
                 return GLib.SOURCE_REMOVE;
             }
             return GLib.SOURCE_CONTINUE;
         });
     };
-    // A cold frontend may not be mapped yet; start on the first real frame so
-    // the drawer window cannot elapse before the surface is on screen.
-    if (window.get_mapped()) start();
-    else drawerGateMap = window.connect('map', () => {
-        window.disconnect(drawerGateMap); drawerGateMap = 0;
-        start();
-    });
+    begin();
 }
 function setVisible(wanted, page = null) {
     if (page) selectPage(page, false);
@@ -400,6 +398,7 @@ app.connect('startup', () => {
         GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => { app.quit(); return GLib.SOURCE_REMOVE; });
     } else {
         setDrawer(drawerClosedOffset());
+        window.connect('map', () => { if (!visible) setDrawer(drawerClosedOffset()); });
         window.set_can_target(false);
         window.present();
         watchBridge();
