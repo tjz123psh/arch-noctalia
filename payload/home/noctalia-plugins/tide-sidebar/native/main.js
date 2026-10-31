@@ -36,7 +36,7 @@ let state = {
 };
 let sequence = 0, visible = false, currentPage = 'notes', lastControl = -1;
 let window, stack, toastRevealer, toastLabel, toastTimer = 0;
-let views = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
+let views = {}, pageHosts = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
 let drawerTimer = 0, drawerAnim = null;
 const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose, DRAWER_OPEN_MARGIN = -1;
 let viewFactory = null;
@@ -75,6 +75,16 @@ function copy(text) {
         Gdk.Display.get_default().get_clipboard().set(String(text));
         return true;
     } catch (_) { return false; }
+}
+function clearClipboardIf(text) {
+    if (!text) return;
+    try {
+        const clipboard = Gdk.Display.get_default()?.get_clipboard();
+        if (!clipboard) return;
+        clipboard.read_text_async(null, (source, result) => {
+            try { if (source.read_text_finish(result) === text) source.set(''); } catch (_) {}
+        });
+    } catch (_) {}
 }
 function runHelper(args, callback, timeoutMs = 5000) {
     if (checkOnly) { callback({ok: false, message: '检查模式不执行系统操作'}); return; }
@@ -123,7 +133,7 @@ function applyConfig() {
 }
 function normalizePage(page) { return pageNames.includes(page) ? page : (pageAliases[page] || 'notes'); }
 function updatePage(force = false, changed = []) {
-    const needed = {notes: ['notes'], tools: ['timer', 'calc', 'stopwatch'], hotspot: ['system'], windows: ['system']};
+    const needed = {notes: ['notes'], tools: ['timer', 'calc', 'stopwatch'], hotspot: ['system', 'feedback'], windows: ['system']};
     const view = views[currentPage];
     if (visible && view && (force || changed.some(name => needed[currentPage].includes(name)))) view.update(state);
 }
@@ -133,6 +143,8 @@ function selectPage(name, save = true) {
     if (visible) views[currentPage]?.onHide?.();
     ensureView(name);
     currentPage = name;
+    // Hidden page switches must not queue a 220ms slide for the next open.
+    stack.set_transition_duration(visible ? UI.motionMs(reducedMotion(), 'page') : 0);
     stack.set_visible_child_name(name);
     for (const [page, button] of Object.entries(navigation)) {
         if (page === name) button.add_css_class('selected'); else button.remove_css_class('selected');
@@ -265,6 +277,7 @@ function readChannel(name) {
         if (name === 'control') applyControl(packet.data);
         else if (name === 'feedback') {
             const reply = packet.data;
+            state.feedback = reply;
             if (reply?.message && visible) toast(reply.message, reply.ok !== true);
             // Focusing a window used to hide the sidebar. The user asked for the panel to
             // stay open so several windows can be picked in a row; hiding is manual now
@@ -353,16 +366,20 @@ app.connect('startup', () => {
     Layer.set_exclusive_zone(window, 0);
     window.connect('close-request', () => { setVisible(false); return true; });
     window.connect('destroy', () => shutdown());
-    const ctx = {ui: UI, send, toast, copy, runHelper, writePrivateRequest, close: () => setVisible(false), getState: () => state, isVisible: () => visible, config: () => state.config};
+    const ctx = {ui: UI, send, toast, copy, clearClipboard: clearClipboardIf, runHelper, writePrivateRequest, close: () => setVisible(false), getState: () => state, isVisible: () => visible, config: () => state.config};
     // Pages are built on first use: the common notes-only open skips the other
     // three widget trees (about 20 ms of construction on this machine).
     viewFactory = {notes: () => createNotes(ctx), tools: () => createTools(ctx), hotspot: () => createHotspot(ctx), windows: () => createWindows(ctx)};
     views = {};
+    // Every page gets a permanent host in navigation order. The heavy view is
+    // still built on first use; this keeps Stack's child order stable so
+    // SLIDE_LEFT_RIGHT always follows the rail/Ctrl+1–4 direction.
     ensureView = name => {
         if (views[name]) return views[name];
         const view = viewFactory[name]();
         views[name] = view;
-        stack.add_named(view.widget, name);
+        const host = pageHosts[name];
+        if (host) host.append(view.widget);
         // selectPage()/--check update right after creation; doing it here twice
         // built the initial notes page against an empty snapshot for nothing.
         return view;
@@ -387,6 +404,13 @@ app.connect('startup', () => {
     const right = UI.box(Gtk.Orientation.VERTICAL, 6, ['content-column']);
     right.set_hexpand(true); right.set_vexpand(true);
     stack = new Gtk.Stack({hexpand: true, vexpand: true, transition_type: Gtk.StackTransitionType.SLIDE_LEFT_RIGHT, transition_duration: UI.DURATION.page});
+    pageHosts = {};
+    for (const page of pageNames) {
+        const host = UI.box(Gtk.Orientation.VERTICAL, 0);
+        host.set_hexpand(true); host.set_vexpand(true);
+        pageHosts[page] = host;
+        stack.add_named(host, page);
+    }
     right.append(stack);
     toastRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_UP, transition_duration: UI.DURATION.toast});
     toastRevealer.add_css_class('toast');

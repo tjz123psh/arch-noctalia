@@ -128,7 +128,8 @@ export function createTools(ctx) {
             pendingTimer = 0;
             if (!waitingForResult) return GLib.SOURCE_REMOVE;
             waitingForResult = false;
-            currentRequest = null;
+            // Keep the request id so a late reply cannot be shown under a newer expression.
+            if (currentRequest) currentRequest.expired = true;
             setLabel(result, '—'); setSensitive(copyButton, false);
             setLabel(calcMessage, '计算服务无响应，请重试');
             setVisible(calcMessage, true); setClass(calcMessage, 'status-error', true);
@@ -298,6 +299,12 @@ export function createTools(ctx) {
             syncingExpression = false;
             const existingSequence = Number(replyId);
             if (Number.isSafeInteger(existingSequence) && existingSequence > requestSequence) requestSequence = existingSequence;
+        }
+        if (currentRequest?.expired) {
+            if (replyId !== currentRequest.requestId) return;
+            currentRequest = null;
+            if (pendingTimer) { GLib.source_remove(pendingTimer); pendingTimer = 0; }
+            return;
         }
         waitingForResult = false;
         if (pendingTimer) { GLib.source_remove(pendingTimer); pendingTimer = 0; }

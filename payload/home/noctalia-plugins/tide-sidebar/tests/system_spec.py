@@ -298,13 +298,15 @@ class BackendSpec(unittest.TestCase):
         self.assertEqual(sum(argv[0] == "/usr/bin/timeout" for argv, _ in self.runner.calls), 1)
         self.assertNotIn(FAKE_SECRET, json.dumps(result))
 
-    def test_flock_contention_consumes_request_without_starting_script(self):
+    def test_flock_contention_preserves_request_without_starting_script(self):
         lock = self.state / "lock"
         with lock.open("w") as handle:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
             path = self.request({"password": FAKE_SECRET})
             self.assert_error("busy", lambda: self.backend.hotspot_action("on", str(path)))
-            self.assertFalse(path.exists())
+            # The request is consumed only after the lock is held; a busy
+            # helper must not destroy the user's just-typed secret.
+            self.assertTrue(path.exists())
             self.assertFalse(self.runner.calls)
 
     def test_helper_lock_serializes_panels_and_ipc(self):

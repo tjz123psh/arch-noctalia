@@ -44,7 +44,7 @@ function scrolled(child) {
 
 export function createHotspot(ctx) {
     const ui = ctx.ui;
-    let shown = false, generation = 0, revealGeneration = 0;
+    let shown = false, generation = 0, revealGeneration = 0, secretCopied = '', lastFeedback = 0;
     let current = {loading: true, hotspot: {available: false, on: null}};
     let initialized = false, editing = false, settingFields = false, desiredBand = 'bg';
     let intent = null, preparing = false, ownedPath = null, operation = null;
@@ -135,7 +135,10 @@ export function createHotspot(ctx) {
     revealButton.button.set_hexpand(true); revealButton.button.set_tooltip_text('查看或隐藏已保存密码');
     const copy = ui.iconButton('copy', () => {
         if (!shown || !secretVisible) return;
-        try { ctx.copy(savedPassword.get_text()); ctx.toast('密码已复制到剪贴板'); }
+        try {
+            const text = savedPassword.get_text();
+            if (ctx.copy(text) !== false) { secretCopied = text; ctx.toast('密码已复制到剪贴板'); }
+        }
         catch (_) { ctx.toast('未能复制密码', true); }
     }, '复制已显示的密码');
     savedButtons.append(revealButton.button); savedButtons.append(copy); saved.append(savedButtons);
@@ -184,6 +187,7 @@ export function createHotspot(ctx) {
         revealGeneration++;
         revealing = false; secretVisible = false;
         cancelTimer('secret');
+        if (secretCopied) { ctx.clearClipboard?.(secretCopied); secretCopied = ''; }
         savedPassword.set_text(''); secretBox.set_reveal_child(false);
         updateControls();
     }
@@ -246,10 +250,12 @@ export function createHotspot(ctx) {
         intent = null; confirm.set_reveal_child(false); updateControls();
     }
     function beginOperation(kind, path = null) {
-        operation = {kind, sawBusy: backendBusy()};
+        const seen = Number(ctx.getState?.()?.feedback?.sequence);
+        operation = {kind, sawBusy: backendBusy(), feedbackAt: Number.isFinite(seen) ? seen : lastFeedback};
         cancelTimer('operation');
         operationTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 65000, () => {
             operationTimer = 0; operation = null;
+            password.set_text(''); clearSecret();
             if (shown) { ctx.send('refresh'); ctx.toast('尚未确认操作结果，请检查状态；不会自动重试', true); }
             updateControls(); return GLib.SOURCE_REMOVE;
         });
@@ -257,7 +263,8 @@ export function createHotspot(ctx) {
             // Only kind and the private path go into the service pipe. No credentials.
             if (ctx.send('hotspot', path ? {kind, path} : {kind}) === false) throw new Error('transport closed');
             ownedPath = null; // Ownership transfers to the service/helper, even if hidden next.
-            password.set_text('');
+            // Keep the password until this operation's feedback arrives: a busy
+            // helper must not destroy the user's just-typed secret.
             ctx.toast(kind === 'off' ? '正在关闭热点…' : kind === 'apply' ? '正在应用设置…' : '正在开启热点…');
         } catch (_) {
             cancelTimer('operation'); operation = null;
@@ -360,10 +367,17 @@ export function createHotspot(ctx) {
     function update(state) {
         current = state?.system || {hotspot: {}, windows: [], loading: true};
         const h = hot();
+        const feedback = state?.feedback;
+        if (Number.isFinite(feedback?.sequence)) lastFeedback = feedback.sequence;
         if (h.busy === true && (secretVisible || revealing)) clearSecret();
         if (operation) {
             if (h.busy === true) operation.sawBusy = true;
-            if (operation.sawBusy && h.busy !== true) { cancelTimer('operation'); operation = null; }
+            const sameAction = !feedback?.hotspotAction || feedback.hotspotAction === operation.kind;
+            const finished = feedback?.scope === 'hotspot' && sameAction && Number(feedback.sequence) > operation.feedbackAt;
+            if (finished || (operation.sawBusy && h.busy !== true)) {
+                cancelTimer('operation'); operation = null;
+                if (!feedback || feedback.ok === true) { password.set_text(''); clearSecret(); }
+            }
         }
         if ((!initialized || !editing) && !busy() && !intent && typeof h.ssid === 'string' && h.ssid) resetFields();
         if (initialized && !hasChanges()) editing = false;

@@ -519,10 +519,14 @@ class Backend:
             raise BackendError("invalid_action", "热点操作无效。")
         if action != "off" and request_path is None:
             raise BackendError("request_required", "请通过私有请求文件提交热点设置。")
-        request = self._consume_request(request_path) if request_path is not None else {}
         if not self._script_available():
+            if request_path is not None:
+                self._consume_request(request_path, discard=True)
             raise BackendError("hotspot_script_missing", "热点脚本不可用。")
         with self._operation_lock():
+            # Consume only after the lock is held: a busy operation must not
+            # delete the user's newly written request before it can be retried.
+            request = self._consume_request(request_path) if request_path is not None else {}
             with tempfile.TemporaryDirectory(prefix="operation-", dir=self.paths.private) as temporary:
                 shim = Path(temporary) / "notify-send"
                 shim.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")

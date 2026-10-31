@@ -86,6 +86,7 @@ export function createNotes(ctx) {
     function send(action, values = {}) {
         try {
             if (ctx.send(action, values) === false) throw new Error('transport unavailable');
+            localError = '';
             return true;
         } catch (_) {
             localError = '后台暂不可用，草稿仍保留在窗口中';
@@ -518,7 +519,12 @@ export function createNotes(ctx) {
         widget: page,
         update,
         onShow() { shown = true; if (ready && current()) editor.grab_focus(); footerWave.pulse(); },
-        onHide() { shown = false; flushAll(); cancelRename(); editPopover.popdown(); listPopover.popdown(); },
+        onHide() {
+            shown = false; flushAll();
+            if (pendingAddSource) { GLib.source_remove(pendingAddSource); pendingAddSource = 0; }
+            pendingAdd = null;
+            cancelRename(); editPopover.popdown(); listPopover.popdown();
+        },
         handleEscape() {
             if (editPopover.get_mapped()) { editPopover.popdown(); return true; }
             if (listPopover.get_mapped()) { listPopover.popdown(); return true; }

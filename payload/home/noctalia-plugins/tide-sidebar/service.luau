@@ -308,7 +308,7 @@ local function hotspotAction(kind,path)
     hotspotOperationWarning=value and type(value.warning)=="string" and value.warning or nil
     local message=(value and value.message) or err or "热点操作结束；请核对当前状态"
     if hotspotOperationWarning and hotspotOperationWarning~="" then message=message.." "..hotspotOperationWarning end
-    feedback(value and value.ok==true,message,"hotspot")
+    feedback(value and value.ok==true,message,"hotspot",{hotspotAction=kind})
     publishSystem()
     refresh()
   end,60000)

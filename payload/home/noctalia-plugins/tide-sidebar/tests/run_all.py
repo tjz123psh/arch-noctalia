@@ -68,6 +68,8 @@ def check_native_lifecycle():
         "bytes.length > 16777216": "note channel limit must cover 160 x 64 KiB snapshots",
         "const from = Math.min(Layer.get_margin": "reopening must resume from the current margin",
         "stack.set_visible_child_name(name)": "page switch must use the baseline Stack slide",
+        "pageHosts[page] = host": "page hosts must be created in navigation order",
+        "set_transition_duration(visible ?": "hidden page switches must not queue a slide",
     }
     missing = [message for token, message in required.items() if token not in js]
     if missing:

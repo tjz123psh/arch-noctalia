@@ -12,7 +12,7 @@
 
 - 插件 `pang/tide-sidebar` 2.1.0 已启用；原生前端子进程 1 个（pid 2686，父进程 noctalia，启动于 17:27:04，RSS 约 225 MiB）。
 - 数据目录 `~/.local/state/noctalia/plugins/data/pang/tide-sidebar/private/` 权限 0700；内有 notes-a/b、timer-a/b、stopwatch-a/b、preferences.json 与 `frontend/` 快照目录。
-- 统一回归 `python3 -B tide-sidebar/tests/run_all.py` 退出码 0：notes 21、tools 95/3362 断言、stopwatch 22、service 68/500、frontend 15、panel 7、system 35、transport 7、native_notes 93、native_tools 110、native_system 36。
+- 统一回归 `python3 -B tide-sidebar/tests/run_all.py` 退出码 0（2.3.0 数据）：notes 24、tools 95/3362 断言、stopwatch 22、service 82/559、frontend 30、panel 7、system 36、transport 7、native_notes 98、native_tools 113、native_system 40。
 - 运行日志近期没有本插件相关 ERR/WRN；只有无关的蓝牙、网络与 PipeWire 警告。
 - 侧栏当前处于收起状态（control.json `visible=false`）。
 

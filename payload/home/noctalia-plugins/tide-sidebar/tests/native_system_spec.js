@@ -31,10 +31,11 @@ function byTip(root, tooltip) {
     return button;
 }
 function context(ui = UI, allowWrite = true) {
-    const ctx = {ui, allowWrite, sends: [], helpers: [], writes: [], copies: [], notices: []};
+    const ctx = {ui, allowWrite, sends: [], helpers: [], writes: [], copies: [], clears: [], notices: []};
     ctx.send = (action, values = {}) => ctx.sends.push({action, ...values});
     ctx.toast = (text, error) => ctx.notices.push({text, error});
     ctx.copy = text => ctx.copies.push(text);
+    ctx.clearClipboard = text => ctx.clears.push(text);
     ctx.close = () => {};
     ctx.runHelper = (args, callback) => {
         ctx.helpers.push({args, callback});
@@ -105,9 +106,12 @@ function primaryFixture() {
         const action = ctx.sends.findLast(item => item.action === 'hotspot');
         assert(action.kind === 'on' && typeof action.path === 'string', 'Confirmed start only sends kind and path');
         assert(!JSON.stringify(ctx.sends).includes(FAKE_SECRET), 'Service commands contain no password');
-        assert(ctx.writes.at(-1).value.password === FAKE_SECRET && draft.get_text() === '', 'Password is private-request-only then cleared');
+        assert(ctx.writes.at(-1).value.password === FAKE_SECRET && draft.get_text() === FAKE_SECRET, 'Password stays in the private request and the draft until feedback');
         state.system.hotspot.busy = true; page.update(state);
-        state.system.hotspot.busy = false; page.update(state);
+        state.system.hotspot.busy = false;
+        state.feedback = {sequence: 1, ok: true, scope: 'hotspot', message: '完成'};
+        page.update(state);
+        assert(draft.get_text() === '', 'Successful hotspot feedback clears the retained password');
 
         byTip(page.widget, '查看或隐藏已保存密码').emit('clicked');
         const lateReveal = lastHelper(ctx, 'reveal'); page.onHide();
@@ -122,6 +126,7 @@ function primaryFixture() {
         assert(ctx.copies.length === 1, 'Copy requires explicit button action');
         page.onHide();
         assert(saved.get_text() === '' && draft.get_text() === '', 'Hiding clears revealed and draft passwords');
+        assert(ctx.clears.includes(FAKE_SECRET), 'Hiding clears the copied password from the clipboard');
         assert(!JSON.stringify(ctx.sends).includes(FAKE_SECRET) && !JSON.stringify(ctx.notices).includes(FAKE_SECRET), 'No secret in service pipe or toasts');
 
         const windowContext = context(counted);

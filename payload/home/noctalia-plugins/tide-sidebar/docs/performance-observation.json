@@ -43,7 +43,9 @@
     "limits": [
       "Same short whole-process sample as above; unrelated shell activity not controlled.",
       "Only this plugin process uses cairo; other GTK apps still follow the session GSK_RENDERER=gl."
-    ]
+    ],
+    "superseded": true,
+    "superseded_note": "Cairo was reverted: Gtk.Stack page transitions were 48-72fps. Use the current GL frontend_memory/page_transition_note sections."
   },
   "idle_exit": {
     "date": "2026-10-31",
@@ -83,14 +85,14 @@
   },
   "frontend_memory": {
     "date": "2026-10-31",
-    "renderer": "cairo + Adwaita icon theme + lazy pages",
-    "notes_only_rss_mib": 98.5,
+    "renderer": "GL (session default) + Adwaita icon theme + lazy pages",
+    "notes_only_rss_mib": 207.5,
     "all_pages_visited_rss_mib": [
-      106.2,
-      114.5
+      207.5,
+      216.5
     ],
     "pss_mib_notes_only": 55.1,
-    "note": "All-pages figures vary a few MiB with mozjs GC/fragmentation across runs; both are far below the 126 MiB cairo baseline before the icon/lazy work."
+    "note": "Current smooth-page-transition path. The earlier cairo figures (~98-115 MiB) traded page-switch smoothness for memory and are superseded."
   },
   "accessibility": {
     "date": "2026-10-31",
@@ -188,6 +190,6 @@
       "hidden_rss_mib": 90.2,
       "hidden_idle_cpu_percent": 0.17
     },
-    "page_transition_note": "Baseline Gtk.Stack SLIDE_LEFT_RIGHT under the default GL renderer: 34 frames / ~236 ms at 144 fps."
+    "page_transition_note": "Baseline Gtk.Stack SLIDE_LEFT_RIGHT under the default GL renderer: 31 frames / ~215 ms at 144 fps."
   }
 }
