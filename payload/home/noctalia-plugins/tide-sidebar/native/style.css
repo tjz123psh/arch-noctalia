@@ -99,6 +99,11 @@
   font-weight: 500;
 }
 .tide-window .primary:hover, .tide-window .primary-button:hover, .tide-window .suggested-action:hover { background-color: #5B4F15; }
+.tide-window .primary:active, .tide-window .primary-button:active, .tide-window .suggested-action:active {
+  background-color: #4F4412;
+}
+.tide-window .danger:active, .tide-window .danger-button:active { background-color: rgba(154, 74, 51, 0.18); }
+.tide-window .soft-button:active { background-color: rgba(109, 94, 27, 0.14); }
 .tide-window button:checked, .tide-window button.selected { color: #6D5E1B; background-color: #FFF6DA; }
 
 /* ---------- cards ---------- */
@@ -165,7 +170,7 @@
 .tide-window progressbar progress { min-width: 0; background-color: #6D5E1B; border-radius: 2px; }
 
 /* ---------- notes page ---------- */
-.tide-window .notes-page { padding: 0; }
+.tide-window .notes-page { padding: 0 12px 0 0; }
 .tide-window .note-selector {
   min-height: 0;
   padding: 0;
@@ -207,10 +212,15 @@
 .tide-window .note-actions-button > button:hover { background-color: #5B4F15; }
 .tide-window .inline-notice {
   padding: 8px 10px; border-radius: 10px;
-  background-color: rgba(154, 74, 51, 0.08);
-  border: 1px solid rgba(154, 74, 51, 0.14);
+  background-color: rgba(120, 103, 28, 0.07);
+  border: 1px solid rgba(120, 103, 28, 0.13);
 }
-.tide-window .inline-notice label { color: #8A4430; }
+.tide-window .inline-notice label { color: #6F6244; }
+.tide-window .inline-notice.error {
+  background-color: rgba(154, 74, 51, 0.08);
+  border-color: rgba(154, 74, 51, 0.16);
+}
+.tide-window .inline-notice.error label { color: #8A4430; }
 
 /* notes picker popover */
 .tide-window popover contents {
@@ -225,6 +235,8 @@
 .tide-window .list-tab.active { color: #6D5E1B; background-color: #FFEDB8; font-weight: 500; }
 .tide-window .note-row { background-color: transparent; border-radius: 9px; padding: 2px; }
 .tide-window .note-row:hover { background-color: rgba(120, 103, 28, 0.07); }
+.tide-window .note-row.active { background-color: #FFEDB8; box-shadow: inset 0 0 0 1px rgba(150, 120, 40, 0.22); }
+.tide-window .note-row.drop-target { background-color: #F6E2A4; }
 .tide-window .note-list-title { font-size: 12px; }
 .tide-window .note-menu-action { min-height: 28px; padding: 5px 10px; background-color: transparent; }
 .tide-window .note-menu-action:hover { background-color: rgba(120, 103, 28, 0.08); }
@@ -398,4 +410,5 @@
   box-shadow: 0 2px 6px rgba(50, 42, 20, 0.18), 0 10px 24px rgba(50, 42, 20, 0.18);
 }
 .tide-window .toast.error { background-color: #7E3B27; color: #FFF1E8; }
+.tide-window .toast.success { background-color: #476D50; color: #EFF6EA; }
 .tide-window .reduced-motion *, .tide-window.reduced-motion * { transition-duration: 0ms; animation-duration: 0ms; }
