@@ -1,10 +1,11 @@
-> **历史快照**：以下正文记录 2026-10-15 的 2.1.0 复查。最新数据见
-> [性能观察](<performance-observation.json>) 与本次复审（2026-10-31，2.3.0）：
-> 历史快照：前端曾改为 cairo 软件光栅（RSS 219→约 98–115 MiB）；后因切页只有 48–72fps，恢复默认 GL（当前约 207 MiB）。按需构建页面（首开省约 13 ms）、
-> 图标主题固定 Adwaita（少加载图标缓存，约省 16 MiB）、闲置 15 分钟退出前端
-> （隐藏期 0 MiB，重开约 0.43 s）；视觉已按新令牌重做，截图见 `previews/`。
+> **历史快照**：以下正文保留 2026-10-15 的 2.1.0 复查原样。当前实现与数据见
+> [性能观察](<performance-observation.json>) 和 [改版验收](<reference-redesign.md>)。
+> 2.3.0（2026-10-31）重跑：notes 24、tools 95/3362、stopwatch 22、service 82/559、
+> frontend 30、panel 7、system 36、transport 7、native_notes 98、native_tools 113、
+> native_system 40。前端曾改 cairo（约 98–115 MiB），因切页只有 48–72fps 已恢复
+> 默认 GL（约 207 MiB）；按需构建页面、Adwaita 图标、闲置退出仍保留。
 
-# 项目复查（2026-10-15）
+# 项目复查（2026-10-15，2.1.0 历史快照）
 
 复查范围：`tide-sidebar/` 全部源码与文档，以及它在本机的实际运行状态。方法：逐文件通读代码、比对文档与实现、核对宿主 API 证据（GIR / 运行日志 / 实际进程与文件权限）、重跑统一回归入口；另有两路独立只读审查（数据/服务层、原生界面层）在并行进行，结论会在收到后追加到本文件。
 
@@ -12,7 +13,7 @@
 
 - 插件 `pang/tide-sidebar` 2.1.0 已启用；原生前端子进程 1 个（pid 2686，父进程 noctalia，启动于 17:27:04，RSS 约 225 MiB）。
 - 数据目录 `~/.local/state/noctalia/plugins/data/pang/tide-sidebar/private/` 权限 0700；内有 notes-a/b、timer-a/b、stopwatch-a/b、preferences.json 与 `frontend/` 快照目录。
-- 统一回归 `python3 -B tide-sidebar/tests/run_all.py` 退出码 0（2.3.0 数据）：notes 24、tools 95/3362 断言、stopwatch 22、service 82/559、frontend 30、panel 7、system 36、transport 7、native_notes 98、native_tools 113、native_system 40。
+- 统一回归 `python3 -B tide-sidebar/tests/run_all.py` 退出码 0（2.1.0 历史数据）：notes 21、tools 95/3362 断言、stopwatch 22、service 68/500、frontend 15、panel 7、system 35、transport 7、native_notes 93、native_tools 110、native_system 36。
 - 运行日志近期没有本插件相关 ERR/WRN；只有无关的蓝牙、网络与 PipeWire 警告。
 - 侧栏当前处于收起状态（control.json `visible=false`）。
 

@@ -6,6 +6,14 @@
 
 结论：可以用原生 Luau 插件做侧栏、编辑、拖放、后台服务和轻量动画；没有 QML 服务对象、通用 canvas/shapes 或可自定义的 CSS 动画。以下按 v5.2.1 实际导出/属性白名单记录，避免套用旧版 Noctalia 或浏览器 API。
 
+## 当前实现备注（2.3.0 之后）
+
+- 插件仍声明 `plugin_api = 32`；前端不强制 `GSK_RENDERER`，跟随会话默认 GL（切页 220ms Stack 滑动需要 144fps）。cairo 省内存方案已撤销。
+- 切页子页在启动时按 `pageNames` 顺序建立永久 host，视图内容仍按需构建；隐藏切页 duration=0。
+- 热点操作反馈新增 `hotspotAction` 字段；前端保留密码到该次 feedback，并清理已复制的密码。
+- 便签/计时/偏好使用 `.pending` + `renameFile` 原子替换；单个损坏槽备份为 `.corrupt-*`。
+- 热点请求在 helper 取得 operation lock 后才消费，忙时不会先删文件。
+
 ## 核实范围与版本
 
 - 本机包查询：`pacman -Qo /usr/bin/noctalia` → noctalia 5.2.1-1。未修改宿主、系统配置或插件启用状态。
