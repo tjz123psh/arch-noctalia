@@ -37,7 +37,8 @@ let state = {
 let sequence = 0, visible = false, currentPage = 'notes', lastControl = -1;
 let window, stack, toastRevealer, toastLabel, toastTimer = 0;
 let views = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
-let drawerTick = 0, drawerAnim = null;
+let drawer = null, drawerX = 0, shellHeight = 0, syncShellHeight = () => {};
+let drawerTimer = 0, drawerAnim = null;
 const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose, DRAWER_OPEN_MARGIN = 8;
 let viewFactory = null;
 let ensureView = () => null;
@@ -117,9 +118,9 @@ function applyConfig() {
     if (width === appliedWidth || !shellBox) return;
     appliedWidth = width;
     // The layer surface follows the widget's request, so the shell carries the width.
-    shellBox.set_size_request(width, -1);
+    shellBox.set_size_request(width, shellHeight > 0 ? shellHeight : -1);
     window.set_default_size(width, -1);
-    if (!visible) Layer.set_margin(window, Layer.Edge.LEFT, drawerClosedMargin());
+    if (!visible) moveDrawer(drawerClosedOffset());
 }
 function normalizePage(page) { return pageNames.includes(page) ? page : (pageAliases[page] || 'notes'); }
 function updatePage(force = false, changed = []) {
@@ -171,33 +172,37 @@ function reportGeometrySoon() {
     });
 }
 
-function drawerClosedMargin() { return -(appliedWidth + 28); }
+function drawerClosedOffset() { return -(appliedWidth + 28); }
 function easeOutCubic(t) { return 1 - (1 - t) ** 3; }
 function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2; }
+function moveDrawer(value) {
+    drawerX = Math.round(value);
+    if (drawer) drawer.move(shellBox, drawerX, 0);
+}
 function cancelDrawer() {
-    if (drawerTick) { window.remove_tick_callback(drawerTick); drawerTick = 0; }
+    if (drawerTimer) { GLib.source_remove(drawerTimer); drawerTimer = 0; }
     drawerAnim = null;
 }
-// The drawer moves the whole layer surface, so cairo never re-rasterises the
-// content mid-flight: no clipped shadow, no per-frame glyph re-layout.
+// The window and its layer surface never move or unmap; only the shell is
+// translated inside a Gtk.Fixed. Integer positions + a 16ms timer keep the
+// content pixel-aligned and avoid the first-map/frame-clock hitch entirely.
 function animateDrawer(from, to, duration, easing, done) {
     cancelDrawer();
-    Layer.set_margin(window, Layer.Edge.LEFT, from);
+    moveDrawer(from);
     if (!duration || from === to) {
-        Layer.set_margin(window, Layer.Edge.LEFT, to);
+        moveDrawer(to);
         if (done) done();
         return;
     }
     const anim = {from, to, start: 0, duration, easing, done};
     drawerAnim = anim;
-    drawerTick = window.add_tick_callback(() => {
-        if (drawerAnim !== anim) return GLib.SOURCE_REMOVE;
+    drawerTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, () => {
+        if (drawerAnim !== anim) { drawerTimer = 0; return GLib.SOURCE_REMOVE; }
         if (!anim.start) anim.start = GLib.get_monotonic_time();
         const t = Math.min(1, (GLib.get_monotonic_time() - anim.start) / (anim.duration * 1000));
-        const value = Math.round(anim.from + (anim.to - anim.from) * anim.easing(t));
-        if (value !== Layer.get_margin(window, Layer.Edge.LEFT)) Layer.set_margin(window, Layer.Edge.LEFT, value);
+        moveDrawer(anim.from + (anim.to - anim.from) * anim.easing(t));
         if (t >= 1) {
-            drawerTick = 0; drawerAnim = null;
+            drawerTimer = 0; drawerAnim = null;
             if (anim.done) anim.done();
             return GLib.SOURCE_REMOVE;
         }
@@ -210,9 +215,10 @@ function setVisible(wanted, page = null) {
     visible = wanted;
     if (visible) {
         window.set_can_target(true);
+        syncShellHeight();
         if (!window.get_mapped()) window.present();
-        const closed = drawerClosedMargin();
-        Layer.set_margin(window, Layer.Edge.LEFT, closed);
+        const closed = drawerClosedOffset();
+        moveDrawer(closed);
         updatePage(true);
         views[currentPage]?.onShow?.();
         if (reducedMotion()) animateDrawer(closed, DRAWER_OPEN_MARGIN, 0, easeOutCubic);
@@ -223,7 +229,7 @@ function setVisible(wanted, page = null) {
         views[currentPage]?.onHide?.();
         send('flush');
         send('visibility', {open: false, tab: currentPage});
-        animateDrawer(Layer.get_margin(window, Layer.Edge.LEFT), drawerClosedMargin(), reducedMotion() ? 0 : DRAWER_CLOSE_MS, easeInOutCubic, () => {
+        animateDrawer(drawerX, drawerClosedOffset(), reducedMotion() ? 0 : DRAWER_CLOSE_MS, easeInOutCubic, () => {
             if (!visible) window.set_can_target(false);
         });
     }
@@ -372,7 +378,17 @@ app.connect('startup', () => {
     toastRevealer.connect('notify::child-revealed', () => { if (!toastRevealer.get_reveal_child() && !toastRevealer.get_child_revealed()) toastRevealer.set_visible(false); });
     toastLabel = new Gtk.Label({wrap: true, xalign: 0}); toastRevealer.set_child(toastLabel); right.append(toastRevealer);
     shell.append(rail); shell.append(right);
-    window.set_child(shell);
+    drawer = new Gtk.Fixed();
+    drawer.set_hexpand(true); drawer.set_vexpand(true);
+    drawer.put(shell, 0, 0);
+    window.set_child(drawer);
+    syncShellHeight = () => {
+        const height = window.get_height();
+        if (height > 0 && height !== shellHeight) {
+            shellHeight = height;
+            shellBox.set_size_request(appliedWidth, height);
+        }
+    };
     const keyboard = new Gtk.EventControllerKey();
     keyboard.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
     keyboard.connect('key-pressed', (_controller, key, _code, mods) => {
@@ -390,9 +406,10 @@ app.connect('startup', () => {
         print('native-check: GTK widgets and CSS constructed successfully');
         GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => { app.quit(); return GLib.SOURCE_REMOVE; });
     } else {
-        Layer.set_margin(window, Layer.Edge.LEFT, drawerClosedMargin());
+        moveDrawer(drawerClosedOffset());
         window.set_can_target(false);
         window.present();
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => { syncShellHeight(); return GLib.SOURCE_REMOVE; });
         watchBridge();
         send('frontend-ready');
         heartbeat = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 4, () => {

@@ -178,10 +178,10 @@
       "CSS keyframes on box-shadow/background-color (parsed but not rendered by this GTK version); only opacity keyframes are reliable"
     ],
     "drawer": {
-      "type": "Gtk4LayerShell LEFT margin, frame-synced tick",
-      "note": "The window stays mapped for the whole frontend lifetime (parked off-screen with can_target=false when hidden). Opening sets the closed margin and animates to 8; the tick timestamp starts on the first rendered frame, so a slow first surface frame cannot eat the animation.",
-      "hidden_rss_mib": 87.6,
-      "hidden_idle_cpu_percent": 0.12
+      "type": "Gtk.Fixed child translation inside a fixed, always-mapped window",
+      "note": "The layer surface never moves or unmaps; a 16ms timer translates the shell by integer pixels inside a Gtk.Fixed. Hidden state keeps the shell outside the window and disables input targeting. The timer starts on the first frame so a slow first paint cannot skip the animation.",
+      "hidden_rss_mib": 89.5,
+      "hidden_idle_cpu_percent": 0.17
     }
   }
 }
