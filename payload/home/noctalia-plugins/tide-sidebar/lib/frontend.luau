@@ -6,7 +6,8 @@ function M.new(api,base,onCommand,onError)
   local self={api=api,dir=base and (base.."/frontend") or nil,started=false,ready=false,dead=false,
     instance=tostring(math.floor(api.nowMs())).."-"..tostring(math.random(100000,999999)),
     latest={},pending={},encoded={},chunks={},serial=0,visible=false,page="notes",reducedMotion=false,
-    lastSeen=0,startedAt=0,failed=false,capable=base~=nil and type(api.runStream)=="function" and type(api.renameFile)=="function"}
+    lastSeen=0,startedAt=0,failed=false,idleExitMs=0,hiddenAt=nil,restartPending=false,
+    capable=base~=nil and type(api.runStream)=="function" and type(api.renameFile)=="function"}
   local function errorMessage(message)
     if onError then onError(message) end
   end
@@ -32,10 +33,18 @@ function M.new(api,base,onCommand,onError)
       end
     end
   end
+  function self:setVisible(value)
+    value=value==true
+    if value then self.hiddenAt=nil
+    elseif self.visible then self.hiddenAt=api.nowMs() end
+    self.visible=value
+  end
   function self:control(action,page,reduced)
     if page then self.page=page end
     if type(reduced)=="boolean" then self.reducedMotion=reduced end
-    if action=="toggle" then self.visible=not self.visible elseif action=="show" then self.visible=true elseif action=="hide" then self.visible=false end
+    if action=="toggle" then self:setVisible(not self.visible)
+    elseif action=="show" then self:setVisible(true)
+    elseif action=="hide" then self:setVisible(false) end
     self.serial=self.serial+1
     self:publish("control",{serial=self.serial,visible=self.visible,page=self.page,reducedMotion=self.reducedMotion,quit=action=="quit"})
     self:flush()
@@ -72,6 +81,10 @@ function M.new(api,base,onCommand,onError)
   end
   function self:start()
     if self.started or self.dead or not self.capable then return false end
+    if self.restartPending then
+      self.restartPending=false
+      self.instance=tostring(math.floor(api.nowMs())).."-"..tostring(math.random(100000,999999))
+    end
     local assets={"main.js","ui.js","style.css","views/notes.js","views/tools.js","views/system.js"}
     for _,name in ipairs(assets) do
       if type(api.fileExists)=="function" and not api.fileExists(api.pluginDir().."/native/"..name) then self.failed=true;return false end
@@ -103,7 +116,7 @@ function M.new(api,base,onCommand,onError)
   function self:ensure()
     local t=api.nowMs()
     if self.started and ((self.lastSeen==0 and t-self.startedAt>15000) or (self.lastSeen>0 and t-self.lastSeen>24000)) then self.started=false;self.failed=true end
-    if self.failed then self.visible=false;self.failed=false end
+    if self.failed then self:setVisible(false);self.failed=false end
     if self.started then return true end
     return self:start()
   end
@@ -112,18 +125,33 @@ function M.new(api,base,onCommand,onError)
     self:control("quit")
     self.relaunchAt=api.nowMs()+600
   end
+  -- Hidden long enough: drop the whole GTK child. The backend (notes, timer,
+  -- stopwatch, hotspot/window service) keeps running; the next show respawns it.
+  function self:idleQuit()
+    if not self.started then return false end
+    self:control("quit")
+    self.started=false;self.ready=false;self.lastSeen=0;self.startedAt=0;self.hiddenAt=nil
+    self.restartPending=true
+    self.idleExits=(self.idleExits or 0)+1
+    return true
+  end
   function self:pulse()
-    if self.relaunchAt and api.nowMs()>=self.relaunchAt then
+    local t=api.nowMs()
+    if self.started and not self.visible and (self.idleExitMs or 0)>0 then
+      local since=self.hiddenAt or self.startedAt
+      if since>0 and t-since>=self.idleExitMs then self:idleQuit() end
+    end
+    if self.relaunchAt and t>=self.relaunchAt then
       self.relaunchAt=nil;self.started=false;self.ready=false;self.lastSeen=0
-      self.instance=tostring(math.floor(api.nowMs())).."-"..tostring(math.random(100000,999999))
-      self.visible=self.relaunchVisible==true
+      self.instance=tostring(math.floor(t)).."-"..tostring(math.random(100000,999999))
+      self:setVisible(self.relaunchVisible==true)
       self:start()
     end
   end
   function self:shutdown()
     if self.dead then return end
-    self:control("quit")
-    self.dead=true
+    if self.started then self:control("quit") end
+    self.dead=true;self.started=false
   end
   return self
 end

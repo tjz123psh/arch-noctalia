@@ -49,6 +49,10 @@
     "band": {
       "bg": "2.4 GHz",
       "a": "5 GHz"
+    },
+    "idle_exit_minutes": {
+      "label": "Idle exit (minutes)",
+      "description": "Quit the native front end once the sidebar has stayed hidden this long. Hidden means no memory; reopening takes about half a second. 0 keeps it resident."
     }
   }
 }

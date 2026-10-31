@@ -44,5 +44,21 @@
       "Same short whole-process sample as above; unrelated shell activity not controlled.",
       "Only this plugin process uses cairo; other GTK apps still follow the session GSK_RENDERER=gl."
     ]
+  },
+  "idle_exit": {
+    "date": "2026-10-31",
+    "default_minutes": 15,
+    "how_tested": "Temporarily lowered the frontend idle deadline to 15 s, then restored the 15 min default; panel was hidden the whole time.",
+    "frontend_process": "exited after the deadline while hidden; resident front end becomes 0 MiB (no process)",
+    "respawn": {
+      "process_spawn_ms": 69,
+      "layer_surface_visible_ms": 429,
+      "frontend_rss_mib_after_open": 124.5
+    },
+    "backend": "service keeps notes, timer, stopwatch and notifications; only the GTK child exits",
+    "limits": [
+      "Latency sampled by polling `niri msg layers` every ~10 ms, so the measured 429 ms includes polling overhead.",
+      "One machine, one session; not a cold-disk measurement."
+    ]
   }
 }

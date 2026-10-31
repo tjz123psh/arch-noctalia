@@ -47,6 +47,32 @@ stream(line({protocol=1,instance=f.instance,chunk="packet4",part=1,parts=129,tex
 check(f.chunks.packet4==nil,"fragment count is bounded")
 f:control("hide")
 check(encoded[storage["/private/frontend/control.json"]].data.visible==false,"hide does not touch persisted timer state")
+-- Idle exit: hidden long enough drops the GTK child; the next show respawns it.
+local g=Frontend.new(api,"/private-idle",function()end,function()end)
+g.idleExitMs=60000
+g:publish("notes",{ready=true})
+check(g:start(),"idle fixture child starts")
+check(spawned:find("GSK_RENDERER=cairo",1,true),"child is spawned with the software raster renderer")
+local firstInstance=g.instance
+g:control("hide")
+clock=clock+59999;g:pulse()
+check(g.started,"child is kept before the idle deadline")
+clock=clock+1;g:pulse()
+check(not g.started and not g.ready,"idle quit stops the child after the deadline")
+local quitWire=encoded[storage["/private-idle/frontend/control.json"]]
+check(quitWire and quitWire.data.quit==true and quitWire.instance==firstInstance,"quit packet targets the running instance")
+g:pulse()
+check(not g.started,"stopped child is not respawned while hidden")
+g:control("show","tools")
+check(g:ensure(),"show respawns the child")
+check(g.instance~=firstInstance,"respawn uses a fresh instance id")
+check(g.visible and g.page=="tools","show state survives the respawn")
+local showWire=encoded[storage["/private-idle/frontend/control.json"]]
+check(showWire and showWire.instance==g.instance and showWire.data.visible==true,"respawned child receives the current show state")
+g:control("hide")
+local h=Frontend.new(api,"/private-idle-off",function()end,function()end)
+h:publish("notes",{ready=true});h.idleExitMs=0;h:start();h:control("hide");clock=clock+600000;h:pulse()
+check(h.started,"idle exit 0 keeps the child resident")
 f:shutdown()
 local before=#received
 stream(line({protocol=1,instance=f.instance,action="note-delete",id="note-1"}))

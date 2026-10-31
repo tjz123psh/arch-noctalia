@@ -68,6 +68,7 @@ local function readConfig()
     timerDefaultMinutes=clampInt(setting("timer_default_minutes",25),25,1,5999),
     timerPresets=presetList(),
     confirmWindowClose=setting("confirm_window_close",true)==true,
+    idleExitMinutes=clampInt(setting("idle_exit_minutes",15),15,0,120),
     hotspotDefaultSsid=tostring(setting("hotspot_default_ssid","") or ""),
     hotspotDefaultBand=setting("hotspot_default_band","bg")=="a" and "a" or "bg",
     refreshSeconds=clampInt(setting("system_refresh_seconds",3),3,1,30),
@@ -345,7 +346,7 @@ command=function(c)
     frontend:publish("geometry",values)
   elseif action=="visibility" then
     local current=not c.controlSerial or c.controlSerial>=frontend.serial
-    if current then frontend.visible=c.open==true;frontend.page=normalizePage(c.tab or frontend.page) end
+    if current then frontend:setVisible(c.open==true);frontend.page=normalizePage(c.tab or frontend.page) end
     noctalia.state.set("visibility",{open=current and c.open==true or frontend.visible,tab=normalizePage(c.tab or frontend.page),at=now()})
   elseif action=="frontend-toggle" or action=="frontend-show" or action=="frontend-hide" then
     local kind=action:sub(10)
@@ -393,6 +394,7 @@ command=function(c)
   end
 end
 frontend=Frontend.new(noctalia,base,function(value) command(value) end,function(message) feedback(false,message,"") end)
+frontend.idleExitMs=config.idleExitMinutes*60000
 noctalia.state.watch("command",function(value) command(value);frontend:flush() end)
 noctalia.state.watch("visibility",function(value)
   if type(value)~="table" then return end
@@ -484,6 +486,7 @@ end
 
 function onConfigChanged()
   config=readConfig()
+  frontend.idleExitMs=config.idleExitMinutes*60000
   -- A running or paused countdown is never touched: only an untouched idle one
   -- follows the new default length.
   if ready and timer.status=="idle" and timerRevision==0 then
