@@ -49,12 +49,12 @@ const applicationId = 'org.noctalia.TideSidebar.r' + instance.replace(/[^A-Za-z0
 const app = new Gtk.Application({application_id: applicationId, flags: 0});
 
 function send(action, values = {}) {
-    if (checkOnly || exiting) return;
+    if (checkOnly || exiting) return false;
     // stdout is the private pipe owned by Noctalia's runStream, never a log.
     const packetId = String(++sequence);
     const message = {protocol: 1, instance, action, packetId, requestId: packetId, controlSerial: lastControl, ...values};
-    try { for (const line of encodePackets(message)) print(line); }
-    catch (_) { toast('请求内容过大，尚未保存', true); }
+    try { for (const line of encodePackets(message)) print(line); return true; }
+    catch (_) { toast('请求内容过大，尚未保存', true); return false; }
 }
 const reducedMotion = () => state.preferences?.reducedMotion === true;
 function toast(text, isError = false) {
@@ -119,7 +119,7 @@ function applyConfig() {
     // The layer surface follows the widget's request, so the shell carries the width.
     shellBox.set_size_request(width, -1);
     window.set_default_size(width, -1);
-    if (!visible) setDrawer(drawerClosedOffset());
+    if (!visible && !drawerAnim) setDrawer(drawerClosedOffset());
 }
 function normalizePage(page) { return pageNames.includes(page) ? page : (pageAliases[page] || 'notes'); }
 function updatePage(force = false, changed = []) {
@@ -135,9 +135,9 @@ function selectPage(name, save = true) {
     // from the children's order, so earlier pages slide back in from the left.
     stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT);
     stack.set_transition_duration(visible ? UI.motionMs(reducedMotion(), 'page') : 0);
-    currentPage = name;
     ensureView(name);
     stack.set_visible_child_name(name);
+    currentPage = name;
     for (const [page, button] of Object.entries(navigation)) {
         if (page === name) button.add_css_class('selected'); else button.remove_css_class('selected');
     }
@@ -215,14 +215,20 @@ function setVisible(wanted, page = null) {
     if (wanted === visible) return;
     visible = wanted;
     if (visible) {
+        Layer.set_keyboard_mode(window, Layer.KeyboardMode.ON_DEMAND);
         window.set_can_target(true);
         if (!window.get_mapped()) window.present();
         updatePage(true);
         views[currentPage]?.onShow?.();
-        animateDrawer(drawerClosedOffset(), DRAWER_OPEN_MARGIN, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeInOutCubic);
+        const from = Math.min(Layer.get_margin(window, Layer.Edge.LEFT), DRAWER_OPEN_MARGIN);
+        animateDrawer(from, DRAWER_OPEN_MARGIN, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeInOutCubic);
         send('visibility', {open: true, tab: currentPage});
         reportGeometrySoon();
     } else {
+        // The surface stays mapped off-screen; without this the hidden editor
+        // keeps keyboard focus and its input is written to disk.
+        window.set_focus(null);
+        Layer.set_keyboard_mode(window, Layer.KeyboardMode.NONE);
         views[currentPage]?.onHide?.();
         send('flush');
         send('visibility', {open: false, tab: currentPage});
@@ -232,8 +238,9 @@ function setVisible(wanted, page = null) {
     }
 }
 function applyControl(control) {
-    if (!control || Number(control.serial) <= lastControl) return;
-    lastControl = Number(control.serial);
+    const serial = Number(control?.serial);
+    if (!Number.isFinite(serial) || serial <= lastControl) return;
+    lastControl = serial;
     if (control.quit) { shutdown(); return; }
     const reduced = control.reducedMotion === true;
     Gtk.Settings.get_default().gtk_enable_animations = !reduced;
@@ -241,16 +248,23 @@ function applyControl(control) {
     stack.set_transition_duration(UI.motionMs(reduced, 'page'));
     toastRevealer.set_transition_duration(UI.motionMs(reduced, 'toast'));
     setVisible(control.visible === true, control.page || currentPage);
+    // A visibility report can be dropped while a newer control serial is being
+    // written; echo the settled state so the service's lastControl catches up.
+    send('visibility', {open: visible, tab: currentPage});
 }
 function readChannel(name) {
+    let packet;
     try {
         const [ok, bytes] = Gio.File.new_for_path(GLib.build_filenamev([bridgeDir, name + '.json'])).load_contents(null);
-        if (!ok || bytes.length > 8388608) return false;
-        const packet = JSON.parse(new TextDecoder().decode(bytes));
-        if (packet.instance !== instance) {
-            if (name === 'control' && !checkOnly) shutdown();
-            return false;
-        }
+        if (!ok) return false;
+        if (bytes.length > 16777216) { printerr('sidebar: ' + name + '.json exceeds 16 MiB; ignored'); return false; }
+        packet = JSON.parse(new TextDecoder().decode(bytes));
+    } catch (_) { return false; }
+    if (packet.instance !== instance) {
+        if (name === 'control' && !checkOnly) shutdown();
+        return false;
+    }
+    try {
         if (name === 'control') applyControl(packet.data);
         else if (name === 'feedback') {
             const reply = packet.data;
@@ -260,7 +274,10 @@ function readChannel(name) {
             // (chevron, Super+Shift+W) or by clicking outside.
         } else state[name] = packet.data;
         return true;
-    } catch (_) { return false; }
+    } catch (error) {
+        printerr('sidebar: failed to apply ' + name + ': ' + error.message);
+        return false;
+    }
 }
 function flushReads() {
     pendingRead = 0;
@@ -294,7 +311,9 @@ function watchBridge() {
 }
 function shutdown() {
     if (exiting) return;
-    views[currentPage]?.onHide?.();
+    for (const view of Object.values(views)) {
+        try { view?.onHide?.(); } catch (error) { printerr('sidebar: view cleanup failed: ' + error.message); }
+    }
     send('flush'); send('visibility', {open: false, tab: currentPage});
     exiting = true;
     fileMonitor?.cancel();
@@ -336,6 +355,7 @@ app.connect('startup', () => {
     Layer.set_keyboard_mode(window, Layer.KeyboardMode.ON_DEMAND);
     Layer.set_exclusive_zone(window, 0);
     window.connect('close-request', () => { setVisible(false); return true; });
+    window.connect('destroy', () => shutdown());
     const ctx = {ui: UI, send, toast, copy, runHelper, writePrivateRequest, close: () => setVisible(false), getState: () => state, isVisible: () => visible, config: () => state.config};
     // Pages are built on first use: the common notes-only open skips the other
     // three widget trees (about 20 ms of construction on this machine).

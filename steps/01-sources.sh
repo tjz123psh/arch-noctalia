@@ -22,6 +22,16 @@ machine="${AN_MACHINE:?AN_MACHINE is required (set by install.sh)}"
 
 PACMAN_CONF="/etc/pacman.conf"
 
+# Temp files can hold a half-written mirror list; remove them even if a probe or
+# a sudo prompt is interrupted between mktemp and the successful write.
+tmp_ml=""
+tmp_conf=""
+cleanup_tmp() {
+  if [[ -n "$tmp_ml" ]]; then rm -f -- "$tmp_ml"; fi
+  if [[ -n "$tmp_conf" ]]; then rm -f -- "$tmp_conf"; fi
+}
+trap cleanup_tmp EXIT
+
 info "Stage 01 sources: checking pacman sources..."
 
 # 0) 基础工具：curl（后续引导/健康检查都要用）

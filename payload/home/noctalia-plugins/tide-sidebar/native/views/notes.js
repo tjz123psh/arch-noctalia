@@ -200,8 +200,10 @@ export function createNotes(ctx) {
         });
     }
     function sizeList() {
-        const width = listButton.get_width();
-        if (width >= 240) listShell.set_size_request(width, -1);
+        // Follow the current button width, not only growth: after the panel is
+        // narrowed the popover must shrink instead of being clipped.
+        const width = Math.max(240, listButton.get_width());
+        listShell.set_size_request(width, -1);
     }
     listPopover.connect('show', () => { sizeList(); staggerRows(); });
     const listTabs = U.box(Gtk.Orientation.HORIZONTAL, 5);

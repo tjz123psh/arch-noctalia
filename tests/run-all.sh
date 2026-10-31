@@ -19,6 +19,20 @@ for t in "$HERE"/test-*.sh; do
     overall=1
   fi
 done
+# 插件套件：同一份代码的另一个入口（run_all.py 覆盖 Lua/JS/GTK 与文档契约）。
+if command -v python3 >/dev/null 2>&1 && command -v lua >/dev/null 2>&1 \
+   && command -v gjs >/dev/null 2>&1 && command -v node >/dev/null 2>&1 \
+   && command -v noctalia >/dev/null 2>&1; then
+  printf '===== tide-sidebar plugin suite =====\n'
+  if python3 -B "$HERE/../payload/home/noctalia-plugins/tide-sidebar/tests/run_all.py"; then
+    printf 'PASS: tide-sidebar plugin suite\n\n'
+  else
+    printf 'FAIL: tide-sidebar plugin suite\n\n'
+    overall=1
+  fi
+else
+  printf 'SKIP: tide-sidebar plugin suite (lua/gjs/node/noctalia missing)\n\n'
+fi
 if (( overall == 0 )); then
   echo "ALL TESTS PASSED"
 else

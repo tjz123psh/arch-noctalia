@@ -137,7 +137,7 @@ local function boot(options)
     function h:writeCount(kind)
         local count = 0
         for _, call in ipairs(self.disk.writes) do
-            if not kind or call.path:match("/" .. kind .. "%-%a%.json$") then count = count + 1 end
+            if not kind or call.path:match("/" .. kind .. "%-%a%.json%.pending$") or call.path:match("/" .. kind .. "%-%a%.json$") then count = count + 1 end
         end
         return count
     end
@@ -197,9 +197,10 @@ local function boot(options)
     host.writeFile = function(path, raw)
         assert(type(raw) == "string", "writeFile expects bytes")
         h.disk.writes[#h.disk.writes + 1] = {path=path,raw=raw}
-        local mode = (path:match("/notes%-%a%.json$") and h.disk.notesMode)
-            or (path:match("/timer%-%a%.json$") and h.disk.timerMode)
-            or (path:match("/stopwatch%-%a%.json$") and h.disk.stopwatchMode)
+        local logical = path:gsub("%.pending$", "")
+        local mode = (logical:match("/notes%-%a%.json$") and h.disk.notesMode)
+            or (logical:match("/timer%-%a%.json$") and h.disk.timerMode)
+            or (logical:match("/stopwatch%-%a%.json$") and h.disk.stopwatchMode)
         if mode == "fail" then return false end
         if mode == "throw" then error("mock write failed") end
         h.disk.files[path] = mode == "corrupt" and "{broken" or raw
@@ -483,7 +484,9 @@ test("readback mismatch never marks a note saved", function()
     h.disk.notesMode = nil
     local restart = initialized({disk=h.disk,now=h.now+1000})
     equal(activeBody(restart), "good")
-    check(restart:notes().warning ~= "", "recovery warning missing after interrupted write")
+    -- Atomic writes keep the torn bytes in *.pending, so there is no corrupt
+    -- slot to recover from and no recovery warning is expected.
+    equal(restart:notes().warning, "", "atomic write must not report a corrupt slot")
 end)
 
 test("encoding and thrown note-write failures preserve dirty state", function()
@@ -814,6 +817,17 @@ test("automatic snapshot queries are throttled and stop when closed", function()
     h:visibility(false)
     h:tick(3000); h:tick(60000)
     equal(h:count("snapshot"), 3)
+end)
+
+test("stale visibility report cannot forge an open panel", function()
+    local h = initialized()
+    -- A control (preferences) advances frontend.serial; without one, serial 0
+    -- is genuinely current and must not be treated as stale.
+    h:send({action="preferences", tab="notes"})
+    h:send({action="visibility", open=true, tab="notes", controlSerial=9999})
+    equal(h.values.visibility.open, true)
+    h:send({action="visibility", open=false, tab="notes", controlSerial=0})
+    equal(h.values.visibility.open, true, "an older serial must be ignored")
 end)
 
 test("visibility heartbeat expiry prevents orphan polling", function()

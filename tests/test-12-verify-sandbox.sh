@@ -52,6 +52,7 @@ echo "user:$(id -un):rw-"
 SH
 chmod +x "$stub"/*
 : > "$home/bin/cursor-track"; chmod +x "$home/bin/cursor-track"
+: > "$home/bin/an-test-link"; chmod +x "$home/bin/an-test-link"
 
 # --- 最小清单 ---
 normal_md5="$(printf 'NORMAL\n' | md5sum | awk '{print $1}')"
@@ -60,6 +61,7 @@ printf 'payload/test/runtime.conf\t/home/pang/an-test-runtime.conf\t644\tdeadbee
 printf 'payload/system/etc/supergfxd.conf\t/etc/supergfxd.conf\t644\tdeadbeef\n' >> "$repo/manifests/files.tsv"
 printf '# schema=1\npayload/test/runtime.conf\ttest runtime file\npayload/system/etc/supergfxd.conf\ttest supergfxd\n' > "$repo/manifests/runtime-regenerated.tsv"
 printf '# schema=1\n' > "$repo/manifests/packages.tsv"
+printf '# schema=1\nan-test-link\tbin/an-test-link\n' > "$repo/manifests/bin-links.tsv"
 
 reset_fixture() {
   rm -rf "$runtime" "$sgfx"
@@ -85,6 +87,8 @@ grep -q 'files: 1 checked, 1 ok, 0 mismatched, 0 missing' <<<"$out" \
   || bad "file counters wrong: $(grep '^files:' <<<"$out" | tail -1)"
 grep -q 'runtime-regenerated files (themed by the desktop): existence checked, content skipped: 2' <<<"$out" \
   || bad "runtime counter does not report both runtime rows"
+grep -q 'links: 1 checked, 0 bad' <<<"$out" \
+  || bad "healthy run did not actually verify the bin link"
 grep -q 'all files, packages, links and service states verified' <<<"$out" \
   || bad "healthy run did not finish with the success summary"
 

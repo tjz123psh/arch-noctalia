@@ -109,12 +109,14 @@ export function createTools(ctx) {
     let expressionEdited = false;
     let shownOnce = false;
     let historySignature = '';
+    let pendingTimer = 0;
 
     function cancelPreview() {
         if (previewSource) GLib.source_remove(previewSource);
         previewSource = 0;
     }
     function pendingResult() {
+        if (pendingTimer) { GLib.source_remove(pendingTimer); pendingTimer = 0; }
         copyValue = null;
         setSensitive(copyButton, false);
         setLabel(result, expression.get_text().trim() ? '…' : '0');
@@ -122,6 +124,16 @@ export function createTools(ctx) {
         setLabel(calcMessage, '');
         setVisible(calcMessage, false);
         setClass(calcMessage, 'status-error', false);
+        pendingTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 8000, () => {
+            pendingTimer = 0;
+            if (!waitingForResult) return GLib.SOURCE_REMOVE;
+            waitingForResult = false;
+            currentRequest = null;
+            setLabel(result, '—'); setSensitive(copyButton, false);
+            setLabel(calcMessage, '计算服务无响应，请重试');
+            setVisible(calcMessage, true); setClass(calcMessage, 'status-error', true);
+            return GLib.SOURCE_REMOVE;
+        });
     }
     function newRequest(commit) {
         // Reserve the id immediately, before debounce: an older reply must not
@@ -288,6 +300,7 @@ export function createTools(ctx) {
             if (Number.isSafeInteger(existingSequence) && existingSequence > requestSequence) requestSequence = existingSequence;
         }
         waitingForResult = false;
+        if (pendingTimer) { GLib.source_remove(pendingTimer); pendingTimer = 0; }
         const error = String(calc.error ?? '');
         copyValue = error ? null : String(calc.result ?? '0');
         setLabel(result, error ? '—' : copyValue);
@@ -812,6 +825,7 @@ export function createTools(ctx) {
         },
         onHide() {
             toolsVisible = false;
+            if (pendingTimer) { GLib.source_remove(pendingTimer); pendingTimer = 0; waitingForResult = false; }
             cancelStopwatchRefresh();
             // A pending preview can resume on showing; this never pauses or
             // resets the actual service-owned countdown.

@@ -86,15 +86,22 @@ local actionSequence = 0
 local function now() return noctalia.nowMs() end
 local function readJson(name)
   local raw = noctalia.readFile(base .. "/" .. name)
-  if not raw or raw == "" then return nil end
+  if not raw or raw == "" or #raw > 1048576 then return nil end
   local ok, value = pcall(noctalia.json.decode,raw)
   return ok and type(value)=="table" and value or nil
 end
 local function writeJson(name,value)
   local ok, raw = pcall(noctalia.json.encode,value)
   if not ok or type(raw)~="string" then return false end
-  local written = noctalia.writeFile(base .. "/" .. name,raw)
-  return written and noctalia.readFile(base .. "/" .. name)==raw
+  local path=base.."/"..name
+  local pending=path..".pending"
+  if type(noctalia.renameFile)=="function" then
+    if not noctalia.writeFile(pending,raw) or noctalia.readFile(pending)~=raw then return false end
+    return noctalia.renameFile(pending,path) and noctalia.readFile(path)==raw
+  end
+  -- Capability fallback: the host lacks renameFile; keep the old write path.
+  local written = noctalia.writeFile(path,raw)
+  return written and noctalia.readFile(path)==raw
 end
 local noteIO={
   read=function(name)
@@ -106,6 +113,7 @@ local noteIO={
     return raw
   end,
   write=function(name,raw) return noctalia.writeFile(base.."/"..name,raw) end,
+  rename=type(noctalia.renameFile)=="function" and function(from,to) return noctalia.renameFile(base.."/"..from, base.."/"..to) end or nil,
   decode=function(raw) return noctalia.json.decode(raw) end,
   encode=function(value) return noctalia.json.encode(value) end,
 }
@@ -346,14 +354,21 @@ command=function(c)
     frontend:publish("geometry",values)
   elseif action=="visibility" then
     local current=not c.controlSerial or c.controlSerial>=frontend.serial
-    if current then frontend:setVisible(c.open==true);frontend.page=normalizePage(c.tab or frontend.page) end
-    noctalia.state.set("visibility",{open=current and c.open==true or frontend.visible,tab=normalizePage(c.tab or frontend.page),at=now()})
+    -- A report older than the latest control is stale (the native side will
+    -- echo its settled state after applying that control). Do not fake open.
+    if not current then return end
+    frontend:setVisible(c.open==true);frontend.page=normalizePage(c.tab or frontend.page)
+    noctalia.state.set("visibility",{open=c.open==true,tab=normalizePage(c.tab or frontend.page),at=now()})
   elseif action=="frontend-toggle" or action=="frontend-show" or action=="frontend-hide" then
     local kind=action:sub(10)
-    if ready then frontend:ensure() end
+    if ready and not frontend:ensure() then frontend:setVisible(false); return end
     frontend:control(kind,c.page and normalizePage(c.page) or nil,reducedMotion())
   elseif action=="calc-evaluate" then
     local expression=type(c.expression)=="string" and c.expression or ""
+    if #expression>1024 then
+      calculation.expression="";calculation.error="表达式过长";calculation.requestId=tostring(c.requestId or "")
+      frontend:publish("calc",calculation);return
+    end
     calculation.expression=expression;calculation.requestId=tostring(c.requestId or "")
     if expression=="" then calculation.result="0";calculation.error=""
     else

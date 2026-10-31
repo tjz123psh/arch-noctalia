@@ -29,6 +29,7 @@ local db, encoded, serial = {}, {}, 0
 local io = {
   read=function(k) return db[k] end,
   write=function(k,v) db[k]=v return true end,
+  rename=function(from,to) if not db[from] then return false end db[to]=db[from] db[from]=nil return true end,
   encode=function(v) serial=serial+1 local key="json:"..serial encoded[key]=assert(Notes.validate(v)) return key end,
   decode=function(v) return encoded[v] end,
 }
@@ -44,9 +45,17 @@ check(loaded.revision == s.revision, "load latest revision")
 db["notes-b.json"] = "broken"
 local recovered, oldSlot, warning = Notes.load(io,2300)
 check(recovered and oldSlot == "notes-a.json" and warning, "recover corrupt newest snapshot")
+check(not db["notes-a.json.pending"] and not db["notes-b.json.pending"], "save renames pending files")
 local old = db["notes-a.json"]
 io.write=function(k,v) db[k]="partial" return false end
 check(not Notes.save(io,s,oldSlot) and db["notes-a.json"]==old,"failed save preserves good slot")
-db["notes-a.json"]="broken"
-check(not Notes.load(io,2400), "both corrupt must not initialize or overwrite")
+-- One torn slot is backed up and does not lock notes forever.
+db["notes-a.json"]="broken"; db["notes-b.json"]=nil
+local fresh, _, warning = Notes.load(io,2400)
+check(fresh and warning, "single corrupt slot recovers empty with a warning")
+local backups = 0
+for key in pairs(db) do if key:match("notes%-a%.json%.corrupt%-") then backups = backups + 1 end end
+check(backups == 1, "corrupt slot moved aside")
+db["notes-a.json"]="broken"; db["notes-b.json"]="broken"
+check(not Notes.load(io,2500), "both corrupt must not initialize or overwrite")
 print("notes_spec: "..total.." checks passed")

@@ -26,6 +26,11 @@ count_lock "$M/seed.tsv" 34 "seed.tsv"
 count_lock "$M/excluded.tsv" 153 "excluded.tsv"
 count_lock "$M/runtime-regenerated.tsv" 26 "runtime-regenerated.tsv"
 
+# --- schema 头：七个清单都必须声明 # schema=1，避免旧格式悄悄混入 ---
+for f in "$M"/*.tsv; do
+  [[ "$(head -1 "$f")" == "# schema=1" ]] || note "missing '# schema=1' header: ${f##*/}"
+done
+
 # --- 末行换行：所有步骤都用 while read 逐行读清单，末行没换行会静默漏掉最后一条 ---
 for f in "$M"/*.tsv; do
   [[ -s "$f" ]] || continue

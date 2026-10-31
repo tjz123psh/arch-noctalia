@@ -91,8 +91,9 @@ function M.new(api,base,onCommand,onError)
     end
     if not api.mkdirAll(self.dir) then errorMessage("无法创建界面私有通信目录");return false end
     self.started=true;self.startedAt=api.nowMs();self.failed=false
+    local generation=self.instance
     local accepted=api.runAsync({"chmod","700","--",self.dir},function(result)
-      if self.dead then return end
+      if self.dead or not self.started or self.instance~=generation then return end
       if result.exitCode~=0 then self.started=false;errorMessage("无法保护界面通信目录");return end
       self.ready=true
       self:control(nil,self.page,self.reducedMotion)
@@ -115,13 +116,18 @@ function M.new(api,base,onCommand,onError)
   end
   function self:ensure()
     local t=api.nowMs()
-    if self.started and ((self.lastSeen==0 and t-self.startedAt>15000) or (self.lastSeen>0 and t-self.lastSeen>24000)) then self.started=false;self.failed=true end
+    if self.started and ((self.lastSeen==0 and t-self.startedAt>15000) or (self.lastSeen>0 and t-self.lastSeen>24000)) then
+      -- A stuck child still owns the instance id and D-Bus name. Ask it to quit
+      -- and force a fresh instance so the replacement can actually take over.
+      self:control("quit")
+      self.restartPending=true
+      self.started=false;self.failed=true
+    end
     if self.failed then self:setVisible(false);self.failed=false end
     if self.started then return true end
     return self:start()
   end
   function self:restart()
-    self.relaunchVisible=self.visible
     self:control("quit")
     self.relaunchAt=api.nowMs()+600
   end
@@ -144,7 +150,8 @@ function M.new(api,base,onCommand,onError)
     if self.relaunchAt and t>=self.relaunchAt then
       self.relaunchAt=nil;self.started=false;self.ready=false;self.lastSeen=0
       self.instance=tostring(math.floor(t)).."-"..tostring(math.random(100000,999999))
-      self:setVisible(self.relaunchVisible==true)
+      -- Do not restore the visibility captured 600ms ago: a show/hide during
+      -- the reload is the user's latest intent, and start() publishes it.
       self:start()
     end
   end

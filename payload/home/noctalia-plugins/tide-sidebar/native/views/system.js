@@ -255,7 +255,7 @@ export function createHotspot(ctx) {
         });
         try {
             // Only kind and the private path go into the service pipe. No credentials.
-            ctx.send('hotspot', path ? {kind, path} : {kind});
+            if (ctx.send('hotspot', path ? {kind, path} : {kind}) === false) throw new Error('transport closed');
             ownedPath = null; // Ownership transfers to the service/helper, even if hidden next.
             password.set_text('');
             ctx.toast(kind === 'off' ? '正在关闭热点…' : kind === 'apply' ? '正在应用设置…' : '正在开启热点…');

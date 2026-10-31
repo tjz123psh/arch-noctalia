@@ -55,6 +55,42 @@ def check_channel_parity():
     print("PASS: " + str(len(declared)) + " snapshot channels wired to the native front end")
 
 
+def check_native_lifecycle():
+    """The drawer's close path and control guard are load-bearing; lock them."""
+    js = (PLUGIN / "native/main.js").read_text(encoding="utf-8")
+    required = {
+        "window.set_focus(null)": "hidden surface must drop keyboard focus",
+        "Layer.KeyboardMode.NONE": "hidden surface must stop taking keyboard input",
+        "window.connect('destroy'": "destroyed toplevel must run shutdown",
+        "Number.isFinite(serial)": "non-numeric control serials must be rejected",
+        "for (const view of Object.values(views))": "every view timer must stop on shutdown",
+        "view?.onHide?.()": "view cleanup must run on shutdown",
+        "bytes.length > 16777216": "note channel limit must cover 160 x 64 KiB snapshots",
+        "const from = Math.min(Layer.get_margin": "reopening must resume from the current margin",
+    }
+    missing = [message for token, message in required.items() if token not in js]
+    if missing:
+        raise SystemExit("native lifecycle contract missing: " + "; ".join(missing))
+    if "Number(control.serial)" in js:
+        raise SystemExit("native/main.js compares control serials without a finite guard")
+    if "Gtk.Fixed" in js:
+        raise SystemExit("native/main.js reintroduced Gtk.Fixed (re-rasterizes the drawer)")
+    if "DRAWER_OPEN_MARGIN = -1" not in js or "appliedWidth - 1" not in js:
+        raise SystemExit("drawer no longer parks one (nearly invisible) pixel on screen")
+    if "timeout_add(GLib.PRIORITY_DEFAULT, 7" not in js:
+        raise SystemExit("drawer timer is no longer matched to the 144 Hz output")
+    css = (PLUGIN / "native/style.css").read_text(encoding="utf-8")
+    if "0.004" not in css or "background-clip: padding-box" not in css:
+        raise SystemExit("drawer's hidden 1px must stay near-transparent")
+    ui = (PLUGIN / "native/ui.js").read_text(encoding="utf-8")
+    if "drawerOpen: 620" not in ui or "drawerClose: 560" not in ui:
+        raise SystemExit("drawer durations drifted from 620/560")
+    perf = json.loads((PLUGIN / "docs/performance-observation.json").read_text(encoding="utf-8"))
+    durations = perf.get("motion", {}).get("durations_ms", {})
+    if durations.get("drawer_open") != 620 or durations.get("drawer_close") != 560:
+        raise SystemExit("performance-observation.json still records old drawer durations")
+    print("PASS: drawer lifecycle, focus handoff, destroy cleanup and duration contract")
+
 def check_documentation_links():
     """Relative links (and their anchors) in the repository docs must resolve."""
     broken, checked = [], 0
@@ -132,6 +168,7 @@ for name in sources + ["README.md", "open.sh", "translations/en.json", "translat
 check_plugin_settings()
 check_channel_parity()
 check_motion_enums()
+check_native_lifecycle()
 check_documentation_links()
 run(["bash", "-n", str(PLUGIN / "open.sh")])
 run(["luac", "-p", *[str(PLUGIN / name) for name in sources]])

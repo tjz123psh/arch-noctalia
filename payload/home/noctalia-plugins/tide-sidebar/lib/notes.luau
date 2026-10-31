@@ -140,7 +140,17 @@ function M.load(io, now)
   if candidates[1] then
     return candidates[1].state, candidates[1].slot, #errors > 0 and "已从另一份快照恢复便签" or nil
   end
-  if found then return nil, nil, "两份便签快照都无法读取。原文件已保留，禁止覆盖，请先备份检查。" end
+  if found then
+    -- First save can leave one torn slot. Keep it, but do not lock notes forever:
+    -- move the unreadable file aside and start empty with a visible warning.
+    if #errors == 1 and type(io.rename) == "function" then
+      local backup = errors[1] .. ".corrupt-" .. tostring(now)
+      if io.rename(errors[1], backup) then
+        return M.empty(now), nil, "便签快照损坏，已备份为 " .. backup .. "，从空白便签开始"
+      end
+    end
+    return nil, nil, "两份便签快照都无法读取。原文件已保留，禁止覆盖，请先备份检查。"
+  end
   return M.empty(now), nil, nil
 end
 function M.save(io, state, previousSlot)
@@ -149,8 +159,19 @@ function M.save(io, state, previousSlot)
   local nextSlot = previousSlot == "notes-a.json" and "notes-b.json" or "notes-a.json"
   local ok, encoded = pcall(io.encode, valid)
   if not ok or type(encoded) ~= "string" then return nil, "便签编码失败，未保存" end
-  local wrote, result = pcall(io.write, nextSlot, encoded)
+  -- Write to a temporary name and rename: a crash mid-write never leaves a torn
+  -- slot that would block the next load.
+  local pendingSlot = nextSlot .. ".pending"
+  local wrote, result = pcall(io.write, pendingSlot, encoded)
   if not wrote or not result then return nil, "便签写入失败；上一份快照仍保留" end
+  if io.read(pendingSlot) ~= encoded then return nil, "便签保存校验失败；上一份快照仍保留" end
+  local moved, ok = false, false
+  if type(io.rename) == "function" then moved, ok = pcall(io.rename, pendingSlot, nextSlot) end
+  if not moved or not ok then
+    -- Capability fallback: direct write, still verified below.
+    local wroteSlot, okSlot = pcall(io.write, nextSlot, encoded)
+    if not wroteSlot or not okSlot then return nil, "便签写入失败；上一份快照仍保留" end
+  end
   if io.read(nextSlot) ~= encoded then return nil, "便签保存校验失败；上一份快照仍保留" end
   return nextSlot
 end

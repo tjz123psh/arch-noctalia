@@ -139,8 +139,8 @@
       "page": 220,
       "toast": 180,
       "wave": 320,
-      "drawer_open": 560,
-      "drawer_close": 500
+      "drawer_open": 620,
+      "drawer_close": 560
     },
     "measured_frame_spans_ms": {
       "page_slide_forward": 170,
