@@ -32,5 +32,5 @@ if (( ${#to_install[@]} == 0 )); then
   exit 0
 fi
 # --ask=4：冲突包自动替换（与 03 一致）
-as_root pacman -S --needed --noconfirm --ask=4 "${to_install[@]}"
+pkg_run as_root pacman -S --needed --noconfirm --ask=4 "${to_install[@]}"
 ok "Stage 06 desktop: done"

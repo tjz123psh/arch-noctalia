@@ -31,6 +31,16 @@ die()     { error "$@"; exit 1; }
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
+# 包管理器（pacman/paru）的输出很长：默认 quiet 下只留 stderr（下载/构建的逐行日志不再刷屏，
+# 进度与错误照旧可见）；--verbose 时原样透传。用法：pkg_run as_root pacman -S ... / pkg_run paru -S ...
+pkg_run() {
+  if [[ "${AN_QUIET:-0}" == "1" ]]; then
+    "$@" >/dev/null
+  else
+    "$@"
+  fi
+}
+
 # --- root 操作（目标机已按 §9.1 装好 sudo） ---
 as_root() { sudo "$@"; }
 

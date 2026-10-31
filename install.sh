@@ -31,7 +31,7 @@ Usage:
   ./install.sh --preview              read-only: show the plan, change nothing
 
 Options:
-  --preview         read-only: render the full stage plan, change nothing
+  --preview         read-only: render the full stage plan (marks done/skipped), change nothing
   --run             explicit install (the default; kept for scripts)
   --machine M       force machine type (physical|vm) instead of auto-detection
   --from NN         resume: skip stages before NN (done stages are still skipped)
@@ -71,9 +71,16 @@ if [[ -n "${MACHINE_OVERRIDE}" ]]; then
     physical|vm) ;;
     *) die "--machine must be physical or vm (got: ${machine})" ;;
   esac
-  if [[ "$machine" == "physical" && "$virt" == "vmware" ]]; then
-    warn "machine type forced to physical, but systemd-detect-virt says vmware - drivers will be installed on a VM."
-  fi
+  # 与自动探测交叉核对：两边都确定且矛盾时告警（unknown 不猜）。
+  # 只在单边告警会让「KVM 上写 physical」「裸机上写 vm」静默通过，而 12 步用同一个变量过滤后照样全绿。
+  case "${machine}:${virt}" in
+    physical:none|physical:unknown|vm:unknown) ;;
+    vm:none)
+      warn "machine type forced to vm, but systemd-detect-virt says none (bare metal) - driver packages will be skipped." ;;
+    physical:*)
+      warn "machine type forced to physical, but systemd-detect-virt says ${virt} - driver packages will be installed on a virtual machine." ;;
+    vm:*) ;;  # 其它虚拟化实现（kvm/xen/openvz/...）本来就该按 vm 走
+  esac
 fi
 
 # --from / --redo 的取值在预览里也要校验：预览是最先跑的，错误参数不该等到 run 才发现。
@@ -93,7 +100,15 @@ if [[ -n "$FROM_STAGE" || -n "$REDO_STAGE" ]]; then
 fi
 
 if [[ "$MODE" == "preview" ]]; then
-  render_plan "preview" "$machine" "$virt" "$user" "$SKIP_AUR"
+  # 预览只“读”状态：只看 steps.done 是否存在，不 touch（run 模式才创建）。
+  preview_from="$FROM_STAGE"
+  preview_label="--from"
+  if [[ -n "$REDO_STAGE" ]]; then
+    preview_from="$REDO_STAGE"
+    preview_label="--redo"
+  fi
+  render_plan "preview" "$machine" "$virt" "$user" "$SKIP_AUR" \
+    "${AN_STATE_DIR}/steps.done" "$preview_from" "$preview_label" "$REDO_STAGE"
   if [[ -n "$REDO_STAGE" ]]; then
     info "note: --redo ${REDO_STAGE} - in run mode, the done-record of stages >= ${REDO_STAGE} is cleared and they run again"
   fi

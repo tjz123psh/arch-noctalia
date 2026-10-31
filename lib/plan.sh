@@ -49,11 +49,18 @@ stage_desc() { # $1=id
   return 1
 }
 
-# 渲染完整计划。（$1=mode preview|run；$2=machine；$3=virt；$4=user；$5=skip_aur）
+# 渲染完整计划。（$1=mode preview|run；$2=machine；$3=virt；$4=user；$5=skip_aur；
+#   $6=steps.done 路径（只读，可为空）；$7=from/redo 阶段号；$8=标签 --from|--redo；$9=redo 阶段号）
 # 注意：只读操作——不得创建/修改任何文件（预览的验收要求）。
+# 标注与 run 模式的实际跳过逻辑一致：先看 from 跳过，再看 done 记录，最后看 --no-aur；
+# --redo 会把 >= NN 的记录清掉，所以那些阶段即便已记账也不算 already done。
 render_plan() {
   local mode="$1" machine="$2" virt="$3" user="$4" skip_aur="${5:-0}"
+  local done_file="${6:-}" from_stage="${7:-}" start_label="${8:---from}" redo_stage="${9:-}" redo_reopens note
   local id name desc payload_count
+  local -a notes
+  # 每个标注单独一个方括号（同一阶段可能同时有「已记账」与「vm 跳过驱动」）。
+  add_note() { notes+=("$1"); }
 
   printf '== arch-noctalia installer ==\n'
   printf 'mode:    %s\n' "$mode"
@@ -64,10 +71,26 @@ render_plan() {
   for id in $(stage_ids); do
     name="$(stage_name "$id")"
     desc="$(stage_desc "$id")"
-    if [[ "$id" == "05" && "$skip_aur" == "1" ]]; then
-      desc="${desc}  [skipped: --no-aur]"
+    notes=()
+    # --redo 会清掉 >= NN 的记录：那些阶段即便在 done 文件里也会重跑，不能标成 already done。
+    redo_reopens=0
+    if [[ -n "$redo_stage" && ! "$id" < "$redo_stage" ]]; then
+      redo_reopens=1
     fi
-    printf '  [%s] %-9s %s\n' "$id" "$name" "$desc"
+    if [[ -n "$from_stage" && "$id" < "$from_stage" ]]; then
+      add_note "skipped: ${start_label} ${from_stage}"
+    elif (( redo_reopens == 0 )) && [[ -n "$done_file" && -r "$done_file" ]] && grep -qx -- "$id" "$done_file" 2>/dev/null; then
+      add_note "already done"
+    elif [[ "$id" == "05" && "$skip_aur" == "1" ]]; then
+      add_note "skipped: --no-aur"
+    fi
+    # 04 在 vm 上仍会执行，只是跳过驱动包（与 steps/04-drivers.sh 同一条判定）。
+    if [[ "$id" == "04" && "$machine" == "vm" ]]; then
+      add_note "drivers skipped: vm"
+    fi
+    printf '  [%s] %-9s %s' "$id" "$name" "$desc"
+    for note in "${notes[@]}"; do printf '  [%s]' "$note"; done
+    printf '\n'
   done
 
   payload_count="$(find "$AN_ROOT_DIR/payload" -type f ! -name '.gitkeep' 2>/dev/null | wc -l | tr -d ' ')"

@@ -27,7 +27,7 @@ info "Stage 01 sources: checking pacman sources..."
 # 0) 基础工具：curl（后续引导/健康检查都要用）
 if ! have curl; then
   info "installing required tool: curl"
-  as_root pacman -S --needed --noconfirm curl
+  pkg_run as_root pacman -S --needed --noconfirm curl
 fi
 ok "tool: curl present"
 
@@ -126,14 +126,14 @@ fi
 
 # 3) 刷新数据库（stage 02 会立刻做全量 -Syu，避免部分升级窗口）
 info "refreshing package databases (pacman -Sy)"
-as_root pacman -Sy --noconfirm
+pkg_run as_root pacman -Sy --noconfirm
 
 # 4) keyring（archlinuxcn 包的签名环）
 if pacman -Q archlinuxcn-keyring >/dev/null 2>&1; then
   ok "archlinuxcn-keyring: installed"
 else
   info "installing archlinuxcn-keyring"
-  as_root pacman -S --needed --noconfirm archlinuxcn-keyring
+  pkg_run as_root pacman -S --needed --noconfirm archlinuxcn-keyring
   ok "archlinuxcn-keyring: installed"
 fi
 
@@ -142,7 +142,7 @@ if have paru; then
   ok "paru: present"
 else
   info "installing paru (AUR helper from archlinuxcn)"
-  as_root pacman -S --needed --noconfirm paru
+  pkg_run as_root pacman -S --needed --noconfirm paru
   ok "paru: installed"
 fi
 

@@ -11,5 +11,5 @@ source "${AN_ROOT_DIR}/lib/common.sh"
 require_orchestrator
 
 info "Stage 02 system: full system upgrade (pacman -Syu)"
-as_root pacman -Syu --noconfirm
+pkg_run as_root pacman -Syu --noconfirm
 ok "Stage 02 system: done"

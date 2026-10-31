@@ -9,8 +9,11 @@ out2="$(mktemp)"
 out3="$(mktemp)"
 out4="$(mktemp)"
 out5="$(mktemp)"
+out6="$(mktemp)"
+out7="$(mktemp)"
+out8="$(mktemp)"
 sandbox="$(mktemp -d)"
-trap 'rm -f "$out1" "$out2" "$out3" "$out4" "$out5"; rm -rf "$sandbox"' EXIT
+trap 'rm -f "$out1" "$out2" "$out3" "$out4" "$out5" "$out6" "$out7" "$out8"; rm -rf "$sandbox"' EXIT
 # 状态目录现在落在用户 XDG state 下，所以给沙箱 HOME，顺便把「预览不写状态」断言精确到位置上。
 export HOME="$sandbox/home"
 mkdir -p "$HOME"
@@ -81,4 +84,36 @@ bash "$ROOT/install.sh" --preview --from 7 > "$out5" 2>&1 || rc=$?
 [[ "$rc" != 0 ]] || { echo "--from 7 must be rejected in preview (want two-digit stage ids)"; exit 1; }
 grep -q 'no such stage' "$out5" || { echo "missing --from error message"; exit 1; }
 
-echo "ok: deterministic preview, full stage plan, environment line present, no state written, --no-aur and --redo annotated, --machine and --from validated"
+# ---- 预览必须反映状态（审计 F3：以前不读 steps.done，12/12 完成时仍把 12 步全列成待做）----
+done_dir="$HOME/.local/state/arch-noctalia"
+mkdir -p "$done_dir"
+printf '01\n02\n03\n04\n05\n06\n' > "$done_dir/steps.done"
+before_md5="$(md5sum "$done_dir/steps.done" | awk '{print $1}')"
+if ! bash "$ROOT/install.sh" --preview > "$out6" 2>&1; then
+  echo "preview with an existing steps.done exited non-zero:"
+  cat "$out6"
+  exit 1
+fi
+grep -qE '^  \[01\] sources .*\[already done\]$' "$out6" || { echo "[01] not marked 'already done' in preview"; exit 1; }
+grep -E '^  \[07\] config ' "$out6" | grep -q 'already done' && { echo "[07] must not be marked done (no record)"; exit 1; }
+after_md5="$(md5sum "$done_dir/steps.done" | awk '{print $1}')"
+[[ "$before_md5" == "$after_md5" ]] || { echo "preview modified steps.done"; exit 1; }
+
+# --redo NN：>= NN 会被重新打开（不标 already done），< NN 标 skipped。
+if ! bash "$ROOT/install.sh" --preview --redo 06 > "$out7" 2>&1; then
+  echo "preview --redo 06 exited non-zero:"
+  cat "$out7"
+  exit 1
+fi
+grep -qE '^  \[01\] sources .*\[skipped: --redo 06\]$' "$out7" || { echo "--redo preview asked to clear 06 but did not mark 01 as skipped"; exit 1; }
+grep -E '^  \[06\] desktop ' "$out7" | grep -q 'already done' && { echo "[06] must not be 'already done' under --redo 06 (its record gets cleared)"; exit 1; }
+
+# vm 上的驱动跳过必须在计划里看得见（04 仍会执行，只是不装驱动包）。
+if ! bash "$ROOT/install.sh" --preview --machine vm > "$out8" 2>&1; then
+  echo "preview --machine vm exited non-zero:"
+  cat "$out8"
+  exit 1
+fi
+grep -qE '^  \[04\] drivers .*\[drivers skipped: vm\]$' "$out8" || { echo "04 not annotated as driver-skipped on a vm"; exit 1; }
+
+echo "ok: deterministic preview, full stage plan, environment line present, no state written, --no-aur and --redo annotated, --machine and --from validated, state-aware annotations"

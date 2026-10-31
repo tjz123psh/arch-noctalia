@@ -30,7 +30,7 @@ cd ~/arch-noctalia
 | 命令 | 作用 |
 |------|------|
 | `./install.sh` | 安装；中断了再跑会接着装 |
-| `./install.sh --preview` | 只看计划，不动系统 |
+| `./install.sh --preview` | 只看计划，不动系统（标出已完成与将跳过的阶段） |
 | `./install.sh --redo 07` | 从第 7 步起重跑（改完配置想让它生效） |
 | `./install.sh --no-aur` | 先跳过 AUR 包，进桌面后再补 |
 

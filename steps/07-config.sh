@@ -433,8 +433,10 @@ if have git && [[ -x "$term_tools" && -f "$fish_conf" ]] && grep -Fxq '# >>> mai
   elif tt_log="$("$term_tools" --enable 2>&1)"; then
     ok "terminal-tools: git integration enabled (delta pager, zdiff3, colorMoved)"
   else
-    warn "terminal-tools --enable failed - git diff/log will not use delta; run: ~/scripts/maintenance/terminal-tools --enable"
+    # 与 12 步保持一致：12 把「管理块在、6 个键一个没设」当失败。只 warn 的话会出现
+    # 「12 红、--redo 12 又修不了」的死局；这里当场停下，重跑 07 即可重试。
     printf '%s\n' "$tt_log" | sed 's/^/    /' >&2 || true
+    die "terminal-tools --enable failed - git diff/log would not use delta; fix it and re-run: ./install.sh --redo 07"
   fi
 elif [[ -f "$fish_conf" ]] && grep -Fxq '# >>> maintenance terminal-tools >>>' "$fish_conf"; then
   info "terminal-tools: not deployed or git missing - git integration skipped"

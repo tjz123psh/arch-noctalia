@@ -54,7 +54,7 @@ else
   for pkg in "${repo_pending[@]}"; do
     info "installing repo package: ${pkg}"
     # --ask=4：冲突包自动替换（与 03 一致）
-    if ! as_root pacman -S --needed --noconfirm --ask=4 "$pkg"; then
+    if ! pkg_run as_root pacman -S --needed --noconfirm --ask=4 "$pkg"; then
       warn "install failed: ${pkg} (repo)"
       failed+=("$pkg")
     fi
@@ -62,7 +62,7 @@ else
   # paru 必须以当前用户运行（AUR 构建不允许 root），因此不加 sudo。
   for pkg in "${aur_pending[@]}"; do
     info "installing AUR package: ${pkg}"
-    if ! paru -S --needed --noconfirm --skipreview "$pkg"; then
+    if ! pkg_run paru -S --needed --noconfirm --skipreview "$pkg"; then
       warn "install failed: ${pkg} (aur)"
       failed+=("$pkg")
     fi

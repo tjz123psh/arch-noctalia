@@ -29,8 +29,8 @@ kernel_defer() {
   [[ ! -d "/usr/lib/modules/$(uname -r)" ]]
 }
 
-enable_system_unit() { # $1=unit
-  local u="$1"
+enable_system_unit() { # $1=unit  $2=optional（可选单元失败只告警，不中止整步）
+  local u="$1" optional="${2:-}"
   if ! systemctl cat "$u" >/dev/null 2>&1; then
     warn "unit not found: ${u} (package missing?)"
     missing_units+=("$u")
@@ -65,7 +65,11 @@ enable_system_unit() { # $1=unit
     # 条件不满足（如无蓝牙控制器）：enable 已生效，启动被 systemd 跳过——硬件就绪后会自动启动。
     warn "${u}: enabled; condition not met (no matching hardware?) - systemd skips it"
   else
-    die "failed to start ${u} (see: systemctl status ${u})"
+    if [[ "$optional" == "optional" ]]; then
+      warn "${u}: failed to start (optional unit - continuing; check: systemctl status ${u})"
+    else
+      die "failed to start ${u} (see: systemctl status ${u})"
+    fi
   fi
 }
 
@@ -115,7 +119,7 @@ fi
 # --- 物理机驱动配套（由 04 的包提供；本机不存在则跳过） ---
 for u in asusd.service supergfxd.service; do
   if systemctl cat "$u" >/dev/null 2>&1; then
-    enable_system_unit "$u"
+    enable_system_unit "$u" optional
   fi
 done
 

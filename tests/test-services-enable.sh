@@ -26,9 +26,14 @@ cp -a "$ROOT_DIR/steps" "$repo/steps"
 for m in "$ROOT_DIR"/manifests/*.tsv; do cp -- "$m" "$repo/manifests/"; done
 
 # 会记账的 systemctl：单元都存在、都未启用；enable 记录下来并成功；is-active 视为在跑。
+failfile="$sandbox/fail-unit"
 cat > "$stub/systemctl" <<STUB
 #!/bin/sh
 echo "systemctl \$*" >> "$log"
+# 故障注入：fail-unit 文件内容为单元名时，该单元的 enable --now 返回失败（其余照常）。
+if [ -f "$failfile" ] && [ "\$1" = "enable" ]; then
+  case "\$*" in *"\$(cat "$failfile")"*) exit 1 ;; esac
+fi
 case "\$1" in
   cat|show|daemon-reload|--user) exit 0 ;;
   is-enabled) exit 1 ;;
@@ -69,8 +74,25 @@ grep -q 'enable --now bluetooth.service' "$log" || bad "bluetooth.service was no
 if grep -q 'greetd' "$log"; then bad "10-services must not touch greetd (that is stage 11's job)"; fi
 grep -q 'services: ' <<<"$out" || bad "summary line missing"
 
+# 可选单元（asusd/supergfxd）启动失败只告警；必需单元（docker）失败必须中止（审计 F13）。
+run10() {
+  rc=0
+  out="$(env HOME="$home" PATH="$stub:$PATH" AN_RUN=1 AN_MACHINE=physical AN_ROOT_DIR="$repo" \
+          AN_TARGET_ROOT="$root" AN_TARGET_ALLOW=/ bash "$repo/steps/10-services.sh" 2>&1)" || rc=$?
+}
+printf 'supergfxd.service\n' > "$failfile"
+run10
+(( rc == 0 )) || bad "optional unit failure (supergfxd) must not abort stage 10 (rc=$rc)"
+grep -q 'supergfxd.service: failed to start (optional unit' <<<"$out" || bad "optional-unit failure was not reported as a warning"
+
+printf 'docker.service\n' > "$failfile"
+run10
+(( rc != 0 )) || bad "required unit failure (docker) must abort stage 10"
+grep -q 'failed to start docker.service' <<<"$out" || bad "required-unit failure message missing"
+rm -f "$failfile"
+
 if (( fail > 0 )); then
   echo "test-services-enable: FAIL"
   exit 1
 fi
-echo "ok: 10-services enables docker/bluetooth (--now) in the sandbox and leaves greetd to stage 11"
+echo "ok: 10-services enables docker/bluetooth (--now), keeps greetd out, warns on optional units and aborts on required ones"
