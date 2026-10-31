@@ -76,7 +76,7 @@ noctalia msg plugin pang/tide-sidebar:backend all motion on
 noctalia msg plugin pang/tide-sidebar:backend all motion off
 ~~~
 
-本机一次预热后的 6 秒观察：Noctalia 约 4.00%＋前端 1.67%，合计约单核 5.67%；收起后合计 1.17%。原生前端 RSS 约 217 MiB，是额外常驻界面的内存代价。它不是零开销，也不把 CPU 采样冒充 FPS 或输入延迟。
+前端用 GTK 自带的软件光栅（cairo）而不是 GL：调色板、圆角与投影照旧，但本进程不再加载 GL 驱动栈（libLLVM / NVIDIA gallium），常驻内存大幅下降。本机一次预热后的 6 秒观察：Noctalia 约 0.83%＋前端 0.17%，合计约单核 1.00%；收起后 0.83%＋0.00%，合计约 0.83%。原生前端 RSS 约 126 MiB（GL 路径曾约 217 MiB），仍是额外常驻界面的内存代价。它不是零开销，也不把 CPU 采样冒充 FPS 或输入延迟。
 
 详见[性能记录及条件](<docs/performance-observation.json>)和[改版验收说明](<docs/reference-redesign.md>)。旧版样本包含开场动画、新版样本预热后才开始，不能据此声称严格减少了50%。
 

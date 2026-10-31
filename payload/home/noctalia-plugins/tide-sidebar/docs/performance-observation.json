@@ -21,5 +21,28 @@
     "Whole-process short sample, not FPS or input latency.",
     "Old observation included opening; new observation followed 1.1s warm-up, so do not claim a causal 50% improvement.",
     "Other desktop activity was not controlled."
-  ]
+  ],
+  "native_cairo": {
+    "date": "2026-10-31",
+    "renderer": "GSK_RENDERER=cairo (only the plugin frontend spawn; session env unchanged)",
+    "open_tools": {
+      "seconds": 6.0,
+      "noctalia_one_core_cpu_percent": 0.83,
+      "frontend_one_core_cpu_percent": 0.17,
+      "combined_one_core_cpu_percent": 1.0,
+      "frontend_rss_mib": 125.6
+    },
+    "closed": {
+      "seconds": 6.0,
+      "noctalia_one_core_cpu_percent": 0.83,
+      "frontend_one_core_cpu_percent": 0.0,
+      "combined_one_core_cpu_percent": 0.83,
+      "frontend_rss_mib": 123.8
+    },
+    "pixel_equivalence": "Four pages captured at the same size; body regions differ by 0.000% at 2% fuzz. Full-panel differences came from a note text edit and cursor phase, not from the renderer.",
+    "limits": [
+      "Same short whole-process sample as above; unrelated shell activity not controlled.",
+      "Only this plugin process uses cairo; other GTK apps still follow the session GSK_RENDERER=gl."
+    ]
+  }
 }
