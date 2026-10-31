@@ -3,6 +3,7 @@ import Pango from 'gi://Pango';
 import GLib from 'gi://GLib';
 
 const icons = {
+    home: 'go-home-symbolic',
     note: 'document-edit-symbolic', calculator: 'accessories-calculator-symbolic',
     hourglass: 'alarm-symbolic', timer: 'alarm-symbolic', wifi: 'network-wireless-symbolic',
     apps: 'view-grid-symbolic', windows: 'focus-windows-symbolic', tools: 'applications-utilities-symbolic',
@@ -74,6 +75,7 @@ function makeWave(color, height, cornerRadius) {
     const green = parseInt(color.slice(3, 5), 16) / 255;
     const blue = parseInt(color.slice(5, 7), 16) / 255;
     let phase = 0, from = 0, start = 0, tick = 0;
+    let pendingPulse = false, pendingDuration = 480, pendingIntensity = 0.85;
     area.set_draw_func((_widget, cr, width, h) => {
         if (width < 2 || h < 2) return;
         const y = h * 0.32, a = Math.min(4, h * 0.20);
@@ -92,20 +94,38 @@ function makeWave(color, height, cornerRadius) {
         cr.setSourceRGBA(red, green, blue, 1);
         cr.fill();
     });
-    area.pulse = () => {
-        if (!area.get_mapped() || !Gtk.Settings.get_default().gtk_enable_animations) return;
+    area.pulse = (durationMs = 480, intensity = 0.85) => {
+        if (!Gtk.Settings.get_default().gtk_enable_animations) return;
+        if (!area.get_mapped()) {
+            pendingPulse = true;
+            pendingDuration = durationMs;
+            pendingIntensity = intensity;
+            return;
+        }
+        pendingPulse = false;
         from = phase; start = GLib.get_monotonic_time();
         if (tick) return;
+        const durationUs = Math.max(1, durationMs) * 1000;
         tick = area.add_tick_callback((_widget, clock) => {
-            const t = Math.min(1, (clock.get_frame_time() - start) / 320000);
-            const ease = 1 - (1 - t) ** 3;
-            phase = from * (1 - ease) + Math.sin(Math.PI * ease) * .65;
+            const t = Math.min(1, (clock.get_frame_time() - start) / durationUs);
+            const ease = 1 - (1 - t) ** 2;
+            const ripple = Math.sin(Math.PI * 2 * t) * Math.exp(-2.2 * t) * intensity;
+            phase = from * (1 - ease) + ripple;
             area.queue_draw();
             if (t >= 1) { tick = 0; phase = 0; return GLib.SOURCE_REMOVE; }
             return GLib.SOURCE_CONTINUE;
         });
     };
-    area.connect('unmap', () => { if (tick) area.remove_tick_callback(tick); tick = 0; phase = 0; });
+    area.connect('map', () => {
+        if (pendingPulse) {
+            pendingPulse = false;
+            area.pulse(pendingDuration, pendingIntensity);
+        }
+    });
+    area.connect('unmap', () => {
+        if (tick) area.remove_tick_callback(tick);
+        tick = 0; phase = 0; pendingPulse = false;
+    });
     return area;
 }
 export function waveBand(color = '#F1D68B', height = 22) { return makeWave(color, height, 0); }

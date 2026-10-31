@@ -14,15 +14,17 @@ noctalia msg plugin pang/tide-sidebar:backend all toggle
 
 # 仓库根目录的便捷入口
 bash tide-sidebar/open.sh
+bash tide-sidebar/open.sh home
 bash tide-sidebar/open.sh notes
 bash tide-sidebar/open.sh tools
 bash tide-sidebar/open.sh hotspot
 bash tide-sidebar/open.sh windows
 ~~~
 
-- 只有四个窄标签：便签、工具、热点、窗口。
+- 五个窄标签：首页、便签、工具、热点、窗口。
+- 首页为生动多维工作台：实时秒跳时钟、双层交错流波、CPU 脉冲走势与 16 线程律动矩阵、核心温度、内存健康、NVMe 读写对冲示波器、实时网络双流吞吐与前台活跃任务雷达。
 - 计算器与倒计时在同一个工具页，不再分成两页。
-- 面板内 Ctrl+1～4 切页，Esc 先取消当前确认，再收起。
+- 面板内 Ctrl+1～5 切页，Esc 先取消当前确认，再收起。
 - 状态栏可添加 pang/tide-sidebar:toggle，控制中心可添加 pang/tide-sidebar:open；现有布局不会被擅自改动。
 - 旧 pang/tide-sidebar:sidebar 面板 ID 保留为兼容转接，不再绘制旧版界面。
 
@@ -35,6 +37,8 @@ bash tide-sidebar/open.sh windows
 - 只保留功能文字，没有欢迎语、品牌大标题或诗句。
 
 ## 功能
+
+**首页**：实时跳动数字时钟与公历/周次、电池充电状态与系统运行时间；时钟卡片底部双层半透明自然流动潮汐水波；CPU 总负载脉冲走势图与核心硬件温度（带温控呼吸指示灯）；多核 16 线程动态律动矩阵（类似音频均衡器的各核心实时调度可视化）；RAM 内存占用胶囊进度条与可用/缓存细分；NVMe 存储读写双向对冲示波器；实时网络双流吞吐走势图；前台活跃任务（Top Tasks）实时监控雷达与动态能量槽。
 
 **便签**：添加、切换、重命名、复制、删除到回收区、恢复、拖动及上下排序。正文停笔后自动保存，切换或收起时请求立即保存。单条正文最多 64 KiB，最多 80 条便签及 80 条可恢复删除，总标题与正文不超过 1 MiB；超限不静默截断。右下角铅笔菜单保留编辑类操作。
 

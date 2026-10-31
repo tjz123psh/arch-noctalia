@@ -238,7 +238,7 @@ export function createNotes(ctx) {
     const noticeText = U.label('', ['caption']); noticeText.set_wrap(true); noticeText.set_ellipsize(Pango.EllipsizeMode.NONE);
     noticeBox.append(noticeText); noticeRevealer.set_child(noticeBox); page.append(noticeRevealer);
 
-    const card = U.card(['notes-card']); card.set_spacing(0); card.set_vexpand(true); page.append(card);
+    const card = U.card(['notes-card', 'card-stagger-1']); card.set_spacing(0); card.set_vexpand(true); page.append(card);
     const toolbar = U.box(Gtk.Orientation.HORIZONTAL, 0, ['notes-toolbar']);
     const title = U.label('', ['note-title']); title.set_hexpand(true); title.set_max_width_chars(23);
     toolbar.append(title); card.append(toolbar);
@@ -337,12 +337,14 @@ export function createNotes(ctx) {
         cancelRename(); requestedId = id; showNote(id);
         if (!send('note-select', {id})) requestedId = '';
         syncLists();
+        footerWave.pulse(380, 0.65);
     }
     function addNote() {
         if (!ready || pendingAdd || notes.length >= 80 || !flushAll()) return;
         pendingAdd = {ids: new Set(notes.map(note => note.id))};
         if (!send('note-add')) { pendingAdd = null; return; }
         refreshStatus();
+        footerWave.pulse(420, 0.75);
         if (pendingAddSource) GLib.source_remove(pendingAddSource);
         pendingAddSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 4000, () => {
             pendingAddSource = 0;
@@ -518,7 +520,7 @@ export function createNotes(ctx) {
     return {
         widget: page,
         update,
-        onShow() { shown = true; if (ready && current()) editor.grab_focus(); footerWave.pulse(); },
+        onShow() { shown = true; if (ready && current()) editor.grab_focus(); footerWave.pulse(520, 0.9); },
         onHide() {
             shown = false; flushAll();
             if (pendingAddSource) { GLib.source_remove(pendingAddSource); pendingAddSource = 0; }

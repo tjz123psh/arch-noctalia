@@ -41,6 +41,7 @@
       "description": "Seconds between hotspot and window status queries while those pages are open."
     },
     "tab": {
+      "home": "Home",
       "notes": "Notes",
       "tools": "Tools",
       "hotspot": "Hotspot",

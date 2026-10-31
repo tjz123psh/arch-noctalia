@@ -18,7 +18,7 @@ count_lock() { # $1=file $2=expected $3=label
   local n; n="$(cnt "$1")"
   [[ "$n" == "$2" ]] || note "$3 row count: $n (locked at $2) — intentional changes must update this test"
 }
-count_lock "$M/files.tsv" 414 "files.tsv"
+count_lock "$M/files.tsv" 415 "files.tsv"
 count_lock "$M/packages.tsv" 177 "packages.tsv"
 count_lock "$M/aur.tsv" 17 "aur.tsv"
 count_lock "$M/bin-links.tsv" 19 "bin-links.tsv"

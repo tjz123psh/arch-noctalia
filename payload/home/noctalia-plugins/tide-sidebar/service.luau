@@ -17,13 +17,15 @@ local timerDirty, timerRetryAt, pendingFinish = false, 0, false
 local stopwatch, stopwatchRevision, stopwatchSlot = Stopwatch.new(), 0, nil
 local stopwatchError, stopwatchBlocked = "", false
 local stopwatchDirty, stopwatchRetryAt = false, 0
-local preferences = { tab = "notes", reducedMotion = false }
+local preferences = { tab = "home", reducedMotion = false }
 local calculation={expression="",result="0",error="",history={},requestId=""}
 local lastAnswer=0
 local function normalizePage(page)
+  if page=="home" then return "home" end
   if page=="tools" or page=="calculator" or page=="timer" then return "tools" end
   if page=="hotspot" or page=="windows" then return page end
-  return "notes"
+  if page=="notes" then return "notes" end
+  return "home"
 end
 local function reducedMotion()
   return preferences.reducedMotion or (type(noctalia.getConfig)=="function" and noctalia.getConfig("reduced_motion")==true)
@@ -59,8 +61,8 @@ local function presetList()
   return result
 end
 local function readConfig()
-  local tab=setting("default_tab","notes")
-  if tab~="tools" and tab~="hotspot" and tab~="windows" then tab="notes" end
+  local tab=setting("default_tab","home")
+  if tab~="tools" and tab~="hotspot" and tab~="windows" and tab~="notes" then tab="home" end
   return {
     panelWidth=clampInt(setting("panel_width",450),450,380,640),
     rememberLastTab=setting("remember_last_tab",true)==true,

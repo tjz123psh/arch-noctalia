@@ -41,6 +41,7 @@
       "description": "热点/窗口页打开时，两次状态查询之间的秒数。"
     },
     "tab": {
+      "home": "首页",
       "notes": "便签",
       "tools": "工具",
       "hotspot": "热点",

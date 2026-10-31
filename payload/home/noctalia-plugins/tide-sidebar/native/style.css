@@ -45,16 +45,26 @@
   color: #6B6249;
   background-color: transparent;
   border: 1px solid transparent;
-  transition: background-color 120ms ease-out, color 120ms ease-out, box-shadow 120ms ease-out;
+  transition: background-color 160ms cubic-bezier(0.2, 0.8, 0.25, 1),
+              color 140ms ease-out,
+              border-color 160ms ease-out,
+              box-shadow 160ms cubic-bezier(0.2, 0.8, 0.25, 1);
 }
-.tide-window .nav-button:hover { background-color: rgba(120, 103, 28, 0.08); color: #5C533B; }
-.tide-window .nav-button:active { background-color: rgba(120, 103, 28, 0.14); }
+.tide-window .nav-button:hover {
+  background-color: rgba(120, 103, 28, 0.09);
+  color: #4C432C;
+  box-shadow: 0 1px 3px rgba(74, 62, 28, 0.06);
+}
+.tide-window .nav-button:active {
+  background-color: rgba(120, 103, 28, 0.16);
+  box-shadow: inset 0 1px 2px rgba(60, 48, 16, 0.14);
+}
 .tide-window .nav-button.selected,
 .tide-window .nav-button:checked {
   background-color: #FFF6DA;
-  border-color: rgba(150, 120, 40, 0.20);
+  border-color: rgba(150, 120, 40, 0.25);
   color: #6D5E1B;
-  box-shadow: 0 1px 2px rgba(74, 62, 28, 0.08);
+  box-shadow: 0 2px 6px rgba(74, 62, 28, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 .tide-window .nav-label { font-size: 10px; font-weight: 500; }
 .tide-window .motion-button, .tide-window .close-button { color: #71674F; margin-top: 2px; }
@@ -82,12 +92,12 @@
   box-shadow: none;
   min-height: 30px;
   padding: 5px 10px;
-  transition: background-color 120ms ease-out, color 120ms ease-out, border-color 120ms ease-out, box-shadow 120ms ease-out;
+  transition: background-color 140ms ease-out, color 120ms ease-out, border-color 140ms ease-out, box-shadow 140ms cubic-bezier(0.2, 0.8, 0.25, 1);
 }
 .tide-window button:hover { background-color: rgba(120, 103, 28, 0.08); }
-.tide-window .glass-button:hover { box-shadow: 0 1px 2px rgba(74, 62, 28, 0.10); }
+.tide-window .glass-button:hover { box-shadow: 0 2px 5px rgba(74, 62, 28, 0.10); }
 .tide-window .glass-button:active { box-shadow: inset 0 1px 2px rgba(60, 48, 16, 0.16); }
-.tide-window button:active { background-color: rgba(120, 103, 28, 0.15); }
+.tide-window button:active { background-color: rgba(120, 103, 28, 0.15); box-shadow: inset 0 1px 2px rgba(60, 48, 16, 0.12); }
 .tide-window button:disabled { opacity: 0.55; }
 .tide-window button:focus-visible { outline: 2px solid rgba(109, 94, 27, 0.55); outline-offset: 1px; }
 .tide-window button label { color: inherit; }
@@ -101,10 +111,15 @@
   border-radius: 11px;
   min-height: 32px;
   font-weight: 500;
+  box-shadow: 0 1px 3px rgba(60, 50, 10, 0.20);
 }
-.tide-window .primary:hover, .tide-window .primary-button:hover, .tide-window .suggested-action:hover { background-color: #5B4F15; }
+.tide-window .primary:hover, .tide-window .primary-button:hover, .tide-window .suggested-action:hover {
+  background-color: #5B4F15;
+  box-shadow: 0 3px 8px rgba(60, 50, 10, 0.28);
+}
 .tide-window .primary:active, .tide-window .primary-button:active, .tide-window .suggested-action:active {
   background-color: #4F4412;
+  box-shadow: inset 0 1px 3px rgba(30, 24, 6, 0.35);
 }
 .tide-window .danger:active, .tide-window .danger-button:active { background-color: rgba(154, 74, 51, 0.18); }
 .tide-window .soft-button:active { background-color: rgba(109, 94, 27, 0.14); }
@@ -121,6 +136,9 @@
 }
 .tide-window .notes-card { background-color: #FFEDB8; padding: 0; }
 .tide-window .tools-card { background-color: #FFE9A8; padding: 0; }
+.tide-window .home-clock-card { background-color: #FFE9A8; padding: 0; }
+.tide-window .home-cpu-card, .tide-window .home-mem-card, .tide-window .home-disk-card,
+.tide-window .home-net-card, .tide-window .home-task-card { background-color: #FAF4E6; border-color: rgba(96, 80, 32, 0.12); }
 .tide-window .hotspot-card, .tide-window .stopwatch-card, .tide-window .window-card { transition: background-color 160ms ease-out, border-color 160ms ease-out; }
 .tide-window .timer-card { background-color: #6D5E1B; border-color: rgba(60, 50, 10, 0.25); padding: 0; }
 .tide-window .stopwatch-card { background-color: #E6F1E1; border-color: rgba(71, 109, 80, 0.12); padding: 11px 14px; }
@@ -217,9 +235,17 @@
 .tide-window .note-actions-button > button {
   min-height: 38px; min-width: 38px; padding: 8px; border-radius: 999px;
   color: #FFF7DD; background-color: #6D5E1B;
-  box-shadow: 0 2px 5px rgba(60, 50, 10, 0.28);
+  box-shadow: 0 2px 6px rgba(60, 50, 10, 0.28);
+  transition: background-color 140ms ease-out, box-shadow 140ms cubic-bezier(0.2, 0.8, 0.25, 1);
 }
-.tide-window .note-actions-button > button:hover { background-color: #5B4F15; }
+.tide-window .note-actions-button > button:hover {
+  background-color: #5B4F15;
+  box-shadow: 0 4px 12px rgba(60, 50, 10, 0.38);
+}
+.tide-window .note-actions-button > button:active {
+  background-color: #4F4412;
+  box-shadow: inset 0 1px 3px rgba(30, 24, 6, 0.35);
+}
 .tide-window .inline-notice {
   padding: 8px 10px; border-radius: 10px;
   background-color: rgba(120, 103, 28, 0.07);
@@ -287,8 +313,16 @@
 .tide-window .key-button {
   font-size: 20px; font-weight: 500; color: #3B3320;
   min-height: 31px; border-radius: 10px;
+  transition: background-color 100ms ease-out, box-shadow 100ms ease-out, color 100ms ease-out;
 }
-.tide-window .key-button:hover { background-color: rgba(120, 103, 28, 0.10); }
+.tide-window .key-button:hover {
+  background-color: rgba(120, 103, 28, 0.10);
+  box-shadow: 0 1px 2px rgba(74, 62, 28, 0.06);
+}
+.tide-window .key-button:active {
+  background-color: rgba(120, 103, 28, 0.20);
+  box-shadow: inset 0 1px 2px rgba(60, 48, 16, 0.18);
+}
 .tide-window .key-memory, .tide-window .ans-button, .tide-window .small-key { font-size: 13px; font-weight: 500; color: #5C533B; }
 .tide-window .operator-column {
   background-color: rgba(109, 94, 27, 0.09);
@@ -299,6 +333,16 @@
 .tide-window .operator-key { color: #4C432C; }
 .tide-window .equals-button {
   background-color: #6D5E1B; color: #FFF7DD; border-radius: 11px; font-weight: 600;
+  box-shadow: 0 1px 3px rgba(74, 62, 28, 0.14);
+  transition: background-color 120ms ease-out, box-shadow 120ms ease-out;
+}
+.tide-window .equals-button:hover {
+  background-color: #5B4F15;
+  box-shadow: 0 3px 6px rgba(74, 62, 28, 0.22);
+}
+.tide-window .equals-button:active {
+  background-color: #4F4412;
+  box-shadow: inset 0 1px 3px rgba(30, 24, 6, 0.32);
 }
 .tide-window .equals-button:hover { background-color: #5B4F15; }
 .tide-window .tools-history { padding: 2px 14px 12px; }
@@ -337,8 +381,23 @@
   color: #5C533B;
   background-color: rgba(255, 255, 255, 0.34);
   border: 1px solid rgba(120, 103, 28, 0.14);
+  transition: background-color 140ms ease-out, border-color 140ms ease-out, box-shadow 140ms ease-out;
 }
-.tide-window .preset-button:hover { background-color: rgba(255, 255, 255, 0.65); border-color: rgba(120, 103, 28, 0.24); }
+.tide-window .preset-button:hover {
+  background-color: rgba(255, 255, 255, 0.72);
+  border-color: rgba(120, 103, 28, 0.28);
+  box-shadow: 0 1px 3px rgba(74, 62, 28, 0.08);
+}
+.tide-window .preset-button:active {
+  background-color: rgba(255, 255, 255, 0.90);
+  box-shadow: inset 0 1px 2px rgba(74, 62, 28, 0.14);
+}
+.tide-window .preset-button.selected {
+  background-color: #FFF6DA;
+  border-color: rgba(150, 120, 40, 0.35);
+  color: #6D5E1B;
+  box-shadow: 0 1px 2px rgba(74, 62, 28, 0.10);
+}
 .tide-window .timer-actions .primary { background-color: #6D5E1B; }
 .tide-window .timer-actions .soft-button { color: #6D5E1B; }
 
@@ -444,6 +503,73 @@
 }
 .tide-window .toast.error { background-color: #7E3B27; color: #FFF1E8; }
 .tide-window .toast.success { background-color: #476D50; color: #EFF6EA; }
+/* ---------- home: clock, hardware matrix, dynamic network flow ---------- */
+.tide-window .home-clock-content { padding: 16px 18px 8px; }
+.tide-window .home-date-label { font-size: 13px; font-weight: 500; color: #5C533B; letter-spacing: 0.02em; }
+.tide-window .home-live-badge {
+  background-color: rgba(255, 255, 255, 0.50);
+  border: 1px solid rgba(109, 94, 27, 0.14);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.tide-window .home-pulse-dot { color: #476D50; font-size: 8px; margin-top: 1px; }
+.tide-window .home-time-row { margin: 4px 0 2px; }
+.tide-window .home-time-main {
+  font-size: 38px; font-weight: 600; color: #2F2918;
+  font-feature-settings: "tnum"; letter-spacing: -0.02em;
+}
+.tide-window .home-time-sec {
+  font-size: 20px; font-weight: 500; color: #7B6C3E;
+  font-feature-settings: "tnum"; margin-bottom: 5px;
+}
+.tide-window .home-hw-value {
+  font-size: 22px; font-weight: 600; color: #2F2918;
+  font-feature-settings: "tnum";
+}
+.tide-window .home-hw-sub {
+  font-size: 12px; font-weight: 500; color: #6F6244;
+  font-feature-settings: "tnum";
+}
+.tide-window .home-temp-dot { font-size: 8px; color: #476D50; margin-top: 1px; }
+.tide-window .home-temp-dot.warm { color: #B58A28; }
+.tide-window .home-temp-dot.hot { color: #B23D26; }
+.tide-window .home-temp-label { color: #6F6244; font-size: 11px; font-weight: 500; font-feature-settings: "tnum"; margin-right: 4px; }
+.tide-window .home-sparkline { margin: 4px 0 2px; }
+.tide-window .home-core-bars { margin: 3px 0 1px; }
+.tide-window .home-progress-track {
+  background-color: rgba(109, 94, 27, 0.12);
+  border-radius: 999px;
+  min-height: 8px;
+}
+.tide-window .home-progress-fill {
+  background-color: #6D5E1B;
+  border-radius: 999px;
+  min-height: 8px;
+}
+.tide-window .home-net-speed-box { font-feature-settings: "tnum"; font-size: 11px; }
+.tide-window .home-speed-rx { color: #476D50; font-weight: 600; }
+.tide-window .home-speed-tx { color: #8C7320; font-weight: 600; }
+.tide-window .home-net-graph { margin: 4px 0 2px; }
+.tide-window .home-task-card { padding: 12px 14px 10px; }
+.tide-window .home-task-row { padding: 3px 2px; }
+.tide-window .home-task-name { font-size: 12px; font-weight: 500; color: #3B3320; }
+.tide-window .home-task-meter-track {
+  background-color: rgba(109, 94, 27, 0.12);
+  border-radius: 999px;
+  min-height: 6px;
+}
+.tide-window .home-task-meter-fill {
+  background-color: #6D5E1B;
+  border-radius: 999px;
+  min-height: 6px;
+}
+.tide-window .home-task-cpu {
+  font-feature-settings: "tnum";
+  color: #5C533B;
+  font-weight: 600;
+  font-size: 11px;
+}
+
 /* ---------- motion layer: entrance, stagger, completion ---------- */
 @keyframes tide-row-in { from { opacity: 0; } to { opacity: 1; } }
 .tide-window .row-in { animation: tide-row-in 170ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
@@ -454,4 +580,12 @@
 .tide-window .row-in-5 { animation-delay: 90ms; }
 .tide-window .row-in-6 { animation-delay: 108ms; }
 .tide-window .row-in-7 { animation-delay: 126ms; }
+
+@keyframes tide-card-rise {
+  from { opacity: 0.68; }
+  to { opacity: 1; }
+}
+.tide-window .card-stagger-1 { animation: tide-card-rise 220ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+.tide-window .card-stagger-2 { animation: tide-card-rise 260ms cubic-bezier(0.22, 0.61, 0.36, 1) 36ms both; }
+.tide-window .card-stagger-3 { animation: tide-card-rise 300ms cubic-bezier(0.22, 0.61, 0.36, 1) 72ms both; }
 .tide-window .reduced-motion *, .tide-window.reduced-motion * { transition-duration: 0ms; animation-duration: 0ms; animation-delay: 0ms; }

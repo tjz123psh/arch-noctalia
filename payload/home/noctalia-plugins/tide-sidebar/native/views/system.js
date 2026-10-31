@@ -57,7 +57,7 @@ export function createHotspot(ctx) {
     const body = ui.box('vertical', 12, ['scroll-gutter']);
     widget.append(scrolled(body));
 
-    const statusCard = ui.card(['hotspot-card']);
+    const statusCard = ui.card(['hotspot-card', 'card-stagger-1']);
     const summary = ui.box('horizontal', 10, ['status-summary']);
     summary.append(ui.icon('wifi', 22));
     const summaryText = ui.box('vertical', 4);
@@ -85,7 +85,7 @@ export function createHotspot(ctx) {
     statusCard.append(statusError);
     body.append(statusCard);
 
-    const form = ui.card(['hotspot-card']);
+    const form = ui.card(['hotspot-card', 'card-stagger-2']);
     form.append(ui.label('热点设置', ['section-title']));
     form.append(ui.label('热点名称', ['field-label']));
     const ssid = ui.classes(new Gtk.Entry({hexpand: true, placeholder_text: '热点名称'}), ['field-muted']);
@@ -127,7 +127,7 @@ export function createHotspot(ctx) {
     confirmButtons.append(cancel); confirmButtons.append(accept.button);
     confirmCard.append(confirmButtons); confirm.set_child(confirmCard); body.append(confirm);
 
-    const saved = ui.card(['hotspot-card']);
+    const saved = ui.card(['hotspot-card', 'card-stagger-3']);
     saved.append(ui.label('已保存密码', ['section-title']));
     saved.append(paragraph(ui, '仅在本页临时查看，30 秒后自动隐藏。'));
     const savedButtons = ui.box('horizontal', 8);

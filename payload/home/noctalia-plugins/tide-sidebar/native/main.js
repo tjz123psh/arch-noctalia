@@ -5,6 +5,7 @@ import GLib from 'gi://GLib';
 import Layer from 'gi://Gtk4LayerShell?version=1.0';
 import * as UI from './ui.js';
 import {encodePackets} from './transport.mjs';
+import {createHome} from './views/home.js';
 import {createNotes} from './views/notes.js';
 import {createTools} from './views/tools.js';
 import {createHotspot, createWindows} from './views/system.js';
@@ -22,19 +23,19 @@ if (!checkOnly && (!bridgeDir || !instance)) throw new Error('Missing private fr
 
 const channels = ['notes', 'timer', 'stopwatch', 'system', 'calc', 'preferences', 'feedback', 'control', 'config'];
 // Every snapshot channel the service may publish: an unlisted name is never read.
-const pageNames = ['notes', 'tools', 'hotspot', 'windows'];
-const pageAliases = {home: 'notes', calculator: 'tools', timer: 'tools'};
+const pageNames = ['home', 'notes', 'tools', 'hotspot', 'windows'];
+const pageAliases = {calculator: 'tools', timer: 'tools'};
 let state = {
     notes: {ready: false, model: null, error: ''},
     timer: {ready: false, timer: {version: 1, status: 'idle', durationMs: 1500000, remainingMs: 1500000}},
     system: {loading: true, hotspot: {available: false, on: null}, windows: []},
     stopwatch: {ready: false, stopwatch: {version: 1, status: 'idle', elapsedMs: 0, laps: []}, error: ''},
     calc: {expression: '', result: '0', error: '', history: [], requestId: ''},
-    preferences: {tab: 'notes', reducedMotion: false},
+    preferences: {tab: 'home', reducedMotion: false},
     config: {panelWidth: 450, timerPresets: [5, 15, 25, 60], timerDefaultMinutes: 25,
-        confirmWindowClose: true, hotspotDefaultSsid: '', hotspotDefaultBand: 'bg', defaultTab: 'notes'},
+        confirmWindowClose: true, hotspotDefaultSsid: '', hotspotDefaultBand: 'bg', defaultTab: 'home'},
 };
-let sequence = 0, visible = false, currentPage = 'notes', lastControl = -1;
+let sequence = 0, visible = false, currentPage = 'home', lastControl = -1;
 let window, stack, toastRevealer, toastLabel, toastTimer = 0;
 let views = {}, pageHosts = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
 let drawerTimer = 0, drawerAnim = null;
@@ -131,9 +132,9 @@ function applyConfig() {
     window.set_default_size(width, -1);
     if (!visible && !drawerAnim) setDrawer(drawerClosedOffset());
 }
-function normalizePage(page) { return pageNames.includes(page) ? page : (pageAliases[page] || 'notes'); }
+function normalizePage(page) { return pageNames.includes(page) ? page : (pageAliases[page] || 'home'); }
 function updatePage(force = false, changed = []) {
-    const needed = {notes: ['notes'], tools: ['timer', 'calc', 'stopwatch'], hotspot: ['system', 'feedback'], windows: ['system']};
+    const needed = {home: ['notes', 'timer', 'stopwatch', 'system'], notes: ['notes'], tools: ['timer', 'calc', 'stopwatch'], hotspot: ['system', 'feedback'], windows: ['system']};
     const view = views[currentPage];
     if (visible && view && (force || changed.some(name => needed[currentPage].includes(name)))) view.update(state);
 }
@@ -366,10 +367,10 @@ app.connect('startup', () => {
     Layer.set_exclusive_zone(window, 0);
     window.connect('close-request', () => { setVisible(false); return true; });
     window.connect('destroy', () => shutdown());
-    const ctx = {ui: UI, send, toast, copy, clearClipboard: clearClipboardIf, runHelper, writePrivateRequest, close: () => setVisible(false), getState: () => state, isVisible: () => visible, config: () => state.config};
-    // Pages are built on first use: the common notes-only open skips the other
-    // three widget trees (about 20 ms of construction on this machine).
-    viewFactory = {notes: () => createNotes(ctx), tools: () => createTools(ctx), hotspot: () => createHotspot(ctx), windows: () => createWindows(ctx)};
+    const ctx = {ui: UI, send, toast, copy, selectPage: page => selectPage(page), clearClipboard: clearClipboardIf, runHelper, writePrivateRequest, close: () => setVisible(false), getState: () => state, isVisible: () => visible, config: () => state.config};
+    // Pages are built on first use: the common home-only open skips the other
+    // four widget trees (about 25 ms of construction on this machine).
+    viewFactory = {home: () => createHome(ctx), notes: () => createNotes(ctx), tools: () => createTools(ctx), hotspot: () => createHotspot(ctx), windows: () => createWindows(ctx)};
     views = {};
     // Every page gets a permanent host in navigation order. The heavy view is
     // still built on first use; this keeps Stack's child order stable so
@@ -390,7 +391,7 @@ app.connect('startup', () => {
     applyConfig();
     const rail = UI.box(Gtk.Orientation.VERTICAL, 7, ['tab-rail']);
     rail.set_size_request(46, -1);
-    const descriptions = {notes: ['便签', 'note'], tools: ['工具', 'calculator'], hotspot: ['热点', 'wifi'], windows: ['窗口', 'apps']};
+    const descriptions = {home: ['首页', 'home'], notes: ['便签', 'note'], tools: ['工具', 'calculator'], hotspot: ['热点', 'wifi'], windows: ['窗口', 'apps']};
     for (const page of pageNames) {
         const [text, glyph] = descriptions[page];
         const button = UI.classes(new Gtk.Button({tooltip_text: text}), ['nav-button', 'nav-' + page]);

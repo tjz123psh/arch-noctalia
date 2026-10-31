@@ -40,8 +40,9 @@ key = "default_tab"
 type = "select"
 label_key = "settings.default_tab.label"
 description_key = "settings.default_tab.description"
-default = "notes"
+default = "home"
 options = [
+  { value = "home", label_key = "settings.tab.home" },
   { value = "notes", label_key = "settings.tab.notes" },
   { value = "tools", label_key = "settings.tab.tools" },
   { value = "hotspot", label_key = "settings.tab.hotspot" },
