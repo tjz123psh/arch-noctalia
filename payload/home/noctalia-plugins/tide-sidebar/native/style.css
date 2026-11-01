@@ -740,35 +740,7 @@
 .dark-theme .dev-pill:hover { background-color: rgba(217, 180, 74, 0.20); }
 
 /* ---------- dev tools, ambient soundscapes, niri control ---------- */
-.tide-window .tools-expander {
-  margin: 0 14px 0;
-  border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.45);
-  border: 1px solid rgba(120, 103, 28, 0.12);
-  padding: 0 4px;
-  transition: background-color 140ms ease-out, border-color 140ms ease-out;
-}
-.tide-window .tools-expander:hover {
-  background-color: rgba(255, 255, 255, 0.70);
-  border-color: rgba(120, 103, 28, 0.22);
-}
-.tide-window .tools-expander-title {
-  font-size: 11px;
-  font-weight: 500;
-  color: #71674F;
-  letter-spacing: 0.02em;
-}
-.tide-window .tools-expander-body {
-  padding: 8px 4px 6px;
-}
-.tide-window .tools-micro-pane {
-  padding: 10px 12px;
-  border-radius: 10px;
-  background-color: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(120, 103, 28, 0.10);
-  box-shadow: 0 1px 4px rgba(74, 62, 28, 0.04);
-}
-.tide-window .home-dev-card, .tide-window .niri-control-card {
+.tide-window .niri-control-card {
   padding: 12px 14px 10px;
 }
 .tide-window .dev-pill {
@@ -793,62 +765,8 @@
   color: #6D5E1B;
   font-weight: 600;
 }
-.tide-window .sound-status {
-  font-size: 11px;
-  color: #7A7056;
-  font-weight: 500;
-}
-.tide-window .sound-status.status-playing {
-  color: #386A46;
-  font-weight: 600;
-}
-.tide-window .dev-input {
-  min-height: 28px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-family: monospace;
-}
-.tide-window .dev-result-badge {
-  font-family: monospace;
-  font-size: 11px;
-  color: #5C5020;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background-color: rgba(120, 103, 28, 0.07);
-}
-.tide-window .ts-now {
-  font-family: monospace;
-  font-size: 12px;
-  color: #6D5E1B;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 6px;
-  background-color: rgba(120, 103, 28, 0.09);
-}
-.dark-theme .tools-expander {
-  background-color: rgba(255, 255, 255, 0.03);
-  border-color: rgba(217, 180, 74, 0.12);
-}
-.dark-theme .tools-expander:hover {
-  background-color: rgba(217, 180, 74, 0.06);
-  border-color: rgba(217, 180, 74, 0.22);
-}
-.dark-theme .tools-micro-pane {
-  background-color: rgba(20, 18, 14, 0.65);
-  border-color: rgba(217, 180, 74, 0.12);
-}
-.dark-theme .dev-result-badge {
-  background-color: rgba(217, 180, 74, 0.10);
-  color: #FDF4D4;
-}
-.dark-theme .ts-now {
-  background-color: rgba(217, 180, 74, 0.12);
-  color: #F6D06F;
-}
-.dark-theme .sound-status.status-playing {
-  color: #34D399;
-}
+.dark-theme .dev-pill { background-color: rgba(217, 180, 74, 0.10); border-color: rgba(217, 180, 74, 0.20); color: #F5E6B3; }
+.dark-theme .dev-pill:hover { background-color: rgba(217, 180, 74, 0.20); }
 
 /* ---------- launcher & bookmark hub ---------- */
 .tide-window .home-launcher-card {

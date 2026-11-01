@@ -1,7 +1,6 @@
 import Gtk from 'gi://Gtk?version=4.0';
 import GLib from 'gi://GLib';
 import Pango from 'gi://Pango';
-import Gst from 'gi://Gst?version=1.0';
 
 const MAX_DURATION_MS = (99 * 3600 + 59 * 60 + 59) * 1000;
 const HISTORY_LIMIT = 8; // The service keeps the latest eight committed calculations.
@@ -807,185 +806,6 @@ export function createTools(ctx) {
     stopwatchCard.append(stopwatchHistory);
     page.append(stopwatchCard);
 
-    // =========================================================
-    // 4. 极客微工具箱 & 专注声景 (Dev Mini-Tools & Ambient Focus)
-    // =========================================================
-    let gstInited = false;
-    let soundPipeline = null;
-    let currentSoundType = null;
-
-    function ensureGst() {
-        if (!gstInited) {
-            try { Gst.init(null); gstInited = true; } catch (_) {}
-        }
-    }
-
-    function stopSound() {
-        if (soundPipeline) {
-            try { soundPipeline.set_state(Gst.State.NULL); } catch (_) {}
-            soundPipeline = null;
-        }
-        currentSoundType = null;
-        updateSoundButtons();
-    }
-
-    function playSound(type) {
-        if (currentSoundType === type) { stopSound(); return; }
-        stopSound();
-        ensureGst();
-        let desc = '';
-        if (type === 'rain') desc = 'audiotestsrc wave=pink-noise ! audiochebband mode=low-pass cutoff=1200 ! volume volume=0.15 ! autoaudiosink';
-        else if (type === 'ocean') desc = 'audiotestsrc wave=pink-noise ! audiochebband mode=low-pass cutoff=650 ! volume volume=0.18 ! autoaudiosink';
-        else if (type === 'forest') desc = 'audiotestsrc wave=white-noise ! audiochebband mode=low-pass cutoff=1800 ! volume volume=0.08 ! autoaudiosink';
-        else if (type === 'cafe') desc = 'audiotestsrc wave=pink-noise ! audiochebband mode=low-pass cutoff=900 ! volume volume=0.12 ! autoaudiosink';
-        try {
-            soundPipeline = Gst.parse_launch(desc);
-            soundPipeline.set_state(Gst.State.PLAYING);
-            currentSoundType = type;
-            calcWave.pulse(520, 0.7);
-        } catch (_) {
-            currentSoundType = null;
-        }
-        updateSoundButtons();
-    }
-
-    const devCard = ui.box(Gtk.Orientation.VERTICAL, 10, ['tools-expander-body']);
-
-    // 1. 独立微卡片: 专注声景
-    const soundPane = ui.box(Gtk.Orientation.VERTICAL, 8, ['tools-micro-pane']);
-    const soundHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const soundTitle = ui.label('自然专注声景', ['section-title']);
-    soundTitle.set_hexpand(true);
-    const soundStatus = ui.label('○ 已静音', ['caption', 'sound-status']);
-    soundHeader.append(soundTitle);
-    soundHeader.append(soundStatus);
-    soundPane.append(soundHeader);
-
-    const soundButtonsRow = ui.box(Gtk.Orientation.HORIZONTAL, 6);
-    soundButtonsRow.set_homogeneous(true);
-    const soundDefs = [
-        ['rain', '🌧️ 雨声'],
-        ['ocean', '🌊 潮汐'],
-        ['forest', '🌲 夏夜'],
-        ['cafe', '☕ 咖啡'],
-    ];
-    const soundBtnMap = {};
-    for (const [stype, slabel] of soundDefs) {
-        const sbtn = ui.button(slabel, null, () => playSound(stype), ['dev-pill', 'sound-btn']);
-        soundButtonsRow.append(sbtn);
-        soundBtnMap[stype] = sbtn;
-    }
-    soundPane.append(soundButtonsRow);
-    devCard.append(soundPane);
-
-    function updateSoundButtons() {
-        for (const [stype, sbtn] of Object.entries(soundBtnMap)) {
-            if (stype === currentSoundType) sbtn.add_css_class('selected');
-            else sbtn.remove_css_class('selected');
-        }
-        const nameMap = { rain: '雨声', ocean: '潮汐', forest: '夏夜', cafe: '咖啡' };
-        setLabel(soundStatus, currentSoundType ? `● 正在播放 · ${nameMap[currentSoundType] || ''}` : '○ 已静音');
-        setClass(soundStatus, 'status-playing', !!currentSoundType);
-    }
-
-    // 2. 独立微卡片: 极客微工具
-    const toolsPane = ui.box(Gtk.Orientation.VERTICAL, 8, ['tools-micro-pane']);
-    const devHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const devTitle = ui.label('极客微工具', ['section-title']);
-    devTitle.set_hexpand(true);
-    devHeader.append(devTitle);
-    toolsPane.append(devHeader);
-
-    // 时间戳转换 (紧凑一体化)
-    const tsBox = ui.box(Gtk.Orientation.VERTICAL, 4);
-    const tsTop = ui.box(Gtk.Orientation.HORIZONTAL, 6);
-    const tsLabel = ui.label('Unix 时间戳', ['field-label']);
-    tsLabel.set_hexpand(true);
-    const tsNowLabel = ui.label(String(Math.floor(Date.now() / 1000)), ['caption', 'ts-now']);
-    const tsCopyBtn = ui.iconButton('copy', () => {
-        const val = String(Math.floor(Date.now() / 1000));
-        ctx.copy(val);
-        ctx.toast('时间戳已复制');
-    }, '复制当前秒级时间戳');
-    tsTop.append(tsLabel); tsTop.append(tsNowLabel); tsTop.append(tsCopyBtn);
-    tsBox.append(tsTop);
-
-    const tsRow = ui.box(Gtk.Orientation.HORIZONTAL, 6);
-    const tsEntry = new Gtk.Entry({placeholder_text: '粘贴时间戳转本地时间'});
-    tsEntry.add_css_class('dev-input');
-    tsEntry.set_hexpand(true);
-    const tsResult = ui.label('—', ['caption', 'dev-result-badge']);
-    tsResult.set_visible(false);
-    tsEntry.connect('changed', () => {
-        const raw = tsEntry.get_text().trim();
-        if (!raw) { tsResult.set_visible(false); return; }
-        let ms = parseInt(raw, 10);
-        if (!Number.isFinite(ms) || ms <= 0) {
-            tsResult.set_label('无效时间戳');
-            tsResult.set_visible(true);
-            return;
-        }
-        if (ms < 10000000000) ms *= 1000;
-        const d = new Date(ms);
-        tsResult.set_label(d.toLocaleString('zh-CN', {hour12: false}));
-        tsResult.set_visible(true);
-    });
-    tsRow.append(tsEntry);
-    tsRow.append(tsResult);
-    tsBox.append(tsRow);
-    toolsPane.append(tsBox);
-
-    // Base64 快速编解码 (紧凑一体化)
-    const b64Box = ui.box(Gtk.Orientation.VERTICAL, 4);
-    const b64Top = ui.box(Gtk.Orientation.HORIZONTAL, 6);
-    const b64Label = ui.label('Base64 快速转换', ['field-label']);
-    b64Label.set_hexpand(true);
-    const b64CopyBtn = ui.iconButton('copy', () => {
-        const val = b64Result.get_label();
-        if (val && b64Result.get_visible()) { ctx.copy(val); ctx.toast('Base64 结果已复制'); }
-    }, '复制转换结果');
-    b64Top.append(b64Label); b64Top.append(b64CopyBtn);
-    b64Box.append(b64Top);
-
-    const b64Row = ui.box(Gtk.Orientation.HORIZONTAL, 6);
-    const b64Entry = new Gtk.Entry({placeholder_text: '输入文本编码 / 输入 Base64 解码'});
-    b64Entry.add_css_class('dev-input');
-    b64Entry.set_hexpand(true);
-    const b64Result = ui.label('—', ['caption', 'dev-result-badge']);
-    b64Result.set_visible(false);
-    b64Entry.connect('changed', () => {
-        const val = b64Entry.get_text().trim();
-        if (!val) { b64Result.set_visible(false); return; }
-        try {
-            if (/^[A-Za-z0-9+/=]+$/.test(val) && val.length % 4 === 0 && val.length >= 4) {
-                const dec = GLib.base64_decode(val);
-                const str = new TextDecoder().decode(dec);
-                if (str && !/[\x00-\x08]/.test(str)) {
-                    b64Result.set_label('解码: ' + str);
-                    b64Result.set_visible(true);
-                    return;
-                }
-            }
-        } catch (_) {}
-        const enc = GLib.base64_encode(new TextEncoder().encode(val));
-        b64Result.set_label('编码: ' + enc);
-        b64Result.set_visible(true);
-    });
-    b64Row.append(b64Entry);
-    b64Row.append(b64Result);
-    b64Box.append(b64Row);
-    toolsPane.append(b64Box);
-
-    devCard.append(toolsPane);
-
-    const devExpander = new Gtk.Expander({expanded: false});
-    devExpander.add_css_class('tools-expander');
-    devExpander.add_css_class('scroll-gutter');
-    const devHeading = ui.label('扩展工具箱与自然声景 · Tools & Sounds', ['caption', 'tools-expander-title']);
-    devExpander.set_label_widget(devHeading);
-    devExpander.set_child(devCard);
-    page.append(devExpander);
-
     function stopwatchElapsed() {
         return stopwatchModel.elapsedMs + (stopwatchModel.status === 'running'
             ? Math.max(0, Date.now() - stopwatchModel.startedAtMs) : 0);
@@ -1101,7 +921,6 @@ export function createTools(ctx) {
             if (previewQueued) schedulePreview();
         },
         onHide() {
-            stopSound();
             toolsVisible = false;
             if (pendingTimer) { GLib.source_remove(pendingTimer); pendingTimer = 0; waitingForResult = false; }
             cancelStopwatchRefresh();
