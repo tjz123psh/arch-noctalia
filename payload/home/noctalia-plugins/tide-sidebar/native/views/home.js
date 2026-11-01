@@ -31,11 +31,6 @@ const DEFAULT_HUB_CONFIG = {
     ],
     bookmarks: [
         {
-            name: '雨课堂',
-            url: 'https://www.yuketang.cn/web',
-            icon: '🎓'
-        },
-        {
             name: 'GitHub',
             url: 'https://github.com',
             icon: '🐙'
@@ -44,11 +39,6 @@ const DEFAULT_HUB_CONFIG = {
             name: '哔哩哔哩',
             url: 'https://www.bilibili.com',
             icon: '📺'
-        },
-        {
-            name: 'DevDocs',
-            url: 'https://devdocs.io',
-            icon: '📚'
         }
     ]
 };
