@@ -4,6 +4,11 @@ import GLib from 'gi://GLib';
 
 const icons = {
     home: 'go-home-symbolic',
+    theme: 'display-brightness-symbolic',
+    moon: 'weather-clear-night-symbolic',
+    sun: 'weather-clear-symbolic',
+    terminal: 'utilities-terminal-symbolic',
+    music: 'audio-x-generic-symbolic',
     note: 'document-edit-symbolic', calculator: 'accessories-calculator-symbolic',
     hourglass: 'alarm-symbolic', timer: 'alarm-symbolic', wifi: 'network-wireless-symbolic',
     apps: 'view-grid-symbolic', windows: 'focus-windows-symbolic', tools: 'applications-utilities-symbolic',

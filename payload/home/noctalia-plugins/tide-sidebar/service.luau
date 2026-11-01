@@ -17,7 +17,7 @@ local timerDirty, timerRetryAt, pendingFinish = false, 0, false
 local stopwatch, stopwatchRevision, stopwatchSlot = Stopwatch.new(), 0, nil
 local stopwatchError, stopwatchBlocked = "", false
 local stopwatchDirty, stopwatchRetryAt = false, 0
-local preferences = { tab = "home", reducedMotion = false }
+local preferences = { tab = "home", darkTheme = false, reducedMotion = false }
 local calculation={expression="",result="0",error="",history={},requestId=""}
 local lastAnswer=0
 local function normalizePage(page)
@@ -403,6 +403,7 @@ command=function(c)
   elseif action=="preferences" then
     local tabs={home=true,notes=true,tools=true,calculator=true,timer=true,hotspot=true,windows=true}
     if tabs[c.tab] then preferences.tab=normalizePage(c.tab) end
+    if type(c.darkTheme)=="boolean" then preferences.darkTheme=c.darkTheme end
     if type(c.reducedMotion)=="boolean" then preferences.reducedMotion=c.reducedMotion end
     -- Only a session that is allowed to remember the tab writes it back.
     if ready and config.rememberLastTab then writeJson("preferences.json",preferences) end
@@ -451,6 +452,7 @@ local accepted=noctalia.runAsync({"chmod","-R","go-rwx","--",base},function(resu
   if loaded then
     local tabs={home=true,notes=true,tools=true,calculator=true,timer=true,hotspot=true,windows=true}
     if tabs[loaded.tab] then preferences.tab=normalizePage(loaded.tab) end
+    preferences.darkTheme=loaded.darkTheme==true
     preferences.reducedMotion=loaded.reducedMotion==true
   end
   if not config.rememberLastTab then preferences.tab=config.defaultTab end

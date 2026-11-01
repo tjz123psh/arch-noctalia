@@ -431,6 +431,49 @@ export function createWindows(ctx) {
     widget.append(header.row);
     const search = ui.classes(new Gtk.SearchEntry({hexpand: true, placeholder_text: '搜索应用或窗口'}), ['field-muted', 'scroll-gutter']);
     widget.append(search);
+
+    // Niri 桌面中控卡片
+    const niriCard = ui.card(['card', 'niri-control-card', 'card-stagger-1']);
+    niriCard.set_spacing(8);
+
+    const niriHeader = ui.box(Gtk.Orientation.HORIZONTAL, 6);
+    const niriTitle = ui.label('工作区与平铺调度', ['section-title']);
+    niriTitle.set_hexpand(true);
+    niriHeader.append(niriTitle);
+    niriCard.append(niriHeader);
+
+    // 6 个工作区微型胶囊
+    const wsRow = ui.box(Gtk.Orientation.HORIZONTAL, 5);
+    wsRow.set_homogeneous(true);
+    const wsButtons = [];
+    for (let ws = 1; ws <= 6; ws++) {
+        const wsBtn = ui.button(String(ws), null, () => {
+            try { GLib.spawn_command_line_async(`niri msg action focus-workspace ${ws}`); } catch (_) {}
+        }, ['dev-pill', 'ws-pill']);
+        wsBtn.set_tooltip_text(`切换到工作区 ${ws}`);
+        wsRow.append(wsBtn);
+        wsButtons.push(wsBtn);
+    }
+    niriCard.append(wsRow);
+
+    // 快速调度栏
+    const actionRow = ui.box(Gtk.Orientation.HORIZONTAL, 6);
+    actionRow.set_homogeneous(true);
+    const btnFullscreen = ui.button('全屏切换', null, () => {
+        try { GLib.spawn_command_line_async('niri msg action fullscreen-window'); } catch (_) {}
+    }, ['dev-pill']);
+    btnFullscreen.set_tooltip_text('切换当前窗口全屏 (niri fullscreen)');
+
+    const btnCenter = ui.button('窗口居中', null, () => {
+        try { GLib.spawn_command_line_async('niri msg action center-column'); } catch (_) {}
+    }, ['dev-pill']);
+    btnCenter.set_tooltip_text('将当前列居中显示 (niri center-column)');
+
+    actionRow.append(btnFullscreen);
+    actionRow.append(btnCenter);
+    niriCard.append(actionRow);
+
+    widget.append(niriCard);
     const errorLabel = paragraph(ui, '', ['warning', 'scroll-gutter']); show(errorLabel, false); widget.append(errorLabel);
 
     const confirmation = ui.classes(new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: ui.DURATION.reveal}), ['scroll-gutter']);
@@ -568,6 +611,13 @@ export function createWindows(ctx) {
         sensitive(header.refresh, shown);
         sensitive(close, shown && !!pendingId && !error);
         confirmation.set_transition_duration(ui.motionMs(state?.preferences?.reducedMotion === true, 'reveal'));
+        // Highlight active workspace
+        const activeWin = data.find(w => w.focused);
+        const activeWs = activeWin ? parseInt(activeWin.workspaceId, 10) : 0;
+        wsButtons.forEach((btn, idx) => {
+            if (idx + 1 === activeWs) btn.add_css_class('selected');
+            else btn.remove_css_class('selected');
+        });
         applyFilter();
         if (staggerPending && shown && staggerRows()) staggerPending = false;
     }

@@ -122,6 +122,7 @@ export function createNotes(ctx) {
             h1: new Gtk.TextTag({name: 'md_h1', weight: Pango.Weight.BOLD, size: 16 * Pango.SCALE}),
             h2: new Gtk.TextTag({name: 'md_h2', weight: Pango.Weight.BOLD, size: 14 * Pango.SCALE}),
             todoBox: new Gtk.TextTag({name: 'md_todo_box', weight: Pango.Weight.BOLD, foreground: '#6D5E1B'}),
+            todoDoneBox: new Gtk.TextTag({name: 'md_todo_done_box', weight: Pango.Weight.BOLD, foreground: '#476D50'}),
             todoDone: new Gtk.TextTag({name: 'md_todo_done', strikethrough: true, foreground: '#8A7E64'}),
         };
         for (const tag of Object.values(tags)) table.add(tag);
@@ -147,7 +148,7 @@ export function createNotes(ctx) {
                 buffer.apply_tag(tags.h2, buffer.get_iter_at_offset(offset), buffer.get_iter_at_offset(offset + lineLen));
             } else if (line.includes('[x]') || line.includes('[X]')) {
                 const boxIdx = line.indexOf('[x]') >= 0 ? line.indexOf('[x]') : line.indexOf('[X]');
-                buffer.apply_tag(tags.todoBox, buffer.get_iter_at_offset(offset + boxIdx), buffer.get_iter_at_offset(offset + boxIdx + 3));
+                buffer.apply_tag(tags.todoDoneBox, buffer.get_iter_at_offset(offset + boxIdx), buffer.get_iter_at_offset(offset + boxIdx + 3));
                 buffer.apply_tag(tags.todoDone, buffer.get_iter_at_offset(offset + boxIdx + 3), buffer.get_iter_at_offset(offset + lineLen));
             } else if (line.includes('[ ]')) {
                 const boxIdx = line.indexOf('[ ]');
@@ -278,9 +279,11 @@ export function createNotes(ctx) {
     noticeBox.append(noticeText); noticeRevealer.set_child(noticeBox); page.append(noticeRevealer);
 
     const card = U.card(['notes-card', 'card-stagger-1']); card.set_spacing(0); card.set_vexpand(true); page.append(card);
-    const toolbar = U.box(Gtk.Orientation.HORIZONTAL, 0, ['notes-toolbar']);
-    const title = U.label('', ['note-title']); title.set_hexpand(true); title.set_max_width_chars(23);
-    toolbar.append(title); card.append(toolbar);
+    const toolbar = U.box(Gtk.Orientation.HORIZONTAL, 6, ['notes-toolbar']);
+    const title = U.label('', ['note-title']); title.set_hexpand(true); title.set_max_width_chars(21);
+    const todoPill = U.button('待办', 'check', () => { toggleCurrentTodo(); editor.grab_focus(); }, ['notes-toolbar-pill']);
+    todoPill.set_tooltip_text('插入待办复选框或切换完成状态 (Ctrl+D)');
+    toolbar.append(title); toolbar.append(todoPill); card.append(toolbar);
     // Keep the paper uncluttered: the reference's bottom pencil opens native actions.
     const editPopover = new Gtk.Popover({has_arrow: false, autohide: true});
     const actions = U.box(Gtk.Orientation.VERTICAL, 3, ['note-actions']);
@@ -322,16 +325,14 @@ export function createNotes(ctx) {
     const footerLayer = new Gtk.Overlay({hexpand: true}); footerLayer.add_css_class('note-footer-layer');
     const footerWave = U.waveFooter('#F6E2A4', 54, 22); footerWave.add_css_class('note-footer-wave');
     footerLayer.set_child(footerWave);
-    const footer = U.box(Gtk.Orientation.HORIZONTAL, 8, ['note-footer']);
+    const footer = U.box(Gtk.Orientation.HORIZONTAL, 10, ['note-footer']);
     footer.set_halign(Gtk.Align.FILL); footer.set_valign(Gtk.Align.END);
     const count = U.label('0 字', ['caption']);
-    const addTodoBtn = U.button('待办', 'check', () => { toggleCurrentTodo(); editor.grab_focus(); }, ['note-todo-btn']);
-    addTodoBtn.set_tooltip_text('插入待办项或切换打勾 (Ctrl+D)');
     const status = U.label('正在连接…', ['status-label']); status.set_hexpand(true); status.set_xalign(1);
     const actionsButton = new Gtk.MenuButton({tooltip_text: '便签操作'});
     actionsButton.add_css_class('note-actions-button'); actionsButton.set_icon_name('document-edit-symbolic');
     actionsButton.set_always_show_arrow(false); actionsButton.set_popover(editPopover);
-    footer.append(count); footer.append(addTodoBtn); footer.append(status); footer.append(actionsButton);
+    footer.append(count); footer.append(status); footer.append(actionsButton);
     footerLayer.add_overlay(footer); footerLayer.set_measure_overlay(footer, false); card.append(footerLayer);
     const undoRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: U.DURATION.reveal});
     const undoRow = U.box(Gtk.Orientation.HORIZONTAL, 7, ['undo-row']);

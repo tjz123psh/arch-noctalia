@@ -138,6 +138,13 @@ function updatePage(force = false, changed = []) {
     const view = views[currentPage];
     if (visible && view && (force || changed.some(name => needed[currentPage].includes(name)))) view.update(state);
 }
+function toggleTheme() {
+    const next = !window.has_css_class('dark-theme');
+    if (next) window.add_css_class('dark-theme');
+    else window.remove_css_class('dark-theme');
+    if (state.preferences) state.preferences.darkTheme = next;
+    send('preferences', {tab: currentPage, darkTheme: next, reducedMotion: reducedMotion()});
+}
 function selectPage(name, save = true) {
     name = normalizePage(name);
     if (name === currentPage && stack?.get_visible_child_name() === name) { updatePage(true); return; }
@@ -283,7 +290,13 @@ function readChannel(name) {
             // Focusing a window used to hide the sidebar. The user asked for the panel to
             // stay open so several windows can be picked in a row; hiding is manual now
             // (chevron, Super+Shift+W) or by clicking outside.
-        } else state[name] = packet.data;
+        } else {
+            state[name] = packet.data;
+            if (name === 'preferences' && window) {
+                if (packet.data?.darkTheme === true) window.add_css_class('dark-theme');
+                else window.remove_css_class('dark-theme');
+            }
+        }
         return true;
     } catch (error) {
         printerr('sidebar: failed to apply ' + name + ': ' + error.message);
@@ -401,6 +414,7 @@ app.connect('startup', () => {
         navigation[page] = button; rail.append(button);
     }
     rail.append(new Gtk.Box({vexpand: true}));
+    rail.append(UI.iconButton('theme', toggleTheme, '切换日间暖纸 / 黑曜夜金主题', ['theme-button']));
     rail.append(UI.iconButton('chevron-left', () => setVisible(false), '收起 · Super+Shift+W', ['close-button']));
     const right = UI.box(Gtk.Orientation.VERTICAL, 6, ['content-column']);
     right.set_hexpand(true); right.set_vexpand(true);
