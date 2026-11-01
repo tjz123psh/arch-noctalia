@@ -5,6 +5,63 @@ import Pango from 'gi://Pango';
 const HISTORY_POINTS = 24;
 const WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
+const CONFIG_DIR = GLib.build_filenamev([GLib.get_user_config_dir(), 'noctalia']);
+const WORKSPACES_FILE = GLib.build_filenamev([CONFIG_DIR, 'workspaces.json']);
+
+const DEFAULT_WORKSPACES = [
+    {
+        name: 'arch-noctalia',
+        path: '~/Projects/arch-noctalia',
+        desc: '系统与侧边栏工程',
+        icon: '🌟'
+    },
+    {
+        name: '桌面配置',
+        path: '~/.config',
+        desc: '~/.config 桌面配置目录',
+        icon: '⚙️'
+    },
+    {
+        name: '插件开发',
+        path: '~/noctalia-plugins',
+        desc: 'Noctalia 插件源码',
+        icon: '🧩'
+    }
+];
+
+function resolvePath(p) {
+    if (!p) return GLib.get_home_dir();
+    if (p.startsWith('~/')) {
+        return GLib.build_filenamev([GLib.get_home_dir(), p.slice(2)]);
+    }
+    return p;
+}
+
+function ensureWorkspaceConfig() {
+    try {
+        if (!GLib.file_test(WORKSPACES_FILE, GLib.FileTest.EXISTS)) {
+            GLib.mkdir_with_parents(CONFIG_DIR, 0o755);
+            GLib.file_set_contents(WORKSPACES_FILE, JSON.stringify(DEFAULT_WORKSPACES, null, 2));
+        }
+    } catch (_) {}
+}
+
+function loadWorkspaces() {
+    try {
+        ensureWorkspaceConfig();
+        const [ok, bytes] = GLib.file_get_contents(WORKSPACES_FILE);
+        if (!ok) return DEFAULT_WORKSPACES;
+        const text = new TextDecoder().decode(bytes);
+        const parsed = JSON.parse(text);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+        }
+        return DEFAULT_WORKSPACES;
+    } catch (_) {
+        return DEFAULT_WORKSPACES;
+    }
+}
+
 function readProcStat() {
     try {
         const [ok, bytes] = GLib.file_get_contents('/proc/stat');
@@ -583,98 +640,70 @@ export function createHome(ctx) {
     page.append(taskCard);
 
     // =========================================================
-    // 6. 极速工作台与书签快速通道 (Projects & Web Launcher)
+    // 6. 项目工作区 (Workspaces Hub - 动态配置接口驱动)
     // =========================================================
     const launcherCard = ui.card(['home-launcher-card', 'card-stagger-3']);
-    launcherCard.set_spacing(12);
+    launcherCard.set_spacing(10);
 
     const launcherHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const launcherTitle = ui.label('极速工作台', ['section-title']);
+    const launcherTitle = ui.label('项目工作区', ['section-title']);
     launcherTitle.set_hexpand(true);
-    const launcherBadge = ui.label('QUICK HUB', ['caption', 'home-tag-badge']);
+
+    const editConfigBtn = ui.iconButton('document-edit', () => {
+        ensureWorkspaceConfig();
+        GLib.spawn_command_line_async(`code "${WORKSPACES_FILE}" || xdg-open "${WORKSPACES_FILE}"`);
+        if (ctx.toast) ctx.toast('已打开工作区配置: workspaces.json');
+    }, '编辑工作区配置接口 (JSON)');
+    editConfigBtn.add_css_class('launcher-edit-btn');
+
     launcherHeader.append(launcherTitle);
-    launcherHeader.append(launcherBadge);
+    launcherHeader.append(editConfigBtn);
     launcherCard.append(launcherHeader);
 
-    // --- 分组 1: 常用工作区工程 ---
-    const workspaceGroup = ui.box(Gtk.Orientation.VERTICAL, 6);
-    const wsHeader = ui.label('常用工程 · Workspaces', ['caption']);
-    wsHeader.set_xalign(0);
-    workspaceGroup.append(wsHeader);
+    const wsSubHeader = ui.label('项目列表 · Projects', ['caption']);
+    wsSubHeader.set_xalign(0);
+    launcherCard.append(wsSubHeader);
 
-    const projects = [
-        {
-            name: '🌟 arch-noctalia',
-            path: '/home/pang/Projects/arch-noctalia',
-            desc: '系统与侧边栏核心工程',
-        },
-        {
-            name: '⚙️ 系统配置',
-            path: '/home/pang/.config',
-            desc: '~/.config 桌面配置目录',
-        },
-        {
-            name: '🧩 插件开发',
-            path: '/home/pang/noctalia-plugins',
-            desc: 'Noctalia 插件源码',
-        },
-    ];
+    const projectListBox = ui.box(Gtk.Orientation.VERTICAL, 6);
+    launcherCard.append(projectListBox);
 
-    projects.forEach(p => {
-        const row = ui.box(Gtk.Orientation.HORIZONTAL, 6, ['launcher-item-row']);
-        const info = ui.box(Gtk.Orientation.VERTICAL, 1);
-        info.set_hexpand(true);
-        const nameLabel = ui.label(p.name, ['launcher-item-name']);
-        nameLabel.set_xalign(0);
-        const descLabel = ui.label(p.desc, ['caption', 'launcher-item-desc']);
-        descLabel.set_xalign(0);
-        info.append(nameLabel);
-        info.append(descLabel);
-        row.append(info);
+    function renderWorkspaces() {
+        ui.clear(projectListBox);
+        const projects = loadWorkspaces();
+        projects.forEach(p => {
+            const row = ui.box(Gtk.Orientation.HORIZONTAL, 6, ['launcher-item-row']);
+            const info = ui.box(Gtk.Orientation.VERTICAL, 1);
+            info.set_hexpand(true);
+            const titleText = (p.icon ? p.icon + ' ' : '') + (p.name || '未命名工程');
+            const nameLabel = ui.label(titleText, ['launcher-item-name']);
+            nameLabel.set_xalign(0);
+            const descLabel = ui.label(p.desc || p.path || '', ['caption', 'launcher-item-desc']);
+            descLabel.set_xalign(0);
+            info.append(nameLabel);
+            info.append(descLabel);
+            row.append(info);
 
-        const termBtn = ui.button('终端', null, () => {
-            GLib.spawn_command_line_async(`kitty --directory "${p.path}"`);
-            if (ctx.toast) ctx.toast(`已在 Kitty 终端打开: ${p.name}`);
-        }, ['dev-pill', 'launcher-action-pill']);
-        termBtn.set_tooltip_text(`在 Kitty 终端打开: ${p.path}`);
+            const resolved = resolvePath(p.path);
 
-        const codeBtn = ui.button('Code', null, () => {
-            GLib.spawn_command_line_async(`code "${p.path}"`);
-            if (ctx.toast) ctx.toast(`已在 VS Code 打开: ${p.name}`);
-        }, ['dev-pill', 'launcher-action-pill']);
-        codeBtn.set_tooltip_text(`在 VS Code 打开: ${p.path}`);
+            const termBtn = ui.button('终端', null, () => {
+                GLib.spawn_command_line_async(`kitty --directory "${resolved}"`);
+                if (ctx.toast) ctx.toast(`已在终端打开: ${p.name}`);
+            }, ['dev-pill', 'launcher-action-pill']);
+            termBtn.set_tooltip_text(`在 Kitty 终端打开: ${resolved}`);
 
-        row.append(termBtn);
-        row.append(codeBtn);
-        workspaceGroup.append(row);
-    });
-    launcherCard.append(workspaceGroup);
+            const codeBtn = ui.button('Code', null, () => {
+                GLib.spawn_command_line_async(`code "${resolved}"`);
+                if (ctx.toast) ctx.toast(`已在 VS Code 打开: ${p.name}`);
+            }, ['dev-pill', 'launcher-action-pill']);
+            codeBtn.set_tooltip_text(`在 VS Code 打开: ${resolved}`);
 
-    // --- 分组 2: 高频网络通道 ---
-    const webGroup = ui.box(Gtk.Orientation.VERTICAL, 6);
-    const webHeader = ui.label('快速通道 · Bookmarks', ['caption']);
-    webHeader.set_xalign(0);
-    webGroup.append(webHeader);
+            row.append(termBtn);
+            row.append(codeBtn);
+            projectListBox.append(row);
+        });
+    }
 
-    const bookmarks = [
-        { label: '🎓 雨课堂', url: 'https://www.yuketang.cn/web' },
-        { label: '🐙 GitHub', url: 'https://github.com' },
-        { label: '📺 哔哩哔哩', url: 'https://www.bilibili.com' },
-        { label: '📚 DevDocs', url: 'https://devdocs.io' },
-    ];
-
-    const bookmarkGrid = new Gtk.Grid({column_homogeneous: true, row_homogeneous: true, column_spacing: 6, row_spacing: 6});
-    bookmarks.forEach((bm, i) => {
-        const btn = ui.button(bm.label, null, () => {
-            GLib.spawn_command_line_async(`xdg-open "${bm.url}"`);
-            if (ctx.toast) ctx.toast(`正在打开: ${bm.label}`);
-        }, ['dev-pill', 'bookmark-pill']);
-        btn.set_tooltip_text(bm.url);
-        bookmarkGrid.attach(btn, i % 2, Math.floor(i / 2), 1, 1);
-    });
-    webGroup.append(bookmarkGrid);
-    launcherCard.append(webGroup);
-
+    renderWorkspaces();
     page.append(launcherCard);
 
     // =========================================================
@@ -853,6 +882,7 @@ export function createHome(ctx) {
         update(_state) {},
         onShow() {
             shown = true;
+            renderWorkspaces();
             startLoops();
         },
         onHide() {
