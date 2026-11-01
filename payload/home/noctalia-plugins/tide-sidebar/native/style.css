@@ -780,3 +780,53 @@
   color: #6D5E1B;
   font-weight: 600;
 }
+
+/* ---------- launcher & bookmark hub ---------- */
+.tide-window .home-launcher-card {
+  padding: 13px 16px 14px;
+}
+.tide-window .launcher-item-row {
+  padding: 5px 8px;
+  border-radius: 9px;
+  background-color: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(120, 103, 28, 0.08);
+  transition: background-color 120ms ease-out, border-color 120ms ease-out;
+}
+.tide-window .launcher-item-row:hover {
+  background-color: rgba(255, 255, 255, 0.70);
+  border-color: rgba(120, 103, 28, 0.20);
+}
+.tide-window .launcher-item-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #38311F;
+}
+.tide-window .launcher-item-desc {
+  font-size: 10px;
+  color: #8C826C;
+}
+.tide-window .launcher-action-pill {
+  min-height: 24px;
+  padding: 2px 9px;
+  font-size: 11px;
+}
+.tide-window .bookmark-pill {
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.dark-theme .launcher-item-row {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: rgba(217, 180, 74, 0.10);
+}
+.dark-theme .launcher-item-row:hover {
+  background-color: rgba(217, 180, 74, 0.08);
+  border-color: rgba(217, 180, 74, 0.22);
+}
+.dark-theme .launcher-item-name {
+  color: #FDF4D4;
+}
+.dark-theme .launcher-item-desc {
+  color: #A89C82;
+}

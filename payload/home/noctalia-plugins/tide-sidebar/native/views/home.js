@@ -583,6 +583,101 @@ export function createHome(ctx) {
     page.append(taskCard);
 
     // =========================================================
+    // 6. 极速工作台与书签快速通道 (Projects & Web Launcher)
+    // =========================================================
+    const launcherCard = ui.card(['home-launcher-card', 'card-stagger-3']);
+    launcherCard.set_spacing(12);
+
+    const launcherHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
+    const launcherTitle = ui.label('极速工作台', ['section-title']);
+    launcherTitle.set_hexpand(true);
+    const launcherBadge = ui.label('QUICK HUB', ['caption', 'home-tag-badge']);
+    launcherHeader.append(launcherTitle);
+    launcherHeader.append(launcherBadge);
+    launcherCard.append(launcherHeader);
+
+    // --- 分组 1: 常用工作区工程 ---
+    const workspaceGroup = ui.box(Gtk.Orientation.VERTICAL, 6);
+    const wsHeader = ui.label('常用工程 · Workspaces', ['caption']);
+    wsHeader.set_xalign(0);
+    workspaceGroup.append(wsHeader);
+
+    const projects = [
+        {
+            name: '🌟 arch-noctalia',
+            path: '/home/pang/Projects/arch-noctalia',
+            desc: '系统与侧边栏核心工程',
+        },
+        {
+            name: '⚙️ 系统配置',
+            path: '/home/pang/.config',
+            desc: '~/.config 桌面配置目录',
+        },
+        {
+            name: '🧩 插件开发',
+            path: '/home/pang/noctalia-plugins',
+            desc: 'Noctalia 插件源码',
+        },
+    ];
+
+    projects.forEach(p => {
+        const row = ui.box(Gtk.Orientation.HORIZONTAL, 6, ['launcher-item-row']);
+        const info = ui.box(Gtk.Orientation.VERTICAL, 1);
+        info.set_hexpand(true);
+        const nameLabel = ui.label(p.name, ['launcher-item-name']);
+        nameLabel.set_xalign(0);
+        const descLabel = ui.label(p.desc, ['caption', 'launcher-item-desc']);
+        descLabel.set_xalign(0);
+        info.append(nameLabel);
+        info.append(descLabel);
+        row.append(info);
+
+        const termBtn = ui.button('终端', null, () => {
+            GLib.spawn_command_line_async(`kitty --directory "${p.path}"`);
+            if (ctx.toast) ctx.toast(`已在 Kitty 终端打开: ${p.name}`);
+        }, ['dev-pill', 'launcher-action-pill']);
+        termBtn.set_tooltip_text(`在 Kitty 终端打开: ${p.path}`);
+
+        const codeBtn = ui.button('Code', null, () => {
+            GLib.spawn_command_line_async(`code "${p.path}"`);
+            if (ctx.toast) ctx.toast(`已在 VS Code 打开: ${p.name}`);
+        }, ['dev-pill', 'launcher-action-pill']);
+        codeBtn.set_tooltip_text(`在 VS Code 打开: ${p.path}`);
+
+        row.append(termBtn);
+        row.append(codeBtn);
+        workspaceGroup.append(row);
+    });
+    launcherCard.append(workspaceGroup);
+
+    // --- 分组 2: 高频网络通道 ---
+    const webGroup = ui.box(Gtk.Orientation.VERTICAL, 6);
+    const webHeader = ui.label('快速通道 · Bookmarks', ['caption']);
+    webHeader.set_xalign(0);
+    webGroup.append(webHeader);
+
+    const bookmarks = [
+        { label: '🎓 雨课堂', url: 'https://www.yuketang.cn/web' },
+        { label: '🐙 GitHub', url: 'https://github.com' },
+        { label: '📺 哔哩哔哩', url: 'https://www.bilibili.com' },
+        { label: '📚 DevDocs', url: 'https://devdocs.io' },
+    ];
+
+    const bookmarkGrid = new Gtk.Grid({column_homogeneous: true, row_homogeneous: true, column_spacing: 6, row_spacing: 6});
+    bookmarks.forEach((bm, i) => {
+        const btn = ui.button(bm.label, null, () => {
+            GLib.spawn_command_line_async(`xdg-open "${bm.url}"`);
+            if (ctx.toast) ctx.toast(`正在打开: ${bm.label}`);
+        }, ['dev-pill', 'bookmark-pill']);
+        btn.set_tooltip_text(bm.url);
+        bookmarkGrid.attach(btn, i % 2, Math.floor(i / 2), 1, 1);
+    });
+    webGroup.append(bookmarkGrid);
+    launcherCard.append(webGroup);
+
+    page.append(launcherCard);
+
+    // =========================================================
     // 动态采样与时钟循环
     // =========================================================
     function updateClock() {
