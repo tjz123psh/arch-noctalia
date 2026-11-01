@@ -8,26 +8,50 @@ const WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四
 const CONFIG_DIR = GLib.build_filenamev([GLib.get_user_config_dir(), 'noctalia']);
 const WORKSPACES_FILE = GLib.build_filenamev([CONFIG_DIR, 'workspaces.json']);
 
-const DEFAULT_WORKSPACES = [
-    {
-        name: 'arch-noctalia',
-        path: '~/Projects/arch-noctalia',
-        desc: '系统与侧边栏工程',
-        icon: '🌟'
-    },
-    {
-        name: '桌面配置',
-        path: '~/.config',
-        desc: '~/.config 桌面配置目录',
-        icon: '⚙️'
-    },
-    {
-        name: '插件开发',
-        path: '~/noctalia-plugins',
-        desc: 'Noctalia 插件源码',
-        icon: '🧩'
-    }
-];
+const DEFAULT_HUB_CONFIG = {
+    workspaces: [
+        {
+            name: 'arch-noctalia',
+            path: '~/Projects/arch-noctalia',
+            desc: '系统与侧边栏工程',
+            icon: '🌟'
+        },
+        {
+            name: '桌面配置',
+            path: '~/.config',
+            desc: '~/.config 桌面配置目录',
+            icon: '⚙️'
+        },
+        {
+            name: '插件开发',
+            path: '~/noctalia-plugins',
+            desc: 'Noctalia 插件源码',
+            icon: '🧩'
+        }
+    ],
+    bookmarks: [
+        {
+            name: '雨课堂',
+            url: 'https://www.yuketang.cn/web',
+            icon: '🎓'
+        },
+        {
+            name: 'GitHub',
+            url: 'https://github.com',
+            icon: '🐙'
+        },
+        {
+            name: '哔哩哔哩',
+            url: 'https://www.bilibili.com',
+            icon: '📺'
+        },
+        {
+            name: 'DevDocs',
+            url: 'https://devdocs.io',
+            icon: '📚'
+        }
+    ]
+};
 
 function resolvePath(p) {
     if (!p) return GLib.get_home_dir();
@@ -41,24 +65,33 @@ function ensureWorkspaceConfig() {
     try {
         if (!GLib.file_test(WORKSPACES_FILE, GLib.FileTest.EXISTS)) {
             GLib.mkdir_with_parents(CONFIG_DIR, 0o755);
-            GLib.file_set_contents(WORKSPACES_FILE, JSON.stringify(DEFAULT_WORKSPACES, null, 2));
+            GLib.file_set_contents(WORKSPACES_FILE, JSON.stringify(DEFAULT_HUB_CONFIG, null, 2));
         }
     } catch (_) {}
 }
 
-function loadWorkspaces() {
+function loadHubData() {
     try {
         ensureWorkspaceConfig();
         const [ok, bytes] = GLib.file_get_contents(WORKSPACES_FILE);
-        if (!ok) return DEFAULT_WORKSPACES;
+        if (!ok) return DEFAULT_HUB_CONFIG;
         const text = new TextDecoder().decode(bytes);
         const parsed = JSON.parse(text);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
+        if (Array.isArray(parsed)) {
+            return {
+                workspaces: parsed,
+                bookmarks: DEFAULT_HUB_CONFIG.bookmarks
+            };
         }
-        return DEFAULT_WORKSPACES;
+        if (parsed && typeof parsed === 'object') {
+            return {
+                workspaces: Array.isArray(parsed.workspaces) ? parsed.workspaces : DEFAULT_HUB_CONFIG.workspaces,
+                bookmarks: Array.isArray(parsed.bookmarks) ? parsed.bookmarks : DEFAULT_HUB_CONFIG.bookmarks
+            };
+        }
+        return DEFAULT_HUB_CONFIG;
     } catch (_) {
-        return DEFAULT_WORKSPACES;
+        return DEFAULT_HUB_CONFIG;
     }
 }
 
@@ -640,26 +673,27 @@ export function createHome(ctx) {
     page.append(taskCard);
 
     // =========================================================
-    // 6. 项目工作区 (Workspaces Hub - 动态配置接口驱动)
+    // 6. 极速工作台与网址书签 (Workspaces & Bookmarks - 动态接口驱动)
     // =========================================================
     const launcherCard = ui.card(['home-launcher-card', 'card-stagger-3']);
     launcherCard.set_spacing(10);
 
     const launcherHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const launcherTitle = ui.label('项目工作区', ['section-title']);
+    const launcherTitle = ui.label('工作台与书签', ['section-title']);
     launcherTitle.set_hexpand(true);
 
     const editConfigBtn = ui.iconButton('document-edit', () => {
         ensureWorkspaceConfig();
         GLib.spawn_command_line_async(`code "${WORKSPACES_FILE}" || xdg-open "${WORKSPACES_FILE}"`);
-        if (ctx.toast) ctx.toast('已打开工作区配置: workspaces.json');
-    }, '编辑工作区配置接口 (JSON)');
+        if (ctx.toast) ctx.toast('已打开配置接口: workspaces.json');
+    }, '编辑工程与书签列表 (JSON 接口)');
     editConfigBtn.add_css_class('launcher-edit-btn');
 
     launcherHeader.append(launcherTitle);
     launcherHeader.append(editConfigBtn);
     launcherCard.append(launcherHeader);
 
+    // --- 分组 1: 项目列表 ---
     const wsSubHeader = ui.label('项目列表 · Projects', ['caption']);
     wsSubHeader.set_xalign(0);
     launcherCard.append(wsSubHeader);
@@ -667,9 +701,26 @@ export function createHome(ctx) {
     const projectListBox = ui.box(Gtk.Orientation.VERTICAL, 6);
     launcherCard.append(projectListBox);
 
-    function renderWorkspaces() {
+    // --- 分组 2: 常用网址 ---
+    const bookmarkSubHeader = ui.label('常用网址 · Bookmarks', ['caption']);
+    bookmarkSubHeader.set_xalign(0);
+    launcherCard.append(bookmarkSubHeader);
+
+    const bookmarkGrid = new Gtk.Grid({column_homogeneous: true, row_homogeneous: true, column_spacing: 6, row_spacing: 6});
+    launcherCard.append(bookmarkGrid);
+
+    function renderHub() {
         ui.clear(projectListBox);
-        const projects = loadWorkspaces();
+        for (let child = bookmarkGrid.get_first_child(); child;) {
+            const next = child.get_next_sibling();
+            bookmarkGrid.remove(child);
+            child = next;
+        }
+
+        const data = loadHubData();
+        const projects = data.workspaces || [];
+        const bookmarks = data.bookmarks || [];
+
         projects.forEach(p => {
             const row = ui.box(Gtk.Orientation.HORIZONTAL, 6, ['launcher-item-row']);
             const info = ui.box(Gtk.Orientation.VERTICAL, 1);
@@ -701,9 +752,19 @@ export function createHome(ctx) {
             row.append(codeBtn);
             projectListBox.append(row);
         });
+
+        bookmarks.forEach((bm, i) => {
+            const labelText = (bm.icon ? bm.icon + ' ' : '') + (bm.name || bm.label || '网址');
+            const btn = ui.button(labelText, null, () => {
+                GLib.spawn_command_line_async(`xdg-open "${bm.url}"`);
+                if (ctx.toast) ctx.toast(`正在打开: ${labelText}`);
+            }, ['dev-pill', 'bookmark-pill']);
+            btn.set_tooltip_text(bm.url || '');
+            bookmarkGrid.attach(btn, i % 2, Math.floor(i / 2), 1, 1);
+        });
     }
 
-    renderWorkspaces();
+    renderHub();
     page.append(launcherCard);
 
     // =========================================================
@@ -882,7 +943,7 @@ export function createHome(ctx) {
         update(_state) {},
         onShow() {
             shown = true;
-            renderWorkspaces();
+            renderHub();
             startLoops();
         },
         onHide() {
