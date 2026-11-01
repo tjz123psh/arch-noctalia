@@ -810,9 +810,6 @@ export function createTools(ctx) {
     // =========================================================
     // 4. 极客微工具箱 & 专注声景 (Dev Mini-Tools & Ambient Focus)
     // =========================================================
-    const devCard = ui.card(['card', 'home-dev-card', 'card-stagger-3']);
-    devCard.set_spacing(10);
-
     let gstInited = false;
     let soundPipeline = null;
     let currentSoundType = null;
@@ -852,14 +849,17 @@ export function createTools(ctx) {
         updateSoundButtons();
     }
 
-    const soundBox = ui.box(Gtk.Orientation.VERTICAL, 6);
+    const devCard = ui.box(Gtk.Orientation.VERTICAL, 10, ['tools-expander-body']);
+
+    // 1. 独立微卡片: 专注声景
+    const soundPane = ui.box(Gtk.Orientation.VERTICAL, 8, ['tools-micro-pane']);
     const soundHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const soundTitle = ui.label('专注声景 (Ambient Sound)', ['section-title']);
+    const soundTitle = ui.label('自然专注声景', ['section-title']);
     soundTitle.set_hexpand(true);
-    const soundStatus = ui.label('已暂停', ['caption', 'sound-status']);
+    const soundStatus = ui.label('○ 已静音', ['caption', 'sound-status']);
     soundHeader.append(soundTitle);
     soundHeader.append(soundStatus);
-    soundBox.append(soundHeader);
+    soundPane.append(soundHeader);
 
     const soundButtonsRow = ui.box(Gtk.Orientation.HORIZONTAL, 6);
     soundButtonsRow.set_homogeneous(true);
@@ -875,24 +875,28 @@ export function createTools(ctx) {
         soundButtonsRow.append(sbtn);
         soundBtnMap[stype] = sbtn;
     }
-    soundBox.append(soundButtonsRow);
-    devCard.append(soundBox);
+    soundPane.append(soundButtonsRow);
+    devCard.append(soundPane);
 
     function updateSoundButtons() {
         for (const [stype, sbtn] of Object.entries(soundBtnMap)) {
             if (stype === currentSoundType) sbtn.add_css_class('selected');
             else sbtn.remove_css_class('selected');
         }
-        setLabel(soundStatus, currentSoundType ? '● 正在播放' : '已静音');
+        const nameMap = { rain: '雨声', ocean: '潮汐', forest: '夏夜', cafe: '咖啡' };
+        setLabel(soundStatus, currentSoundType ? `● 正在播放 · ${nameMap[currentSoundType] || ''}` : '○ 已静音');
+        setClass(soundStatus, 'status-playing', !!currentSoundType);
     }
 
+    // 2. 独立微卡片: 极客微工具
+    const toolsPane = ui.box(Gtk.Orientation.VERTICAL, 8, ['tools-micro-pane']);
     const devHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const devTitle = ui.label('极客工具箱 (Dev Toolbox)', ['section-title']);
+    const devTitle = ui.label('极客微工具', ['section-title']);
     devTitle.set_hexpand(true);
     devHeader.append(devTitle);
-    devCard.append(devHeader);
+    toolsPane.append(devHeader);
 
-    // 时间戳转换
+    // 时间戳转换 (紧凑一体化)
     const tsBox = ui.box(Gtk.Orientation.VERTICAL, 4);
     const tsTop = ui.box(Gtk.Orientation.HORIZONTAL, 6);
     const tsLabel = ui.label('Unix 时间戳', ['field-label']);
@@ -906,59 +910,78 @@ export function createTools(ctx) {
     tsTop.append(tsLabel); tsTop.append(tsNowLabel); tsTop.append(tsCopyBtn);
     tsBox.append(tsTop);
 
-    const tsEntry = new Gtk.Entry({placeholder_text: '输入时间戳 (秒/毫秒)，回车转换'});
+    const tsRow = ui.box(Gtk.Orientation.HORIZONTAL, 6);
+    const tsEntry = new Gtk.Entry({placeholder_text: '粘贴时间戳转本地时间'});
     tsEntry.add_css_class('dev-input');
-    const tsResult = ui.label('实时转换结果在此显示', ['caption', 'dev-result-label']);
+    tsEntry.set_hexpand(true);
+    const tsResult = ui.label('—', ['caption', 'dev-result-badge']);
+    tsResult.set_visible(false);
     tsEntry.connect('changed', () => {
         const raw = tsEntry.get_text().trim();
-        if (!raw) { tsResult.set_label('实时转换结果在此显示'); return; }
+        if (!raw) { tsResult.set_visible(false); return; }
         let ms = parseInt(raw, 10);
-        if (!Number.isFinite(ms) || ms <= 0) { tsResult.set_label('请输入有效数字时间戳'); return; }
+        if (!Number.isFinite(ms) || ms <= 0) {
+            tsResult.set_label('无效时间戳');
+            tsResult.set_visible(true);
+            return;
+        }
         if (ms < 10000000000) ms *= 1000;
         const d = new Date(ms);
         tsResult.set_label(d.toLocaleString('zh-CN', {hour12: false}));
+        tsResult.set_visible(true);
     });
-    tsBox.append(tsEntry);
-    tsBox.append(tsResult);
-    devCard.append(tsBox);
+    tsRow.append(tsEntry);
+    tsRow.append(tsResult);
+    tsBox.append(tsRow);
+    toolsPane.append(tsBox);
 
-    // Base64 快速编解码
+    // Base64 快速编解码 (紧凑一体化)
     const b64Box = ui.box(Gtk.Orientation.VERTICAL, 4);
     const b64Top = ui.box(Gtk.Orientation.HORIZONTAL, 6);
     const b64Label = ui.label('Base64 快速转换', ['field-label']);
     b64Label.set_hexpand(true);
     const b64CopyBtn = ui.iconButton('copy', () => {
         const val = b64Result.get_label();
-        if (val && val !== '转换结果在此显示') { ctx.copy(val); ctx.toast('Base64 结果已复制'); }
+        if (val && b64Result.get_visible()) { ctx.copy(val); ctx.toast('Base64 结果已复制'); }
     }, '复制转换结果');
     b64Top.append(b64Label); b64Top.append(b64CopyBtn);
     b64Box.append(b64Top);
 
-    const b64Entry = new Gtk.Entry({placeholder_text: '输入文本自动编码 / 输入 Base64 自动解码'});
+    const b64Row = ui.box(Gtk.Orientation.HORIZONTAL, 6);
+    const b64Entry = new Gtk.Entry({placeholder_text: '输入文本编码 / 输入 Base64 解码'});
     b64Entry.add_css_class('dev-input');
-    const b64Result = ui.label('转换结果在此显示', ['caption', 'dev-result-label']);
+    b64Entry.set_hexpand(true);
+    const b64Result = ui.label('—', ['caption', 'dev-result-badge']);
+    b64Result.set_visible(false);
     b64Entry.connect('changed', () => {
         const val = b64Entry.get_text().trim();
-        if (!val) { b64Result.set_label('转换结果在此显示'); return; }
+        if (!val) { b64Result.set_visible(false); return; }
         try {
-            // Attempt decode if looks like valid Base64
             if (/^[A-Za-z0-9+/=]+$/.test(val) && val.length % 4 === 0 && val.length >= 4) {
                 const dec = GLib.base64_decode(val);
                 const str = new TextDecoder().decode(dec);
-                if (str && !/[\x00-\x08]/.test(str)) { b64Result.set_label('解码: ' + str); return; }
+                if (str && !/[\x00-\x08]/.test(str)) {
+                    b64Result.set_label('解码: ' + str);
+                    b64Result.set_visible(true);
+                    return;
+                }
             }
         } catch (_) {}
         const enc = GLib.base64_encode(new TextEncoder().encode(val));
         b64Result.set_label('编码: ' + enc);
+        b64Result.set_visible(true);
     });
-    b64Box.append(b64Entry);
-    b64Box.append(b64Result);
-    devCard.append(b64Box);
+    b64Row.append(b64Entry);
+    b64Row.append(b64Result);
+    b64Box.append(b64Row);
+    toolsPane.append(b64Box);
+
+    devCard.append(toolsPane);
 
     const devExpander = new Gtk.Expander({expanded: false});
     devExpander.add_css_class('tools-expander');
     devExpander.add_css_class('scroll-gutter');
-    const devHeading = ui.label('极客工具 & 专注声景', ['caption']);
+    const devHeading = ui.label('扩展工具箱与自然声景 · Tools & Sounds', ['caption', 'tools-expander-title']);
     devExpander.set_label_widget(devHeading);
     devExpander.set_child(devCard);
     page.append(devExpander);
