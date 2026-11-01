@@ -123,7 +123,7 @@ function makeWave(color, height, cornerRadius) {
     };
     let slowPhase = 0;
     let breatheTick = 0;
-    function startBreathe() {
+    area.startBreathe = () => {
         if (breatheTick || !Gtk.Settings.get_default().gtk_enable_animations) return;
         breatheTick = area.add_tick_callback(() => {
             if (!area.get_mapped()) {
@@ -137,24 +137,23 @@ function makeWave(color, height, cornerRadius) {
             }
             return GLib.SOURCE_CONTINUE;
         });
-    }
-    function stopBreathe() {
+    };
+    area.stopBreathe = () => {
         if (breatheTick) {
             area.remove_tick_callback(breatheTick);
             breatheTick = 0;
         }
-    }
+    };
     area.connect('map', () => {
         if (pendingPulse) {
             pendingPulse = false;
             area.pulse(pendingDuration, pendingIntensity);
         }
-        startBreathe();
     });
     area.connect('unmap', () => {
         if (tick) area.remove_tick_callback(tick);
         tick = 0; phase = 0; pendingPulse = false;
-        stopBreathe();
+        area.stopBreathe();
     });
     return area;
 }

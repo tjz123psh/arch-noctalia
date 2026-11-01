@@ -918,10 +918,12 @@ export function createTools(ctx) {
             if (!shownOnce && expression.get_root()) { focusExpression(); shownOnce = true; }
             renderTimer();
             calcWave.pulse(520, 0.9);
+            calcWave.startBreathe?.();
             if (previewQueued) schedulePreview();
         },
         onHide() {
             toolsVisible = false;
+            calcWave.stopBreathe?.();
             if (pendingTimer) { GLib.source_remove(pendingTimer); pendingTimer = 0; waitingForResult = false; }
             cancelStopwatchRefresh();
             // A pending preview can resume on showing; this never pauses or

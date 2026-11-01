@@ -261,6 +261,7 @@ export function createHome(ctx) {
     let sparkAnim = 0;
     let tideWavePhase1 = 0;
     let tideWavePhase2 = 1.2;
+    let taskSampleCounter = 0;
 
     const page = ui.box(Gtk.Orientation.VERTICAL, 14, ['home-page', 'scroll-gutter']);
     page.set_hexpand(true);
@@ -875,20 +876,23 @@ export function createHome(ctx) {
         txLabel.set_label(`↑ ${formatSpeed(txSpeed)}`);
         netFlowGraph.queue_draw();
 
-        // 5. Top Tasks
-        const tasks = readTopTasks();
-        for (let i = 0; i < 3; i++) {
-            const row = taskRows[i];
-            const t = tasks[i];
-            if (t) {
-                row.nameLabel.set_label(t.name);
-                row.cpuLabel.set_label(t.cpu.toFixed(1) + '%');
-                const fraction = Math.max(0.04, Math.min(1.0, t.cpu / 100));
-                row.meterFill.set_size_request(Math.round(fraction * 90), 6);
-            } else {
-                row.nameLabel.set_label('—');
-                row.cpuLabel.set_label('0.0%');
-                row.meterFill.set_size_request(4, 6);
+        // 5. Top Tasks (节流采样，大幅降低进程派生开销)
+        taskSampleCounter++;
+        if (taskSampleCounter % 2 === 1) {
+            const tasks = readTopTasks();
+            for (let i = 0; i < 3; i++) {
+                const row = taskRows[i];
+                const t = tasks[i];
+                if (t) {
+                    row.nameLabel.set_label(t.name);
+                    row.cpuLabel.set_label(t.cpu.toFixed(1) + '%');
+                    const fraction = Math.max(0.04, Math.min(1.0, t.cpu / 100));
+                    row.meterFill.set_size_request(Math.round(fraction * 90), 6);
+                } else {
+                    row.nameLabel.set_label('—');
+                    row.cpuLabel.set_label('0.0%');
+                    row.meterFill.set_size_request(4, 6);
+                }
             }
         }
     }
@@ -905,7 +909,7 @@ export function createHome(ctx) {
             });
         }
         if (!hardwareTimer) {
-            hardwareTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1200, () => {
+            hardwareTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1600, () => {
                 if (!shown) { hardwareTimer = 0; return GLib.SOURCE_REMOVE; }
                 sampleHardware();
                 return GLib.SOURCE_CONTINUE;

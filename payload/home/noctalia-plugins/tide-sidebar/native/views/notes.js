@@ -573,9 +573,16 @@ export function createNotes(ctx) {
     return {
         widget: page,
         update,
-        onShow() { shown = true; if (ready && current()) editor.grab_focus(); footerWave.pulse(520, 0.9); },
+        onShow() {
+            shown = true;
+            if (ready && current()) editor.grab_focus();
+            footerWave.pulse(520, 0.9);
+            footerWave.startBreathe?.();
+        },
         onHide() {
-            shown = false; flushAll();
+            shown = false;
+            footerWave.stopBreathe?.();
+            flushAll();
             if (pendingAddSource) { GLib.source_remove(pendingAddSource); pendingAddSource = 0; }
             pendingAdd = null;
             cancelRename(); editPopover.popdown(); listPopover.popdown();

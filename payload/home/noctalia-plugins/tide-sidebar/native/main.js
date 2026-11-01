@@ -232,6 +232,7 @@ function setVisible(wanted, page = null) {
     if (wanted === visible) return;
     visible = wanted;
     if (visible) {
+        window.remove_css_class('sidebar-hidden');
         Layer.set_keyboard_mode(window, Layer.KeyboardMode.ON_DEMAND);
         window.set_can_target(true);
         if (!window.get_mapped()) window.present();
@@ -244,13 +245,17 @@ function setVisible(wanted, page = null) {
     } else {
         // The surface stays mapped off-screen; without this the hidden editor
         // keeps keyboard focus and its input is written to disk.
+        window.add_css_class('sidebar-hidden');
         window.set_focus(null);
         Layer.set_keyboard_mode(window, Layer.KeyboardMode.NONE);
         views[currentPage]?.onHide?.();
         send('flush');
         send('visibility', {open: false, tab: currentPage});
         animateDrawer(Layer.get_margin(window, Layer.Edge.LEFT), drawerClosedOffset(), reducedMotion() ? 0 : DRAWER_CLOSE_MS, easeInOutCubic, () => {
-            if (!visible) window.set_can_target(false);
+            if (!visible) {
+                window.set_can_target(false);
+                try { imports.system.gc(); } catch (_) { try { globalThis.gc?.(); } catch (_) {} }
+            }
         });
     }
 }
@@ -363,6 +368,7 @@ app.connect('startup', () => {
     app.hold();
     window = new Gtk.ApplicationWindow({application: app, title: '侧边栏', decorated: false, default_width: 450});
     window.add_css_class('tide-window');
+    window.add_css_class('sidebar-hidden');
     if (!Layer.is_supported()) throw new Error('Wayland layer-shell unavailable; check the local loader command');
     Layer.init_for_window(window);
     if (!Layer.is_layer_window(window)) throw new Error('Unable to create a Wayland layer surface');
