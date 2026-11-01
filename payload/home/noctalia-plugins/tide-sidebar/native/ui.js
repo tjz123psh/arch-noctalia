@@ -121,15 +121,40 @@ function makeWave(color, height, cornerRadius) {
             return GLib.SOURCE_CONTINUE;
         });
     };
+    let slowPhase = 0;
+    let breatheTick = 0;
+    function startBreathe() {
+        if (breatheTick || !Gtk.Settings.get_default().gtk_enable_animations) return;
+        breatheTick = area.add_tick_callback(() => {
+            if (!area.get_mapped()) {
+                breatheTick = 0;
+                return GLib.SOURCE_REMOVE;
+            }
+            slowPhase = (slowPhase + 0.016) % (Math.PI * 2);
+            if (!tick) {
+                phase = slowPhase;
+                area.queue_draw();
+            }
+            return GLib.SOURCE_CONTINUE;
+        });
+    }
+    function stopBreathe() {
+        if (breatheTick) {
+            area.remove_tick_callback(breatheTick);
+            breatheTick = 0;
+        }
+    }
     area.connect('map', () => {
         if (pendingPulse) {
             pendingPulse = false;
             area.pulse(pendingDuration, pendingIntensity);
         }
+        startBreathe();
     });
     area.connect('unmap', () => {
         if (tick) area.remove_tick_callback(tick);
         tick = 0; phase = 0; pendingPulse = false;
+        stopBreathe();
     });
     return area;
 }
