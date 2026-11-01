@@ -121,9 +121,6 @@ export function createNotes(ctx) {
         const tags = {
             h1: new Gtk.TextTag({name: 'md_h1', weight: Pango.Weight.BOLD, size: 16 * Pango.SCALE}),
             h2: new Gtk.TextTag({name: 'md_h2', weight: Pango.Weight.BOLD, size: 14 * Pango.SCALE}),
-            todoBox: new Gtk.TextTag({name: 'md_todo_box', weight: Pango.Weight.BOLD, foreground: '#B2821A'}),
-            todoDoneBox: new Gtk.TextTag({name: 'md_todo_done_box', weight: Pango.Weight.BOLD, foreground: '#34D399'}),
-            todoDone: new Gtk.TextTag({name: 'md_todo_done', strikethrough: true, foreground: '#8A7E64'}),
         };
         for (const tag of Object.values(tags)) table.add(tag);
         const buffer = new Gtk.TextBuffer({tag_table: table});
@@ -146,13 +143,6 @@ export function createNotes(ctx) {
                 buffer.apply_tag(tags.h1, buffer.get_iter_at_offset(offset), buffer.get_iter_at_offset(offset + lineLen));
             } else if (/^##\s+/.test(line)) {
                 buffer.apply_tag(tags.h2, buffer.get_iter_at_offset(offset), buffer.get_iter_at_offset(offset + lineLen));
-            } else if (line.includes('[x]') || line.includes('[X]')) {
-                const boxIdx = line.indexOf('[x]') >= 0 ? line.indexOf('[x]') : line.indexOf('[X]');
-                buffer.apply_tag(tags.todoDoneBox, buffer.get_iter_at_offset(offset + boxIdx), buffer.get_iter_at_offset(offset + boxIdx + 3));
-                buffer.apply_tag(tags.todoDone, buffer.get_iter_at_offset(offset + boxIdx + 3), buffer.get_iter_at_offset(offset + lineLen));
-            } else if (line.includes('[ ]')) {
-                const boxIdx = line.indexOf('[ ]');
-                buffer.apply_tag(tags.todoBox, buffer.get_iter_at_offset(offset + boxIdx), buffer.get_iter_at_offset(offset + boxIdx + 3));
             }
             offset += lineLen + 1;
         }
@@ -281,23 +271,19 @@ export function createNotes(ctx) {
     const card = U.card(['notes-card', 'card-stagger-1']); card.set_spacing(0); card.set_vexpand(true); page.append(card);
     const toolbar = U.box(Gtk.Orientation.HORIZONTAL, 6, ['notes-toolbar']);
     const title = U.label('', ['note-title']); title.set_hexpand(true); title.set_max_width_chars(21);
-    const todoPill = U.button('待办', 'check', () => { toggleCurrentTodo(); editor.grab_focus(); }, ['notes-toolbar-pill']);
-    todoPill.set_tooltip_text('插入待办复选框或切换完成状态 (Ctrl+D)');
-    toolbar.append(title); toolbar.append(todoPill); card.append(toolbar);
+    toolbar.append(title); card.append(toolbar);
     // Keep the paper uncluttered: the reference's bottom pencil opens native actions.
     const editPopover = new Gtk.Popover({has_arrow: false, autohide: true});
     const actions = U.box(Gtk.Orientation.VERTICAL, 3, ['note-actions']);
     const pinButton = U.button('置顶便签', 'check', () => { editPopover.popdown(); togglePin(); }, ['note-menu-action']);
     pinButton.set_tooltip_text('在列表顶部优先显示');
-    const todoButton = U.button('待办打勾 (Ctrl+D)', 'check', () => { editPopover.popdown(); toggleCurrentTodo(); }, ['note-menu-action']);
-    todoButton.set_tooltip_text('切换当前行待办完成状态');
     const renameButton = U.button('重命名', 'pencil', () => { editPopover.popdown(); beginRename(); }, ['note-menu-action']);
     renameButton.set_tooltip_text('重命名便签');
     const copyButton = U.button('复制正文', 'copy', () => { editPopover.popdown(); copyBody(); }, ['note-menu-action']);
     copyButton.set_tooltip_text('复制正文');
     const deleteButton = U.button('移到回收站', 'trash', () => { editPopover.popdown(); deleteNote(); }, ['note-menu-action', 'danger-button']);
     deleteButton.set_tooltip_text('移到回收站');
-    actions.append(pinButton); actions.append(todoButton); actions.append(renameButton); actions.append(copyButton); actions.append(deleteButton); editPopover.set_child(actions);
+    actions.append(pinButton); actions.append(renameButton); actions.append(copyButton); actions.append(deleteButton); editPopover.set_child(actions);
 
     const renameRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: U.DURATION.reveal});
     const renameRow = U.box(Gtk.Orientation.HORIZONTAL, 5, ['rename-row']);
@@ -351,111 +337,13 @@ export function createNotes(ctx) {
         send('note-rename', {id: note.id, title: newTitle});
     }
 
-    function toggleLineTodoAt(lineIdx) {
-        const note = current();
-        if (!note || !ready) return false;
-        const buffer = editor.get_buffer();
-        const lineStart = buffer.get_iter_at_line(lineIdx);
-        const lineEnd = lineStart.copy();
-        if (!lineEnd.ends_line()) lineEnd.forward_to_line_end();
-        const lineText = buffer.get_text(lineStart, lineEnd, true);
-
-        if (lineText.includes('[ ]')) {
-            const newText = lineText.replace('[ ]', '[x]');
-            buffer.begin_user_action();
-            buffer.delete(lineStart, lineEnd);
-            buffer.insert(lineStart, newText, -1);
-            buffer.end_user_action();
-            footerWave.pulse(360, 0.5);
-            return true;
-        } else if (lineText.includes('[x]') || lineText.includes('[X]')) {
-            const newText = lineText.replace(/\[[xX]\]/, '[ ]');
-            buffer.begin_user_action();
-            buffer.delete(lineStart, lineEnd);
-            buffer.insert(lineStart, newText, -1);
-            buffer.end_user_action();
-            footerWave.pulse(320, 0.4);
-            return true;
-        }
-        return false;
-    }
-
-    function toggleCurrentTodo() {
-        const note = current();
-        if (!note || !ready) return;
-        const buffer = editor.get_buffer();
-        const mark = buffer.get_insert();
-        const iter = buffer.get_iter_at_mark(mark);
-        const lineIdx = iter.get_line();
-        if (!toggleLineTodoAt(lineIdx)) {
-            const lineStart = buffer.get_iter_at_line(lineIdx);
-            buffer.begin_user_action();
-            buffer.insert(lineStart, '- [ ] ', -1);
-            buffer.end_user_action();
-            footerWave.pulse(320, 0.4);
-            if (ctx.toast) ctx.toast('已插入待办方框，点击方框即可打勾');
-        } else {
-            if (ctx.toast) ctx.toast('待办状态已切换');
-        }
-    }
-
-    function handleSmartTodoEnter() {
-        const buffer = editor.get_buffer();
-        const mark = buffer.get_insert();
-        const iter = buffer.get_iter_at_mark(mark);
-        const lineIdx = iter.get_line();
-        const lineStart = buffer.get_iter_at_line(lineIdx);
-        const lineEnd = lineStart.copy();
-        if (!lineEnd.ends_line()) lineEnd.forward_to_line_end();
-        const lineText = buffer.get_text(lineStart, lineEnd, true);
-
-        const match = lineText.match(/^(\s*-\s*\[[ xX]\]\s*)/);
-        if (match) {
-            const prefix = match[1];
-            if (lineText.trim() === prefix.trim()) {
-                buffer.begin_user_action();
-                buffer.delete(lineStart, lineEnd);
-                buffer.end_user_action();
-                return true;
-            }
-            buffer.begin_user_action();
-            buffer.insert_at_cursor('\n- [ ] ');
-            buffer.end_user_action();
-            return true;
-        }
-        return false;
-    }
-
     const keys = new Gtk.EventControllerKey();
     keys.connect('key-pressed', (_controller, keyval, _keycode, modifiers) => {
         if ((modifiers & Gdk.ModifierType.CONTROL_MASK) && (keyval === Gdk.KEY_s || keyval === Gdk.KEY_S)) {
             flushAll(); return true;
         }
-        if ((modifiers & Gdk.ModifierType.CONTROL_MASK) && (keyval === Gdk.KEY_d || keyval === Gdk.KEY_D)) {
-            toggleCurrentTodo(); return true;
-        }
-        if (!(modifiers & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.ALT_MASK))
-            && (keyval === Gdk.KEY_Return || keyval === Gdk.KEY_KP_Enter)) {
-            if (handleSmartTodoEnter()) return true;
-        }
         return false;
     });
-    const editorClick = new Gtk.GestureClick();
-    editorClick.connect('pressed', (_gesture, _n, x, y) => {
-        try {
-            const [bx, by] = editor.window_to_buffer_coords(Gtk.TextWindowType.TEXT, x, y);
-            const [ok, iter] = editor.get_iter_at_location(bx, by);
-            if (!ok || !iter) return;
-            const lineIdx = iter.get_line();
-            const offset = iter.get_line_offset();
-            if (offset <= 10) {
-                if (toggleLineTodoAt(lineIdx)) {
-                    if (ctx.toast) ctx.toast('已切换待办状态');
-                }
-            }
-        } catch (_) {}
-    });
-    editor.add_controller(editorClick);
     editor.add_controller(keys);
     const renameKeys = new Gtk.EventControllerKey();
     renameKeys.connect('key-pressed', (_controller, keyval) => {
