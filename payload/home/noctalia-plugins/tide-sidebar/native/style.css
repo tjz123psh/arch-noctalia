@@ -304,7 +304,14 @@
 
 /* ---------- tools: calculator ---------- */
 .tide-window .tools-page { padding: 0; }
-.tide-window .calc-display-pane { padding: 13px 16px 4px 18px; }
+.tide-window .calc-display-pane {
+  padding: 10px 16px 4px 18px;
+  min-height: 98px;
+}
+.tide-window .calc-display-pane > .caption {
+  min-height: 16px;
+  font-size: 11px;
+}
 .tide-window .calc-expression {
   background-color: transparent; background-image: none;
   border: none; border-radius: 0; box-shadow: none;
@@ -334,16 +341,16 @@
 .tide-window .calc-keypad-pane { padding: 10px 12px 14px; }
 .tide-window .key-button {
   font-size: 20px; font-weight: 500; color: #3B3320;
-  min-height: 31px; border-radius: 10px;
-  transition: background-color 100ms ease-out, box-shadow 100ms ease-out, color 100ms ease-out;
+  min-height: 32px; border-radius: 10px;
+  transition: background-color 80ms ease-out, box-shadow 80ms ease-out;
 }
 .tide-window .key-button:hover {
-  background-color: rgba(120, 103, 28, 0.10);
-  box-shadow: 0 1px 2px rgba(74, 62, 28, 0.06);
+  background-color: rgba(120, 103, 28, 0.12);
+  box-shadow: 0 1px 3px rgba(74, 62, 28, 0.08);
 }
 .tide-window .key-button:active {
-  background-color: rgba(120, 103, 28, 0.20);
-  box-shadow: inset 0 1px 2px rgba(60, 48, 16, 0.18);
+  background-color: rgba(120, 103, 28, 0.22);
+  box-shadow: inset 0 2px 4px rgba(60, 48, 16, 0.20);
 }
 .tide-window .key-memory, .tide-window .ans-button, .tide-window .small-key { font-size: 13px; font-weight: 500; color: #5C533B; }
 .tide-window .operator-column {

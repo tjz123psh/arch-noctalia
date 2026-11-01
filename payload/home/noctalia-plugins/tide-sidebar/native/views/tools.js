@@ -111,6 +111,8 @@ export function createTools(ctx) {
     let shownOnce = false;
     let historySignature = '';
     let pendingTimer = 0;
+    let justCalculated = false;
+    const OPERATOR_TOKENS = new Set(['+', '−', '×', '÷', '^', '%']);
 
     function cancelPreview() {
         if (previewSource) GLib.source_remove(previewSource);
@@ -167,6 +169,7 @@ export function createTools(ctx) {
         if (waitingForResult && currentRequest?.commit && currentRequest.expression === expression.get_text()) return;
         cancelPreview();
         previewQueued = false;
+        justCalculated = true;
         sendRequest(newRequest(true));
         calcWave.pulse();
     }
@@ -185,14 +188,40 @@ export function createTools(ctx) {
         if (expression.get_root()) expression.grab_focus_without_selecting();
     }
     function insertToken(token) {
+        if (!token) return;
+        const isOp = OPERATOR_TOKENS.has(token);
         const [selected, start, end] = expression.get_selection_bounds();
-        let position = selected ? start : expression.get_position();
-        if (selected) expression.delete_text(start, end);
+
+        if (justCalculated && !selected) {
+            justCalculated = false;
+            if (isOp && copyValue && copyValue !== '—') {
+                expression.set_text(copyValue);
+                expression.set_position(copyValue.length);
+            } else if (!isOp && token !== '(') {
+                expression.set_text('');
+            }
+        }
+
+        if (isOp) {
+            const pos = selected ? start : expression.get_position();
+            if (!selected && pos > 0) {
+                const prevChar = expression.get_text().charAt(pos - 1);
+                if (OPERATOR_TOKENS.has(prevChar)) {
+                    expression.delete_text(pos - 1, pos);
+                    expression.set_position(pos - 1);
+                }
+            }
+        }
+
+        const [hasSel, selStart, selEnd] = expression.get_selection_bounds();
+        let position = hasSel ? selStart : expression.get_position();
+        if (hasSel) expression.delete_text(selStart, selEnd);
         position = expression.insert_text(token, -1, position);
         expression.set_position(position);
         focusExpression();
     }
     function eraseCharacter() {
+        justCalculated = false;
         const [selected, start, end] = expression.get_selection_bounds();
         const position = expression.get_position();
         if (selected) {
@@ -230,6 +259,7 @@ export function createTools(ctx) {
             if (text === '=') evaluate();
             else if (text === '⌫') eraseCharacter();
             else if (text === 'C') {
+                justCalculated = false;
                 expression.set_text('');
                 focusExpression();
             } else insertToken(token);
