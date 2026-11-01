@@ -96,7 +96,7 @@ export function createTools(ctx) {
     calcMessage.set_ellipsize(Pango.EllipsizeMode.NONE);
     calcMessage.set_visible(false);
     calcDisplayPane.append(calcMessage);
-    const calcWave = ui.waveBand('#F6E0A0', 20);
+    const calcWave = ui.waveBand('#E2BE5C', 20);
     calcWave.add_css_class('calc-wave');
     calculator.append(calcWave);
 

@@ -83,11 +83,14 @@ function makeWave(color, height, cornerRadius) {
     let pendingPulse = false, pendingDuration = 480, pendingIntensity = 0.85;
     area.set_draw_func((_widget, cr, width, h) => {
         if (width < 2 || h < 2) return;
-        const y = h * 0.32, a = Math.min(4, h * 0.20);
+        const y = h * 0.35;
+        const a = Math.min(7, h * 0.28);
+
+        // 1. 水体主体填充
         cr.moveTo(0, y);
-        cr.curveTo(width * .13, y - a * Math.cos(phase), width * .23, y + a, width * .36, y + a * .25);
-        cr.curveTo(width * .49, y - a, width * .57, y - a * Math.cos(phase + .6), width * .70, y);
-        cr.curveTo(width * .84, y + a, width * .90, y - a * .7, width, y - a * .15);
+        cr.curveTo(width * .13, y - a * Math.cos(phase), width * .23, y + a * Math.sin(phase * 0.8 + 0.3), width * .36, y + a * .3);
+        cr.curveTo(width * .49, y - a, width * .57, y - a * Math.cos(phase + .6), width * .70, y + a * 0.2);
+        cr.curveTo(width * .84, y + a * Math.sin(phase + 1.2), width * .90, y - a * .6, width, y - a * .15);
         const radius = Math.min(cornerRadius, h * .5, width * .5);
         if (radius > 0) {
             cr.lineTo(width, h - radius);
@@ -96,8 +99,19 @@ function makeWave(color, height, cornerRadius) {
             cr.curveTo(radius * .45, h, 0, h - radius * .45, 0, h - radius);
         } else { cr.lineTo(width, h); cr.lineTo(0, h); }
         cr.closePath();
-        cr.setSourceRGBA(red, green, blue, 1);
+        cr.setSourceRGBA(red, green, blue, 0.95);
         cr.fill();
+
+        // 2. 波峰反光水线 (Crest Highlight - 鲜明展现流转与起伏动势)
+        cr.moveTo(0, y);
+        cr.curveTo(width * .13, y - a * Math.cos(phase), width * .23, y + a * Math.sin(phase * 0.8 + 0.3), width * .36, y + a * .3);
+        cr.curveTo(width * .49, y - a, width * .57, y - a * Math.cos(phase + .6), width * .70, y + a * 0.2);
+        cr.curveTo(width * .84, y + a * Math.sin(phase + 1.2), width * .90, y - a * .6, width, y - a * .15);
+        cr.setLineWidth(1.8);
+        cr.setLineCap(1);
+        cr.setLineJoin(1);
+        cr.setSourceRGBA(1.0, 0.96, 0.80, 0.85);
+        cr.stroke();
     });
     area.pulse = (durationMs = 480, intensity = 0.85) => {
         if (!Gtk.Settings.get_default().gtk_enable_animations) return;

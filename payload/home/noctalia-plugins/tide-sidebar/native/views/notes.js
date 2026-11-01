@@ -309,7 +309,7 @@ export function createNotes(ctx) {
     bodyStack.set_visible_child_name('empty'); card.append(bodyStack);
 
     const footerLayer = new Gtk.Overlay({hexpand: true}); footerLayer.add_css_class('note-footer-layer');
-    const footerWave = U.waveFooter('#F6E2A4', 54, 22); footerWave.add_css_class('note-footer-wave');
+    const footerWave = U.waveFooter('#E8C568', 54, 22); footerWave.add_css_class('note-footer-wave');
     footerLayer.set_child(footerWave);
     const footer = U.box(Gtk.Orientation.HORIZONTAL, 10, ['note-footer']);
     footer.set_halign(Gtk.Align.FILL); footer.set_valign(Gtk.Align.END);
