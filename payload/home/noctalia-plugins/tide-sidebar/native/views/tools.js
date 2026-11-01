@@ -112,6 +112,7 @@ export function createTools(ctx) {
     let historySignature = '';
     let pendingTimer = 0;
     let justCalculated = false;
+    let isCommitted = false;
     const OPERATOR_TOKENS = new Set(['+', '−', '×', '÷', '^', '%']);
 
     function cancelPreview() {
@@ -122,7 +123,14 @@ export function createTools(ctx) {
         if (pendingTimer) { GLib.source_remove(pendingTimer); pendingTimer = 0; }
         copyValue = null;
         setSensitive(copyButton, false);
-        setLabel(result, expression.get_text().trim() ? '…' : '0');
+        if (!expression.get_text().trim()) {
+            setLabel(result, '0');
+            setClass(result, 'previewing', false);
+            setClass(result, 'committed', false);
+        } else {
+            setClass(result, 'previewing', !isCommitted);
+            setClass(result, 'committed', isCommitted);
+        }
         result.set_tooltip_text(null);
         setLabel(calcMessage, '');
         setVisible(calcMessage, false);
@@ -170,11 +178,13 @@ export function createTools(ctx) {
         cancelPreview();
         previewQueued = false;
         justCalculated = true;
+        isCommitted = true;
         sendRequest(newRequest(true));
         calcWave.pulse();
     }
     expression.connect('changed', () => {
         if (syncingExpression) return;
+        isCommitted = false;
         expressionEdited = true;
         cancelPreview();
         newRequest(false);
@@ -213,9 +223,19 @@ export function createTools(ctx) {
             }
         }
 
-        const [hasSel, selStart, selEnd] = expression.get_selection_bounds();
-        let position = hasSel ? selStart : expression.get_position();
-        if (hasSel) expression.delete_text(selStart, selEnd);
+        if (token === '(') {
+            let pos = hasSel ? selStart : expression.get_position();
+            if (!hasSel && pos > 0) {
+                const prev = expression.get_text().charAt(pos - 1);
+                if (/[0-9πe\)]/.test(prev)) {
+                    token = '×(';
+                }
+            }
+        }
+
+        const [hasBounds, finalStart, finalEnd] = expression.get_selection_bounds();
+        let position = hasBounds ? finalStart : expression.get_position();
+        if (hasBounds) expression.delete_text(finalStart, finalEnd);
         position = expression.insert_text(token, -1, position);
         expression.set_position(position);
         focusExpression();
@@ -260,6 +280,10 @@ export function createTools(ctx) {
             else if (text === '⌫') eraseCharacter();
             else if (text === 'C') {
                 justCalculated = false;
+                isCommitted = false;
+                setLabel(result, '0');
+                setClass(result, 'previewing', false);
+                setClass(result, 'committed', false);
                 expression.set_text('');
                 focusExpression();
             } else insertToken(token);
@@ -341,12 +365,27 @@ export function createTools(ctx) {
         if (pendingTimer) { GLib.source_remove(pendingTimer); pendingTimer = 0; }
         const error = String(calc.error ?? '');
         copyValue = error ? null : String(calc.result ?? '0');
-        setLabel(result, error ? '—' : copyValue);
+
+        if (isCommitted) {
+            setLabel(result, error ? '—' : copyValue);
+            setLabel(calcMessage, error);
+            setVisible(calcMessage, !!error);
+            setClass(calcMessage, 'status-error', !!error);
+            setClass(result, 'committed', !error);
+            setClass(result, 'previewing', false);
+        } else {
+            // 输入编辑中（未按等号）：绝不弹出报错黄字，绝不把大屏闪成破折号 '—'
+            setVisible(calcMessage, false);
+            setLabel(calcMessage, '');
+            if (!error && copyValue !== null) {
+                setLabel(result, copyValue);
+            }
+            setClass(result, 'committed', false);
+            setClass(result, 'previewing', true);
+        }
+
         if (result.get_tooltip_text() !== copyValue) result.set_tooltip_text(copyValue);
-        setSensitive(copyButton, !error);
-        setLabel(calcMessage, error);
-        setVisible(calcMessage, !!error);
-        setClass(calcMessage, 'status-error', !!error);
+        setSensitive(copyButton, !error && copyValue !== null);
 
         const records = (Array.isArray(calc.history) ? calc.history : []).slice(0, HISTORY_LIMIT)
             .filter(item => item && typeof item.expression === 'string' && typeof item.result === 'string')

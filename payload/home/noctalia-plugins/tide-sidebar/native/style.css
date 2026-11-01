@@ -337,6 +337,19 @@
 .tide-window .result-display {
   font-size: 38px; font-weight: 600; color: #2F2918;
   font-feature-settings: "tnum"; letter-spacing: -0.01em;
+  transition: opacity 120ms ease-out, color 120ms ease-out, font-size 120ms ease-out;
+}
+.tide-window .result-display.previewing {
+  font-size: 20px;
+  color: #B5A88A;
+  opacity: 0.18;
+  font-weight: 500;
+}
+.tide-window .result-display.committed {
+  font-size: 38px;
+  color: #2F2918;
+  opacity: 1;
+  font-weight: 700;
 }
 .tide-window .calc-keypad-pane { padding: 10px 12px 14px; }
 .tide-window .key-button {
@@ -697,6 +710,17 @@
 .dark-theme .window-row.selected {
   background-color: rgba(36, 54, 40, 0.85);
   border-color: rgba(52, 211, 153, 0.35);
+}
+.dark-theme .result-display { color: #FDF4D4; }
+.dark-theme .result-display.previewing {
+  font-size: 20px;
+  color: #7A7258;
+  opacity: 0.20;
+}
+.dark-theme .result-display.committed {
+  font-size: 38px;
+  color: #FDF4D4;
+  opacity: 1;
 }
 .dark-theme .key-button { color: #E6DCBE; }
 .dark-theme .key-button:hover { background-color: rgba(217, 180, 74, 0.14); }
