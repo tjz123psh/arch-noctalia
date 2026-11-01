@@ -121,8 +121,8 @@ export function createNotes(ctx) {
         const tags = {
             h1: new Gtk.TextTag({name: 'md_h1', weight: Pango.Weight.BOLD, size: 16 * Pango.SCALE}),
             h2: new Gtk.TextTag({name: 'md_h2', weight: Pango.Weight.BOLD, size: 14 * Pango.SCALE}),
-            todoBox: new Gtk.TextTag({name: 'md_todo_box', weight: Pango.Weight.BOLD, foreground: '#6D5E1B'}),
-            todoDoneBox: new Gtk.TextTag({name: 'md_todo_done_box', weight: Pango.Weight.BOLD, foreground: '#476D50'}),
+            todoBox: new Gtk.TextTag({name: 'md_todo_box', weight: Pango.Weight.BOLD, foreground: '#B2821A'}),
+            todoDoneBox: new Gtk.TextTag({name: 'md_todo_done_box', weight: Pango.Weight.BOLD, foreground: '#34D399'}),
             todoDone: new Gtk.TextTag({name: 'md_todo_done', strikethrough: true, foreground: '#8A7E64'}),
         };
         for (const tag of Object.values(tags)) table.add(tag);
@@ -393,6 +393,9 @@ export function createNotes(ctx) {
             buffer.insert(lineStart, '- [ ] ', -1);
             buffer.end_user_action();
             footerWave.pulse(320, 0.4);
+            if (ctx.toast) ctx.toast('已插入待办方框，点击方框即可打勾');
+        } else {
+            if (ctx.toast) ctx.toast('待办状态已切换');
         }
     }
 
@@ -439,13 +442,18 @@ export function createNotes(ctx) {
     });
     const editorClick = new Gtk.GestureClick();
     editorClick.connect('pressed', (_gesture, _n, x, y) => {
-        const [iter] = editor.get_iter_at_location(x, y);
-        if (!iter) return;
-        const lineIdx = iter.get_line();
-        const offset = iter.get_line_offset();
-        if (offset <= 7) {
-            toggleLineTodoAt(lineIdx);
-        }
+        try {
+            const [bx, by] = editor.window_to_buffer_coords(Gtk.TextWindowType.TEXT, x, y);
+            const [ok, iter] = editor.get_iter_at_location(bx, by);
+            if (!ok || !iter) return;
+            const lineIdx = iter.get_line();
+            const offset = iter.get_line_offset();
+            if (offset <= 10) {
+                if (toggleLineTodoAt(lineIdx)) {
+                    if (ctx.toast) ctx.toast('已切换待办状态');
+                }
+            }
+        } catch (_) {}
     });
     editor.add_controller(editorClick);
     editor.add_controller(keys);
