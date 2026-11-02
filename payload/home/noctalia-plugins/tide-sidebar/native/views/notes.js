@@ -148,6 +148,14 @@ export function createNotes(ctx) {
         }
     }
 
+    function scrollToCaret() {
+        const buffer = editor.get_buffer();
+        if (!buffer) return;
+        const mark = buffer.get_insert();
+        if (!mark) return;
+        editor.scroll_to_mark(mark, 0.08, false, 0, 0);
+    }
+
     function ensureBuffer(id) {
         const draft = drafts.get(id);
         if (!draft) return null;
@@ -169,6 +177,7 @@ export function createNotes(ctx) {
                 localError = '';
                 if (record.actionDepth === 0) sendDraft(id);
                 refreshStatus();
+                scrollToCaret();
             });
         } else if (!draft.dirty && textOf(record.buffer) !== draft.body) {
             record.suppressed = true;
@@ -298,7 +307,7 @@ export function createNotes(ctx) {
     const editorScroll = new Gtk.ScrolledWindow({vexpand: true, hexpand: true, min_content_height: 140});
     editorScroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC); editorScroll.add_css_class('editor-scroll');
     const editor = new Gtk.TextView({vexpand: true, hexpand: true, wrap_mode: Gtk.WrapMode.WORD_CHAR,
-        left_margin: 18, right_margin: 18, top_margin: 12, bottom_margin: 12, pixels_above_lines: 2, pixels_below_lines: 3});
+        left_margin: 18, right_margin: 18, top_margin: 12, bottom_margin: 160, pixels_above_lines: 2, pixels_below_lines: 3});
     editor.add_css_class('notes-paper'); editor.set_editable(false);
     editorScroll.set_child(editor); paper.append(editorScroll); bodyStack.add_named(paper, 'editor');
     const empty = U.box(Gtk.Orientation.VERTICAL, 12, ['empty-state']); empty.set_valign(Gtk.Align.CENTER);

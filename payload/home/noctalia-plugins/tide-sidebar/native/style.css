@@ -170,9 +170,21 @@
 }
 .tide-window textview:disabled { color: #8F846B; }
 .tide-window entry placeholder { color: #776D58; }
-.tide-window textview, .tide-window textview text, .tide-window textview text preedit {
+.tide-window textview, .tide-window textview text {
   color: #332D1F; background-color: transparent; background-image: none;
   border: none; border-radius: 0; box-shadow: none; outline: none; padding: 0;
+}
+.tide-window textview text preedit,
+.tide-window .notes-paper text preedit {
+  color: #5C4E15;
+  background-color: rgba(231, 206, 134, 0.45);
+  border-bottom: 2px solid #B2821A;
+}
+.dark-theme textview text preedit,
+.dark-theme .notes-paper text preedit {
+  color: #FDF4D4;
+  background-color: rgba(246, 208, 111, 0.30);
+  border-bottom: 2px solid #F6D06F;
 }
 .tide-window .notes-paper, .tide-window .notes-paper text { color: #332D1F; background-color: transparent; font-size: 14px; }
 .tide-window textview:focus, .tide-window textview:focus-within, .tide-window textview text:focus { outline: none; box-shadow: none; }
