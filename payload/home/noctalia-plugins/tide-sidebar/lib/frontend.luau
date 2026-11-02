@@ -104,7 +104,7 @@ function M.new(api,base,onCommand,onError)
       -- baseline path wins over the ~100 MiB memory saving here.
       -- API32 runStream accepts a shell string, unlike runAsync's argv overload.
       -- Every argument is a quoted, owned path/constant; no note/password text enters it.
-      local arguments={"env","LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so","GDK_BACKEND=wayland","gjs","-m",api.pluginDir().."/native/main.js","--bridge-dir",self.dir,"--instance",self.instance}
+      local arguments={"env","LD_PRELOAD=/usr/lib/libgtk4-layer-shell.so","GDK_BACKEND=wayland","GTK_IM_MODULE=wayland","gjs","-m",api.pluginDir().."/native/main.js","--bridge-dir",self.dir,"--instance",self.instance}
       local quoted={"exec"}
       for _,argument in ipairs(arguments) do table.insert(quoted,"'"..tostring(argument):gsub("'","'\\''").."'") end
       local callOK,launched=pcall(api.runStream,table.concat(quoted," "),function(line) self:receive(line) end)
