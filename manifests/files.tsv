@@ -65,6 +65,7 @@ payload/home/.config/niri/scripts/niri-touchpad-toggle	/home/pang/.config/niri/s
 payload/home/.config/niri/scripts/niri-vmtest-gen	/home/pang/.config/niri/scripts/niri-vmtest-gen	755	148f58e9a01052ed6a97adf1ea499880
 payload/home/.config/niri/scripts/niri-vmtest-enter	/home/pang/.config/niri/scripts/niri-vmtest-enter	755	ebdc3801f5072a9fb93ee1dfc6b80206
 payload/home/.config/noctalia/hooks.toml	/home/pang/.config/noctalia/hooks.toml	644	949788850bc98a9878df6d6e80bd9edf
+payload/home/.config/noctalia/workspaces.json	/home/pang/.config/noctalia/workspaces.json	644	865874040cba042ba4662fdf786d59f5
 payload/home/.config/nomacs/Image Lounge.conf	/home/pang/.config/nomacs/Image Lounge.conf	644	8d4a0f214e9bf402c48be6f5b7002b9e
 payload/home/.config/nwg-look/config	/home/pang/.config/nwg-look/config	644	1d7532f1af614a510283dc0b46520eee
 payload/home/.config/papirus-folders/keep	/home/pang/.config/papirus-folders/keep	644	54ede524b231ba359a3a461fd6aa5197
@@ -341,7 +342,7 @@ payload/home/noctalia-plugins/magnifier/tools/cursor-track/README.md	/home/pang/
 # ——— 2026-10-20 插件源码整体纳入：~/noctalia-plugins 的开发改为在本仓 payload/home/noctalia-plugins/ 进行，
 #     07 步按清单部署回本机（宿主以 path 源 pang-dev 直接读该目录）；.git/.backups/build 不入仓。
 payload/home/noctalia-plugins/README.md	/home/pang/noctalia-plugins/README.md	600	0c46818d98230bcadaa48c2b83d60749
-payload/home/noctalia-plugins/tide-sidebar/README.md	/home/pang/noctalia-plugins/tide-sidebar/README.md	644	d53cd2085178fa07eb4f145f83d35330
+payload/home/noctalia-plugins/tide-sidebar/README.md	/home/pang/noctalia-plugins/tide-sidebar/README.md	644	e5d53bdaac8e6120f1e77d9a5003954f
 payload/home/noctalia-plugins/tide-sidebar/design/reference-flat-proof.png	/home/pang/noctalia-plugins/tide-sidebar/design/reference-flat-proof.png	644	403928d8fe15915eef374dbfcac4e31e
 payload/home/noctalia-plugins/tide-sidebar/docs/performance-observation.json	/home/pang/noctalia-plugins/tide-sidebar/docs/performance-observation.json	600	4ff0e178d4cc792735b62ee2fb3a4d6f
 payload/home/noctalia-plugins/tide-sidebar/docs/project-review.md	/home/pang/noctalia-plugins/tide-sidebar/docs/project-review.md	600	3c367289de96a1b3825ebee39f934eb7

@@ -3,6 +3,7 @@
 # 用户在机器上的编辑绝不被覆盖；12-verify 对其跳过内容核对。
 # <repo 路径（= files.tsv 第 1 列）>\t<备注>
 payload/home/.config/fish/conf.d/proxy.fish	用户态：fish 代理环境变量片段（只在 127.0.0.1:7890 有监听时设置；改完不会被重跑覆盖）
+payload/home/.config/noctalia/workspaces.json	用户态：tide-sidebar 首页工作台接口（项目路径 + 常用网址；侧栏卡片右上角铅笔图标可直编，重装不覆盖）
 payload/home/Templates/C 源文件.c	个人数据种子（便签/模板）
 payload/home/Templates/CSS 样式表.css	个人数据种子（便签/模板）
 payload/home/Templates/Dockerfile	个人数据种子（便签/模板）

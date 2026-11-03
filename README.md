@@ -21,6 +21,7 @@ cd ~/arch-noctalia
 ## 装完之后
 
 - 桌面：niri 平铺窗口管理器 + Noctalia（状态栏 / 侧边栏 / 插件）
+- 侧边栏工作台 `pang/tide-sidebar`（`Super+Shift+W`）：动态首页仪表盘（时钟 / CPU 16 线程 / 内存 / NVMe / 网络 / Top 任务）、工作台与书签、便签、计算器 / 倒计时 / 秒表、热点、niri 工作区与窗口控制，支持深色黑曜夜金主题
 - 登录界面：greetd + nwg-hello，壁纸与桌面同步
 - 常用软件：kitty、fish、nvim、yazi、mpv、fuzzel、fcitx5、Docker、snapper 快照、ASUS 显卡切换
 - 自制脚本都在 `~/bin`，配置在 `~/.config`，全部由本仓库部署

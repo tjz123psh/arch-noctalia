@@ -1,0 +1,34 @@
+{
+  "workspaces": [
+    {
+      "name": "arch-noctalia",
+      "path": "~/Projects/arch-noctalia",
+      "desc": "系统与侧边栏核心工程",
+      "icon": "🌟"
+    },
+    {
+      "name": "桌面配置",
+      "path": "~/.config",
+      "desc": "~/.config 桌面配置目录",
+      "icon": "⚙️"
+    },
+    {
+      "name": "插件开发",
+      "path": "~/noctalia-plugins",
+      "desc": "Noctalia 插件源码",
+      "icon": "🧩"
+    }
+  ],
+  "bookmarks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com",
+      "icon": "🐙"
+    },
+    {
+      "name": "哔哩哔哩",
+      "url": "https://www.bilibili.com",
+      "icon": "📺"
+    }
+  ]
+}

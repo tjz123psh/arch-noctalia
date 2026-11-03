@@ -50,6 +50,7 @@ git	extra
 git-delta	extra		
 github-cli	extra		
 gitleaks	extra		密钥扫描：推送前用 `gitleaks dir . --redact --no-banner` 复核凭据（本机 git-push 流程的必备工具；安装器自检另有一遍轻量扫描）
+gjs	extra		Noctalia 插件 pang/tide-sidebar 原生前端运行时（`gjs -m native/main.js`；显式声明，别只靠 sushi 传递带入——它一旦缺失 Super+Shift+W 面板直接起不来）
 go	extra		
 gpu-screen-recorder	extra		~/bin/rice-record 依赖（Noctalia 录屏插件 2026-10-26 已弃用）
 greetd	extra	desktop	
