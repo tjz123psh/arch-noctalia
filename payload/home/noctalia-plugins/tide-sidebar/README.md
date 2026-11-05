@@ -155,7 +155,8 @@ GTK 原生控件保留输入法、选区及撤销能力；离屏测试不代表�
 - [便签页](<native/views/notes.js>)、[合并工具页](<native/views/tools.js>)、[热点与窗口页](<native/views/system.js>)。
 - [原后台](<service.luau>)继续负责持久化、倒计时、系统操作；[私有界面桥接](<lib/frontend.luau>)管理原生前端。
 - [便签模型](<lib/notes.luau>)、[计算模型](<lib/calculator.luau>)、[倒计时模型](<lib/countdown.luau>)、[秒表模型](<lib/stopwatch.luau>)沿用可独立测试的逻辑。
-- 每个页面的自测脚本在 [tests/](<tests/>)；视觉基准在 [design/](<design/>)，当前实机截图在 [previews/](<previews/>)。
+- 每个页面的自测脚本在 [tests/](<tests/>)；视觉基准在 [design/](<design/>)。
+- 当前实机截图（跟随壁纸调色板，2026-11 重做）：[首页](<previews/home.png>) · [便签](<previews/notes.png>) · [工具](<previews/tools.png>) · [热点](<previews/hotspot.png>) · [窗口](<previews/windows.png>) · [设置页](<previews/plugin-settings.png>)。
 - [系统助手](<helpers/system.py>)不依赖第三方Python包。
 - [SDK 接口笔记](<docs/sdk-notes.md>)、[改版验收](<docs/reference-redesign.md>)、[性能记录](<docs/performance-observation.json>)、[项目复查](<docs/project-review.md>)。
 

@@ -52,7 +52,7 @@ README 已更正：① 快捷键那段改为写明“写在哪个文件 + 会被
 ### ~~低：死代码与杂物~~ → 已清理（2026-10-15）
 
 - `lib/theme.luau`、`lib/view.luau`：现在只有 `view.luau` 引用 `theme.luau`，没有任何入口引用它们（`panel.luau` 已改为兼容转接，`service.luau` 只 require notes/countdown/calculator/frontend/stopwatch）。属于旧 Noctalia-UI 版本的残留。已移入 `.backups/legacy-lua-ui/`（该目录里本来就有同一份副本）—— 插件 `lib/` 现在只剩 calculator、countdown、frontend、notes、stopwatch。
-- `previews/` 只保留与当前实现一致的 `light-note-live.png`、`mint-hotspot-live.png`、`stopwatch-tools-live.png`；其余 7 张已移入 `.backups/legacy-previews/`，`docs/reference-redesign.md` 的图片链接同步改到现行截图。
+- `previews/` 只保留与当前实现一致的 `home.png`、`notes.png`、`tools.png`、`hotspot.png`、`windows.png`、`plugin-settings.png`（2026-11 壁纸调色板重做后重新实拍）；更早的截图已移入 `.backups/legacy-previews/`，`docs/reference-redesign.md` 的图片链接同步改到现行截图。
 - `frontend/geometry.json` 只被写入、没有任何读取方（`native/main.js:23` 的 channels 列表不含 geometry），属于诊断残留。
 - `.backups/tide-sidebar-before-native-20261014/transition-metadata.json` 里存着改版前的便签文件哈希（无正文）。
 
