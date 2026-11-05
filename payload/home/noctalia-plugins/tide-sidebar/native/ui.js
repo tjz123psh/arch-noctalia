@@ -198,15 +198,15 @@ export function waveRule(color = '#F1D68B', height = 8) {
     });
     area.startBreathe = () => {
         if (tick || !Gtk.Settings.get_default().gtk_enable_animations) return;
-        tick = area.add_tick_callback(() => {
+        tick = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 55, () => {
             if (!area.get_mapped()) { tick = 0; return GLib.SOURCE_REMOVE; }
-            phase = (phase + 0.014) % (Math.PI * 2);
+            phase = (phase + 0.03) % (Math.PI * 2);
             area.queue_draw();
             return GLib.SOURCE_CONTINUE;
         });
     };
     area.stopBreathe = () => {
-        if (tick) { area.remove_tick_callback(tick); tick = 0; }
+        if (tick) { GLib.source_remove(tick); tick = 0; }
     };
     area.pulse = () => {};
     area.connect('unmap', () => area.stopBreathe());
