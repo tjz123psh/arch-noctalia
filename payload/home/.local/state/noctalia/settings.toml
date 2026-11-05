@@ -580,3 +580,25 @@ type = "weather"
 [widget.workspaces]
 capsule = false
 type = "workspaces"
+
+# ---- 日历：法定节假日 ----
+# Noctalia 的日历服务本身不带节假日；它只显示 [calendar] 里各账户同步来的日程。
+# holiday-cn 每天抓国务院公告并汇总成一份 ICS（覆盖 2022 起的全部年份）；走 jsDelivr
+# 镜像而不是 raw.githubusercontent（后者在本机上偶发 http status 0）。
+# 订阅它即可让控制中心日历在放假/补班那天显示条目与圆点。
+[calendar]
+enabled = true
+# 节假日一年变几次，默认 15 分钟太勤；240 是运行时的上限（写更大也会被夹到 240）。
+refresh_minutes = 240
+
+[calendar.account.cn_holidays]
+type = "ics"
+name = "法定节假日"
+server_url = "https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/holiday-cn.ics"
+color = "#E5A83B"
+
+# 月视图里显示事件圆点与当天日程卡片（键名由 noctalia config validate 校验）。
+[control_center.calendar]
+show_events_card = true
+show_events_location = true
+show_week_numbers = true
