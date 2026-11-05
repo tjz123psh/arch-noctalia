@@ -54,6 +54,10 @@
     "idle_exit_minutes": {
       "label": "闲置退出（分钟）",
       "description": "侧栏收起超过该时长后退出原生前端，隐藏期间不占内存；再次打开约需半秒。0 表示保持常驻。"
+    },
+    "editor_command": {
+      "label": "编辑器命令",
+      "description": "工作台卡片打开工程或配置文件时用的命令（如 code、codium、zed）。留空则自动探测 code / codium / zed / kitty -e nvim。"
     }
   }
 }

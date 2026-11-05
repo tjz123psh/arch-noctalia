@@ -54,6 +54,10 @@
     "idle_exit_minutes": {
       "label": "Idle exit (minutes)",
       "description": "Quit the native front end once the sidebar has stayed hidden this long. Hidden means no memory; reopening takes about half a second. 0 keeps it resident."
+    },
+    "editor_command": {
+      "label": "Editor command",
+      "description": "Command used by the workspace card to open a project or the config file (e.g. code, codium, zed). Leave empty to auto-detect code / codium / zed / kitty -e nvim."
     }
   }
 }

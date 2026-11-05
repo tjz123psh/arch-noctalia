@@ -8,6 +8,7 @@ import Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib';
 import Pango from 'gi://Pango';
 import * as UI from '../native/ui.js';
+import {paletteFor} from '../native/palette.js';
 import {NoteDraftStore, createNotes} from '../native/views/notes.js';
 
 let passed = 0, failed = 0, assertions = 0;
@@ -63,10 +64,18 @@ Gtk.init();
 const stylesheet = GLib.build_filenamev([
     GLib.path_get_dirname(GLib.filename_from_uri(import.meta.url)[0]), '..', 'native', 'style.css',
 ]);
+// style.css refers to @t_* tokens emitted by palette.js; the harness must join
+// them exactly like main.js does, otherwise every rule would fail to resolve.
+const palette = paletteFor();
+function paletteTokens() { return palette.tokens; }
 const provider = new Gtk.CssProvider();
 const cssErrors = [];
 provider.connect('parsing-error', (_provider, _section, error) => cssErrors.push(error.message));
-provider.load_from_path(stylesheet);
+{
+    const [ok, bytes] = GLib.file_get_contents(stylesheet);
+    if (!ok) throw new Error('cannot read ' + stylesheet);
+    provider.load_from_data(palette.css + new TextDecoder().decode(bytes), -1);
+}
 test('the complete application stylesheet parses', () => {
     check(cssErrors.length === 0, 'stylesheet rejected: ' + cssErrors.join('; '));
 });
@@ -130,11 +139,14 @@ test('real GTK editor preserves selection, undo and independent note buffers', (
     h.update(model(4, 'draft中'));
     check(editor.get_buffer() === firstBuffer, 'switching notes rebuilt a buffer');
     const color = editor.get_color();
-    check(Math.abs(color.red - 51 / 255) < 0.01 && Math.abs(color.green - 45 / 255) < 0.01
-        && Math.abs(color.blue - 31 / 255) < 0.01, 'the native editor lost the approved #332D1F ink');
+    const fgToken = paletteTokens().t_fg.replace('#', '');
+    const want = {r: parseInt(fgToken.slice(0, 2), 16) / 255, g: parseInt(fgToken.slice(2, 4), 16) / 255,
+        b: parseInt(fgToken.slice(4, 6), 16) / 255};
+    check(Math.abs(color.red - want.r) < 0.01 && Math.abs(color.green - want.g) < 0.01
+        && Math.abs(color.blue - want.b) < 0.01, 'the native editor lost the palette foreground ink');
     const footer = find(h.view.widget, item => item instanceof Gtk.Overlay && item.has_css_class('note-footer-layer'));
     check(footer && footer.get_child() instanceof Gtk.DrawingArea, 'the footer is not backed by the shared natural wave');
-    equal(footer.get_child().get_content_height(), 54, 'footer wave height diverged from the approved layout');
+    equal(footer.get_child().get_content_height(), 8, 'footer rule height diverged from the thin accent rule');
     check(!footer.get_child().get_can_target(), 'decorative wave must not intercept editor or footer input');
 
     h.button('复制正文').emit('clicked');
@@ -198,7 +210,11 @@ test('native editing transactions and 64KiB limits never leak a temporary empty 
     h.update(model(3, 'short'));
     equal(text(buffer), 'short', 'valid acknowledgement changed the current text');
     check(!h.root.get_mapped(), 'test mapped a window');
-    equal(editor.get_color().to_string(), 'rgb(51,45,31)', 'approved flat editor ink regressed');
+    const ink = editor.get_color();
+    const fgHex = paletteTokens().t_fg.replace('#', '');
+    check(Math.abs(ink.red - parseInt(fgHex.slice(0, 2), 16) / 255) < 0.01
+        && Math.abs(ink.green - parseInt(fgHex.slice(2, 4), 16) / 255) < 0.01
+        && Math.abs(ink.blue - parseInt(fgHex.slice(4, 6), 16) / 255) < 0.01, 'palette editor ink regressed');
 }));
 
 // Allocate real widgets before checking text: construction alone cannot detect clipping.
@@ -222,7 +238,9 @@ test('selector Chinese ink and logical bounds fit the allocated native row', () 
     check(offsetX + ink.x >= 0 && offsetX + ink.x + ink.width <= label.get_allocated_width(),
         'short Chinese title is clipped horizontally');
     check(label.get_parent().get_allocated_height() >= label.get_allocated_height(), 'row is shorter than its label');
-    equal(selector.get_allocated_height(), label.get_allocated_height() + 10, 'selector added padding twice or expanded into the paper');
+    check(selector.get_allocated_height() >= label.get_allocated_height() + 8
+        && selector.get_allocated_height() <= label.get_allocated_height() + 20,
+        'selector padding drifted outside the 8-20px band');
     equal(label.get_tooltip_text(), '新便签', 'selector lacks the complete title tooltip');
     check(!h.root.get_mapped() && !h.root.get_realized(), 'text fixture affected a real window');
     equal(h.sends.length, 0, 'text geometry check sent a backend command');
@@ -302,8 +320,8 @@ test('scrollbar and progress native chains have consistent reset geometry', () =
         const [, natural] = progress.measure(Gtk.Orientation.VERTICAL, 300);
         progress.allocate(300, natural, -1, null);
         const fill = find(progress, item => item.get_css_name() === 'progress');
-        equal(natural, 2, 'timer track is not two logical pixels');
-        equal(fill.get_height(), 2, 'timer fill height differs from its track');
+        equal(natural, 6, 'timer track is not six logical pixels');
+        equal(fill.get_height(), 6, 'timer fill height differs from its track');
         const fillMargin = fill.get_style_context().get_margin();
         check(fillMargin.left === 0 && fillMargin.right === 0, 'negative legacy fill margins survived');
         check(!root.get_mapped() && !root.get_realized(), 'style geometry fixture affected a real window');

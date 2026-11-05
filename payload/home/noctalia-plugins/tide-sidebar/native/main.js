@@ -5,6 +5,7 @@ import GLib from 'gi://GLib';
 import Layer from 'gi://Gtk4LayerShell?version=1.0';
 import * as UI from './ui.js';
 import {encodePackets} from './transport.mjs';
+import {paletteFor} from './palette.js';
 import {createHome} from './views/home.js';
 import {createNotes} from './views/notes.js';
 import {createTools} from './views/tools.js';
@@ -137,13 +138,6 @@ function updatePage(force = false, changed = []) {
     const needed = {home: ['notes', 'timer', 'stopwatch', 'system'], notes: ['notes'], tools: ['timer', 'calc', 'stopwatch'], hotspot: ['system', 'feedback'], windows: ['system']};
     const view = views[currentPage];
     if (visible && view && (force || changed.some(name => needed[currentPage].includes(name)))) view.update(state);
-}
-function toggleTheme() {
-    const next = !window.has_css_class('dark-theme');
-    if (next) window.add_css_class('dark-theme');
-    else window.remove_css_class('dark-theme');
-    if (state.preferences) state.preferences.darkTheme = next;
-    send('preferences', {tab: currentPage, darkTheme: next, reducedMotion: reducedMotion()});
 }
 function selectPage(name, save = true) {
     name = normalizePage(name);
@@ -297,10 +291,6 @@ function readChannel(name) {
             // (chevron, Super+Shift+W) or by clicking outside.
         } else {
             state[name] = packet.data;
-            if (name === 'preferences' && window) {
-                if (packet.data?.darkTheme === true) window.add_css_class('dark-theme');
-                else window.remove_css_class('dark-theme');
-            }
         }
         return true;
     } catch (error) {
@@ -346,6 +336,7 @@ function shutdown() {
     send('flush'); send('visibility', {open: false, tab: currentPage});
     exiting = true;
     fileMonitor?.cancel();
+    paletteMonitor?.cancel();
     if (heartbeat) GLib.source_remove(heartbeat);
     if (pendingRead) GLib.source_remove(pendingRead);
     if (geometrySource) GLib.source_remove(geometrySource);
@@ -353,14 +344,55 @@ function shutdown() {
     for (const proc of helperProcesses) proc.force_exit();
     app.quit();
 }
+let paletteState = null;
+let paletteProvider = null;
+let paletteMonitor = null;
 app.connect('startup', () => {
   try {
-    const provider = new Gtk.CssProvider();
-    const cssErrors = [];
-    provider.connect('parsing-error', (_provider, _section, error) => cssErrors.push(error.message));
-    provider.load_from_path(GLib.build_filenamev([pluginDir, 'style.css']));
-    if (cssErrors.length) throw new Error('Invalid sidebar stylesheet: ' + cssErrors.join('; '));
-    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_USER + 1);
+    const sheetPath = GLib.build_filenamev([pluginDir, 'style.css']);
+    const readSheet = () => {
+        const [ok, bytes] = GLib.file_get_contents(sheetPath);
+        if (!ok) throw new Error('cannot read ' + sheetPath);
+        return new TextDecoder().decode(bytes);
+    };
+    const applyStylesheet = () => {
+        const palette = paletteFor();
+        paletteState = palette;
+        const css = palette.css + readSheet();
+        const provider = new Gtk.CssProvider();
+        const cssErrors = [];
+        provider.connect('parsing-error', (_provider, _section, error) => cssErrors.push(error.message));
+        provider.load_from_data(css, -1);
+        if (cssErrors.length) throw new Error('Invalid sidebar stylesheet: ' + cssErrors.join('; '));
+        const display = Gdk.Display.get_default();
+        if (paletteProvider) Gtk.StyleContext.remove_provider_for_display(display, paletteProvider);
+        Gtk.StyleContext.add_provider_for_display(display, provider, Gtk.STYLE_PROVIDER_PRIORITY_USER + 1);
+        paletteProvider = provider;
+        if (window) {
+            if (palette.dark) { window.add_css_class('palette-dark'); window.remove_css_class('palette-light'); }
+            else { window.add_css_class('palette-light'); window.remove_css_class('palette-dark'); }
+        }
+    };
+    applyStylesheet();
+    // Wallpaper change -> Noctalia rewrites noctalia.css -> re-derive tokens.
+    // Debounced: the template processor may write twice in a row.
+    let paletteReload = 0;
+    const watchPalette = () => {
+        try {
+            const file = Gio.File.new_for_path(GLib.build_filenamev([GLib.get_user_config_dir(), 'gtk-4.0', 'noctalia.css']));
+            paletteMonitor = file.monitor_file(Gio.FileMonitorFlags.NONE, null);
+            paletteMonitor.connect('changed', () => {
+                if (paletteReload) GLib.source_remove(paletteReload);
+                paletteReload = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 120, () => {
+                    paletteReload = 0;
+                    try { applyStylesheet(); } catch (error) { printerr('sidebar: palette reload failed: ' + error.message); }
+                    return GLib.SOURCE_REMOVE;
+                });
+            });
+        } catch (error) {
+            printerr('sidebar: palette watch unavailable: ' + error.message);
+        }
+    };
     // All icons in this panel are *-symbolic and resolve from GTK's built-in
     // Adwaita theme anyway; naming it explicitly keeps the session's Papirus
     // icon caches (2 x ~3 MiB) out of this process. No visual change.
@@ -384,9 +416,10 @@ app.connect('startup', () => {
     Layer.set_margin(window, Layer.Edge.BOTTOM, 0);
     Layer.set_keyboard_mode(window, Layer.KeyboardMode.ON_DEMAND);
     Layer.set_exclusive_zone(window, 0);
+    watchPalette();
     window.connect('close-request', () => { setVisible(false); return true; });
     window.connect('destroy', () => shutdown());
-    const ctx = {ui: UI, send, toast, copy, selectPage: page => selectPage(page), clearClipboard: clearClipboardIf, runHelper, writePrivateRequest, close: () => setVisible(false), getState: () => state, isVisible: () => visible, config: () => state.config};
+    const ctx = {ui: UI, send, toast, copy, selectPage: page => selectPage(page), clearClipboard: clearClipboardIf, runHelper, writePrivateRequest, close: () => setVisible(false), getState: () => state, isVisible: () => visible, config: () => state.config, palette: () => paletteState?.tokens};
     // Pages are built on first use: the common home-only open skips the other
     // four widget trees (about 25 ms of construction on this machine).
     viewFactory = {home: () => createHome(ctx), notes: () => createNotes(ctx), tools: () => createTools(ctx), hotspot: () => createHotspot(ctx), windows: () => createWindows(ctx)};
@@ -409,18 +442,17 @@ app.connect('startup', () => {
     shell.set_size_request(450, -1);
     applyConfig();
     const rail = UI.box(Gtk.Orientation.VERTICAL, 7, ['tab-rail']);
-    rail.set_size_request(46, -1);
+    rail.set_size_request(56, -1);
     const descriptions = {home: ['首页', 'home'], notes: ['便签', 'note'], tools: ['工具', 'calculator'], hotspot: ['热点', 'wifi'], windows: ['窗口', 'apps']};
     for (const page of pageNames) {
         const [text, glyph] = descriptions[page];
         const button = UI.classes(new Gtk.Button({tooltip_text: text}), ['nav-button', 'nav-' + page]);
         const child = UI.box(Gtk.Orientation.VERTICAL, 4);
-        child.set_halign(Gtk.Align.CENTER); child.append(UI.icon(glyph, 21)); child.append(UI.label(text, ['nav-label']));
+        child.set_halign(Gtk.Align.CENTER); child.append(UI.icon(glyph, 24)); child.append(UI.label(text, ['nav-label']));
         button.set_child(child); button.connect('clicked', () => selectPage(page));
         navigation[page] = button; rail.append(button);
     }
     rail.append(new Gtk.Box({vexpand: true}));
-    rail.append(UI.iconButton('theme', toggleTheme, '切换日间暖纸 / 黑曜夜金主题', ['theme-button']));
     rail.append(UI.iconButton('chevron-left', () => setVisible(false), '收起 · Super+Shift+W', ['close-button']));
     const right = UI.box(Gtk.Orientation.VERTICAL, 6, ['content-column']);
     right.set_hexpand(true); right.set_vexpand(true);

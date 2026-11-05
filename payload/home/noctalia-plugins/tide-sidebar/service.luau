@@ -74,6 +74,7 @@ local function readConfig()
     hotspotDefaultSsid=tostring(setting("hotspot_default_ssid","") or ""),
     hotspotDefaultBand=setting("hotspot_default_band","bg")=="a" and "a" or "bg",
     refreshSeconds=clampInt(setting("system_refresh_seconds",3),3,1,30),
+    editorCommand=tostring(setting("editor_command","") or ""),
   }
 end
 local config=readConfig()
@@ -149,6 +150,7 @@ local function configSnapshot()
     hotspotDefaultSsid=config.hotspotDefaultSsid,
     hotspotDefaultBand=config.hotspotDefaultBand,
     refreshSeconds=config.refreshSeconds,
+    editorCommand=config.editorCommand,
     reducedMotion=reducedMotion(),
   }
 end

@@ -101,6 +101,13 @@ options = [
 ]
 
 [[setting]]
+key = "editor_command"
+type = "string"
+label_key = "settings.editor_command.label"
+description_key = "settings.editor_command.description"
+default = ""
+
+[[setting]]
 key = "system_refresh_seconds"
 type = "int"
 label_key = "settings.system_refresh_seconds.label"

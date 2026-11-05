@@ -7,6 +7,7 @@ import Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib';
 import System from 'system';
 import * as ui from '../native/ui.js';
+import {paletteFor} from '../native/palette.js';
 import {createTools} from '../native/views/tools.js';
 
 const EXPECTED_ASSERTIONS = 113;
@@ -90,7 +91,7 @@ async function runSuite() {
     const timerContentPane = findClass('timer-content-pane');
     assert(timerCard.get_orientation() === Gtk.Orientation.HORIZONTAL && findClass('timer-label-pane').get_parent() === timerCard && timerContentPane.get_parent() === timerCard && timerDisplay.get_parent() === timerContentPane && findClass('timer-presets').get_parent() === findClass('tools-page'), 'Timer must use two horizontal panes with presets outside the card');
     const wave = findClass('calc-wave');
-    assert(wave instanceof Gtk.DrawingArea && wave.get_content_height() === 20 && wave.get_prev_sibling() === findClass('calc-display-pane') && wave.get_next_sibling() === findClass('calc-keypad-pane'), 'A single small native wave must separate display and keypad');
+    assert(wave instanceof Gtk.DrawingArea && wave.get_content_height() === 10 && wave.get_prev_sibling() === findClass('calc-display-pane') && wave.get_next_sibling() === findClass('calc-keypad-pane'), 'A single thin wave rule must separate display and keypad');
     assert(widgets.filter(w => w.has_css_class('history-row')).length === 8, 'History row pool must be bounded at 8');
     assert(!history.get_expanded(), 'History must begin collapsed');
     button('5 分').emit('clicked');
@@ -250,7 +251,12 @@ async function runTimingExtensions() {
     // A root is needed to exercise real Gtk focus dispatch. It is never
     // realized/presented, so these controls cannot receive desktop input.
     const css = new Gtk.CssProvider();
-    css.load_from_path(GLib.build_filenamev([GLib.path_get_dirname(GLib.filename_from_uri(import.meta.url)[0]), '..', 'native', 'style.css']));
+    {
+        const sheet = GLib.build_filenamev([GLib.path_get_dirname(GLib.filename_from_uri(import.meta.url)[0]), '..', 'native', 'style.css']);
+        const [ok, bytes] = GLib.file_get_contents(sheet);
+        if (!ok) throw new Error('cannot read ' + sheet);
+        css.load_from_data(paletteFor().css + new TextDecoder().decode(bytes), -1);
+    }
     Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), css, Gtk.STYLE_PROVIDER_PRIORITY_USER + 1);
     const inputActions = [];
     const inputView = createTools({ui, send: (action, values) => inputActions.push({action, ...values}), toast: () => {}, copy: () => true});

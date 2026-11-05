@@ -204,7 +204,7 @@ export function createNotes(ctx) {
     listButton.set_child(selectorRow);
     const addButton = U.iconButton('plus', addNote, '新建便签', ['note-add-button']);
     addButton.set_child(U.icon('plus', 24));
-    header.append(heading); header.append(addButton); page.append(header); page.append(listButton);
+    header.append(heading); header.append(addButton); page.append(header);
 
     // Owned by MenuButton, not parented manually: popup lifetime is native GTK's.
     const listPopover = new Gtk.Popover({has_arrow: false, autohide: true, position: Gtk.PositionType.BOTTOM});
@@ -278,21 +278,26 @@ export function createNotes(ctx) {
     noticeBox.append(noticeText); noticeRevealer.set_child(noticeBox); page.append(noticeRevealer);
 
     const card = U.card(['notes-card', 'card-stagger-1']); card.set_spacing(0); card.set_vexpand(true); page.append(card);
+    // The note switcher is part of the card (one surface, one header), not a
+    // floating pill above it: that pill never lined up with the card edge.
+    const cardSelectorRow = U.box(Gtk.Orientation.HORIZONTAL, 6, ['notes-selector-row']);
+    cardSelectorRow.append(listButton);
+    card.append(cardSelectorRow);
     const toolbar = U.box(Gtk.Orientation.HORIZONTAL, 6, ['notes-toolbar']);
     const title = U.label('', ['note-title']); title.set_hexpand(true); title.set_max_width_chars(21);
-    toolbar.append(title); card.append(toolbar);
-    // Keep the paper uncluttered: the reference's bottom pencil opens native actions.
+    // High-frequency actions live in the title row (one click, >=32px targets).
+    // Destructive actions stay behind the footer menu so they cannot be hit by
+    // accident.
+    const pinAction = U.iconButton('starred', () => togglePin(), '置顶 / 取消置顶', ['note-tool-button']);
+    const renameAction = U.iconButton('pencil', () => beginRename(), '重命名', ['note-tool-button']);
+    const copyAction = U.iconButton('copy', () => copyBody(), '复制正文', ['note-tool-button']);
+    toolbar.append(title); toolbar.append(pinAction); toolbar.append(renameAction); toolbar.append(copyAction);
+    card.append(toolbar);
     const editPopover = new Gtk.Popover({has_arrow: false, autohide: true});
     const actions = U.box(Gtk.Orientation.VERTICAL, 3, ['note-actions']);
-    const pinButton = U.button('置顶便签', 'check', () => { editPopover.popdown(); togglePin(); }, ['note-menu-action']);
-    pinButton.set_tooltip_text('在列表顶部优先显示');
-    const renameButton = U.button('重命名', 'pencil', () => { editPopover.popdown(); beginRename(); }, ['note-menu-action']);
-    renameButton.set_tooltip_text('重命名便签');
-    const copyButton = U.button('复制正文', 'copy', () => { editPopover.popdown(); copyBody(); }, ['note-menu-action']);
-    copyButton.set_tooltip_text('复制正文');
     const deleteButton = U.button('移到回收站', 'trash', () => { editPopover.popdown(); deleteNote(); }, ['note-menu-action', 'danger-button']);
     deleteButton.set_tooltip_text('移到回收站');
-    actions.append(pinButton); actions.append(renameButton); actions.append(copyButton); actions.append(deleteButton); editPopover.set_child(actions);
+    actions.append(deleteButton); editPopover.set_child(actions);
 
     const renameRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: U.DURATION.reveal});
     const renameRow = U.box(Gtk.Orientation.HORIZONTAL, 5, ['rename-row']);
@@ -313,13 +318,13 @@ export function createNotes(ctx) {
     editorScroll.set_child(editor); paper.append(editorScroll); bodyStack.add_named(paper, 'editor');
     const empty = U.box(Gtk.Orientation.VERTICAL, 12, ['empty-state']); empty.set_valign(Gtk.Align.CENTER);
     const emptyTitle = U.label('还没有便签', ['empty-title']); emptyTitle.set_xalign(0.5);
-    const emptyHint = U.label('新建一条，直接开始记录', ['caption']); emptyHint.set_xalign(0.5);
     const emptyAdd = U.button('新建便签', 'plus', addNote, ['primary-button']); emptyAdd.set_halign(Gtk.Align.CENTER);
-    empty.append(emptyTitle); empty.append(emptyHint); empty.append(emptyAdd); bodyStack.add_named(empty, 'empty');
+    empty.append(emptyTitle); empty.append(emptyAdd); bodyStack.add_named(empty, 'empty');
     bodyStack.set_visible_child_name('empty'); card.append(bodyStack);
 
     const footerLayer = new Gtk.Overlay({hexpand: true}); footerLayer.add_css_class('note-footer-layer');
-    const footerWave = U.waveFooter('#E8C568', 54, 22); footerWave.add_css_class('note-footer-wave');
+    const accent = ctx.palette?.()?.t_accent || '#e8a08c';
+    const footerWave = U.waveRule(accent, 8); footerWave.add_css_class('note-footer-wave');
     footerLayer.set_child(footerWave);
     const footer = U.box(Gtk.Orientation.HORIZONTAL, 10, ['note-footer']);
     footer.set_halign(Gtk.Align.FILL); footer.set_valign(Gtk.Align.END);
@@ -454,8 +459,11 @@ export function createNotes(ctx) {
         editor.set_cursor_visible(ready && !!note && !pendingAdd);
         addButton.set_sensitive(ready && !pendingAdd && notes.length < 80);
         emptyAdd.set_sensitive(ready && !pendingAdd && notes.length < 80);
-        renameButton.set_sensitive(ready && !!note && !pendingAdd);
-        copyButton.set_sensitive(ready && !!note);
+        pinAction.set_sensitive(ready && !!note && !pendingAdd);
+        renameAction.set_sensitive(ready && !!note && !pendingAdd);
+        copyAction.set_sensitive(ready && !!note);
+        if (note) mark(pinAction, 'pinned', String(note.title || '').startsWith('★ '));
+        else mark(pinAction, 'pinned', false);
         actionsButton.set_sensitive(ready && !!note && !pendingAdd);
         deleteButton.set_sensitive(ready && !!note && trash.length < 80 && !pendingAdd);
     }

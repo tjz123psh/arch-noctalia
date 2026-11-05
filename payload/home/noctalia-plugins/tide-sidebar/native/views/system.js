@@ -129,7 +129,6 @@ export function createHotspot(ctx) {
 
     const saved = ui.card(['hotspot-card', 'card-stagger-3']);
     saved.append(ui.label('已保存密码', ['section-title']));
-    saved.append(paragraph(ui, '仅在本页临时查看，30 秒后自动隐藏。'));
     const savedButtons = ui.box('horizontal', 8);
     const revealButton = namedButton(ui, '查看密码', 'eye', toggleSecret);
     revealButton.button.set_hexpand(true); revealButton.button.set_tooltip_text('查看或隐藏已保存密码');
@@ -149,7 +148,6 @@ export function createHotspot(ctx) {
     body.append(saved);
     const operationWarning = paragraph(ui, '', ['warning']); show(operationWarning, false);
     body.append(operationWarning);
-    body.append(paragraph(ui, '开启会断开当前 Wi-Fi，有线连接不受影响。关闭后会尝试恢复原 Wi-Fi，可能需要重新认证。'));
 
     const hot = () => current.hotspot || {};
     const configDefaults = () => ctx.config?.() || {};
@@ -362,7 +360,7 @@ export function createHotspot(ctx) {
         ui.setLabel(revealButton.label, secretVisible ? '隐藏密码' : revealing ? '取消读取' : '查看密码');
         ui.setLabel(pending, hasChanges() || h.pending === true
             ? (h.on === true ? '有修改尚未应用；应用时会重启热点。' : '这些设置将在开启热点时使用。')
-            : '5 GHz 启动失败时可能回落到 2.4 GHz；以上方实际频段为准。');
+            : '');
     }
     function update(state) {
         current = state?.system || {hotspot: {}, windows: [], loading: true};
@@ -522,14 +520,6 @@ export function createWindows(ctx) {
     const emptyTitle = ui.label('正在获取窗口', ['section-title']); empty.append(emptyTitle);
     const emptyText = paragraph(ui, '窗口列表会在状态更新后显示。'); empty.append(emptyText);
     content.append(empty); widget.append(scrolled(content));
-    const hint = paragraph(ui, '点击窗口回到应用；右侧关闭按钮会先要求确认。'); widget.append(hint);
-    function updateHint() {
-        const text = ctx.config?.()?.confirmWindowClose === false
-            ? '点击窗口回到应用；右侧关闭按钮会直接关闭该窗口。'
-            : '点击窗口回到应用；右侧关闭按钮会先要求确认。';
-        if (hint.get_text() !== text) hint.set_text(text);
-    }
-
     function cancelClose() { pendingId = null; confirmation.set_reveal_child(false); sensitive(close, false); }
     function openClose(id) {
         if (!shown || !rows.has(id) || current.windowsError) return;
@@ -605,7 +595,6 @@ export function createWindows(ctx) {
             else ui.setLabel(confirmName, rows.get(pendingId).data.title || rows.get(pendingId).data.appId || '未命名窗口');
         }
         if (ctx.config?.()?.confirmWindowClose === false && pendingId) cancelClose();
-        updateHint();
         const error = clean(current.windowsError);
         ui.setLabel(errorLabel, error); show(errorLabel, !!error);
         sensitive(header.refresh, shown);

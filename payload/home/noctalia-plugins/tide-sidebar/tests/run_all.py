@@ -83,8 +83,13 @@ def check_native_lifecycle():
     if "timeout_add(GLib.PRIORITY_DEFAULT, 7" not in js:
         raise SystemExit("drawer timer is no longer matched to the 144 Hz output")
     css = (PLUGIN / "native/style.css").read_text(encoding="utf-8")
-    if "0.004" not in css or "background-clip: padding-box" not in css:
+    palette_js = (PLUGIN / "native/palette.js").read_text(encoding="utf-8")
+    # The parked sliver colour now lives in the palette bridge (t_sliver with a
+    # 0.004 alpha); style.css must reference the token, not a hardcoded colour.
+    if "t_sliver: rgba(bg, 0.004)" not in palette_js or "@t_sliver" not in css:
         raise SystemExit("drawer's hidden 1px must stay near-transparent")
+    if "background-clip: padding-box" not in css:
+        raise SystemExit("drawer must clip its background to the padding box")
     ui = (PLUGIN / "native/ui.js").read_text(encoding="utf-8")
     if "drawerOpen: 620" not in ui or "drawerClose: 560" not in ui:
         raise SystemExit("drawer durations drifted from 620/560")

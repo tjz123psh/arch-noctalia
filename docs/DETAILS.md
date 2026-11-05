@@ -45,6 +45,8 @@
 
 - Noctalia 插件源码：`payload/home/noctalia-plugins/`（`magnifier` 放大镜 + `tide-sidebar` 侧边栏工作台），07 步部署到 `~/noctalia-plugins`，宿主以 path 源 `pang-dev` **直接读这个目录**；改插件就在本仓里改，提交推送后跑 `./install.sh --redo 07` 部署，然后在 Noctalia 里重新载入插件。注意 Noctalia 的插件系统仍会把插件装到 `~/.local/state/noctalia/plugins/`（那份是运行副本，含便签等用户数据，见 `excluded.tsv`），源码与运行副本是两回事。`.backups/`、`magnifier/tools/cursor-track/build/` 属本地产物，不入仓。
 
+- 侧边栏配色跟随壁纸：`native/palette.js` 解析 Noctalia 生成的 `~/.config/gtk-4.0/noctalia.css`（`@define-color`），推导三级表面/两档文字/强调色与透明变体，`style.css` 只用 `@t_*` token，不再有写死颜色（`dark-theme` 手动开关已随之删除）。换壁纸时 `Gio.FileMonitor` 热重载；文件缺失时回退内置调色板。想改侧栏观感要改的是 token 推导（`palette.js`），不是样式表里的字面色值。
+
 - 侧边栏（`tide-sidebar`）的安装器契约：第 03 步装 `gjs`（原生前端运行时）+ `gtk4-layer-shell`（`LD_PRELOAD` 的 `libgtk4-layer-shell.so`，缺它面板起不来），**两者都必须显式列在 `manifests/packages.tsv`**——`gjs` 虽然会被 `sushi` 传递带入，但别赌这条链；第 09 步预检插件源文件与这两个运行时，缺任何一件直接中止而不留半套。首页「工作台与书签」的工程/网址列表由 `~/.config/noctalia/workspaces.json` 驱动（`seed.tsv`：存在即保持，重装不覆盖），模板随 07 部署，侧栏卡片右上角铅笔图标可直编；插件自身也会在缺失时用内置模板补建，两处内容一致。
 
 - GRUB 菜单：`/etc/default/grub` 随 07 部署，其中 `GRUB_DISABLE_BOOTNEXT=true` 关掉 grub 2.16 自带 `31_efi_bootnext` 生成的同名「UEFI OS」条目（不关就会在开机菜单里多出一串重复项）。该变量由 grub 包自己的脚本读取，机型无关；没有这个脚本的系统上它只是一行不起作用的设置。

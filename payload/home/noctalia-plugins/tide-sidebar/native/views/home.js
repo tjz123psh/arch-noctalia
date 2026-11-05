@@ -19,26 +19,24 @@ const DEFAULT_HUB_CONFIG = {
         {
             name: '桌面配置',
             path: '~/.config',
-            desc: '~/.config 桌面配置目录',
-            icon: '⚙️'
+            icon: 'emblem-system'
         },
         {
             name: '插件开发',
             path: '~/noctalia-plugins',
-            desc: 'Noctalia 插件源码',
-            icon: '🧩'
+            icon: 'application-x-addon'
         }
     ],
     bookmarks: [
         {
             name: 'GitHub',
             url: 'https://github.com',
-            icon: '🐙'
+            icon: 'web-browser'
         },
         {
             name: '哔哩哔哩',
             url: 'https://www.bilibili.com',
-            icon: '📺'
+            icon: 'video-display'
         }
     ]
 };
@@ -84,6 +82,7 @@ function loadHubData() {
         return DEFAULT_HUB_CONFIG;
     }
 }
+
 
 function readProcStat() {
     try {
@@ -237,6 +236,114 @@ function formatSpeed(bytesPerSec) {
     return (bytesPerSec / (1024 * 1024)).toFixed(1) + ' MB/s';
 }
 
+
+const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+
+// Symbolic icon names resolve from Adwaita; emoji stay supported because the
+// workspaces.json contract always allowed them.
+function isSymbolicIcon(value) { return /^[a-z0-9-]+(?:-symbolic)?$/.test(String(value || '')); }
+function symbolicName(value) {
+    const raw = String(value || '').trim();
+    if (!isSymbolicIcon(raw)) return null;
+    return raw.endsWith('-symbolic') ? raw : raw + '-symbolic';
+}
+
+function parseAccent(ctx) {
+    const value = String(ctx.palette?.()?.t_accent || '#e8a08c').replace('#', '');
+    return {
+        red: parseInt(value.slice(0, 2), 16) / 255,
+        green: parseInt(value.slice(2, 4), 16) / 255,
+        blue: parseInt(value.slice(4, 6), 16) / 255,
+    };
+}
+
+function present(bin) {
+    return Boolean(GLib.find_program_in_path(bin))
+        || ['/usr/bin/', '/usr/local/bin/', '/bin/'].some(dir => GLib.file_test(dir + bin, GLib.FileTest.IS_EXECUTABLE));
+}
+
+function editorChoice(config) {
+    const configured = String(config?.editorCommand || '').trim();
+    if (configured) {
+        const bin = configured.split(/\s+/)[0];
+        if (GLib.find_program_in_path(bin)) return {command: configured, label: bin};
+        return {command: '', label: bin, missing: true};
+    }
+    for (const [bin, label] of [['code', 'Code'], ['codium', 'VSCodium'], ['zed', 'Zed']]) {
+        if (present(bin)) return {command: bin, label};
+    }
+    if (present('kitty') && present('nvim')) {
+        return {command: 'kitty -e nvim', label: 'nvim'};
+    }
+    return null;
+}
+
+const quote = value => "'" + String(value).replace(/'/g, "'\\''") + "'";
+
+function launch(command, path) {
+    try {
+        GLib.spawn_command_line_async(command + ' ' + quote(path));
+        return true;
+    } catch (_) { return false; }
+}
+
+function fractionBar(ui, {height = 6, names = []} = {}) {
+    const area = new Gtk.DrawingArea({content_height: height, hexpand: true, can_target: false});
+    area.add_css_class('home-fraction');
+    if (names.length) ui.classes(area, names);
+    area.fraction = 0;
+    area.set_draw_func((_w, cr, width, h) => {
+        if (width < 2) return;
+        const radius = h / 2;
+        const acc = area.get_color();
+        const dim = acc.copy();
+        dim.alpha = 0.16;
+        cr.save();
+        cr.arc(radius, radius, radius, Math.PI / 2, Math.PI * 1.5);
+        cr.arc(Math.max(radius, width - radius), radius, radius, Math.PI * 1.5, Math.PI / 2);
+        cr.setSourceRGBA(dim.red, dim.green, dim.blue, dim.alpha);
+        cr.fill();
+        cr.restore();
+        const filled = Math.max(0, Math.min(1, area.fraction)) * width;
+        if (filled < 2) return;
+        const r2 = Math.min(radius, filled / 2);
+        cr.save();
+        cr.arc(r2, radius, r2, Math.PI / 2, Math.PI * 1.5);
+        cr.arc(Math.max(r2, filled - r2), radius, r2, Math.PI * 1.5, Math.PI / 2);
+        cr.setSourceRGBA(acc.red, acc.green, acc.blue, 1);
+        cr.fill();
+        cr.restore();
+    });
+    return area;
+}
+
+function sparkline(ui, values, {height = 26, alpha = 0.85, ceiling = null} = {}) {
+    const area = new Gtk.DrawingArea({content_height: height, hexpand: true, can_target: false});
+    area.add_css_class('home-sparkline');
+    area.set_draw_func((_w, cr, width, h) => {
+        if (width < 4 || h < 4) return;
+        const top = ceiling ?? Math.max(1, ...values);
+        const step = width / Math.max(1, values.length - 1);
+        const y = v => h - 2 - Math.min(1, v / top) * (h - 4);
+        const acc = area.get_color();
+        cr.moveTo(0, h);
+        cr.lineTo(0, y(values[0] || 0));
+        values.forEach((v, i) => cr.lineTo(i * step, y(v)));
+        cr.lineTo(width, y(values[values.length - 1] || 0));
+        cr.lineTo(width, h);
+        cr.closePath();
+        cr.setSourceRGBA(acc.red, acc.green, acc.blue, 0.18 * alpha);
+        cr.fill();
+        cr.moveTo(0, y(values[0] || 0));
+        values.forEach((v, i) => cr.lineTo(i * step, y(v)));
+        cr.setLineWidth(1.6);
+        cr.setLineJoin(1);
+        cr.setSourceRGBA(acc.red, acc.green, acc.blue, alpha);
+        cr.stroke();
+    });
+    return area;
+}
+
 export function createHome(ctx) {
     const {ui} = ctx;
     let shown = false;
@@ -252,20 +359,14 @@ export function createHome(ctx) {
     const cpuHistory = new Array(HISTORY_POINTS).fill(0);
     const corePercents = new Array(16).fill(0);
     const netRxHistory = new Array(HISTORY_POINTS).fill(0);
-    const netTxHistory = new Array(HISTORY_POINTS).fill(0);
     const diskReadHistory = new Array(HISTORY_POINTS).fill(0);
-    const diskWriteHistory = new Array(HISTORY_POINTS).fill(0);
 
     let currentCpuPercent = 0;
-    let currentTemp = 36;
-    let sparkAnim = 0;
-    let tideWavePhase1 = 0;
-    let tideWavePhase2 = 1.2;
+    let tidePhase = 0;
     let taskSampleCounter = 0;
 
-    const page = ui.box(Gtk.Orientation.VERTICAL, 14, ['home-page', 'scroll-gutter']);
-    page.set_hexpand(true);
-    page.set_vexpand(true);
+    const page = ui.box(Gtk.Orientation.VERTICAL, 10, ['home-page', 'scroll-gutter']);
+    page.set_hexpand(true); page.set_vexpand(true);
     const widget = new Gtk.ScrolledWindow({
         hscrollbar_policy: Gtk.PolicyType.NEVER,
         vscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
@@ -275,625 +376,327 @@ export function createHome(ctx) {
     widget.set_child(page);
 
     // =========================================================
-    // 1. 顶部时间与双层交错流波卡片
+    // 1. 时钟卡：日期 + 大号时间 + 电池/运行时长 + 潮汐
     // =========================================================
     const clockCard = ui.card(['home-clock-card', 'card-stagger-1']);
     clockCard.set_spacing(0);
 
-    const clockContent = ui.box(Gtk.Orientation.VERTICAL, 6, ['home-clock-content']);
-    const dateRow = ui.box(Gtk.Orientation.HORIZONTAL, 6);
-    const dateLabel = ui.label('正在加载日期…', ['home-date-label']);
+    const clockContent = ui.box(Gtk.Orientation.VERTICAL, 4, ['home-clock-content']);
+    const dateRow = ui.box(Gtk.Orientation.HORIZONTAL, 8);
+    const dateLabel = ui.label('', ['home-date-label']);
     dateLabel.set_hexpand(true);
-
-    const liveBadge = ui.box(Gtk.Orientation.HORIZONTAL, 5, ['home-live-badge']);
-    const pulseDot = ui.label('●', ['home-pulse-dot']);
-    const statusBadgeText = ui.label('在线', ['caption']);
-    liveBadge.append(pulseDot);
-    liveBadge.append(statusBadgeText);
-    dateRow.append(dateLabel);
-    dateRow.append(liveBadge);
-    clockContent.append(dateRow);
+    dateLabel.set_xalign(0);
+    const statusBadge = ui.box(Gtk.Orientation.HORIZONTAL, 5, ['home-live-badge']);
+    const statusDot = ui.label('●', ['home-pulse-dot']);
+    const statusText = ui.label('在线', ['caption']);
+    statusBadge.append(statusDot); statusBadge.append(statusText);
+    dateRow.append(dateLabel); dateRow.append(statusBadge);
 
     const timeRow = ui.box(Gtk.Orientation.HORIZONTAL, 2, ['home-time-row']);
-    const timeMain = ui.label('00:00', ['home-time-main']);
-    const timeSec = ui.label(':00', ['home-time-sec']);
-    timeSec.set_valign(Gtk.Align.BASELINE);
-    timeRow.append(timeMain);
-    timeRow.append(timeSec);
-    clockContent.append(timeRow);
+    timeRow.set_valign(Gtk.Align.END);
+    const timeMain = ui.label('--:--', ['home-time-main']);
+    const timeSec = ui.label(':--', ['home-time-sec']);
+    timeSec.set_valign(Gtk.Align.END);
+    timeRow.append(timeMain); timeRow.append(timeSec);
 
+    clockContent.append(dateRow);
+    clockContent.append(timeRow);
     clockCard.append(clockContent);
 
-    // 双层自然流动潮汐水波
-    const tideArea = new Gtk.DrawingArea({content_height: 38, hexpand: true, can_target: false});
+    const tideArea = new Gtk.DrawingArea({content_height: 28, hexpand: true, can_target: false});
     tideArea.add_css_class('home-clock-wave');
     tideArea.set_draw_func((_w, cr, width, h) => {
         if (width < 2 || h < 2) return;
-        const cornerRadius = 18;
-
-        // Wave Layer 1 (Under - Pale Yellow #F6E0A0)
-        const y1 = h * 0.35, a1 = 3.5;
-        cr.moveTo(0, y1);
-        cr.curveTo(width * .15, y1 - a1 * Math.cos(tideWavePhase1), width * .30, y1 + a1, width * .48, y1 + a1 * .2);
-        cr.curveTo(width * .62, y1 - a1, width * .78, y1 - a1 * Math.cos(tideWavePhase1 + .8), width, y1 + a1 * .3);
-        cr.lineTo(width, h - cornerRadius);
-        cr.curveTo(width, h - cornerRadius * .45, width - cornerRadius * .45, h, width - cornerRadius, h);
-        cr.lineTo(cornerRadius, h);
-        cr.curveTo(cornerRadius * .45, h, 0, h - cornerRadius * .45, 0, h - cornerRadius);
-        cr.closePath();
-        cr.setSourceRGBA(0.96, 0.88, 0.63, 0.70);
-        cr.fill();
-
-        // Wave Layer 2 (Over - Deep Warm Gold #ECD081)
-        const y2 = h * 0.45, a2 = 2.5;
-        cr.moveTo(0, y2);
-        cr.curveTo(width * .18, y2 + a2 * Math.sin(tideWavePhase2), width * .38, y2 - a2, width * .55, y2 + a2 * .4);
-        cr.curveTo(width * .72, y2 - a2, width * .86, y2 + a2 * Math.cos(tideWavePhase2 + .5), width, y2 - a2 * .2);
-        cr.lineTo(width, h - cornerRadius);
-        cr.curveTo(width, h - cornerRadius * .45, width - cornerRadius * .45, h, width - cornerRadius, h);
-        cr.lineTo(cornerRadius, h);
-        cr.curveTo(cornerRadius * .45, h, 0, h - cornerRadius * .45, 0, h - cornerRadius);
-        cr.closePath();
-        cr.setSourceRGBA(0.92, 0.82, 0.51, 0.90);
-        cr.fill();
+        const acc = parseAccent(ctx);
+        const stroke = (offset, amplitude, widthPx, alpha) => {
+            const y = h * offset;
+            cr.moveTo(0, y);
+            cr.curveTo(width * .16, y - amplitude * Math.cos(tidePhase), width * .34, y + amplitude * Math.sin(tidePhase * 0.9),
+                width * .52, y + amplitude * 0.35);
+            cr.curveTo(width * .70, y - amplitude, width * .86, y + amplitude * 0.6, width, y - amplitude * 0.2);
+            cr.setLineWidth(widthPx);
+            cr.setLineCap(1);
+            cr.setSourceRGBA(acc.red, acc.green, acc.blue, alpha);
+            cr.stroke();
+        };
+        stroke(0.42, 3.4, 1.8, 0.9);
+        stroke(0.70, 2.4, 1.2, 0.42);
     });
     clockCard.append(tideArea);
     page.append(clockCard);
 
     // =========================================================
-    // 2. CPU 计算核心与 16 线程动态律动矩阵
+    // 2. 系统概览：CPU / 内存 / NVMe / 网络 四行 + Top 任务
     // =========================================================
-    const cpuCard = ui.card(['home-cpu-card', 'card-stagger-2']);
-    cpuCard.set_spacing(10);
+    const sysCard = ui.card(['home-cpu-card', 'card-stagger-2']);
+    sysCard.set_spacing(10);
 
-    const cpuHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const cpuTitle = ui.label('CPU 计算引擎', ['section-title']);
-    cpuTitle.set_hexpand(true);
-
-    const cpuSubBox = ui.box(Gtk.Orientation.HORIZONTAL, 6);
+    const sysHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
+    const sysTitle = ui.label('系统概览', ['section-title']);
+    sysTitle.set_hexpand(true);
     const tempDot = ui.label('●', ['home-temp-dot']);
-    const tempLabel = ui.label('35°C', ['caption', 'home-temp-label']);
-    const cpuValue = ui.label('0%', ['home-hw-value']);
-    cpuSubBox.append(tempDot);
-    cpuSubBox.append(tempLabel);
-    cpuSubBox.append(cpuValue);
-    cpuHeader.append(cpuTitle);
-    cpuHeader.append(cpuSubBox);
-    cpuCard.append(cpuHeader);
+    const tempLabel = ui.label('--°C', ['home-temp-label']);
+    sysHeader.append(sysTitle); sysHeader.append(tempDot); sysHeader.append(tempLabel);
+    sysCard.append(sysHeader);
 
-    // 总体 CPU 脉冲波形图
-    const sparkline = new Gtk.DrawingArea({content_height: 42, hexpand: true, can_target: false});
-    sparkline.add_css_class('home-sparkline');
-    sparkline.set_draw_func((_w, cr, width, height) => {
-        if (width < 10 || height < 10) return;
-        const padY = 5;
-        const graphH = height - padY * 2;
-        const stepX = width / (HISTORY_POINTS - 1);
+    const row = (name) => {
+        const box = ui.box(Gtk.Orientation.HORIZONTAL, 8, ['home-hw-row']);
+        const label = ui.label(name, ['home-hw-name']);
+        label.set_size_request(42, -1);
+        const value = ui.label('', ['home-hw-value']);
+        value.set_xalign(1);
+        value.set_size_request(104, -1);
+        box.append(label); box.append(value);
+        return {box, label, value};
+    };
 
-        cr.setLineWidth(2.0);
-        cr.setLineJoin(1);
-        cr.setLineCap(1);
-
-        const points = [];
-        for (let i = 0; i < HISTORY_POINTS; i++) {
-            const raw = Math.max(0, Math.min(100, cpuHistory[i]));
-            const idleWave = raw < 4 ? (Math.sin(i * 0.7 + sparkAnim) * 2.2 + 3.8) : raw;
-            const val = Math.max(2, Math.min(100, idleWave));
-            const x = i * stepX;
-            const y = height - padY - (val / 100) * graphH;
-            points.push({x, y});
-        }
-
-        cr.moveTo(points[0].x, points[0].y);
-        for (let i = 1; i < HISTORY_POINTS; i++) {
-            const prev = points[i - 1];
-            const curr = points[i];
-            const midX = (prev.x + curr.x) / 2;
-            cr.curveTo(midX, prev.y, midX, curr.y, curr.x, curr.y);
-        }
-
-        // Fill
-        cr.save();
-        cr.lineTo(width, height);
-        cr.lineTo(0, height);
-        cr.closePath();
-        cr.setSourceRGBA(0.43, 0.37, 0.11, 0.12);
-        cr.fill();
-        cr.restore();
-
-        // Stroke
-        cr.setSourceRGBA(0.43, 0.37, 0.11, 0.85);
-        cr.stroke();
-
-        // End pulse dot
-        const last = points[HISTORY_POINTS - 1];
-        cr.arc(last.x - 2, last.y, 4, 0, Math.PI * 2);
-        cr.setSourceRGBA(0.43, 0.37, 0.11, 0.25);
-        cr.fill();
-        cr.arc(last.x - 2, last.y, 2.5, 0, Math.PI * 2);
-        cr.setSourceRGBA(0.43, 0.37, 0.11, 1.0);
-        cr.fill();
-    });
-    cpuCard.append(sparkline);
-
-    // 16 核心多线程动态律动矩阵
-    const coreSection = ui.box(Gtk.Orientation.VERTICAL, 4);
-    const coreHeader = ui.box(Gtk.Orientation.HORIZONTAL, 6);
-    const coreTitle = ui.label('多核线程分布 (16 Cores)', ['caption']);
-    coreTitle.set_hexpand(true);
-    coreHeader.append(coreTitle);
-    coreSection.append(coreHeader);
-
-    const coreBars = new Gtk.DrawingArea({content_height: 24, hexpand: true, can_target: false});
-    coreBars.add_css_class('home-core-bars');
-    coreBars.set_draw_func((_w, cr, width, height) => {
-        if (width < 20 || height < 8) return;
-        const count = 16;
+    const cpuRow = row('CPU');
+    const cpuSpark = sparkline(ui, cpuHistory, {height: 22, ceiling: 100});
+    cpuRow.box.insert_child_after(cpuSpark, cpuRow.label);
+    const coreStrip = new Gtk.DrawingArea({content_height: 8, hexpand: true, can_target: false});
+    coreStrip.add_css_class('home-core-bars');
+    coreStrip.set_draw_func((_w, cr, width, h) => {
+        if (width < 8) return;
+        const acc = coreStrip.get_color();
         const gap = 3;
-        const barWidth = Math.max(3, (width - gap * (count - 1)) / count);
-
-        for (let i = 0; i < count; i++) {
-            const x = i * (barWidth + gap);
-            const val = Math.max(0.06, Math.min(1.0, (corePercents[i] || 0) / 100));
-            const barH = val * (height - 2);
-
-            // Background slot
-            cr.setSourceRGBA(0.43, 0.37, 0.11, 0.10);
-            cr.rectangle(x, 1, barWidth, height - 2);
-            cr.fill();
-
-            // Active bar
-            cr.setSourceRGBA(0.43, 0.37, 0.11, 0.75 + val * 0.25);
-            cr.rectangle(x, height - 1 - barH, barWidth, barH);
+        const cell = (width - gap * 15) / 16;
+        for (let i = 0; i < 16; i++) {
+            const pct = corePercents[i] / 100;
+            cr.setSourceRGBA(acc.red, acc.green, acc.blue, 0.10 + 0.80 * pct);
+            cr.rectangle(i * (cell + gap), 0, cell, h);
             cr.fill();
         }
     });
-    coreSection.append(coreBars);
-    cpuCard.append(coreSection);
+    sysCard.append(cpuRow.box);
+    sysCard.append(coreStrip);
 
-    page.append(cpuCard);
+    const ramRow = row('内存');
+    const ramBar = fractionBar(ui, {height: 8, names: ['home-progress']});
+    ramBar.set_valign(Gtk.Align.CENTER);
+    ramRow.box.insert_child_after(ramBar, ramRow.label);
+    sysCard.append(ramRow.box);
 
-    // =========================================================
-    // 3. 内存与缓存监控卡片
-    // =========================================================
-    const memCard = ui.card(['home-mem-card', 'card-stagger-2']);
-    memCard.set_spacing(8);
+    const diskRow = row('NVMe');
+    const diskSpark = sparkline(ui, diskReadHistory, {height: 22});
+    diskRow.box.insert_child_after(diskSpark, diskRow.label);
+    sysCard.append(diskRow.box);
 
-    const memHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const memTitle = ui.label('内存占用 (RAM)', ['section-title']);
-    memTitle.set_hexpand(true);
-    const memValue = ui.label('0 GiB / 0 GiB', ['home-hw-sub']);
-    memHeader.append(memTitle);
-    memHeader.append(memValue);
-    memCard.append(memHeader);
+    const netRow = row('网络');
+    const netSpark = sparkline(ui, netRxHistory, {height: 22});
+    netRow.box.insert_child_after(netSpark, netRow.label);
+    sysCard.append(netRow.box);
 
-    // 内存胶囊进度条
-    const memTrack = ui.box(Gtk.Orientation.HORIZONTAL, 0, ['home-progress-track']);
-    memTrack.set_size_request(-1, 8);
-    const memFill = ui.box(Gtk.Orientation.HORIZONTAL, 0, ['home-progress-fill']);
-    memFill.set_hexpand(false);
-    memTrack.append(memFill);
-    memCard.append(memTrack);
-
-    const memDetail = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const memAvailLabel = ui.label('可用: —', ['caption']);
-    memAvailLabel.set_hexpand(true);
-    const memCacheLabel = ui.label('缓存: —', ['caption']);
-    memDetail.append(memAvailLabel);
-    memDetail.append(memCacheLabel);
-    memCard.append(memDetail);
-
-    page.append(memCard);
-
-    // =========================================================
-    // 4. NVMe 磁盘实时读写动态对冲示波器
-    // =========================================================
-    const diskCard = ui.card(['home-disk-card', 'card-stagger-3']);
-    diskCard.set_spacing(10);
-
-    const diskHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const diskTitle = ui.label('NVMe 存储吞吐', ['section-title']);
-    diskTitle.set_hexpand(true);
-
-    const diskSpeedBox = ui.box(Gtk.Orientation.HORIZONTAL, 12, ['home-net-speed-box']);
-    const diskReadLabel = ui.label('读 ↓ 0 B/s', ['home-speed-rx']);
-    const diskWriteLabel = ui.label('写 ↑ 0 B/s', ['home-speed-tx']);
-    diskSpeedBox.append(diskReadLabel);
-    diskSpeedBox.append(diskWriteLabel);
-    diskHeader.append(diskTitle);
-    diskHeader.append(diskSpeedBox);
-    diskCard.append(diskHeader);
-
-    // 双向对冲脉冲图 (Read up / Write down)
-    const diskGraph = new Gtk.DrawingArea({content_height: 44, hexpand: true, can_target: false});
-    diskGraph.add_css_class('home-net-graph');
-    diskGraph.set_draw_func((_w, cr, width, height) => {
-        if (width < 10 || height < 10) return;
-        const midY = height * 0.5;
-        const stepX = width / (HISTORY_POINTS - 1);
-        const maxVal = Math.max(1024 * 1024, ...diskReadHistory, ...diskWriteHistory);
-
-        // Center baseline
-        cr.setLineWidth(1.0);
-        cr.setSourceRGBA(0.43, 0.37, 0.11, 0.15);
-        cr.moveTo(0, midY);
-        cr.lineTo(width, midY);
-        cr.stroke();
-
-        // 1. Read Stream (pulsing upwards)
-        cr.setLineWidth(1.8);
-        cr.moveTo(0, midY);
-        for (let i = 0; i < HISTORY_POINTS; i++) {
-            const val = diskReadHistory[i] || 0;
-            const h = (val / maxVal) * (midY - 3);
-            const x = i * stepX;
-            const y = midY - Math.max(0, h);
-            cr.lineTo(x, y);
-        }
-        cr.lineTo(width, midY);
-        cr.setSourceRGBA(0.28, 0.50, 0.35, 0.85);
-        cr.stroke();
-
-        // 2. Write Stream (pulsing downwards)
-        cr.moveTo(0, midY);
-        for (let i = 0; i < HISTORY_POINTS; i++) {
-            const val = diskWriteHistory[i] || 0;
-            const h = (val / maxVal) * (midY - 3);
-            const x = i * stepX;
-            const y = midY + Math.max(0, h);
-            cr.lineTo(x, y);
-        }
-        cr.lineTo(width, midY);
-        cr.setSourceRGBA(0.75, 0.45, 0.18, 0.85);
-        cr.stroke();
-    });
-    diskCard.append(diskGraph);
-    page.append(diskCard);
-
-    // =========================================================
-    // 5. 实时网络流量动态水流卡片
-    // =========================================================
-    const netCard = ui.card(['home-net-card', 'card-stagger-3']);
-    netCard.set_spacing(10);
-
-    const netHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const netTitle = ui.label('实时网络吞吐', ['section-title']);
-    netTitle.set_hexpand(true);
-
-    const speedBox = ui.box(Gtk.Orientation.HORIZONTAL, 12, ['home-net-speed-box']);
-    const rxLabel = ui.label('↓ 0 B/s', ['home-speed-rx']);
-    const txLabel = ui.label('↑ 0 B/s', ['home-speed-tx']);
-    speedBox.append(rxLabel);
-    speedBox.append(txLabel);
-    netHeader.append(netTitle);
-    netHeader.append(speedBox);
-    netCard.append(netHeader);
-
-    // 双流波形图 (Rx / Tx Sparkline)
-    const netFlowGraph = new Gtk.DrawingArea({content_height: 44, hexpand: true, can_target: false});
-    netFlowGraph.add_css_class('home-net-graph');
-    netFlowGraph.set_draw_func((_w, cr, width, height) => {
-        if (width < 10 || height < 10) return;
-        const padY = 4;
-        const graphH = height - padY * 2;
-        const stepX = width / (HISTORY_POINTS - 1);
-
-        const maxRx = Math.max(50 * 1024, ...netRxHistory);
-        const maxTx = Math.max(50 * 1024, ...netTxHistory);
-        const scaleCeil = Math.max(maxRx, maxTx);
-
-        function drawStream(data, r, g, b) {
-            cr.setLineWidth(1.8);
-            cr.setLineJoin(1);
-            cr.setLineCap(1);
-
-            const points = [];
-            for (let i = 0; i < HISTORY_POINTS; i++) {
-                const val = data[i] || 0;
-                const ripple = val < 1024 ? (Math.sin(i * 0.8 + sparkAnim) * 1.5 + 2) : (val / scaleCeil) * 100;
-                const normalized = Math.max(2, Math.min(100, ripple));
-                const x = i * stepX;
-                const y = height - padY - (normalized / 100) * graphH;
-                points.push({x, y});
-            }
-
-            cr.moveTo(points[0].x, points[0].y);
-            for (let i = 1; i < HISTORY_POINTS; i++) {
-                const prev = points[i - 1];
-                const curr = points[i];
-                const midX = (prev.x + curr.x) / 2;
-                cr.curveTo(midX, prev.y, midX, curr.y, curr.x, curr.y);
-            }
-
-            cr.save();
-            cr.lineTo(width, height);
-            cr.lineTo(0, height);
-            cr.closePath();
-            cr.setSourceRGBA(r, g, b, 0.12);
-            cr.fill();
-            cr.restore();
-
-            cr.setSourceRGBA(r, g, b, 0.85);
-            cr.stroke();
-
-            const last = points[HISTORY_POINTS - 1];
-            cr.arc(last.x - 2, last.y, 2.5, 0, Math.PI * 2);
-            cr.setSourceRGBA(r, g, b, 1.0);
-            cr.fill();
-        }
-
-        drawStream(netRxHistory, 0.28, 0.50, 0.35);
-        drawStream(netTxHistory, 0.55, 0.45, 0.15);
-    });
-    netCard.append(netFlowGraph);
-    page.append(netCard);
-
-    // =========================================================
-    // 6. 前台活跃任务雷达 (Top Active Tasks)
-    // =========================================================
-    const taskCard = ui.card(['home-task-card', 'card-stagger-3']);
-    taskCard.set_spacing(8);
-
-    const taskHeader = ui.box(Gtk.Orientation.HORIZONTAL, 6);
-    const taskTitle = ui.label('前台活跃任务 (Top Tasks)', ['section-title']);
-    taskTitle.set_hexpand(true);
-    taskHeader.append(taskTitle);
-    taskCard.append(taskHeader);
+    const divider = new Gtk.Separator({orientation: Gtk.Orientation.HORIZONTAL});
+    sysCard.append(divider);
 
     const taskRows = [];
     for (let i = 0; i < 3; i++) {
-        const row = ui.box(Gtk.Orientation.HORIZONTAL, 8, ['home-task-row']);
-        const nameLabel = ui.label('—', ['home-task-name']);
-        nameLabel.set_hexpand(true);
-
-        const meterTrack = ui.box(Gtk.Orientation.HORIZONTAL, 0, ['home-task-meter-track']);
-        meterTrack.set_size_request(90, 6);
-        const meterFill = ui.box(Gtk.Orientation.HORIZONTAL, 0, ['home-task-meter-fill']);
-        meterTrack.append(meterFill);
-
-        const cpuLabel = ui.label('0.0%', ['caption', 'home-task-cpu']);
-        cpuLabel.set_size_request(42, -1);
-        cpuLabel.set_xalign(1);
-
-        row.append(nameLabel);
-        row.append(meterTrack);
-        row.append(cpuLabel);
-        taskCard.append(row);
-        taskRows.push({nameLabel, meterFill, cpuLabel});
+        const line = ui.box(Gtk.Orientation.HORIZONTAL, 8, ['home-task-row']);
+        const name = ui.label('—', ['home-task-name']);
+        name.set_size_request(88, -1);
+        name.set_ellipsize(Pango.EllipsizeMode.END);
+        const meter = fractionBar(ui, {height: 6, names: ['home-task-meter']});
+        meter.set_valign(Gtk.Align.CENTER);
+        const cpu = ui.label('0.0%', ['home-task-cpu']);
+        cpu.set_xalign(1);
+        cpu.set_size_request(46, -1);
+        line.append(name); line.append(meter); line.append(cpu);
+        sysCard.append(line);
+        taskRows.push({name, meter, cpu});
     }
-    page.append(taskCard);
+    page.append(sysCard);
 
     // =========================================================
-    // 6. 极速工作台与网址书签 (Workspaces & Bookmarks - 动态接口驱动)
+    // 3. 工作台：工程 + 书签（接口驱动，编辑器自动探测）
     // =========================================================
-    const launcherCard = ui.card(['home-launcher-card', 'card-stagger-3']);
-    launcherCard.set_spacing(10);
+    const hubCard = ui.card(['home-launcher-card', 'card-stagger-3']);
+    hubCard.set_spacing(8);
 
-    const launcherHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const launcherTitle = ui.label('工作台与书签', ['section-title']);
-    launcherTitle.set_hexpand(true);
-
+    const hubHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
+    const hubTitle = ui.label('工作台', ['section-title']);
+    hubTitle.set_hexpand(true);
     const editConfigBtn = ui.iconButton('document-edit', () => {
         ensureWorkspaceConfig();
-        GLib.spawn_command_line_async(`code "${WORKSPACES_FILE}" || xdg-open "${WORKSPACES_FILE}"`);
-        if (ctx.toast) ctx.toast('已打开配置接口: workspaces.json');
-    }, '编辑工程与书签列表 (JSON 接口)');
-    editConfigBtn.add_css_class('launcher-edit-btn');
+        const ed = editorChoice(ctx.config?.());
+        if (ed && ed.command && launch(ed.command, WORKSPACES_FILE)) {
+            if (ctx.toast) ctx.toast('已在 ' + ed.label + ' 打开工作区配置');
+        } else if (launch('xdg-open', WORKSPACES_FILE)) {
+            if (ctx.toast) ctx.toast('已用默认程序打开工作区配置');
+        } else {
+            if (ctx.toast) ctx.toast('打不开配置文件：没有可用的编辑器', true);
+        }
+    }, '编辑工作区配置 (JSON)', ['launcher-edit-btn']);
+    hubHeader.append(hubTitle); hubHeader.append(editConfigBtn);
+    hubCard.append(hubHeader);
 
-    launcherHeader.append(launcherTitle);
-    launcherHeader.append(editConfigBtn);
-    launcherCard.append(launcherHeader);
-
-    // --- 分组 1: 项目列表 ---
-    const wsSubHeader = ui.label('项目列表 · Projects', ['caption']);
-    wsSubHeader.set_xalign(0);
-    launcherCard.append(wsSubHeader);
-
-    const projectListBox = ui.box(Gtk.Orientation.VERTICAL, 6);
-    launcherCard.append(projectListBox);
-
-    // --- 分组 2: 常用网址 ---
-    const bookmarkSubHeader = ui.label('常用网址 · Bookmarks', ['caption']);
-    bookmarkSubHeader.set_xalign(0);
-    launcherCard.append(bookmarkSubHeader);
-
+    const projectList = ui.box(Gtk.Orientation.VERTICAL, 6);
+    hubCard.append(projectList);
     const bookmarkGrid = new Gtk.Grid({column_homogeneous: true, row_homogeneous: true, column_spacing: 6, row_spacing: 6});
-    launcherCard.append(bookmarkGrid);
+    hubCard.append(bookmarkGrid);
 
-    function renderHub() {
-        ui.clear(projectListBox);
-        for (let child = bookmarkGrid.get_first_child(); child;) {
+    function clearBox(box) {
+        for (let child = box.get_first_child(); child;) {
             const next = child.get_next_sibling();
-            bookmarkGrid.remove(child);
+            box.remove(child);
             child = next;
         }
+    }
 
+    function renderHub() {
+        clearBox(projectList);
+        clearBox(bookmarkGrid);
         const data = loadHubData();
-        const projects = data.workspaces || [];
-        const bookmarks = data.bookmarks || [];
+        const editor = editorChoice(ctx.config?.());
 
-        projects.forEach(p => {
-            const row = ui.box(Gtk.Orientation.HORIZONTAL, 6, ['launcher-item-row']);
-            const info = ui.box(Gtk.Orientation.VERTICAL, 1);
-            info.set_hexpand(true);
-            const titleText = (p.icon ? p.icon + ' ' : '') + (p.name || '未命名工程');
-            const nameLabel = ui.label(titleText, ['launcher-item-name']);
-            nameLabel.set_xalign(0);
-            const descLabel = ui.label(p.desc || p.path || '', ['caption', 'launcher-item-desc']);
-            descLabel.set_xalign(0);
-            info.append(nameLabel);
-            info.append(descLabel);
-            row.append(info);
+        for (const project of data.workspaces || []) {
+            const line = ui.box(Gtk.Orientation.HORIZONTAL, 8, ['launcher-item-row']);
+            const iconName = symbolicName(project.icon) || 'folder-symbolic';
+            const glyph = ui.icon(iconName, 18);
+            const name = ui.label(project.name || project.path || '未命名', ['launcher-item-name']);
+            name.set_hexpand(true);
+            name.set_ellipsize(Pango.EllipsizeMode.END);
+            name.set_xalign(0);
+            line.append(glyph); line.append(name);
 
-            const resolved = resolvePath(p.path);
+            const resolved = resolvePath(project.path);
+            if (present('kitty')) {
+                const term = ui.button('终端', null, () => {
+                    if (launch('kitty --directory', resolved)) {
+                        if (ctx.toast) ctx.toast('已在终端打开 ' + (project.name || resolved));
+                    } else if (ctx.toast) ctx.toast('无法启动终端', true);
+                }, ['launcher-action-pill', 'icon-button']);
+                term.set_tooltip_text('在终端打开 ' + resolved);
+                line.append(term);
+            }
+            if (editor) {
+                const open = ui.button(editor.label, null, () => {
+                    if (launch(editor.command, resolved)) {
+                        if (ctx.toast) ctx.toast('已在 ' + editor.label + ' 打开 ' + (project.name || resolved));
+                    } else if (ctx.toast) {
+                        ctx.toast(editor.missing
+                            ? '找不到 ' + editor.label + '：请在插件设置里改“编辑器命令”'
+                            : '无法启动 ' + editor.label, true);
+                    }
+                }, ['launcher-action-pill']);
+                open.set_tooltip_text('用 ' + editor.label + ' 打开 ' + resolved);
+                line.append(open);
+            }
+            projectList.append(line);
+        }
 
-            const termBtn = ui.button('终端', null, () => {
-                GLib.spawn_command_line_async(`kitty --directory "${resolved}"`);
-                if (ctx.toast) ctx.toast(`已在终端打开: ${p.name}`);
-            }, ['dev-pill', 'launcher-action-pill']);
-            termBtn.set_tooltip_text(`在 Kitty 终端打开: ${resolved}`);
-
-            const codeBtn = ui.button('Code', null, () => {
-                GLib.spawn_command_line_async(`code "${resolved}"`);
-                if (ctx.toast) ctx.toast(`已在 VS Code 打开: ${p.name}`);
-            }, ['dev-pill', 'launcher-action-pill']);
-            codeBtn.set_tooltip_text(`在 VS Code 打开: ${resolved}`);
-
-            row.append(termBtn);
-            row.append(codeBtn);
-            projectListBox.append(row);
-        });
-
-        bookmarks.forEach((bm, i) => {
-            const labelText = (bm.icon ? bm.icon + ' ' : '') + (bm.name || bm.label || '网址');
-            const btn = ui.button(labelText, null, () => {
-                GLib.spawn_command_line_async(`xdg-open "${bm.url}"`);
-                if (ctx.toast) ctx.toast(`正在打开: ${labelText}`);
-            }, ['dev-pill', 'bookmark-pill']);
-            btn.set_tooltip_text(bm.url || '');
-            bookmarkGrid.attach(btn, i % 2, Math.floor(i / 2), 1, 1);
+        (data.bookmarks || []).forEach((bookmark, index) => {
+            const iconName = symbolicName(bookmark.icon);
+            const button = ui.button(bookmark.name || '网址', iconName, () => {
+                if (launch('xdg-open', bookmark.url)) {
+                    if (ctx.toast) ctx.toast('正在打开 ' + (bookmark.name || bookmark.url));
+                } else if (ctx.toast) ctx.toast('无法打开 ' + (bookmark.name || bookmark.url), true);
+            }, ['bookmark-pill']);
+            button.set_tooltip_text(bookmark.url || '');
+            bookmarkGrid.attach(button, index % 2, Math.floor(index / 2), 1, 1);
         });
     }
 
-    renderHub();
-    page.append(launcherCard);
+    page.append(hubCard);
 
     // =========================================================
-    // 动态采样与时钟循环
+    // 采样循环
     // =========================================================
     function updateClock() {
         const now = new Date();
-        const hh = String(now.getHours()).padStart(2, '0');
-        const mm = String(now.getMinutes()).padStart(2, '0');
-        const ss = String(now.getSeconds()).padStart(2, '0');
-        timeMain.set_label(`${hh}:${mm}`);
-        timeSec.set_label(`:${ss}`);
+        timeMain.set_label(String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'));
+        timeSec.set_label(':' + String(now.getSeconds()).padStart(2, '0'));
+        dateLabel.set_label((now.getMonth() + 1) + '月' + now.getDate() + '日 ' + WEEKDAYS[now.getDay()]);
 
-        const month = now.getMonth() + 1;
-        const date = now.getDate();
-        const weekday = WEEKDAYS[now.getDay()];
-        dateLabel.set_label(`${month}月${date}日 ${weekday}`);
-
-        const bat = readBattery();
+        const battery = readBattery();
         const uptime = readProcUptime();
-        if (bat) {
-            const symbol = bat.isCharging ? '⚡ ' : '';
-            statusBadgeText.set_label(`${symbol}${bat.cap}% · ${uptime || '正常'}`);
+        if (battery) {
+            const symbol = battery.isCharging ? '⚡ ' : '';
+            statusText.set_label(symbol + battery.cap + '% · ' + (uptime || '在线'));
         } else {
-            statusBadgeText.set_label(uptime || '在线');
+            statusText.set_label(uptime || '在线');
         }
     }
 
     function sampleHardware() {
-        const nowTime = GLib.get_monotonic_time();
-        const deltaSec = Math.max(0.5, (nowTime - lastSampleTime) / 1000000);
-        lastSampleTime = nowTime;
+        const now = GLib.get_monotonic_time();
+        const delta = Math.max(0.5, (now - lastSampleTime) / 1e6);
+        lastSampleTime = now;
 
-        // 1. CPU & Temperature
-        const nextStat = readProcStat();
-        if (lastStat && nextStat) {
-            const idleDelta = nextStat.total.idle - lastStat.total.idle;
-            const totalDelta = nextStat.total.total - lastStat.total.total;
-            if (totalDelta > 0) {
-                currentCpuPercent = Math.max(0, Math.min(100, Math.round(((totalDelta - idleDelta) / totalDelta) * 100)));
-            }
-
+        const stat = readProcStat();
+        if (lastStat && stat) {
+            const idle = stat.total.idle - lastStat.total.idle;
+            const total = stat.total.total - lastStat.total.total;
+            if (total > 0) currentCpuPercent = Math.max(0, Math.min(100, Math.round(((total - idle) / total) * 100)));
             for (let i = 0; i < 16; i++) {
-                if (nextStat.cores[i] && lastStat.cores[i]) {
-                    const cIdle = nextStat.cores[i].idle - lastStat.cores[i].idle;
-                    const cTotal = nextStat.cores[i].total - lastStat.cores[i].total;
-                    if (cTotal > 0) {
-                        corePercents[i] = Math.max(0, Math.min(100, Math.round(((cTotal - cIdle) / cTotal) * 100)));
-                    }
-                }
+                if (!stat.cores[i] || !lastStat.cores[i]) continue;
+                const ci = stat.cores[i].idle - lastStat.cores[i].idle;
+                const ct = stat.cores[i].total - lastStat.cores[i].total;
+                if (ct > 0) corePercents[i] = Math.max(0, Math.min(100, Math.round(((ct - ci) / ct) * 100)));
             }
         }
-        lastStat = nextStat;
-        cpuHistory.shift();
-        cpuHistory.push(currentCpuPercent);
-        cpuValue.set_label(`${currentCpuPercent}%`);
+        lastStat = stat;
+        cpuHistory.shift(); cpuHistory.push(currentCpuPercent);
+        cpuRow.value.set_label(currentCpuPercent + '%');
+        cpuSpark.queue_draw();
+        coreStrip.queue_draw();
 
         const temp = readHwmonTemp();
         if (temp !== null) {
-            currentTemp = temp;
-            tempLabel.set_label(`${currentTemp}°C`);
-            if (currentTemp > 75) {
-                tempDot.remove_css_class('warm'); tempDot.add_css_class('hot');
-            } else if (currentTemp > 55) {
-                tempDot.remove_css_class('hot'); tempDot.add_css_class('warm');
-            } else {
-                tempDot.remove_css_class('hot'); tempDot.remove_css_class('warm');
-            }
+            tempLabel.set_label(temp + '°C');
+            tempDot.remove_css_class('warm'); tempDot.remove_css_class('hot');
+            if (temp > 75) tempDot.add_css_class('hot');
+            else if (temp > 55) tempDot.add_css_class('warm');
         }
 
-        sparkAnim = (sparkAnim + 0.35) % (Math.PI * 2);
-        sparkline.queue_draw();
-        coreBars.queue_draw();
-
-        // 2. Memory
         const mem = readProcMeminfo();
         if (mem && mem.total > 0) {
-            const memPercent = Math.round(mem.percent);
-            memValue.set_label(`${formatBytes(mem.used)} / ${formatBytes(mem.total)} (${memPercent}%)`);
-            memAvailLabel.set_label(`可用: ${formatBytes(mem.avail)}`);
-            memCacheLabel.set_label(`缓存: ${formatBytes(mem.cache)}`);
-
-            const fraction = Math.max(0.02, Math.min(1.0, memPercent / 100));
-            memFill.set_size_request(Math.max(8, Math.round(fraction * 360)), 8);
+            const pct = Math.round(mem.percent);
+            ramRow.value.set_label(formatBytes(mem.used) + ' / ' + formatBytes(mem.total));
+            ramBar.fraction = Math.max(0.01, Math.min(1, pct / 100));
+            ramBar.queue_draw();
+            ramRow.label.set_tooltip_text('可用 ' + formatBytes(mem.avail) + ' · 缓存 ' + formatBytes(mem.cache));
         }
 
-        // 3. Disk I/O
-        const nextDisk = readProcDisk();
-        let rSpeed = 0, wSpeed = 0;
-        if (lastDisk && nextDisk) {
-            rSpeed = Math.max(0, Math.round((nextDisk.readBytes - lastDisk.readBytes) / deltaSec));
-            wSpeed = Math.max(0, Math.round((nextDisk.writeBytes - lastDisk.writeBytes) / deltaSec));
+        const disk = readProcDisk();
+        let read = 0, write = 0;
+        if (lastDisk && disk) {
+            read = Math.max(0, Math.round((disk.readBytes - lastDisk.readBytes) / delta));
+            write = Math.max(0, Math.round((disk.writeBytes - lastDisk.writeBytes) / delta));
         }
-        lastDisk = nextDisk;
-        diskReadHistory.shift();
-        diskReadHistory.push(rSpeed);
-        diskWriteHistory.shift();
-        diskWriteHistory.push(wSpeed);
+        lastDisk = disk;
+        diskReadHistory.shift(); diskReadHistory.push(read);
+        diskRow.value.set_label('读 ' + formatSpeed(read) + ' · 写 ' + formatSpeed(write));
+        diskSpark.queue_draw();
 
-        diskReadLabel.set_label(`读 ↓ ${formatSpeed(rSpeed)}`);
-        diskWriteLabel.set_label(`写 ↑ ${formatSpeed(wSpeed)}`);
-        diskGraph.queue_draw();
-
-        // 4. Network
-        const nextNet = readProcNet();
-        let rxSpeed = 0, txSpeed = 0;
-        if (lastNet && nextNet) {
-            rxSpeed = Math.max(0, Math.round((nextNet.rx - lastNet.rx) / deltaSec));
-            txSpeed = Math.max(0, Math.round((nextNet.tx - lastNet.tx) / deltaSec));
+        const net = readProcNet();
+        let rx = 0, tx = 0;
+        if (lastNet && net) {
+            rx = Math.max(0, Math.round((net.rx - lastNet.rx) / delta));
+            tx = Math.max(0, Math.round((net.tx - lastNet.tx) / delta));
         }
-        lastNet = nextNet;
-        netRxHistory.shift();
-        netRxHistory.push(rxSpeed);
-        netTxHistory.shift();
-        netTxHistory.push(txSpeed);
+        lastNet = net;
+        netRxHistory.shift(); netRxHistory.push(rx);
+        netRow.value.set_label('↓ ' + formatSpeed(rx) + ' ↑ ' + formatSpeed(tx));
+        netSpark.queue_draw();
 
-        rxLabel.set_label(`↓ ${formatSpeed(rxSpeed)}`);
-        txLabel.set_label(`↑ ${formatSpeed(txSpeed)}`);
-        netFlowGraph.queue_draw();
-
-        // 5. Top Tasks (节流采样，大幅降低进程派生开销)
+        // `ps` is the only fork in this loop: sample it every other tick.
         taskSampleCounter++;
         if (taskSampleCounter % 2 === 1) {
             const tasks = readTopTasks();
-            for (let i = 0; i < 3; i++) {
-                const row = taskRows[i];
-                const t = tasks[i];
-                if (t) {
-                    row.nameLabel.set_label(t.name);
-                    row.cpuLabel.set_label(t.cpu.toFixed(1) + '%');
-                    const fraction = Math.max(0.04, Math.min(1.0, t.cpu / 100));
-                    row.meterFill.set_size_request(Math.round(fraction * 90), 6);
+            taskRows.forEach((rowItem, index) => {
+                const task = tasks[index];
+                if (task) {
+                    rowItem.name.set_label(task.name);
+                    rowItem.cpu.set_label(task.cpu.toFixed(1) + '%');
+                    rowItem.meter.fraction = Math.max(0.02, Math.min(1, task.cpu / 100));
+                    rowItem.meter.queue_draw();
                 } else {
-                    row.nameLabel.set_label('—');
-                    row.cpuLabel.set_label('0.0%');
-                    row.meterFill.set_size_request(4, 6);
+                    rowItem.name.set_label('—');
+                    rowItem.cpu.set_label('0.0%');
+                    rowItem.meter.fraction = 0;
+                    rowItem.meter.queue_draw();
                 }
-            }
+            });
         }
     }
 
@@ -918,8 +721,7 @@ export function createHome(ctx) {
         if (!waveTick) {
             waveTick = tideArea.add_tick_callback(() => {
                 if (!shown) { waveTick = 0; return GLib.SOURCE_REMOVE; }
-                tideWavePhase1 = (tideWavePhase1 + 0.024) % (Math.PI * 2);
-                tideWavePhase2 = (tideWavePhase2 + 0.032) % (Math.PI * 2);
+                tidePhase = (tidePhase + 0.02) % (Math.PI * 2);
                 tideArea.queue_draw();
                 return GLib.SOURCE_CONTINUE;
             });
@@ -934,7 +736,7 @@ export function createHome(ctx) {
 
     return {
         widget,
-        update(_state) {},
+        update() {},
         onShow() {
             shown = true;
             renderHub();
@@ -944,8 +746,6 @@ export function createHome(ctx) {
             shown = false;
             stopLoops();
         },
-        handleEscape() {
-            return false;
-        },
+        handleEscape() { return false; },
     };
 }

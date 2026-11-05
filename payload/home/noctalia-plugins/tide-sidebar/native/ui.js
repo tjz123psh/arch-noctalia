@@ -171,6 +171,48 @@ function makeWave(color, height, cornerRadius) {
     });
     return area;
 }
+// A rule-style wave: one stroked line, no filled body. This is the shape the
+// 2026-11 redesign uses as a separator (notes footer, calculator mid-rule);
+// a filled block at low contrast is what made the old design read as "cheap".
+export function waveRule(color = '#F1D68B', height = 8) {
+    const area = new Gtk.DrawingArea({content_height: height, hexpand: true, can_target: false});
+    const hex = String(color).replace('#', '');
+    const rgb = {
+        r: parseInt(hex.slice(0, 2), 16) / 255,
+        g: parseInt(hex.slice(2, 4), 16) / 255,
+        b: parseInt(hex.slice(4, 6), 16) / 255,
+    };
+    let phase = 0;
+    let tick = 0;
+    area.set_draw_func((_widget, cr, width, h) => {
+        if (width < 2 || h < 2) return;
+        const y = h * 0.5;
+        const amp = Math.min(2.6, h * 0.32);
+        cr.moveTo(0, y);
+        cr.curveTo(width * .18, y - amp * Math.cos(phase), width * .34, y + amp * Math.sin(phase * .9), width * .52, y + amp * .25);
+        cr.curveTo(width * .70, y - amp, width * .86, y + amp * .6, width, y - amp * .2);
+        cr.setLineWidth(1.6);
+        cr.setLineCap(1);
+        cr.setSourceRGBA(rgb.r, rgb.g, rgb.b, 0.55);
+        cr.stroke();
+    });
+    area.startBreathe = () => {
+        if (tick || !Gtk.Settings.get_default().gtk_enable_animations) return;
+        tick = area.add_tick_callback(() => {
+            if (!area.get_mapped()) { tick = 0; return GLib.SOURCE_REMOVE; }
+            phase = (phase + 0.014) % (Math.PI * 2);
+            area.queue_draw();
+            return GLib.SOURCE_CONTINUE;
+        });
+    };
+    area.stopBreathe = () => {
+        if (tick) { area.remove_tick_callback(tick); tick = 0; }
+    };
+    area.pulse = () => {};
+    area.connect('unmap', () => area.stopBreathe());
+    return area;
+}
+
 export function waveBand(color = '#F1D68B', height = 22) { return makeWave(color, height, 0); }
 export function waveFooter(color = '#ECD081', height = 54, radius = 22) { return makeWave(color, height, radius); }
 
