@@ -144,10 +144,12 @@ test('real GTK editor preserves selection, undo and independent note buffers', (
         b: parseInt(fgToken.slice(4, 6), 16) / 255};
     check(Math.abs(color.red - want.r) < 0.01 && Math.abs(color.green - want.g) < 0.01
         && Math.abs(color.blue - want.b) < 0.01, 'the native editor lost the palette foreground ink');
-    const footer = find(h.view.widget, item => item instanceof Gtk.Overlay && item.has_css_class('note-footer-layer'));
-    check(footer && footer.get_child() instanceof Gtk.DrawingArea, 'the footer is not backed by the shared natural wave');
-    equal(footer.get_child().get_content_height(), 8, 'footer rule height diverged from the thin accent rule');
-    check(!footer.get_child().get_can_target(), 'decorative wave must not intercept editor or footer input');
+    const footer = find(h.view.widget, item => item.has_css_class('note-footer-layer'));
+    const rule = footer?.get_first_child();
+    check(rule instanceof Gtk.DrawingArea, 'the footer is not preceded by the shared wave rule');
+    equal(rule.get_content_height(), 8, 'footer rule height diverged from the thin accent rule');
+    check(!rule.get_can_target(), 'decorative wave must not intercept editor or footer input');
+    check(rule.get_next_sibling()?.has_css_class('note-footer'), 'footer row must follow the rule in the same column');
 
     h.button('复制正文').emit('clicked');
     equal(h.copies.at(-1), 'draft中', 'copy did not use the local draft');

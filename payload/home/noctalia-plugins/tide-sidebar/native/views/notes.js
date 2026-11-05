@@ -322,19 +322,21 @@ export function createNotes(ctx) {
     empty.append(emptyTitle); empty.append(emptyAdd); bodyStack.add_named(empty, 'empty');
     bodyStack.set_visible_child_name('empty'); card.append(bodyStack);
 
-    const footerLayer = new Gtk.Overlay({hexpand: true}); footerLayer.add_css_class('note-footer-layer');
+    // Rule above the footer, not behind it: the 8px wave used to sit under the
+    // footer row (54px overlay slot) and was simply invisible after the redesign.
+    const footerLayer = U.box(Gtk.Orientation.VERTICAL, 4, ['note-footer-layer']);
     const accent = ctx.palette?.()?.t_accent || '#e8a08c';
     const footerWave = U.waveRule(accent, 8); footerWave.add_css_class('note-footer-wave');
-    footerLayer.set_child(footerWave);
+    footerLayer.append(footerWave);
     const footer = U.box(Gtk.Orientation.HORIZONTAL, 10, ['note-footer']);
-    footer.set_halign(Gtk.Align.FILL); footer.set_valign(Gtk.Align.END);
+    footer.set_halign(Gtk.Align.FILL);
     const count = U.label('0 字', ['caption']);
     const status = U.label('正在连接…', ['status-label']); status.set_hexpand(true); status.set_xalign(1);
     const actionsButton = new Gtk.MenuButton({tooltip_text: '便签操作'});
     actionsButton.add_css_class('note-actions-button'); actionsButton.set_icon_name('document-edit-symbolic');
     actionsButton.set_always_show_arrow(false); actionsButton.set_popover(editPopover);
     footer.append(count); footer.append(status); footer.append(actionsButton);
-    footerLayer.add_overlay(footer); footerLayer.set_measure_overlay(footer, false); card.append(footerLayer);
+    footerLayer.append(footer); card.append(footerLayer);
     const undoRevealer = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: U.DURATION.reveal});
     const undoRow = U.box(Gtk.Orientation.HORIZONTAL, 7, ['undo-row']);
     const undoText = U.label('已移到回收站', ['caption']); undoText.set_hexpand(true);
