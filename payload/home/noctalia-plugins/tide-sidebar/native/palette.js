@@ -183,6 +183,7 @@ export function buildTokens(defines = {}) {
         // Group plates sit one step above the glass; rows only get hairlines.
         t_group: dark ? rgba({r: 255, g: 255, b: 255}, 0.085) : rgba({r: 255, g: 255, b: 255}, 0.72),
         t_row_hover: dark ? rgba({r: 255, g: 255, b: 255}, 0.04) : rgba({r: 0, g: 0, b: 0}, 0.035),
+        t_row_active: dark ? rgba({r: 255, g: 255, b: 255}, 0.085) : rgba({r: 0, g: 0, b: 0}, 0.07),
         t_separator: dark ? rgba({r: 255, g: 255, b: 255}, 0.075) : rgba({r: 0, g: 0, b: 0}, 0.08),
         // Static data ink: neutral on purpose, so the accent stays a state and
         // not a decoration. Peaks switch to @t_accent explicitly.

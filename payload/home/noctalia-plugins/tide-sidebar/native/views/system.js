@@ -442,7 +442,13 @@ export function createWindows(ctx) {
     // the layer-shell surface and the panel silently grows past 450px.
     const page = ui.box('vertical', 10, ['scroll-gutter']);
     const search = ui.classes(new Gtk.SearchEntry({hexpand: true, placeholder_text: '搜索应用或窗口'}), ['field-muted']);
-    page.append(search);
+    // Search lives in the same group grammar as everything else instead of
+    // floating as a bare field on the glass.
+    const searchGroup = ui.box('vertical', 0, ['mac-group', 'rise', 'rise-0']);
+    const searchRow = ui.box('horizontal', 0, ['mac-row']);
+    searchRow.append(search);
+    searchGroup.append(searchRow);
+    page.append(searchGroup);
 
     // Niri 桌面中控卡片
     const niriCard = ui.card(['card', 'niri-control-card', 'rise', 'rise-1']);

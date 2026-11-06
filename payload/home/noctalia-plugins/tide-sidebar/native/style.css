@@ -59,7 +59,7 @@
   color: @t_fg;
   background-color: transparent;
   border: 1px solid transparent;
-  transition: background-color 140ms ease-out, color 120ms ease-out, box-shadow 140ms ease-out;
+  transition: background-color 120ms ease-out, color 120ms ease-out, box-shadow 120ms ease-out;
 }
 .tide-window .nav-button:hover {
   background-color: @t_glass_rail;
@@ -228,7 +228,8 @@
 }
 /* Reading surfaces keep more body than decorative cards: long Chinese text on
    a 0.82 glass is where translucency starts to cost legibility. */
-.tide-window .notes-card { background-color: @t_glass_read; padding: 0; }
+.tide-window .notes-card { background-color: @t_glass_read; padding: 0; transition: border-color 160ms ease-out; }
+.tide-window .notes-card:focus-within { border-color: @t_accent_soft; }
 .tide-window .tools-card { background-color: @t_group; padding: 0; }
 .tide-window .home-clock-card {
   background-color: @t_glass_card;
@@ -374,7 +375,8 @@
   background-color: transparent; border-radius: 9px; padding: 4px 6px;
   transition: background-color 120ms ease-out;
 }
-.tide-window .note-row:hover { background-color: @t_surf2; }
+.tide-window .note-row:hover { background-color: @t_row_hover; }
+.tide-window .note-row:active { background-color: @t_row_active; }
 .tide-window .note-row.active { background-color: @t_accent_ghost; box-shadow: inset 2px 0 0 @t_accent; }
 .tide-window .note-row.drop-target { background-color: @t_accent_soft; }
 .tide-window .note-list-title { font-size: 12px; }
@@ -439,7 +441,8 @@
 .tide-window .equals-button:active { background-color: @t_accent; box-shadow: inset 0 2px 3px @t_shadow; }
 .tide-window .tools-history { padding: 2px 12px 8px; }
 .tide-window .history-row { min-height: 34px; background-color: transparent; border-color: transparent; color: @t_fg_dim; }
-.tide-window .history-row:hover { background-color: @t_surf2; }
+.tide-window .history-row:hover { background-color: @t_row_hover; }
+.tide-window .history-row:active { background-color: @t_row_active; }
 .tide-window expander-widget { color: @t_fg_dim; }
 .tide-window expander-widget:hover { color: @t_fg; }
 
@@ -490,7 +493,8 @@
 .tide-window .stopwatch-actions .primary { background-color: @t_accent; color: @t_accent_fg; }
 .tide-window .stopwatch-actions .soft-button { background-color: transparent; border-color: @t_border; color: @t_fg_dim; }
 .tide-window .stopwatch-lap-row { min-height: 30px; border-radius: 7px; color: @t_fg_dim; }
-.tide-window .stopwatch-lap-row:hover { background-color: @t_surf2; }
+.tide-window .stopwatch-lap-row:hover { background-color: @t_row_hover; }
+.tide-window .stopwatch-lap-row:active { background-color: @t_row_active; }
 .tide-window .stopwatch-lap-row.lap-fastest { background-color: @t_success; color: @t_bg; font-weight: 600; }
 .tide-window .stopwatch-lap-row.lap-slowest { background-color: @t_danger_soft; color: @t_danger; font-weight: 600; }
 .tide-window .stopwatch-error { color: @t_danger; }
@@ -508,7 +512,9 @@
 /* The card-wide colour rule above outranks `.danger`, so restate it here. */
 .tide-window .hotspot-card button.danger { color: @t_danger; border-color: @t_danger_soft; }
 .tide-window .hotspot-card button.danger:hover { background-color: @t_danger_soft; }
-.tide-window .status-row { min-height: 38px; }
+.tide-window .status-row { min-height: 38px; transition: background-color 120ms ease-out; }
+.tide-window .status-row:hover { background-color: @t_row_hover; }
+.tide-window .status-row:active { background-color: @t_row_active; }
 .tide-window .status-row.mac-sep { border-top: 1px solid @t_separator; }
 .tide-window .status-row label { font-size: 12px; }
 .tide-window .segmented { background-color: @t_surf0; border: 1px solid @t_border; border-radius: 10px; padding: 2px; }
@@ -535,6 +541,7 @@
   border: none; box-shadow: none; padding: 0; min-height: 0;
 }
 .tide-window .window-row .window-focus:hover { background-color: transparent; }
+.tide-window .window-row .window-focus:active { background-color: @t_row_active; }
 .tide-window .window-row button { min-height: 30px; }
 .tide-window .window-row button label { font-weight: 500; }
 .tide-window .window-row .muted { font-size: 12px; color: @t_fg_dim; }
@@ -612,7 +619,7 @@
   min-height: 40px;
   transition: background-color 120ms ease-out, border-color 120ms ease-out;
 }
-.tide-window .launcher-item-row:hover { background-color: @t_surf2; border-color: @t_border_strong; }
+.tide-window .launcher-item-row:hover { background-color: @t_row_hover; border-color: @t_border_strong; }
 .tide-window .launcher-item-name { font-size: 13px; font-weight: 600; color: @t_fg; }
 .tide-window .launcher-item-desc { font-size: 11px; color: @t_fg_faint; }
 .tide-window .launcher-action-pill { min-height: 30px; padding: 4px 10px; font-size: 12px; }
