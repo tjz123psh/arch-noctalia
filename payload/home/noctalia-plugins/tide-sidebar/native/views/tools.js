@@ -66,7 +66,7 @@ export function createTools(ctx) {
     widget.set_child(page);
 
     // Build the calculator and its history rows once. Snapshots only change text/state.
-    const calculator = ui.card(['tools-card', 'card-stagger-1']);
+    const calculator = ui.card(['tools-card', 'rise', 'rise-0']);
     calculator.set_spacing(0);
     const calcDisplayPane = ui.box(Gtk.Orientation.VERTICAL, 4, ['calc-display-pane']);
     calculator.append(calcDisplayPane);
@@ -291,8 +291,18 @@ export function createTools(ctx) {
         if (tooltip) button.set_tooltip_text(tooltip);
         return button;
     }
-    numberKeys.forEach((key, index) => numberKeypad.attach(makeKey(key, false), index % 3, Math.floor(index / 3), 1, 1));
-    operatorKeys.forEach(key => operatorColumn.append(makeKey(key, true)));
+    numberKeys.forEach((key, index) => {
+        const button = makeKey(key, false);
+        button.add_css_class('rise');
+        button.add_css_class('rise-' + Math.min(1 + (index % 3) + Math.floor(index / 3), 8));
+        numberKeypad.attach(button, index % 3, Math.floor(index / 3), 1, 1);
+    });
+    operatorKeys.forEach((key, index) => {
+        const button = makeKey(key, true);
+        button.add_css_class('rise');
+        button.add_css_class('rise-' + Math.min(2 + index, 8));
+        operatorColumn.append(button);
+    });
     keypadPane.append(numberKeypad);
     keypadPane.append(operatorColumn);
     calculator.append(keypadPane);
@@ -406,7 +416,7 @@ export function createTools(ctx) {
 
     // This is only a view of the service-owned timer. There is no local ticking
     // source: the backend publishes once per changed second, even when hidden.
-    const timerCard = ui.box(Gtk.Orientation.HORIZONTAL, 0, ['card', 'timer-card', 'card-stagger-2']);
+    const timerCard = ui.box(Gtk.Orientation.HORIZONTAL, 0, ['card', 'timer-card', 'rise', 'rise-1']);
     const timerLabelPane = ui.box(Gtk.Orientation.VERTICAL, 8, ['timer-label-pane']);
     const timerContentPane = ui.box(Gtk.Orientation.VERTICAL, 8, ['timer-content-pane']);
     timerContentPane.set_hexpand(true);
@@ -497,7 +507,7 @@ export function createTools(ctx) {
         return field;
     });
     timerContentPane.append(durationRow);
-    const presets = ui.box(Gtk.Orientation.HORIZONTAL, 5, ['timer-presets']);
+    const presets = ui.box(Gtk.Orientation.HORIZONTAL, 5, ['timer-presets', 'rise', 'rise-2']);
     presets.set_homogeneous(true);
     // Fixed pool: the plugin setting can list 1..PRESET_SLOTS lengths, so slots are
     // relabelled in place and every widget keeps its identity across updates.
@@ -722,7 +732,7 @@ export function createTools(ctx) {
     let stopwatchSnapshot = null;
     let stopwatchErrorText = '';
     let stopwatchLapsSignature = '';
-    const stopwatchCard = ui.card(['stopwatch-card', 'card-stagger-3']);
+    const stopwatchCard = ui.card(['stopwatch-card', 'rise', 'rise-3']);
     stopwatchCard.set_spacing(6);
     stopwatchCard.set_vexpand(true);
     const stopwatchHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);

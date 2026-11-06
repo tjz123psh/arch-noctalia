@@ -107,6 +107,20 @@
 
 @keyframes page-fade-in { from { opacity: 0; } to { opacity: 1; } }
 .tide-window .page-in { animation: page-fade-in 260ms ease-out both; }
+/* Shared entrance for the four non-home pages: each card/list rises in order. */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tide-window .page-in .rise { animation: rise-in 440ms cubic-bezier(.22,.61,.36,1) both; }
+.tide-window .page-in .rise-1 { animation-delay: 45ms; }
+.tide-window .page-in .rise-2 { animation-delay: 90ms; }
+.tide-window .page-in .rise-3 { animation-delay: 135ms; }
+.tide-window .page-in .rise-4 { animation-delay: 180ms; }
+.tide-window .page-in .rise-5 { animation-delay: 225ms; }
+.tide-window .page-in .rise-6 { animation-delay: 270ms; }
+.tide-window .page-in .rise-7 { animation-delay: 315ms; }
+.tide-window .page-in .rise-8 { animation-delay: 360ms; }
 
 /* Home entrance: hero settles, rows rise in 45ms steps, charts draw themselves.
    Re-triggered by adding `.playing` on every show (see playIntro). */

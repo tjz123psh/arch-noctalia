@@ -277,7 +277,7 @@ export function createNotes(ctx) {
     const noticeText = U.label('', ['caption']); noticeText.set_wrap(true); noticeText.set_ellipsize(Pango.EllipsizeMode.NONE);
     noticeBox.append(noticeText); noticeRevealer.set_child(noticeBox); page.append(noticeRevealer);
 
-    const card = U.card(['notes-card', 'card-stagger-1']); card.set_spacing(0); card.set_vexpand(true); page.append(card);
+    const card = U.card(['notes-card', 'rise', 'rise-0']); card.set_spacing(0); card.set_vexpand(true); page.append(card);
     // One header per card: the switcher already shows the active note's title,
     // so a second title row below it was pure duplication (and ate 30px).
     // High-frequency actions sit next to the switcher; destructive ones stay

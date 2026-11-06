@@ -57,7 +57,7 @@ export function createHotspot(ctx) {
     const body = ui.box('vertical', 12, ['scroll-gutter']);
     widget.append(scrolled(body));
 
-    const statusCard = ui.card(['hotspot-card', 'card-stagger-1']);
+    const statusCard = ui.card(['hotspot-card', 'rise', 'rise-0']);
     const summary = ui.box('horizontal', 10, ['status-summary']);
     summary.append(ui.icon('wifi', 22));
     const summaryText = ui.box('vertical', 4);
@@ -69,6 +69,8 @@ export function createHotspot(ctx) {
     function detail(name) {
         const row = ui.box('horizontal', 12, ['status-row']);
         if (statusCard.get_last_child()) row.add_css_class('mac-sep');
+        row.add_css_class('rise');
+        row.add_css_class('rise-2');
         const caption = ui.label(name, ['muted']); caption.set_hexpand(true);
         const value = ui.label('—'); value.set_xalign(1);
         row.append(caption); row.append(value); statusCard.append(row);
@@ -86,7 +88,7 @@ export function createHotspot(ctx) {
     statusCard.append(statusError);
     body.append(statusCard);
 
-    const form = ui.card(['hotspot-card', 'card-stagger-2']);
+    const form = ui.card(['hotspot-card', 'rise', 'rise-1']);
     form.append(ui.label('热点设置', ['section-title']));
     form.append(ui.label('热点名称', ['field-label']));
     const ssid = ui.classes(new Gtk.Entry({hexpand: true, placeholder_text: '热点名称'}), ['field-muted']);
@@ -131,7 +133,7 @@ export function createHotspot(ctx) {
     confirmButtons.append(cancel); confirmButtons.append(accept.button);
     confirmCard.append(confirmButtons); confirm.set_child(confirmCard); body.append(confirm);
 
-    const saved = ui.card(['hotspot-card', 'card-stagger-3']);
+    const saved = ui.card(['hotspot-card', 'rise', 'rise-2']);
     saved.append(ui.label('已保存密码', ['section-title']));
     const savedButtons = ui.box('horizontal', 8);
     const revealButton = namedButton(ui, '查看密码', 'eye', toggleSecret);
@@ -443,7 +445,7 @@ export function createWindows(ctx) {
     page.append(search);
 
     // Niri 桌面中控卡片
-    const niriCard = ui.card(['card', 'niri-control-card', 'card-stagger-1']);
+    const niriCard = ui.card(['card', 'niri-control-card', 'rise', 'rise-1']);
     niriCard.set_spacing(8);
 
     const niriHeader = ui.box(Gtk.Orientation.HORIZONTAL, 6);
@@ -504,7 +506,7 @@ export function createWindows(ctx) {
     confirmButtons.append(cancel); confirmButtons.append(close); confirmCard.append(confirmButtons);
     confirmation.set_child(confirmCard); page.append(confirmation);
 
-    const content = ui.box('vertical', 0, ['mac-group']);
+    const content = ui.box('vertical', 0, ['mac-group', 'rise', 'rise-2']);
     function staggerRows() {
         if (reducedMotion) return;
         if (rowStaggerSource) { GLib.source_remove(rowStaggerSource); rowStaggerSource = 0; }
