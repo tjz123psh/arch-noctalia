@@ -139,11 +139,11 @@ export function buildTokens(defines = {}) {
     // The frame is smoked glass: a darker base than the cards so the panels
     // read as frosted sheets laid on top, while 18% of the blurred wallpaper
     // still tints it.
-    const shellInk = mix(bg, {r: 0, g: 0, b: 0}, dark ? 0.42 : 0.06);
-    const shellAlpha = Math.min(0.99, (blurred ? 0.93 : 0.97) + body);
+    const shellInk = mix(bg, fg, dark ? 0.11 : 0.03);
+    const shellAlpha = Math.min(0.99, (blurred ? 0.72 : 0.97) + body);
     const cardAlpha = Math.min(0.99, (blurred ? 0.97 : 0.99) + body);
-    const railAlpha = Math.min(0.99, (blurred ? 0.80 : 0.94) + body);
-    const readAlpha = blurred ? 0.975 : 1;
+    const railAlpha = Math.min(0.99, (blurred ? 0.20 : 0.94) + body);
+    const readAlpha = blurred ? 0.92 : 1;
     const data = rgba(fg, 0.22);
 
     const tokens = {
@@ -174,8 +174,16 @@ export function buildTokens(defines = {}) {
         t_glass_card: rgba(surf1, cardAlpha),
         t_glass_rail: rgba(surf0, railAlpha),
         t_glass_read: rgba(surf1, readAlpha),
-        t_sheen: dark ? rgba({r: 255, g: 255, b: 255}, 0.028) : rgba({r: 255, g: 255, b: 255}, 0.35),
-        t_vignette: dark ? rgba({r: 0, g: 0, b: 0}, 0.22) : rgba({r: 60, g: 40, b: 30}, 0.05),
+        t_sheen: dark ? rgba({r: 255, g: 255, b: 255}, 0.012) : rgba({r: 255, g: 255, b: 255}, 0.25),
+        t_vignette: dark ? rgba({r: 0, g: 0, b: 0}, 0.16) : rgba({r: 60, g: 40, b: 30}, 0.05),
+        // macOS-style category colours: fixed by meaning, tuned per mode so they
+        // stay saturated without glowing on dark glass.
+        t_mod_tools: dark ? '#4C86E8' : '#2F6FD0',
+        t_mod_windows: dark ? '#8C6BE8' : '#6D4DD0',
+        // Group plates sit one step above the glass; rows only get hairlines.
+        t_group: dark ? rgba({r: 255, g: 255, b: 255}, 0.085) : rgba({r: 255, g: 255, b: 255}, 0.72),
+        t_row_hover: dark ? rgba({r: 255, g: 255, b: 255}, 0.04) : rgba({r: 0, g: 0, b: 0}, 0.035),
+        t_separator: dark ? rgba({r: 255, g: 255, b: 255}, 0.075) : rgba({r: 0, g: 0, b: 0}, 0.08),
         // Static data ink: neutral on purpose, so the accent stays a state and
         // not a decoration. Peaks switch to @t_accent explicitly.
         t_data: data,

@@ -51,6 +51,9 @@ function stopwatchText(elapsedMs) {
 export function createTools(ctx) {
     const {ui} = ctx;
     const page = ui.box(Gtk.Orientation.VERTICAL, 16, ['tools-page', 'scroll-gutter']);
+    const toolsHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8, ['page-header']);
+    toolsHeader.append(ui.label('工具', ['page-title']));
+    page.append(toolsHeader);
     page.set_valign(Gtk.Align.FILL);
     page.set_hexpand(true);
     page.set_vexpand(true);
@@ -96,10 +99,6 @@ export function createTools(ctx) {
     calcMessage.set_ellipsize(Pango.EllipsizeMode.NONE);
     calcMessage.set_visible(false);
     calcDisplayPane.append(calcMessage);
-    const calcAccent = () => ctx.palette?.()?.t_accent || '#e8a08c';
-    const calcWave = ui.waveRule(calcAccent, 10);
-    calcWave.add_css_class('calc-wave');
-    calculator.append(calcWave);
 
     let requestSequence = 0;
     let currentRequest = null;
@@ -180,7 +179,6 @@ export function createTools(ctx) {
         justCalculated = true;
         isCommitted = true;
         sendRequest(newRequest(true));
-        calcWave.pulse();
     }
     expression.connect('changed', () => {
         if (syncingExpression) return;
@@ -508,7 +506,6 @@ export function createTools(ctx) {
         entry.button = ui.button('', null, () => {
             if (entry.durationMs > 0) {
                 setDuration(entry.durationMs, true);
-                calcWave.pulse(360, 0.5);
             }
         }, ['preset-button']);
         // An owned label keeps the button's child identity stable: Gtk.Button.set_label()
@@ -682,7 +679,7 @@ export function createTools(ctx) {
         // unrelated calculator reply. No duplicate progress invalidations.
         const fraction = Math.min(1, Math.ceil(remaining / 1000) / Math.max(1, Math.ceil(durationMs / 1000)));
         if (fraction !== lastFraction) { progress.set_fraction(fraction); lastFraction = fraction; }
-        const statusText = timerReady ? ({idle: '未开始', running: '● 计时中', paused: '已暂停', finished: '已完成'}[status]) : '加载中';
+        const statusText = timerReady ? ({idle: '未开始', running: '计时中', paused: '已暂停', finished: '已完成'}[status]) : '加载中';
         setLabel(timerStatus, statusText);
         setClass(timerCard, 'timer-running', timerReady && status === 'running');
         setClass(timerCard, 'timer-finished', timerReady && status === 'finished');
@@ -710,9 +707,7 @@ export function createTools(ctx) {
         }
         const status = timerReady ? timerModel.status : '';
         if (status !== previousTimerStatus) {
-            if (status === 'running') calcWave.pulse();
-            if (status === 'finished' && previousTimerStatus) calcWave.pulse();
-            previousTimerStatus = status;
+                                    previousTimerStatus = status;
         }
         renderTimer();
     }
@@ -918,14 +913,11 @@ export function createTools(ctx) {
             syncStopwatchRefresh();
             if (!shownOnce && expression.get_root()) { focusExpression(); shownOnce = true; }
             renderTimer();
-            calcWave.pulse(520, 0.9);
-            calcWave.startBreathe?.();
-            if (previewQueued) schedulePreview();
+                        if (previewQueued) schedulePreview();
         },
         onHide() {
             toolsVisible = false;
-            calcWave.stopBreathe?.();
-            if (pendingTimer) { GLib.source_remove(pendingTimer); pendingTimer = 0; waitingForResult = false; }
+                        if (pendingTimer) { GLib.source_remove(pendingTimer); pendingTimer = 0; waitingForResult = false; }
             cancelStopwatchRefresh();
             // A pending preview can resume on showing; this never pauses or
             // resets the actual service-owned countdown.

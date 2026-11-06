@@ -68,6 +68,7 @@ export function createHotspot(ctx) {
     statusCard.append(summary);
     function detail(name) {
         const row = ui.box('horizontal', 12, ['status-row']);
+        if (statusCard.get_last_child()) row.add_css_class('mac-sep');
         const caption = ui.label(name, ['muted']); caption.set_hexpand(true);
         const value = ui.label('—'); value.set_xalign(1);
         row.append(caption); row.append(value); statusCard.append(row);
@@ -503,7 +504,7 @@ export function createWindows(ctx) {
     confirmButtons.append(cancel); confirmButtons.append(close); confirmCard.append(confirmButtons);
     confirmation.set_child(confirmCard); page.append(confirmation);
 
-    const content = ui.box('vertical', 8);
+    const content = ui.box('vertical', 0, ['mac-group']);
     function staggerRows() {
         if (reducedMotion) return;
         if (rowStaggerSource) { GLib.source_remove(rowStaggerSource); rowStaggerSource = 0; }
@@ -540,10 +541,11 @@ export function createWindows(ctx) {
         confirmation.set_reveal_child(true); sensitive(close, true);
     }
     function makeRow(data) {
-        const row = ui.box('horizontal', 8, ['card', 'window-card', 'window-row']);
+        const row = ui.box('horizontal', 8, ['mac-row', 'window-row']);
         const focus = ui.button('', null, () => {
             if (shown && rows.has(data.id) && !current.windowsError) ctx.send('window-focus', {id: data.id});
         });
+        focus.add_css_class('window-focus');
         focus.set_hexpand(true);
         const inner = ui.box('horizontal', 9);
         inner.append(ui.icon('apps', 22));
@@ -599,6 +601,14 @@ export function createWindows(ctx) {
                 list.reorder_child_after(row.widget, previous); previous = row.widget;
             }
             ordered = data.map(row => row.id); signature = next;
+            let firstRow = true;
+            for (const [id] of rows) {
+                const row = rows.get(id);
+                if (!row) continue;
+                row.widget.remove_css_class('mac-sep');
+                if (firstRow) firstRow = false;
+                else row.widget.add_css_class('mac-sep');
+            }
         }
         for (const item of data) updateRow(rows.get(item.id), item);
         if (pendingId) {

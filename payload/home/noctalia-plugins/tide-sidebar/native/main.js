@@ -157,7 +157,20 @@ function selectPage(name, save = true) {
         if (page === name) button.add_css_class('selected'); else button.remove_css_class('selected');
     }
     updatePage(true);
-    if (visible) { views[name]?.onShow?.(); send('visibility', {open: true, tab: name}); reportGeometrySoon(); }
+    if (visible) {
+        views[name]?.onShow?.();
+        // A quiet page-level fade keeps the switch from feeling like a hard cut
+        // on pages that do not have their own entrance animation.
+        const pageWidget = views[name]?.widget;
+        if (pageWidget) {
+            pageWidget.remove_css_class('page-in');
+            GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+                if (visible && currentPage === name) pageWidget.add_css_class('page-in');
+                return GLib.SOURCE_REMOVE;
+            });
+        }
+        send('visibility', {open: true, tab: name}); reportGeometrySoon();
+    }
     if (save) send('preferences', {tab: name, reducedMotion: state.preferences?.reducedMotion === true});
 }
 let geometrySource = 0;
@@ -488,16 +501,17 @@ app.connect('startup', () => {
     shell.set_size_request(450, -1);
     applyConfig();
     const rail = UI.box(Gtk.Orientation.VERTICAL, 7, ['tab-rail']);
-    rail.set_size_request(48, -1);
-    const descriptions = {home: ['首页', 'home'], notes: ['便签', 'note'], tools: ['工具', 'calculator'], hotspot: ['热点', 'wifi'], windows: ['窗口', 'apps']};
+    rail.set_size_request(64, -1);
+    const descriptions = {home: ['首页', 'user-home-symbolic'], notes: ['便签', 'accessories-text-editor-symbolic'], tools: ['工具', 'accessories-calculator-symbolic'], hotspot: ['热点', 'network-wireless-symbolic'], windows: ['窗口', 'view-grid-symbolic']};
     for (const page of pageNames) {
         const [text, glyph] = descriptions[page];
-        // Icon-only rail: the page header already names the current page, so a
-        // permanent text label under every icon is duplicated information.
+        // Plain icon rail: the page header already names the current page, so a
+        // permanent label under every icon would be duplicated information.
         const button = UI.classes(new Gtk.Button({tooltip_text: text}), ['nav-button', 'nav-' + page]);
-        const child = UI.box(Gtk.Orientation.VERTICAL, 0);
+        const child = UI.box(Gtk.Orientation.VERTICAL, 4);
         child.set_halign(Gtk.Align.CENTER); child.set_valign(Gtk.Align.CENTER);
         child.append(UI.icon(glyph, 20));
+        child.append(UI.label(text, ['nav-label']));
         button.set_child(child); button.connect('clicked', () => selectPage(page));
         navigation[page] = button; rail.append(button);
     }

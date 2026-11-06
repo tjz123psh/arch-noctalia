@@ -324,10 +324,7 @@ export function createNotes(ctx) {
 
     // Rule above the footer, not behind it: the 8px wave used to sit under the
     // footer row (54px overlay slot) and was simply invisible after the redesign.
-    const footerLayer = U.box(Gtk.Orientation.VERTICAL, 4, ['note-footer-layer']);
-    const accent = () => ctx.palette?.()?.t_accent || '#e8a08c';
-    const footerWave = U.waveRule(accent, 8); footerWave.add_css_class('note-footer-wave');
-    footerLayer.append(footerWave);
+    const footerLayer = U.box(Gtk.Orientation.VERTICAL, 0, ['note-footer-layer']);
     const footer = U.box(Gtk.Orientation.HORIZONTAL, 10, ['note-footer']);
     footer.set_halign(Gtk.Align.FILL);
     const count = U.label('0 字', ['caption']);
@@ -398,14 +395,12 @@ export function createNotes(ctx) {
         cancelRename(); requestedId = id; showNote(id);
         if (!send('note-select', {id})) requestedId = '';
         syncLists();
-        footerWave.pulse(380, 0.65);
     }
     function addNote() {
         if (!ready || pendingAdd || notes.length >= 80 || !flushAll()) return;
         pendingAdd = {ids: new Set(notes.map(note => note.id))};
         if (!send('note-add')) { pendingAdd = null; return; }
         refreshStatus();
-        footerWave.pulse(420, 0.75);
         if (pendingAddSource) GLib.source_remove(pendingAddSource);
         pendingAddSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 4000, () => {
             pendingAddSource = 0;
@@ -441,7 +436,6 @@ export function createNotes(ctx) {
         setLabel(selectorTitle, note?.title || (ready ? '选择便签' : '正在加载…'));
         selectorTitle.set_tooltip_text(note?.title || '');
         listButton.set_tooltip_text(note?.title || '切换便签与查看回收站');
-        if (changedNote) footerWave.pulse();
         refreshStatus();
     }
     function refreshStatus() {
@@ -450,11 +444,9 @@ export function createNotes(ctx) {
         const info = problem || snapshot.warning || (!ready ? '正在连接便签服务…' : '');
         setLabel(noticeText, info); mark(noticeBox, 'error', !!problem); noticeRevealer.set_reveal_child(!!info);
         const label = problem ? '未保存' : pendingAdd ? '正在新建…' : !ready ? '尚未就绪'
-            : draft?.dirty ? '等待后台确认…' : snapshot.saving ? '保存中…' : '● 已保存';
+            : draft?.dirty ? '等待后台确认…' : snapshot.saving ? '保存中…' : '已保存';
         setLabel(status, label); mark(status, 'status-error', !!problem);
-        if (label === '● 已保存' && wasSaving && shown) {
-            footerWave.pulse(380, 0.45);
-        }
+
         wasSaving = snapshot.saving === true || draft?.dirty === true;
         setLabel(count, (note ? editor.get_buffer().get_char_count() : 0) + ' 字');
         editor.set_editable(ready && !!note && !pendingAdd);
@@ -597,12 +589,9 @@ export function createNotes(ctx) {
         onShow() {
             shown = true;
             if (ready && current()) editor.grab_focus();
-            footerWave.pulse(520, 0.9);
-            footerWave.startBreathe?.();
         },
         onHide() {
             shown = false;
-            footerWave.stopBreathe?.();
             flushAll();
             if (pendingAddSource) { GLib.source_remove(pendingAddSource); pendingAddSource = 0; }
             pendingAdd = null;

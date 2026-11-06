@@ -88,10 +88,10 @@ def check_native_lifecycle():
     if "timeout_add(GLib.PRIORITY_DEFAULT, 7" not in js:
         raise SystemExit("drawer timer is no longer matched to the 144 Hz output")
     # Icon-only 48px rail: the page header is the label, the rail is the map.
-    if "rail.set_size_request(48, -1)" not in js or "UI.icon(glyph, 20)" not in js:
-        raise SystemExit("navigation rail drifted from the 48px icon-only contract")
-    if "nav-label" in js:
-        raise SystemExit("navigation rail reintroduced permanent text labels")
+    if "rail.set_size_request(64, -1)" not in js or "UI.icon(glyph, 20)" not in js:
+        raise SystemExit("navigation rail drifted from the 64px labelled contract")
+    if "nav-label" not in js:
+        raise SystemExit("navigation rail lost its text labels")
     css = (PLUGIN / "native/style.css").read_text(encoding="utf-8")
     palette_js = (PLUGIN / "native/palette.js").read_text(encoding="utf-8")
     # The parked sliver must be painted out, otherwise the closed drawer leaves
@@ -129,8 +129,8 @@ def check_palette_tokens():
     # The material must stay glass: the shell, cards and rail paint with the
     # glass tokens, and the reading surfaces keep the higher-opacity one.
     for selector, token in (("background-color: @t_glass;", "shell"),
-                            ("background-color: @t_glass_card;", "card"),
-                            ("background-color: @t_glass_rail;", "rail"),
+                            ("background-color: @t_group;", "group plate"),
+                            ("background-color: @t_glass_rail;", "rail hover"),
                             ("background-color: @t_glass_read;", "reading surface")):
         if selector not in style:
             raise SystemExit("the " + token + " is no longer painted with " + selector.split(": ")[1])

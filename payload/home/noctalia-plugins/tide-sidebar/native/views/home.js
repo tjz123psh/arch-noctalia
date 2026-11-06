@@ -1,7 +1,6 @@
 import Gtk from 'gi://Gtk?version=4.0';
 import GLib from 'gi://GLib';
 import Pango from 'gi://Pango';
-import cairo from 'cairo';
 
 const HISTORY_POINTS = 24;
 const WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
@@ -293,6 +292,7 @@ function fractionBar(ui, {height = 6, names = []} = {}) {
     area.add_css_class('home-fraction');
     if (names.length) ui.classes(area, names);
     area.fraction = 0;
+    area.reveal = 1;
     area.set_draw_func((_w, cr, width, h) => {
         if (width < 2) return;
         const radius = h / 2;
@@ -305,7 +305,7 @@ function fractionBar(ui, {height = 6, names = []} = {}) {
         cr.setSourceRGBA(dim.red, dim.green, dim.blue, dim.alpha);
         cr.fill();
         cr.restore();
-        const filled = Math.max(0, Math.min(1, area.fraction)) * width;
+        const filled = Math.max(0, Math.min(1, area.fraction)) * width * Math.max(0, area.reveal);
         if (filled < 2) return;
         const r2 = Math.min(radius, filled / 2);
         cr.save();
@@ -323,8 +323,11 @@ function fractionBar(ui, {height = 6, names = []} = {}) {
 function sparkline(ui, values, {height = 26, alpha = 0.85, ceiling = null} = {}) {
     const area = new Gtk.DrawingArea({content_height: height, hexpand: true, can_target: false});
     area.add_css_class('home-sparkline');
+    area.reveal = 1;
     area.set_draw_func((_w, cr, width, h) => {
         if (width < 4 || h < 4) return;
+        cr.save();
+        if (area.reveal < 1) { cr.rectangle(0, 0, width * Math.max(0, area.reveal), h); cr.clip(); }
         const top = ceiling ?? Math.max(1, ...values);
         const step = width / Math.max(1, values.length - 1);
         const y = v => h - 2 - Math.min(1, v / top) * (h - 4);
@@ -346,6 +349,7 @@ function sparkline(ui, values, {height = 26, alpha = 0.85, ceiling = null} = {})
         cr.setLineJoin(1);
         cr.setSourceRGBA(acc.red, acc.green, acc.blue, alpha);
         cr.stroke();
+        cr.restore();
     });
     return area;
 }
@@ -355,7 +359,6 @@ export function createHome(ctx) {
     let shown = false;
     let clockTimer = 0;
     let hardwareTimer = 0;
-    let waveTick = 0;
 
     let lastStat = readProcStat();
     let lastNet = readProcNet();
@@ -368,7 +371,6 @@ export function createHome(ctx) {
     const diskReadHistory = new Array(HISTORY_POINTS).fill(0);
 
     let currentCpuPercent = 0;
-    let tidePhase = 0;
     let taskSampleCounter = 0;
 
     const page = ui.box(Gtk.Orientation.VERTICAL, 10, ['home-page', 'scroll-gutter']);
@@ -382,103 +384,64 @@ export function createHome(ctx) {
     widget.set_child(page);
 
     // =========================================================
-    // 1. 时钟卡：日期 + 大号时间 + 电池/运行时长 + 潮汐
+    // macOS 分组列表：hero + 「系统」「进程」「工作台」三组
     // =========================================================
-    const clockCard = ui.card(['home-clock-card', 'card-stagger-1']);
-    clockCard.set_spacing(0);
+    const sectionRow = (text) => {
+        const row = ui.box(Gtk.Orientation.HORIZONTAL, 6, ['mac-section-row']);
+        const label = ui.label(text, ['mac-section']);
+        label.set_hexpand(true);
+        row.append(label);
+        return row;
+    };
 
-    const clockContent = ui.box(Gtk.Orientation.VERTICAL, 4, ['home-clock-content']);
-    const dateRow = ui.box(Gtk.Orientation.HORIZONTAL, 8);
+    // hero：日期 + 大号时间 + 电池/运行时长
+    const hero = ui.box(Gtk.Orientation.VERTICAL, 2, ['mac-group', 'home-hero']);
+    const heroTop = ui.box(Gtk.Orientation.HORIZONTAL, 8);
     const dateLabel = ui.label('', ['home-date-label']);
     dateLabel.set_hexpand(true);
-    dateLabel.set_xalign(0);
     const statusBadge = ui.box(Gtk.Orientation.HORIZONTAL, 5, ['home-live-badge']);
-    const statusDot = ui.label('●', ['home-pulse-dot']);
+    const statusIcon = ui.icon('battery-good-symbolic', 13);
+    statusIcon.add_css_class('home-battery-icon');
     const statusText = ui.label('在线', ['caption']);
-    statusBadge.append(statusDot); statusBadge.append(statusText);
-    dateRow.append(dateLabel); dateRow.append(statusBadge);
-
+    statusBadge.append(statusIcon); statusBadge.append(statusText);
+    heroTop.append(dateLabel); heroTop.append(statusBadge);
     const timeRow = ui.box(Gtk.Orientation.HORIZONTAL, 2, ['home-time-row']);
     timeRow.set_valign(Gtk.Align.END);
     const timeMain = ui.label('--:--', ['home-time-main']);
     const timeSec = ui.label(':--', ['home-time-sec']);
     timeSec.set_valign(Gtk.Align.END);
     timeRow.append(timeMain); timeRow.append(timeSec);
+    hero.append(heroTop);
+    hero.append(timeRow);
+    page.append(hero);
 
-    clockContent.append(dateRow);
-    clockContent.append(timeRow);
-    clockCard.append(clockContent);
-
-    const tideArea = new Gtk.DrawingArea({content_height: 34, hexpand: true, can_target: false});
-    tideArea.add_css_class('home-clock-wave');
-    tideArea.set_draw_func((_w, cr, width, h) => {
-        if (width < 2 || h < 2) return;
-        const acc = parseAccent(ctx);
-        // Water, not a divider: a filled body at 6% with a single crest line.
-        // Two opaque strokes read as a seam at the card's bottom edge.
-        const y = h * 0.62;
-        const amp = Math.min(5.2, h * 0.15);
-        const curve = (offset, a) => {
-            const base = y + offset;
-            cr.moveTo(0, base);
-            cr.curveTo(width * .18, base - a * Math.cos(tidePhase), width * .36, base + a * Math.sin(tidePhase * 0.9),
-                width * .54, base + a * 0.35);
-            cr.curveTo(width * .72, base - a, width * .88, base + a * 0.6, width, base - a * 0.2);
-        };
-        curve(0, amp);
-        cr.lineTo(width, h); cr.lineTo(0, h); cr.closePath();
-        // Water fades out towards the card's bottom edge: a flat 8% tint read
-        // as a dirty band, a vertical gradient reads as depth.
-        const water = new cairo.LinearGradient(0, y - amp, 0, h);
-        water.addColorStopRGBA(0, acc.red, acc.green, acc.blue, 0.16);
-        water.addColorStopRGBA(1, acc.red, acc.green, acc.blue, 0.015);
-        cr.setSource(water);
-        cr.fill();
-        cr.setSourceRGBA(acc.red, acc.green, acc.blue, 0.7);
-        curve(0, amp);
-        cr.setLineWidth(1.2);
-        cr.setLineCap(1);
-        cr.stroke();
-    });
-    // The strokes are full-bleed, so they must be clipped by the card's
-    // rounded outline instead of leaking past the corner arcs.
-    clockCard.set_overflow(Gtk.Overflow.HIDDEN);
-    clockCard.append(tideArea);
-    page.append(clockCard);
-
-    // =========================================================
-    // 2. 系统概览：CPU / 内存 / NVMe / 网络 四行 + Top 任务
-    // =========================================================
-    const sysCard = ui.card(['home-cpu-card', 'card-stagger-2']);
-    sysCard.set_spacing(10);
-
-    const sysHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const sysTitle = ui.label('系统概览', ['section-title']);
-    sysTitle.set_hexpand(true);
-    const tempDot = ui.label('●', ['home-temp-dot']);
+    // 系统
+    const sysSection = sectionRow('系统');
     const tempLabel = ui.label('--°C', ['home-temp-label']);
-    sysHeader.append(sysTitle); sysHeader.append(tempDot); sysHeader.append(tempLabel);
-    sysCard.append(sysHeader);
+    sysSection.append(tempLabel);
+    page.append(sysSection);
 
-    // Two lines per metric: name + value on the first, the graph on the second.
-    // A single line squeezed the value (NVMe/网络的读写速率会超过 100px) into an
-    // ellipsis and left the graph with whatever width was left.
-    const row = (name) => {
-        const column = ui.box(Gtk.Orientation.VERTICAL, 3, ['home-hw-row']);
+    const sysGroup = ui.box(Gtk.Orientation.VERTICAL, 0, ['mac-group']);
+    let sysRowIndex = 0;
+    const hwRow = (name) => {
+        const box = ui.box(Gtk.Orientation.VERTICAL, 5, ['mac-row']);
+        box.add_css_class('row-in-' + Math.min(sysRowIndex++, 8));
+        if (sysGroup.get_first_child()) box.add_css_class('mac-sep');
         const head = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-        const label = ui.label(name, ['home-hw-name']);
-        label.set_size_request(42, -1);
-        const value = ui.label('', ['home-hw-value']);
-        value.set_hexpand(true);
-        value.set_xalign(1);
+        const label = ui.label(name, ['mac-label']);
+        label.set_hexpand(true);
+        const value = ui.label('', ['mac-value']);
         head.append(label); head.append(value);
-        column.append(head);
-        return {box: column, head, label, value};
+        box.append(head);
+        sysGroup.append(box);
+        return {box, head, label, value};
     };
 
-    const cpuRow = row('CPU');
-    const cpuSpark = sparkline(ui, cpuHistory, {height: 26, ceiling: 100});
+    const cpuRow = hwRow('CPU');
+    const cpuSpark = sparkline(ui, cpuHistory, {height: 22, ceiling: 100});
     cpuRow.box.append(cpuSpark);
+
+    const coreRow = hwRow('核心');
     const coreStrip = new Gtk.DrawingArea({content_height: 20, hexpand: true, can_target: false});
     coreStrip.add_css_class('home-core-bars');
     coreStrip.set_draw_func((_w, cr, width, h) => {
@@ -487,14 +450,12 @@ export function createHome(ctx) {
         const accent = parseAccent(ctx);
         const cell = width / 16;
         const barW = Math.max(2, Math.min(4, cell * 0.34));
-        // One hairline baseline instead of a full track: the row reads as
-        // meters standing on a floor, not as a barcode.
         cr.setSourceRGBA(base.red, base.green, base.blue, 0.10);
         cr.rectangle(0, h - 1, width, 1);
         cr.fill();
         for (let i = 0; i < 16; i++) {
             const pct = Math.max(0, Math.min(1, corePercents[i] / 100));
-            const barH = 8 + pct * (h - 10);
+            const barH = (8 + pct * (h - 10)) * coreReveal;
             const x = cell * i + (cell - barW) / 2;
             const hot = pct > 0.7;
             cr.setSourceRGBA(hot ? accent.red : base.red, hot ? accent.green : base.green,
@@ -503,54 +464,47 @@ export function createHome(ctx) {
             cr.fill();
         }
     });
-    sysCard.append(cpuRow.box);
-    sysCard.append(coreStrip);
+    coreRow.box.append(coreStrip);
 
-    const ramRow = row('内存');
-    const ramBar = fractionBar(ui, {height: 8, names: ['home-progress']});
+    const ramRow = hwRow('内存');
+    const ramBar = fractionBar(ui, {height: 6, names: ['home-progress']});
     ramRow.box.append(ramBar);
-    sysCard.append(ramRow.box);
 
-    const diskRow = row('NVMe');
-    const diskSpark = sparkline(ui, diskReadHistory, {height: 20});
+    const diskRow = hwRow('NVMe');
+    const diskSpark = sparkline(ui, diskReadHistory, {height: 16});
     diskRow.box.append(diskSpark);
-    sysCard.append(diskRow.box);
 
-    const netRow = row('网络');
-    const netSpark = sparkline(ui, netRxHistory, {height: 20});
+    const netRow = hwRow('网络');
+    const netSpark = sparkline(ui, netRxHistory, {height: 16});
     netRow.box.append(netSpark);
-    sysCard.append(netRow.box);
+    page.append(sysGroup);
 
-    const divider = new Gtk.Separator({orientation: Gtk.Orientation.HORIZONTAL});
-    sysCard.append(divider);
-
+    // 进程
+    page.append(sectionRow('进程'));
+    const procGroup = ui.box(Gtk.Orientation.VERTICAL, 0, ['mac-group']);
     const taskRows = [];
     for (let i = 0; i < 3; i++) {
-        const line = ui.box(Gtk.Orientation.HORIZONTAL, 8, ['home-task-row']);
-        const name = ui.label('—', ['home-task-name']);
-        name.set_size_request(88, -1);
+        const line = ui.box(Gtk.Orientation.HORIZONTAL, 8, ['mac-row', 'home-task-row']);
+        line.add_css_class('row-in-' + Math.min(5 + i, 8));
+        if (procGroup.get_first_child()) line.add_css_class('mac-sep');
+        const name = ui.label('—', ['mac-label', 'home-task-name']);
+        name.set_hexpand(true);
         name.set_ellipsize(Pango.EllipsizeMode.END);
-        const meter = fractionBar(ui, {height: 6, names: ['home-task-meter']});
+        const meter = fractionBar(ui, {height: 5, names: ['home-task-meter']});
+        meter.set_size_request(70, -1);
         meter.set_valign(Gtk.Align.CENTER);
-        const cpu = ui.label('0.0%', ['home-task-cpu']);
+        const cpu = ui.label('0.0%', ['mac-value', 'home-task-cpu']);
         cpu.set_xalign(1);
         cpu.set_size_request(46, -1);
         line.append(name); line.append(meter); line.append(cpu);
         if (i === 0) line.add_css_class('leader');
-        sysCard.append(line);
+        procGroup.append(line);
         taskRows.push({name, meter, cpu});
     }
-    page.append(sysCard);
+    page.append(procGroup);
 
-    // =========================================================
-    // 3. 工作台：工程 + 书签（接口驱动，编辑器自动探测）
-    // =========================================================
-    const hubCard = ui.card(['home-launcher-card', 'card-stagger-3']);
-    hubCard.set_spacing(8);
-
-    const hubHeader = ui.box(Gtk.Orientation.HORIZONTAL, 8);
-    const hubTitle = ui.label('工作台', ['section-title']);
-    hubTitle.set_hexpand(true);
+    // 工作台
+    const hubSection = sectionRow('工作台');
     const editConfigBtn = ui.iconButton('document-edit', () => {
         ensureWorkspaceConfig();
         const ed = editorChoice(ctx.config?.());
@@ -562,13 +516,13 @@ export function createHome(ctx) {
             if (ctx.toast) ctx.toast('打不开配置文件：没有可用的编辑器', true);
         }
     }, '编辑工作区配置 (JSON)', ['launcher-edit-btn']);
-    hubHeader.append(hubTitle); hubHeader.append(editConfigBtn);
-    hubCard.append(hubHeader);
+    hubSection.append(editConfigBtn);
+    page.append(hubSection);
 
-    const projectList = ui.box(Gtk.Orientation.VERTICAL, 6);
-    hubCard.append(projectList);
-    const bookmarkGrid = new Gtk.Grid({column_homogeneous: true, row_homogeneous: true, column_spacing: 6, row_spacing: 6});
-    hubCard.append(bookmarkGrid);
+    const hubGroup = ui.box(Gtk.Orientation.VERTICAL, 0, ['mac-group']);
+    const projectList = ui.box(Gtk.Orientation.VERTICAL, 0);
+    hubGroup.append(projectList);
+    page.append(hubGroup);
 
     function clearBox(box) {
         for (let child = box.get_first_child(); child;) {
@@ -578,61 +532,87 @@ export function createHome(ctx) {
         }
     }
 
+    let hubRowIndex = 0;
+    function addHubRow(build) {
+        const row = ui.box(Gtk.Orientation.HORIZONTAL, 10, ['mac-row', 'hub-row']);
+        row.add_css_class('row-in-' + Math.min(6 + hubRowIndex++, 10));
+        if (projectList.get_first_child()) row.add_css_class('mac-sep');
+        build(row);
+        projectList.append(row);
+        return row;
+    }
+
+    function hubGlyph(iconName, colorClass) {
+        const glyph = ui.icon(iconName, 18);
+        glyph.add_css_class(colorClass);
+        return glyph;
+    }
+
     function renderHub() {
         clearBox(projectList);
-        clearBox(bookmarkGrid);
         const data = loadHubData();
         const editor = editorChoice(ctx.config?.());
 
         for (const project of data.workspaces || []) {
-            const line = ui.box(Gtk.Orientation.HORIZONTAL, 8, ['launcher-item-row']);
-            const iconName = symbolicName(project.icon) || 'folder-symbolic';
-            const glyph = ui.icon(iconName, 18);
-            const name = ui.label(project.name || project.path || '未命名', ['launcher-item-name']);
-            name.set_hexpand(true);
-            name.set_ellipsize(Pango.EllipsizeMode.END);
-            name.set_xalign(0);
-            line.append(glyph); line.append(name);
+            addHubRow(row => {
+                const iconName = symbolicName(project.icon) || 'folder-symbolic';
+                const name = ui.label(project.name || project.path || '未命名', ['mac-label']);
+                name.set_hexpand(true);
+                name.set_ellipsize(Pango.EllipsizeMode.END);
+                name.set_xalign(0);
+                row.append(hubGlyph(iconName, 'hub-icon-tool'));
+                row.append(name);
 
-            const resolved = resolvePath(project.path);
-            if (present('kitty')) {
-                const term = ui.button('终端', null, () => {
-                    if (launch('kitty --directory', resolved)) {
-                        if (ctx.toast) ctx.toast('已在终端打开 ' + (project.name || resolved));
-                    } else if (ctx.toast) ctx.toast('无法启动终端', true);
-                }, ['launcher-action-pill', 'icon-button']);
-                term.set_tooltip_text('在终端打开 ' + resolved);
-                line.append(term);
-            }
-            if (editor) {
-                const open = ui.button(editor.label, null, () => {
-                    if (launch(editor.command, resolved)) {
-                        if (ctx.toast) ctx.toast('已在 ' + editor.label + ' 打开 ' + (project.name || resolved));
-                    } else if (ctx.toast) {
-                        ctx.toast(editor.missing
-                            ? '找不到 ' + editor.label + '：请在插件设置里改“编辑器命令”'
-                            : '无法启动 ' + editor.label, true);
-                    }
-                }, ['launcher-action-pill']);
-                open.set_tooltip_text('用 ' + editor.label + ' 打开 ' + resolved);
-                line.append(open);
-            }
-            projectList.append(line);
+                const resolved = resolvePath(project.path);
+                if (present('kitty')) {
+                    const term = ui.button('终端', null, () => {
+                        if (launch('kitty --directory', resolved)) {
+                            if (ctx.toast) ctx.toast('已在终端打开 ' + (project.name || resolved));
+                        } else if (ctx.toast) ctx.toast('无法启动终端', true);
+                    }, ['launcher-action-pill', 'icon-button']);
+                    term.set_tooltip_text('在终端打开 ' + resolved);
+                    row.append(term);
+                }
+                if (editor) {
+                    const open = ui.button(editor.label, null, () => {
+                        if (launch(editor.command, resolved)) {
+                            if (ctx.toast) ctx.toast('已在 ' + editor.label + ' 打开 ' + (project.name || resolved));
+                        } else if (ctx.toast) {
+                            ctx.toast(editor.missing
+                                ? '找不到 ' + editor.label + '：请在插件设置里改“编辑器命令”'
+                                : '无法启动 ' + editor.label, true);
+                        }
+                    }, ['launcher-action-pill']);
+                    open.set_tooltip_text('用 ' + editor.label + ' 打开 ' + resolved);
+                    row.append(open);
+                }
+            });
         }
 
-        (data.bookmarks || []).forEach((bookmark, index) => {
-            const iconName = symbolicName(bookmark.icon);
-            const button = ui.button(bookmark.name || '网址', iconName, () => {
-                if (launch('xdg-open', bookmark.url)) {
-                    if (ctx.toast) ctx.toast('正在打开 ' + (bookmark.name || bookmark.url));
-                } else if (ctx.toast) ctx.toast('无法打开 ' + (bookmark.name || bookmark.url), true);
-            }, ['bookmark-pill']);
-            button.set_tooltip_text(bookmark.url || '');
-            bookmarkGrid.attach(button, index % 2, Math.floor(index / 2), 1, 1);
-        });
+        for (const bookmark of data.bookmarks || []) {
+            addHubRow(row => {
+                const iconName = symbolicName(bookmark.icon) || 'web-browser-symbolic';
+                const link = ui.classes(new Gtk.Button(), ['hub-link']);
+                const inner = ui.box(Gtk.Orientation.HORIZONTAL, 10);
+                inner.set_hexpand(true);
+                const name = ui.label(bookmark.name || '网址', ['mac-label']);
+                name.set_hexpand(true);
+                name.set_xalign(0);
+                inner.append(hubGlyph(iconName, 'hub-icon-link'));
+                inner.append(name);
+                inner.append(ui.icon('chevron-right', 14));
+                link.set_child(inner);
+                link.connect('clicked', () => {
+                    if (launch('xdg-open', bookmark.url)) {
+                        if (ctx.toast) ctx.toast('正在打开 ' + (bookmark.name || bookmark.url));
+                    } else if (ctx.toast) ctx.toast('无法打开 ' + (bookmark.name || bookmark.url), true);
+                });
+                link.set_tooltip_text(bookmark.url || '');
+                row.append(link);
+                link.set_hexpand(true);
+            });
+        }
     }
-
-    page.append(hubCard);
 
     // =========================================================
     // 采样循环
@@ -679,9 +659,9 @@ export function createHome(ctx) {
         const temp = readHwmonTemp();
         if (temp !== null) {
             tempLabel.set_label(temp + '°C');
-            tempDot.remove_css_class('warm'); tempDot.remove_css_class('hot');
-            if (temp > 75) tempDot.add_css_class('hot');
-            else if (temp > 55) tempDot.add_css_class('warm');
+            tempLabel.remove_css_class('warm'); tempLabel.remove_css_class('hot');
+            if (temp > 75) tempLabel.add_css_class('hot');
+            else if (temp > 55) tempLabel.add_css_class('warm');
         }
 
         const mem = readProcMeminfo();
@@ -736,8 +716,49 @@ export function createHome(ctx) {
         }
     }
 
+    let introSource = 0;
+    let coreReveal = 1;
+    let introRun = 0;
+    function playIntro() {
+        if (!shown) return;
+        introRun += 1;
+        const run = introRun;
+        // Restart the CSS entrance: drop the class, re-add it on the next idle so
+        // the animation runs again every time the page is shown.
+        page.remove_css_class('playing');
+        GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+            if (shown && run === introRun) page.add_css_class('playing');
+            return GLib.SOURCE_REMOVE;
+        });
+        const start = GLib.get_monotonic_time();
+        if (introSource) GLib.source_remove(introSource);
+        cpuSpark.reveal = diskSpark.reveal = netSpark.reveal = 0;
+        ramBar.reveal = 0;
+        taskRows.forEach(rowItem => { rowItem.meter.reveal = 0; });
+        coreReveal = 0;
+        const paint = () => {
+            cpuSpark.queue_draw(); diskSpark.queue_draw(); netSpark.queue_draw();
+            ramBar.queue_draw();
+            taskRows.forEach(rowItem => rowItem.meter.queue_draw());
+            coreStrip.queue_draw();
+        };
+        introSource = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, () => {
+            if (!shown || run !== introRun) { introSource = 0; return GLib.SOURCE_REMOVE; }
+            const t = Math.min(1, (GLib.get_monotonic_time() - start) / 720000);
+            const e = 1 - (1 - t) ** 3;
+            cpuSpark.reveal = diskSpark.reveal = netSpark.reveal = e;
+            ramBar.reveal = e;
+            taskRows.forEach(rowItem => { rowItem.meter.reveal = e; });
+            coreReveal = e;
+            paint();
+            if (t >= 1) { introSource = 0; return GLib.SOURCE_REMOVE; }
+            return GLib.SOURCE_CONTINUE;
+        });
+    }
+
     function startLoops() {
         if (!shown) return;
+        playIntro();
         updateClock();
         sampleHardware();
         if (!clockTimer) {
@@ -754,22 +775,13 @@ export function createHome(ctx) {
                 return GLib.SOURCE_CONTINUE;
             });
         }
-        if (!waveTick) {
-            // 25fps is plenty for a slow tide and costs a fraction of a 144Hz
-            // frame callback (measured 8% -> ~1.5% CPU on this machine).
-            waveTick = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 55, () => {
-                if (!shown) { waveTick = 0; return GLib.SOURCE_REMOVE; }
-                tidePhase = (tidePhase + 0.045) % (Math.PI * 2);
-                tideArea.queue_draw();
-                return GLib.SOURCE_CONTINUE;
-            });
-        }
     }
 
     function stopLoops() {
+        if (introSource) { GLib.source_remove(introSource); introSource = 0; }
+        page.remove_css_class('playing');
         if (clockTimer) { GLib.source_remove(clockTimer); clockTimer = 0; }
         if (hardwareTimer) { GLib.source_remove(hardwareTimer); hardwareTimer = 0; }
-        if (waveTick) { GLib.source_remove(waveTick); waveTick = 0; }
     }
 
     return {

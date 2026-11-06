@@ -44,24 +44,25 @@
 
 /* ---------- navigation rail ---------- */
 .tide-window .tab-rail {
-  background-color: @t_glass_rail;
-  border: 1px solid @t_border;
+  /* No container: the icons sit directly on the glass, like Noctalia's own
+     settings window. The token stays for the faint hover wash. */
+  background-color: transparent;
+  border: none;
   border-radius: 18px;
-  padding: 6px;
-  box-shadow: inset 0 1px 0 @t_highlight;
+  padding: 4px 0;
 }
 .tide-window .nav-button {
-  min-width: 36px;
-  min-height: 36px;
-  padding: 0;
-  border-radius: 11px;
+  min-width: 56px;
+  min-height: 54px;
+  padding: 4px 0;
+  border-radius: 12px;
   color: @t_fg;
   background-color: transparent;
   border: 1px solid transparent;
   transition: background-color 140ms ease-out, color 120ms ease-out, box-shadow 140ms ease-out;
 }
 .tide-window .nav-button:hover {
-  background-color: @t_surf2;
+  background-color: @t_glass_rail;
   color: @t_fg;
 }
 .tide-window .nav-button:active {
@@ -70,14 +71,67 @@
 }
 .tide-window .nav-button:checked,
 .tide-window .nav-button.selected {
-  background-color: @t_accent_ghost;
+  background-color: @t_accent_soft;
   color: @t_accent;
-  border-color: @t_accent_soft;
-  /* 2px accent rule on the inner edge: states the current page without
-     tinting the whole tile. */
-  box-shadow: inset 2px 0 0 @t_accent;
+  border-color: transparent;
 }
+.tide-window .nav-label { font-size: 10px; font-weight: 500; color: inherit; letter-spacing: 0.02em; }
 .tide-window .close-button { color: @t_fg_dim; margin-top: 2px; min-width: 36px; min-height: 36px; }
+
+/* ---------- macOS grouped list ---------- */
+.tide-window .home-page { padding: 0 0 8px; }
+.tide-window .mac-section {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+  color: @t_fg_dim; padding: 0 4px;
+}
+.tide-window .mac-group {
+  background-color: @t_group;
+  border: 1px solid @t_border_strong;
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 @t_highlight;
+}
+.tide-window .mac-row { padding: 7px 14px; min-height: 38px; }
+.tide-window .mac-row.mac-sep { border-top: 1px solid @t_separator; }
+.tide-window .mac-row:hover { background-color: @t_row_hover; }
+.tide-window .mac-label { font-size: 13px; color: @t_fg; }
+.tide-window .mac-value { font-size: 12px; color: @t_fg_dim; font-feature-settings: "tnum"; }
+.tide-window .home-hero { padding: 14px 16px 10px; }
+.tide-window .home-hero .home-date-label { font-size: 11px; font-weight: 600; color: @t_fg_dim; letter-spacing: 0.05em; }
+.tide-window .home-hero .home-time-main { font-size: 52px; font-weight: 600; letter-spacing: -0.03em; }
+.tide-window .hub-row { padding: 8px 14px; min-height: 46px; }
+.tide-window .hub-icon-tool { color: @t_mod_tools; }
+.tide-window .hub-icon-link { color: @t_mod_windows; }
+.tide-window .hub-link { background-color: transparent; border: none; box-shadow: none; padding: 0; min-height: 0; }
+.tide-window .hub-link:hover { background-color: transparent; }
+.tide-window .hub-link image { color: @t_fg_faint; }
+
+@keyframes page-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.tide-window .page-in { animation: page-fade-in 260ms ease-out both; }
+
+/* Home entrance: hero settles, rows rise in 45ms steps, charts draw themselves.
+   Re-triggered by adding `.playing` on every show (see playIntro). */
+@keyframes mac-hero-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes mac-row-in {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tide-window .home-page.playing .home-hero { animation: mac-hero-in 560ms cubic-bezier(.22,.61,.36,1) both; }
+.tide-window .home-page.playing .mac-row { animation: mac-row-in 420ms cubic-bezier(.22,.61,.36,1) both; }
+.tide-window .home-page.playing .mac-section-row { animation: mac-row-in 380ms cubic-bezier(.22,.61,.36,1) both; }
+.tide-window .home-page.playing .row-in-1 { animation-delay: 45ms; }
+.tide-window .home-page.playing .row-in-2 { animation-delay: 90ms; }
+.tide-window .home-page.playing .row-in-3 { animation-delay: 135ms; }
+.tide-window .home-page.playing .row-in-4 { animation-delay: 180ms; }
+.tide-window .home-page.playing .row-in-5 { animation-delay: 225ms; }
+.tide-window .home-page.playing .row-in-6 { animation-delay: 270ms; }
+.tide-window .home-page.playing .row-in-7 { animation-delay: 315ms; }
+.tide-window .home-page.playing .row-in-8 { animation-delay: 360ms; }
+.tide-window .home-page.playing .row-in-9 { animation-delay: 405ms; }
+.tide-window .home-page.playing .row-in-10 { animation-delay: 450ms; }
+.tide-window .launcher-action-pill { min-height: 28px; padding: 3px 10px; font-size: 11px; border-radius: 8px; }
 .tide-window .close-button:hover { background-color: @t_surf2; color: @t_fg; }
 
 /* ---------- type scale ---------- */
@@ -151,17 +205,17 @@
 
 /* ---------- cards ---------- */
 .tide-window .card {
-  background-color: @t_glass_card;
+  background-color: @t_group;
   background-image: none;
   border: 1px solid @t_border_strong;
-  border-radius: 16px;
-  box-shadow: 0 1px 2px @t_shadow_soft, inset 0 1px 0 @t_highlight;
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 @t_highlight;
   padding: 14px;
 }
 /* Reading surfaces keep more body than decorative cards: long Chinese text on
    a 0.82 glass is where translucency starts to cost legibility. */
-.tide-window .notes-card,
-.tide-window .tools-card { background-color: @t_glass_read; padding: 0; }
+.tide-window .notes-card { background-color: @t_glass_read; padding: 0; }
+.tide-window .tools-card { background-color: @t_group; padding: 0; }
 .tide-window .home-clock-card {
   background-color: @t_glass_card;
   /* Hero card: a soft accent glow behind the clock plus the diagonal sheen.
@@ -260,7 +314,7 @@
 .tide-window .note-selector-title { font-size: 13px; font-weight: 500; color: @t_fg; }
 .tide-window .note-add-button { color: @t_fg_dim; }
 .tide-window .note-add-button:hover { color: @t_accent; background-color: @t_accent_ghost; }
-.tide-window .notes-selector-row { padding: 12px 12px 6px; }
+.tide-window .notes-selector-row { padding: 8px 12px; border-bottom: 1px solid @t_separator; }
 .tide-window .notes-selector-row .note-selector { min-height: 34px; }
 .tide-window .note-tool-button {
   min-width: 32px; min-height: 32px; padding: 6px; border-radius: 9px;
@@ -272,7 +326,7 @@
 .tide-window .editor-scroll:focus-within { box-shadow: none; border-color: transparent; }
 .tide-window .rename-row { padding: 0 12px 8px 16px; }
 .tide-window .note-footer-layer { padding: 0; margin: 0; }
-.tide-window .note-footer { padding: 0 12px 10px 16px; background-color: transparent; }
+.tide-window .note-footer { padding: 8px 12px 8px 16px; background-color: transparent; border-top: 1px solid @t_separator; }
 .tide-window .note-footer > label { font-size: 12px; color: @t_fg_dim; }
 .tide-window .note-footer .status-label { margin-right: 10px; }
 .tide-window .note-actions-button > button {
@@ -352,7 +406,7 @@
 .tide-window .result-display.committed {
   font-size: 36px; color: @t_fg; opacity: 1; font-weight: 700;
 }
-.tide-window .calc-keypad-pane { padding: 8px 12px 12px; }
+.tide-window .calc-keypad-pane { padding: 8px 12px 12px; border-top: 1px solid @t_separator; }
 .tide-window .key-button {
   font-size: 19px; font-weight: 500; color: @t_fg;
   min-height: 34px; border-radius: 10px;
@@ -440,7 +494,8 @@
 /* The card-wide colour rule above outranks `.danger`, so restate it here. */
 .tide-window .hotspot-card button.danger { color: @t_danger; border-color: @t_danger_soft; }
 .tide-window .hotspot-card button.danger:hover { background-color: @t_danger_soft; }
-.tide-window .status-row { min-height: 34px; }
+.tide-window .status-row { min-height: 38px; }
+.tide-window .status-row.mac-sep { border-top: 1px solid @t_separator; }
 .tide-window .status-row label { font-size: 12px; }
 .tide-window .segmented { background-color: @t_surf0; border: 1px solid @t_border; border-radius: 10px; padding: 2px; }
 .tide-window .segmented > button {
@@ -452,16 +507,20 @@
 
 /* ---------- windows ---------- */
 .tide-window .window-row {
-  background-color: @t_surf0;
-  border: 1px solid @t_border;
-  border-radius: 10px;
-  padding: 6px 8px;
-  min-height: 40px;
-  transition: background-color 120ms ease-out, border-color 120ms ease-out;
+  background-color: transparent;
+  border: none;
+  padding: 8px 10px 8px 14px;
+  min-height: 46px;
+  transition: background-color 120ms ease-out;
 }
-.tide-window .window-row:hover { background-color: @t_surf2; }
-.tide-window .window-row:focus-within { border-color: @t_accent_soft; }
-.tide-window .window-row.selected { background-color: @t_accent_ghost; border-color: @t_accent_soft; box-shadow: inset 2px 0 0 @t_accent; }
+.tide-window .window-row:hover { background-color: @t_row_hover; }
+.tide-window .window-row:focus-within { background-color: @t_row_hover; }
+.tide-window .window-row.selected { background-color: @t_accent_ghost; box-shadow: inset 2px 0 0 @t_accent; }
+.tide-window .window-row .window-focus {
+  background-color: transparent; background-image: none;
+  border: none; box-shadow: none; padding: 0; min-height: 0;
+}
+.tide-window .window-row .window-focus:hover { background-color: transparent; }
 .tide-window .window-row button { min-height: 30px; }
 .tide-window .window-row button label { font-weight: 500; }
 .tide-window .window-row .muted { font-size: 12px; color: @t_fg_dim; }
@@ -504,9 +563,10 @@
 }
 .tide-window .home-hw-value { font-size: 14px; font-weight: 600; color: @t_fg; font-feature-settings: "tnum"; }
 .tide-window .home-hw-sub { font-size: 11px; color: @t_fg_faint; }
-.tide-window .home-temp-dot { color: @t_success; }
-.tide-window .home-temp-dot.warm { color: @t_warning; }
-.tide-window .home-temp-dot.hot { color: @t_danger; }
+.tide-window .home-temp-label { color: @t_fg_dim; }
+.tide-window .home-temp-label.warm { color: @t_warning; }
+.tide-window .home-temp-label.hot { color: @t_danger; }
+.tide-window .home-battery-icon { color: @t_success; }
 .tide-window .home-temp-label { font-size: 11px; color: @t_fg_dim; font-feature-settings: "tnum"; }
 .tide-window .home-clock-wave { color: @t_accent; }
 /* Static data is neutral by design: the accent is a state, not a decoration.

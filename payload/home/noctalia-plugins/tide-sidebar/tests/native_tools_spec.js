@@ -92,8 +92,7 @@ async function runSuite() {
     assert(timerCard.get_orientation() === Gtk.Orientation.HORIZONTAL && findClass('timer-label-pane').get_parent() === timerCard && timerContentPane.get_parent() === timerCard && timerDisplay.get_parent() === timerContentPane && findClass('timer-presets').get_parent() === findClass('tools-page'), 'Timer must use two horizontal panes with presets outside the card');
     assert(!walk(timerCard).some(w => w.get_vexpand()),
         'Timer card must not contain a vexpand child: GtkBox propagates the flag and the card swallows every spare pixel of the page');
-    const wave = findClass('calc-wave');
-    assert(wave instanceof Gtk.DrawingArea && wave.get_content_height() === 10 && wave.get_prev_sibling() === findClass('calc-display-pane') && wave.get_next_sibling() === findClass('calc-keypad-pane'), 'A single thin wave rule must separate display and keypad');
+    assert(!findClass('calc-wave'), 'The tide rule was retired: the keypad is separated by a CSS hairline, not a drawing area');
     assert(widgets.filter(w => w.has_css_class('history-row')).length === 8, 'History row pool must be bounded at 8');
     assert(!history.get_expanded(), 'History must begin collapsed');
     button('5 分').emit('clicked');
