@@ -5,6 +5,7 @@ import GLib from 'gi://GLib';
 import Layer from 'gi://Gtk4LayerShell?version=1.0';
 import System from 'system';
 import * as UI from '../native/ui.js';
+import {paletteFor} from '../native/palette.js';
 import {createNotes} from '../native/views/notes.js';
 if (!ARGV.includes('--allow-test-window')) throw new Error('explicit --allow-test-window required');
 const app = new Gtk.Application({application_id: 'org.noctalia.SidebarPopupTest', flags: Gio.ApplicationFlags.NON_UNIQUE});
@@ -25,7 +26,12 @@ app.connect('activate', () => {
     try {
         const provider = new Gtk.CssProvider();
         const dir = GLib.path_get_dirname(GLib.filename_from_uri(import.meta.url)[0]);
-        provider.load_from_path(GLib.build_filenamev([dir, '..', 'native', 'style.css']));
+        {
+            const sheet = GLib.build_filenamev([dir, '..', 'native', 'style.css']);
+            const [ok, bytes] = GLib.file_get_contents(sheet);
+            if (!ok) throw new Error('cannot read ' + sheet);
+            provider.load_from_data(paletteFor().css + new TextDecoder().decode(bytes), -1);
+        }
         Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_USER + 1);
         window = new Gtk.ApplicationWindow({application: app, title: '侧栏弹层测试（模拟数据）', default_width: 450, decorated: false});
         window.add_css_class('tide-window');

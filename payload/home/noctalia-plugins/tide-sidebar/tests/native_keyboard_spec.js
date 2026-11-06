@@ -2,6 +2,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import {paletteFor} from '../native/palette.js';
 import System from 'system';
 import * as UI from '../native/ui.js';
 import {createTools} from '../native/views/tools.js';
@@ -37,7 +38,9 @@ app.connect('activate', () => {
     try {
         const provider = new Gtk.CssProvider();
         const css = GLib.build_filenamev([GLib.path_get_dirname(GLib.filename_from_uri(import.meta.url)[0]), '..', 'native', 'style.css']);
-        provider.load_from_path(css);
+const [cssOk, cssBytes] = GLib.file_get_contents(css);
+if (!cssOk) throw new Error('cannot read ' + css);
+        provider.load_from_data(paletteFor().css + new TextDecoder().decode(cssBytes), -1);
         Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_USER + 1);
         win = new Gtk.ApplicationWindow({application: app, title: '侧栏输入检查（测试数据）', default_width: 450, default_height: 950});
         win.add_css_class('tide-window');

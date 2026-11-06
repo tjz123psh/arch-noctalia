@@ -326,17 +326,20 @@ function sparkline(ui, values, {height = 26, alpha = 0.85, ceiling = null} = {})
         const step = width / Math.max(1, values.length - 1);
         const y = v => h - 2 - Math.min(1, v / top) * (h - 4);
         const acc = area.get_color();
+        // Idle rows draw nothing: a flat series pinned to the bottom edge reads
+        // as a stray divider between two metrics, not as a chart.
+        if (Math.max(...values, 0) < 1) return;
         cr.moveTo(0, h);
         cr.lineTo(0, y(values[0] || 0));
         values.forEach((v, i) => cr.lineTo(i * step, y(v)));
         cr.lineTo(width, y(values[values.length - 1] || 0));
         cr.lineTo(width, h);
         cr.closePath();
-        cr.setSourceRGBA(acc.red, acc.green, acc.blue, 0.18 * alpha);
+        cr.setSourceRGBA(acc.red, acc.green, acc.blue, 0.16 * alpha);
         cr.fill();
         cr.moveTo(0, y(values[0] || 0));
         values.forEach((v, i) => cr.lineTo(i * step, y(v)));
-        cr.setLineWidth(1.6);
+        cr.setLineWidth(1.5);
         cr.setLineJoin(1);
         cr.setSourceRGBA(acc.red, acc.green, acc.blue, alpha);
         cr.stroke();
@@ -439,30 +442,41 @@ export function createHome(ctx) {
     sysHeader.append(sysTitle); sysHeader.append(tempDot); sysHeader.append(tempLabel);
     sysCard.append(sysHeader);
 
+    // Two lines per metric: name + value on the first, the graph on the second.
+    // A single line squeezed the value (NVMe/网络的读写速率会超过 100px) into an
+    // ellipsis and left the graph with whatever width was left.
     const row = (name) => {
-        const box = ui.box(Gtk.Orientation.HORIZONTAL, 8, ['home-hw-row']);
+        const column = ui.box(Gtk.Orientation.VERTICAL, 3, ['home-hw-row']);
+        const head = ui.box(Gtk.Orientation.HORIZONTAL, 8);
         const label = ui.label(name, ['home-hw-name']);
         label.set_size_request(42, -1);
         const value = ui.label('', ['home-hw-value']);
+        value.set_hexpand(true);
         value.set_xalign(1);
-        value.set_size_request(104, -1);
-        box.append(label); box.append(value);
-        return {box, label, value};
+        head.append(label); head.append(value);
+        column.append(head);
+        return {box: column, head, label, value};
     };
 
     const cpuRow = row('CPU');
-    const cpuSpark = sparkline(ui, cpuHistory, {height: 22, ceiling: 100});
-    cpuRow.box.insert_child_after(cpuSpark, cpuRow.label);
-    const coreStrip = new Gtk.DrawingArea({content_height: 8, hexpand: true, can_target: false});
+    const cpuSpark = sparkline(ui, cpuHistory, {height: 20, ceiling: 100});
+    cpuRow.box.append(cpuSpark);
+    const coreStrip = new Gtk.DrawingArea({content_height: 10, hexpand: true, can_target: false});
     coreStrip.add_css_class('home-core-bars');
     coreStrip.set_draw_func((_w, cr, width, h) => {
         if (width < 8) return;
         const acc = coreStrip.get_color();
-        const gap = 3;
+        const gap = 4;
         const cell = (width - gap * 15) / 16;
+        // Track: 16 empty slots, so an idle machine still reads as "a matrix
+        // with nothing running" instead of a dotted divider.
+        cr.setSourceRGBA(acc.red, acc.green, acc.blue, 0.07);
+        cr.rectangle(0, 0, width, h);
+        cr.fill();
         for (let i = 0; i < 16; i++) {
-            const pct = corePercents[i] / 100;
-            cr.setSourceRGBA(acc.red, acc.green, acc.blue, 0.10 + 0.80 * pct);
+            const pct = Math.max(0, Math.min(1, corePercents[i] / 100));
+            if (pct <= 0) continue;
+            cr.setSourceRGBA(acc.red, acc.green, acc.blue, 0.25 + 0.75 * pct);
             cr.rectangle(i * (cell + gap), 0, cell, h);
             cr.fill();
         }
@@ -472,18 +486,17 @@ export function createHome(ctx) {
 
     const ramRow = row('内存');
     const ramBar = fractionBar(ui, {height: 8, names: ['home-progress']});
-    ramBar.set_valign(Gtk.Align.CENTER);
-    ramRow.box.insert_child_after(ramBar, ramRow.label);
+    ramRow.box.append(ramBar);
     sysCard.append(ramRow.box);
 
     const diskRow = row('NVMe');
-    const diskSpark = sparkline(ui, diskReadHistory, {height: 22});
-    diskRow.box.insert_child_after(diskSpark, diskRow.label);
+    const diskSpark = sparkline(ui, diskReadHistory, {height: 20});
+    diskRow.box.append(diskSpark);
     sysCard.append(diskRow.box);
 
     const netRow = row('网络');
-    const netSpark = sparkline(ui, netRxHistory, {height: 22});
-    netRow.box.insert_child_after(netSpark, netRow.label);
+    const netSpark = sparkline(ui, netRxHistory, {height: 20});
+    netRow.box.append(netSpark);
     sysCard.append(netRow.box);
 
     const divider = new Gtk.Separator({orientation: Gtk.Orientation.HORIZONTAL});
@@ -610,8 +623,8 @@ export function createHome(ctx) {
         const battery = readBattery();
         const uptime = readProcUptime();
         if (battery) {
-            const symbol = battery.isCharging ? '⚡ ' : '';
-            statusText.set_label(symbol + battery.cap + '% · ' + (uptime || '在线'));
+            const charge = battery.isCharging ? '充电 ' : '';
+            statusText.set_label(charge + battery.cap + '% · ' + (uptime || '在线'));
         } else {
             statusText.set_label(uptime || '在线');
         }

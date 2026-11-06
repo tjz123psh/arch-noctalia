@@ -288,7 +288,8 @@ export function createNotes(ctx) {
     // High-frequency actions live in the title row (one click, >=32px targets).
     // Destructive actions stay behind the footer menu so they cannot be hit by
     // accident.
-    const pinAction = U.iconButton('starred', () => togglePin(), '置顶 / 取消置顶', ['note-tool-button']);
+    const pinAction = U.iconButton('non-starred-symbolic', () => togglePin(), '置顶 / 取消置顶', ['note-tool-button']);
+    const pinIcon = pinAction.get_child().get_first_child();
     const renameAction = U.iconButton('pencil', () => beginRename(), '重命名', ['note-tool-button']);
     const copyAction = U.iconButton('copy', () => copyBody(), '复制正文', ['note-tool-button']);
     toolbar.append(title); toolbar.append(pinAction); toolbar.append(renameAction); toolbar.append(copyAction);
@@ -464,8 +465,9 @@ export function createNotes(ctx) {
         pinAction.set_sensitive(ready && !!note && !pendingAdd);
         renameAction.set_sensitive(ready && !!note && !pendingAdd);
         copyAction.set_sensitive(ready && !!note);
-        if (note) mark(pinAction, 'pinned', String(note.title || '').startsWith('★ '));
-        else mark(pinAction, 'pinned', false);
+        const isPinned = Boolean(note) && String(note.title || '').startsWith('★ ');
+        mark(pinAction, 'pinned', isPinned);
+        pinIcon?.set_from_icon_name(isPinned ? 'starred-symbolic' : 'non-starred-symbolic');
         actionsButton.set_sensitive(ready && !!note && !pendingAdd);
         deleteButton.set_sensitive(ready && !!note && trash.length < 80 && !pendingAdd);
     }

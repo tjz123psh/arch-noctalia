@@ -184,16 +184,18 @@ export function waveRule(color = '#F1D68B', height = 8) {
     };
     let phase = 0;
     let tick = 0;
+    let pulse = 0;
+    let pulseTick = 0;
     area.set_draw_func((_widget, cr, width, h) => {
         if (width < 2 || h < 2) return;
         const y = h * 0.5;
-        const amp = Math.min(2.6, h * 0.32);
+        const amp = Math.min(2.6, h * 0.32) * (1 + pulse * 1.6);
         cr.moveTo(0, y);
         cr.curveTo(width * .18, y - amp * Math.cos(phase), width * .34, y + amp * Math.sin(phase * .9), width * .52, y + amp * .25);
         cr.curveTo(width * .70, y - amp, width * .86, y + amp * .6, width, y - amp * .2);
-        cr.setLineWidth(1.6);
+        cr.setLineWidth(1.3);
         cr.setLineCap(1);
-        cr.setSourceRGBA(rgb.r, rgb.g, rgb.b, 0.55);
+        cr.setSourceRGBA(rgb.r, rgb.g, rgb.b, 0.42);
         cr.stroke();
     });
     area.startBreathe = () => {
@@ -208,8 +210,26 @@ export function waveRule(color = '#F1D68B', height = 8) {
     area.stopBreathe = () => {
         if (tick) { GLib.source_remove(tick); tick = 0; }
     };
-    area.pulse = () => {};
-    area.connect('unmap', () => area.stopBreathe());
+    // Short damped kick: commits (=) and saves used to ripple the old filled
+    // wave; keep the feedback without the block.
+    area.pulse = (durationMs = 420, intensity = 1) => {
+        if (!Gtk.Settings.get_default().gtk_enable_animations) return;
+        if (pulseTick) { GLib.source_remove(pulseTick); pulseTick = 0; }
+        const start = GLib.get_monotonic_time();
+        const span = Math.max(1, durationMs) * 1000;
+        pulse = Math.min(1.2, intensity);
+        pulseTick = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 24, () => {
+            const t = Math.min(1, (GLib.get_monotonic_time() - start) / span);
+            pulse = Math.min(1.2, intensity) * Math.exp(-3.0 * t) * (1 - t);
+            area.queue_draw();
+            if (t >= 1) { pulseTick = 0; pulse = 0; area.queue_draw(); return GLib.SOURCE_REMOVE; }
+            return GLib.SOURCE_CONTINUE;
+        });
+    };
+    area.connect('unmap', () => {
+        area.stopBreathe();
+        if (pulseTick) { GLib.source_remove(pulseTick); pulseTick = 0; pulse = 0; }
+    });
     return area;
 }
 
