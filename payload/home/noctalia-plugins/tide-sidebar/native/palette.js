@@ -130,6 +130,21 @@ export function buildTokens(defines = {}) {
     const success = dark ? {r: 0x6f, g: 0xd0, b: 0x9b} : {r: 0x2c, g: 0x7d, b: 0x52};
     const warning = dark ? {r: 0xe3, g: 0xb3, b: 0x41} : {r: 0x9a, g: 0x6a, b: 0x00};
     const highlight = dark ? rgba({r: 255, g: 255, b: 255}, 0.055) : rgba({r: 255, g: 255, b: 255}, 0.65);
+    // Glass is only honest when something actually blurs behind the surface.
+    // niri exports NIRI_SOCKET and its layer-rule blurs this namespace; on any
+    // other compositor we fall back to nearly opaque panels instead of showing
+    // a washed-out wallpaper through a "glass" that is not frosted.
+    const blurred = Boolean(GLib.getenv('NIRI_SOCKET'));
+    const body = dark ? 0 : 0.08;           // light palettes need more substance
+    // The frame is smoked glass: a darker base than the cards so the panels
+    // read as frosted sheets laid on top, while 18% of the blurred wallpaper
+    // still tints it.
+    const shellInk = mix(bg, {r: 0, g: 0, b: 0}, dark ? 0.42 : 0.06);
+    const shellAlpha = Math.min(0.99, (blurred ? 0.93 : 0.97) + body);
+    const cardAlpha = Math.min(0.99, (blurred ? 0.97 : 0.99) + body);
+    const railAlpha = Math.min(0.99, (blurred ? 0.80 : 0.94) + body);
+    const readAlpha = blurred ? 0.975 : 1;
+    const data = rgba(fg, 0.22);
 
     const tokens = {
         t_bg: hex(bg),
@@ -152,10 +167,20 @@ export function buildTokens(defines = {}) {
         t_success: hex(success),
         t_warning: hex(warning),
         t_highlight: highlight,
-        // The closed drawer keeps a 1px sliver on screen so the compositor
-        // keeps the buffer warm; that sliver must be invisible.
-        t_sliver: rgba(bg, 0.004),
+        // Glass surfaces. Shell = the floating card, Card = a panel on top of it,
+        // Rail = the navigation strip, Read = surfaces that must stay legible
+        // (note editor, calculator display).
+        t_glass: rgba(shellInk, shellAlpha),
+        t_glass_card: rgba(surf1, cardAlpha),
+        t_glass_rail: rgba(surf0, railAlpha),
+        t_glass_read: rgba(surf1, readAlpha),
+        t_sheen: dark ? rgba({r: 255, g: 255, b: 255}, 0.028) : rgba({r: 255, g: 255, b: 255}, 0.35),
+        t_vignette: dark ? rgba({r: 0, g: 0, b: 0}, 0.22) : rgba({r: 60, g: 40, b: 30}, 0.05),
+        // Static data ink: neutral on purpose, so the accent stays a state and
+        // not a decoration. Peaks switch to @t_accent explicitly.
+        t_data: data,
         t_shadow: dark ? rgba({r: 0, g: 0, b: 0}, 0.45) : rgba({r: 60, g: 40, b: 30}, 0.12),
+        t_shadow_lift: dark ? rgba({r: 0, g: 0, b: 0}, 0.55) : rgba({r: 60, g: 40, b: 30}, 0.20),
         t_shadow_soft: dark ? rgba({r: 0, g: 0, b: 0}, 0.28) : rgba({r: 60, g: 40, b: 30}, 0.07),
     };
     return {tokens, dark};

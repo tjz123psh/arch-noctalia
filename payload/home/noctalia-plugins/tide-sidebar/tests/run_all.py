@@ -78,16 +78,26 @@ def check_native_lifecycle():
         raise SystemExit("native/main.js compares control serials without a finite guard")
     if "drawer = new Gtk.Fixed" in js or "syncShellHeight" in js:
         raise SystemExit("native/main.js reintroduced the Gtk.Fixed drawer")
-    if "DRAWER_OPEN_MARGIN = -1" not in js or "appliedWidth - 1" not in js:
-        raise SystemExit("drawer no longer parks one (nearly invisible) pixel on screen")
+    # Floating card: the open drawer sits at SHELL_INSET (8px of wallpaper on
+    # the left/top/bottom) and the parked state keeps 1px on screen with the
+    # shell painted out so no dark line is left behind.
+    if "SHELL_INSET = 8" not in js or "DRAWER_OPEN_MARGIN = SHELL_INSET" not in js:
+        raise SystemExit("drawer no longer floats with an 8px inset")
+    if "return -Math.max(0, appliedWidth - 1);" not in js:
+        raise SystemExit("drawer no longer parks one pixel on screen")
     if "timeout_add(GLib.PRIORITY_DEFAULT, 7" not in js:
         raise SystemExit("drawer timer is no longer matched to the 144 Hz output")
+    # Icon-only 48px rail: the page header is the label, the rail is the map.
+    if "rail.set_size_request(48, -1)" not in js or "UI.icon(glyph, 20)" not in js:
+        raise SystemExit("navigation rail drifted from the 48px icon-only contract")
+    if "nav-label" in js:
+        raise SystemExit("navigation rail reintroduced permanent text labels")
     css = (PLUGIN / "native/style.css").read_text(encoding="utf-8")
     palette_js = (PLUGIN / "native/palette.js").read_text(encoding="utf-8")
-    # The parked sliver colour now lives in the palette bridge (t_sliver with a
-    # 0.004 alpha); style.css must reference the token, not a hardcoded colour.
-    if "t_sliver: rgba(bg, 0.004)" not in palette_js or "@t_sliver" not in css:
-        raise SystemExit("drawer's hidden 1px must stay near-transparent")
+    # The parked sliver must be painted out, otherwise the closed drawer leaves
+    # a dark 1px line down the screen edge.
+    if "drawer-parked" not in js or ".tide-window.drawer-parked .sidebar-shell" not in css:
+        raise SystemExit("closed drawer would leave a dark 1px line on the screen")
     if "background-clip: padding-box" not in css:
         raise SystemExit("drawer must clip its background to the padding box")
     ui = (PLUGIN / "native/ui.js").read_text(encoding="utf-8")
@@ -116,6 +126,14 @@ def check_palette_tokens():
     unused = sorted(defined - used)
     if unused:
         raise SystemExit("palette.js defines unused tokens: " + ", ".join(unused))
+    # The material must stay glass: the shell, cards and rail paint with the
+    # glass tokens, and the reading surfaces keep the higher-opacity one.
+    for selector, token in (("background-color: @t_glass;", "shell"),
+                            ("background-color: @t_glass_card;", "card"),
+                            ("background-color: @t_glass_rail;", "rail"),
+                            ("background-color: @t_glass_read;", "reading surface")):
+        if selector not in style:
+            raise SystemExit("the " + token + " is no longer painted with " + selector.split(": ")[1])
     print("PASS: " + str(len(used)) + " palette tokens resolve, no hardcoded colours in style.css")
 
 def check_documentation_links():

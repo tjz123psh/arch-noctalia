@@ -18,37 +18,47 @@
   color: @t_fg;
   background-color: transparent;
   background-image: none;
-  font-family: "Adwaita Sans", "Noto Sans CJK SC", sans-serif;
+  /* Inter carries the Latin and the numerals (cv01 = single-storey 1, ss03 =
+     curved l); CJK falls through to Noto Sans CJK SC. tnum keeps every metric
+     column aligned. */
+  font-family: "Inter", "Noto Sans CJK SC", "Adwaita Sans", sans-serif;
+  font-feature-settings: "cv01", "ss03", "tnum";
   font-size: 13px;
   padding: 0;
 }
 .tide-window .sidebar-shell {
-  background-color: @t_bg;
-  background-image: none;
+  background-color: @t_glass;
+  /* Sheen at the top + a soft vignette at the bottom: the glass catches light
+     from above and settles into shadow, which keeps the empty lower half of
+     short pages from looking like a smudge of blurred wallpaper. */
+  background-image: linear-gradient(180deg, @t_sheen 0%, transparent 26%, @t_vignette 100%);
   border: 1px solid @t_border;
-  border-left: 1px solid @t_sliver;
   background-clip: padding-box;
-  border-radius: 0 20px 20px 0;
-  padding: 12px;
+  border-radius: 24px;
+  padding: 10px 12px;
+  /* Two ambient layers + a 1px inner highlight: the top highlight is what reads
+     as "glass" instead of "flat rectangle". */
+  box-shadow: 0 24px 64px @t_shadow_lift, 0 2px 10px @t_shadow_soft, inset 0 1px 0 @t_highlight;
 }
 .tide-window .content-column { min-width: 0; }
 
 /* ---------- navigation rail ---------- */
 .tide-window .tab-rail {
-  background-color: @t_surf0;
+  background-color: @t_glass_rail;
   border: 1px solid @t_border;
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 6px;
+  box-shadow: inset 0 1px 0 @t_highlight;
 }
 .tide-window .nav-button {
-  min-width: 40px;
-  min-height: 52px;
-  padding: 5px 2px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
   border-radius: 11px;
-  color: @t_fg_dim;
+  color: @t_fg;
   background-color: transparent;
   border: 1px solid transparent;
-  transition: background-color 150ms ease-out, color 120ms ease-out, box-shadow 150ms ease-out;
+  transition: background-color 140ms ease-out, color 120ms ease-out, box-shadow 140ms ease-out;
 }
 .tide-window .nav-button:hover {
   background-color: @t_surf2;
@@ -63,24 +73,27 @@
   background-color: @t_accent_ghost;
   color: @t_accent;
   border-color: @t_accent_soft;
+  /* 2px accent rule on the inner edge: states the current page without
+     tinting the whole tile. */
   box-shadow: inset 2px 0 0 @t_accent;
 }
-.tide-window .nav-label { font-size: 11px; font-weight: 500; }
-.tide-window .close-button { color: @t_fg_dim; margin-top: 2px; min-width: 40px; min-height: 40px; }
+.tide-window .close-button { color: @t_fg_dim; margin-top: 2px; min-width: 36px; min-height: 36px; }
 .tide-window .close-button:hover { background-color: @t_surf2; color: @t_fg; }
 
 /* ---------- type scale ---------- */
 .tide-window .title,
 .tide-window .page-title { font-size: 18px; font-weight: 600; color: @t_fg; letter-spacing: 0.01em; }
-.tide-window .section-title { font-size: 14px; font-weight: 600; color: @t_fg; }
+.tide-window .section-title { font-size: 15px; font-weight: 600; color: @t_fg; letter-spacing: -0.01em; }
 .tide-window .subtitle { color: @t_fg_dim; }
 .tide-window .muted, .tide-window .field-muted { color: @t_fg_dim; }
+/* Micro label: the only place where a smaller-than-body size is allowed. It
+   reads as an annotation, not as content. */
 .tide-window .caption, .tide-window .status-label, .tide-window .status {
-  font-size: 12px;
+  font-size: 11px;
   color: @t_fg_dim;
   font-feature-settings: "tnum";
 }
-.tide-window .field-label { font-size: 12px; font-weight: 500; color: @t_fg_dim; letter-spacing: 0.01em; }
+.tide-window .field-label { font-size: 11px; font-weight: 600; color: @t_fg_dim; letter-spacing: 0.05em; }
 .tide-window .warning, .tide-window .status-error, .tide-window .error { color: @t_danger; }
 .tide-window .status-success { color: @t_success; }
 .tide-window .page-header { padding: 2px 0 4px; min-height: 40px; }
@@ -97,12 +110,14 @@
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 500;
-  transition: background-color 120ms ease-out, border-color 120ms ease-out, box-shadow 120ms ease-out;
+  transition: background-color 120ms ease-out, border-color 120ms ease-out,
+              box-shadow 120ms ease-out, transform 110ms ease-out;
 }
 .tide-window button:hover { background-color: @t_surf2; border-color: @t_border_strong; }
 .tide-window button:active {
   background-color: @t_surf1;
   box-shadow: inset 0 1px 2px @t_shadow;
+  transform: scale(0.985);
 }
 .tide-window button:disabled { color: @t_fg_faint; background-color: transparent; border-color: @t_border; }
 .tide-window button:focus-visible { outline: 2px solid @t_accent_line; outline-offset: 1px; }
@@ -136,16 +151,26 @@
 
 /* ---------- cards ---------- */
 .tide-window .card {
-  background-color: @t_surf1;
+  background-color: @t_glass_card;
   background-image: none;
-  border: 1px solid @t_border;
+  border: 1px solid @t_border_strong;
   border-radius: 16px;
   box-shadow: 0 1px 2px @t_shadow_soft, inset 0 1px 0 @t_highlight;
   padding: 14px;
 }
+/* Reading surfaces keep more body than decorative cards: long Chinese text on
+   a 0.82 glass is where translucency starts to cost legibility. */
 .tide-window .notes-card,
-.tide-window .tools-card,
-.tide-window .home-clock-card { background-color: @t_surf1; padding: 0; }
+.tide-window .tools-card { background-color: @t_glass_read; padding: 0; }
+.tide-window .home-clock-card {
+  background-color: @t_glass_card;
+  /* Hero card: a soft accent glow behind the clock plus the diagonal sheen.
+     Both are static gradients — no frame cost. */
+  background-image:
+    radial-gradient(circle at 16% 8%, @t_accent_ghost, transparent 56%),
+    linear-gradient(118deg, @t_sheen 0%, transparent 46%);
+  padding: 0;
+}
 .tide-window .home-cpu-card,
 .tide-window .home-mem-card,
 .tide-window .home-disk-card,
@@ -462,7 +487,7 @@
 /* ---------- home ---------- */
 .tide-window .home-page { padding: 0 0 6px; }
 .tide-window .home-clock-content { padding: 14px 16px 10px; }
-.tide-window .home-date-label { font-size: 12px; color: @t_fg_dim; letter-spacing: 0.02em; }
+.tide-window .home-date-label { font-size: 11px; font-weight: 600; color: @t_fg_dim; letter-spacing: 0.05em; }
 .tide-window .home-live-badge {
   padding: 2px 8px; border-radius: 999px; font-size: 11px;
   color: @t_fg_dim; background-color: @t_surf0; border: 1px solid @t_border;
@@ -483,11 +508,14 @@
 .tide-window .home-temp-dot.warm { color: @t_warning; }
 .tide-window .home-temp-dot.hot { color: @t_danger; }
 .tide-window .home-temp-label { font-size: 11px; color: @t_fg_dim; font-feature-settings: "tnum"; }
+.tide-window .home-clock-wave { color: @t_accent; }
+/* Static data is neutral by design: the accent is a state, not a decoration.
+   Only the leading task and cores above 70% switch back to accent. */
 .tide-window .home-sparkline,
-.tide-window .home-clock-wave,
 .tide-window .home-core-bars,
-.tide-window .home-fraction { color: @t_accent; }
-.tide-window .home-core-bars { color: @t_accent; }
+.tide-window .home-fraction { color: @t_data; }
+.tide-window .home-task-row.leader .home-task-meter { color: @t_accent; }
+.tide-window .home-task-row.leader .home-task-cpu { color: @t_fg; }
 .tide-window .home-progress, .tide-window .home-task-meter { min-width: 60px; }
 .tide-window .home-net-speed-box { color: @t_fg_dim; }
 .tide-window .home-speed-rx { font-size: 12px; color: @t_fg; font-feature-settings: "tnum"; }
@@ -541,8 +569,8 @@
 
 /* ---------- motion ---------- */
 @keyframes tide-card-rise {
-  from { opacity: 0.6; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .tide-window .card-stagger-1 { animation: tide-card-rise 200ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
 .tide-window .card-stagger-2 { animation: tide-card-rise 240ms cubic-bezier(0.22, 0.61, 0.36, 1) 30ms both; }
@@ -550,6 +578,12 @@
 @keyframes tide-row-in { from { opacity: 0; } to { opacity: 1; } }
 .tide-window .row-in { animation: tide-row-in 160ms ease-out both; }
 
+/* Closed drawer: the parked pixel must be invisible, so the shell stops
+ * painting entirely (the surface itself stays mapped). */
+.tide-window.drawer-parked .sidebar-shell {
+  background-color: transparent; background-image: none;
+  border-color: transparent; box-shadow: none;
+}
 /* Hidden surface keeps a 1px sliver on screen; freeze every animation so the
  * frame clock has nothing to do while the drawer is closed. */
 .tide-window.sidebar-hidden *,

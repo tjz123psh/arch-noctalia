@@ -1,6 +1,7 @@
 import Gtk from 'gi://Gtk?version=4.0';
 import GLib from 'gi://GLib';
 import Pango from 'gi://Pango';
+import cairo from 'cairo';
 
 const HISTORY_POINTS = 24;
 const WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
@@ -297,7 +298,7 @@ function fractionBar(ui, {height = 6, names = []} = {}) {
         const radius = h / 2;
         const acc = area.get_color();
         const dim = acc.copy();
-        dim.alpha = 0.16;
+        dim.alpha = acc.alpha * 0.16;
         cr.save();
         cr.arc(radius, radius, radius, Math.PI / 2, Math.PI * 1.5);
         cr.arc(Math.max(radius, width - radius), radius, radius, Math.PI * 1.5, Math.PI / 2);
@@ -310,7 +311,9 @@ function fractionBar(ui, {height = 6, names = []} = {}) {
         cr.save();
         cr.arc(r2, radius, r2, Math.PI / 2, Math.PI * 1.5);
         cr.arc(Math.max(r2, filled - r2), radius, r2, Math.PI * 1.5, Math.PI / 2);
-        cr.setSourceRGBA(acc.red, acc.green, acc.blue, 1);
+        // Respect the token's alpha: @t_data is fg at 22%, and forcing 1.0
+        // painted the neutral bars as solid white.
+        cr.setSourceRGBA(acc.red, acc.green, acc.blue, acc.alpha);
         cr.fill();
         cr.restore();
     });
@@ -406,24 +409,36 @@ export function createHome(ctx) {
     clockContent.append(timeRow);
     clockCard.append(clockContent);
 
-    const tideArea = new Gtk.DrawingArea({content_height: 28, hexpand: true, can_target: false});
+    const tideArea = new Gtk.DrawingArea({content_height: 34, hexpand: true, can_target: false});
     tideArea.add_css_class('home-clock-wave');
     tideArea.set_draw_func((_w, cr, width, h) => {
         if (width < 2 || h < 2) return;
         const acc = parseAccent(ctx);
-        const stroke = (offset, amplitude, widthPx, alpha) => {
-            const y = h * offset;
-            cr.moveTo(0, y);
-            cr.curveTo(width * .16, y - amplitude * Math.cos(tidePhase), width * .34, y + amplitude * Math.sin(tidePhase * 0.9),
-                width * .52, y + amplitude * 0.35);
-            cr.curveTo(width * .70, y - amplitude, width * .86, y + amplitude * 0.6, width, y - amplitude * 0.2);
-            cr.setLineWidth(widthPx);
-            cr.setLineCap(1);
-            cr.setSourceRGBA(acc.red, acc.green, acc.blue, alpha);
-            cr.stroke();
+        // Water, not a divider: a filled body at 6% with a single crest line.
+        // Two opaque strokes read as a seam at the card's bottom edge.
+        const y = h * 0.62;
+        const amp = Math.min(5.2, h * 0.15);
+        const curve = (offset, a) => {
+            const base = y + offset;
+            cr.moveTo(0, base);
+            cr.curveTo(width * .18, base - a * Math.cos(tidePhase), width * .36, base + a * Math.sin(tidePhase * 0.9),
+                width * .54, base + a * 0.35);
+            cr.curveTo(width * .72, base - a, width * .88, base + a * 0.6, width, base - a * 0.2);
         };
-        stroke(0.42, 3.4, 1.8, 0.9);
-        stroke(0.70, 2.4, 1.2, 0.42);
+        curve(0, amp);
+        cr.lineTo(width, h); cr.lineTo(0, h); cr.closePath();
+        // Water fades out towards the card's bottom edge: a flat 8% tint read
+        // as a dirty band, a vertical gradient reads as depth.
+        const water = new cairo.LinearGradient(0, y - amp, 0, h);
+        water.addColorStopRGBA(0, acc.red, acc.green, acc.blue, 0.16);
+        water.addColorStopRGBA(1, acc.red, acc.green, acc.blue, 0.015);
+        cr.setSource(water);
+        cr.fill();
+        cr.setSourceRGBA(acc.red, acc.green, acc.blue, 0.7);
+        curve(0, amp);
+        cr.setLineWidth(1.2);
+        cr.setLineCap(1);
+        cr.stroke();
     });
     // The strokes are full-bleed, so they must be clipped by the card's
     // rounded outline instead of leaking past the corner arcs.
@@ -462,25 +477,29 @@ export function createHome(ctx) {
     };
 
     const cpuRow = row('CPU');
-    const cpuSpark = sparkline(ui, cpuHistory, {height: 20, ceiling: 100});
+    const cpuSpark = sparkline(ui, cpuHistory, {height: 26, ceiling: 100});
     cpuRow.box.append(cpuSpark);
-    const coreStrip = new Gtk.DrawingArea({content_height: 10, hexpand: true, can_target: false});
+    const coreStrip = new Gtk.DrawingArea({content_height: 20, hexpand: true, can_target: false});
     coreStrip.add_css_class('home-core-bars');
     coreStrip.set_draw_func((_w, cr, width, h) => {
-        if (width < 8) return;
-        const acc = coreStrip.get_color();
-        const gap = 4;
-        const cell = (width - gap * 15) / 16;
-        // Track: 16 empty slots, so an idle machine still reads as "a matrix
-        // with nothing running" instead of a dotted divider.
-        cr.setSourceRGBA(acc.red, acc.green, acc.blue, 0.07);
-        cr.rectangle(0, 0, width, h);
+        if (width < 16) return;
+        const base = coreStrip.get_color();
+        const accent = parseAccent(ctx);
+        const cell = width / 16;
+        const barW = Math.max(2, Math.min(4, cell * 0.34));
+        // One hairline baseline instead of a full track: the row reads as
+        // meters standing on a floor, not as a barcode.
+        cr.setSourceRGBA(base.red, base.green, base.blue, 0.10);
+        cr.rectangle(0, h - 1, width, 1);
         cr.fill();
         for (let i = 0; i < 16; i++) {
             const pct = Math.max(0, Math.min(1, corePercents[i] / 100));
-            if (pct <= 0) continue;
-            cr.setSourceRGBA(acc.red, acc.green, acc.blue, 0.25 + 0.75 * pct);
-            cr.rectangle(i * (cell + gap), 0, cell, h);
+            const barH = 8 + pct * (h - 10);
+            const x = cell * i + (cell - barW) / 2;
+            const hot = pct > 0.7;
+            cr.setSourceRGBA(hot ? accent.red : base.red, hot ? accent.green : base.green,
+                hot ? accent.blue : base.blue, hot ? 0.9 : 0.30 + pct * 0.45);
+            cr.rectangle(x, h - 1 - barH, barW, barH);
             cr.fill();
         }
     });
@@ -517,6 +536,7 @@ export function createHome(ctx) {
         cpu.set_xalign(1);
         cpu.set_size_request(46, -1);
         line.append(name); line.append(meter); line.append(cpu);
+        if (i === 0) line.add_css_class('leader');
         sysCard.append(line);
         taskRows.push({name, meter, cpu});
     }

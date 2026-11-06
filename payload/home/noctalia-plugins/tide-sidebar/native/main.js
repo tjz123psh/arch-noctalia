@@ -41,7 +41,11 @@ let sequence = 0, visible = false, currentPage = 'home', lastControl = -1;
 let window, stack, toastRevealer, toastLabel, toastTimer = 0;
 let views = {}, pageHosts = {}, navigation = {}, fileMonitor = null, pendingRead = 0, heartbeat = 0;
 let drawerTimer = 0, drawerAnim = null;
-const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose, DRAWER_OPEN_MARGIN = -1;
+// The panel is a floating card: 8px of wallpaper on the left, top and bottom.
+// OPEN is that inset, CLOSED keeps a single pixel on screen (see drawerClosedOffset).
+const SHELL_INSET = 8;
+const DRAWER_OPEN_MS = UI.DURATION.drawerOpen, DRAWER_CLOSE_MS = UI.DURATION.drawerClose,
+    DRAWER_OPEN_MARGIN = SHELL_INSET;
 let viewFactory = null;
 let ensureView = () => null;
 let shellBox = null, appliedWidth = 0;
@@ -186,6 +190,24 @@ function reportGeometrySoon() {
 function drawerClosedOffset() { return -Math.max(0, appliedWidth - 1); }
 function easeOutCubic(t) { return 1 - (1 - t) ** 3; }
 function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2; }
+// cubic-bezier(.32,.72,0,1): starts fast, settles slowly — the "expensive"
+// drawer feel. Solved with Newton iterations, same maths as the CSS curve.
+function bezierEase(x1, y1, x2, y2) {
+    const curve = (a, b, t) => 3 * (1 - t) ** 2 * t * a + 3 * (1 - t) * t * t * b + t ** 3;
+    const slope = (a, b, t) => 3 * (1 - t) ** 2 * a + 6 * (1 - t) * t * (b - a) + 3 * t * t * (1 - b);
+    return x => {
+        let t = x;
+        for (let i = 0; i < 6; i++) {
+            const dx = curve(x1, x2, t) - x;
+            const d = slope(x1, x2, t);
+            if (Math.abs(dx) < 1e-5 || Math.abs(d) < 1e-6) break;
+            t -= dx / d;
+            t = Math.min(1, Math.max(0, t));
+        }
+        return curve(y1, y2, t);
+    };
+}
+const easeDrawer = bezierEase(0.32, 0.72, 0, 1);
 function setDrawer(value) {
     Layer.set_margin(window, Layer.Edge.LEFT, Math.round(value));
 }
@@ -243,6 +265,7 @@ function setVisible(wanted, page = null) {
     }
     visible = wanted;
     if (visible) {
+        window.remove_css_class('drawer-parked');
         window.remove_css_class('sidebar-hidden');
         Layer.set_keyboard_mode(window, Layer.KeyboardMode.ON_DEMAND);
         window.set_can_target(true);
@@ -250,7 +273,7 @@ function setVisible(wanted, page = null) {
         updatePage(true);
         views[currentPage]?.onShow?.();
         const from = Math.min(Layer.get_margin(window, Layer.Edge.LEFT), DRAWER_OPEN_MARGIN);
-        animateDrawer(from, DRAWER_OPEN_MARGIN, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeInOutCubic);
+        animateDrawer(from, DRAWER_OPEN_MARGIN, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeDrawer);
         send('visibility', {open: true, tab: currentPage});
         reportGeometrySoon();
     } else {
@@ -262,8 +285,11 @@ function setVisible(wanted, page = null) {
         views[currentPage]?.onHide?.();
         send('flush');
         send('visibility', {open: false, tab: currentPage});
-        animateDrawer(Layer.get_margin(window, Layer.Edge.LEFT), drawerClosedOffset(), reducedMotion() ? 0 : DRAWER_CLOSE_MS, easeInOutCubic, () => {
+        animateDrawer(Layer.get_margin(window, Layer.Edge.LEFT), drawerClosedOffset(), reducedMotion() ? 0 : DRAWER_CLOSE_MS, easeDrawer, () => {
             if (!visible) {
+                // The parked 1px sliver is the shell's right edge; paint it out
+                // so the closed drawer does not leave a dark line on the screen.
+                window.add_css_class('drawer-parked');
                 window.set_can_target(false);
                 try { imports.system.gc(); } catch (_) { try { globalThis.gc?.(); } catch (_) {} }
             }
@@ -429,11 +455,11 @@ app.connect('startup', () => {
     Layer.set_anchor(window, Layer.Edge.LEFT, true);
     Layer.set_anchor(window, Layer.Edge.TOP, true);
     Layer.set_anchor(window, Layer.Edge.BOTTOM, true);
-    // The drawer is attached to the screen edge: no top/bottom/side breathing
-    // room; the shell's left corners are square and its right corners rounded.
-    Layer.set_margin(window, Layer.Edge.LEFT, 0);
-    Layer.set_margin(window, Layer.Edge.TOP, 0);
-    Layer.set_margin(window, Layer.Edge.BOTTOM, 0);
+    // Floating card: the compositor leaves 8px of wallpaper on the left, top and
+    // bottom so the glass, shadow and 24px corners have something to sit on.
+    Layer.set_margin(window, Layer.Edge.LEFT, SHELL_INSET);
+    Layer.set_margin(window, Layer.Edge.TOP, SHELL_INSET);
+    Layer.set_margin(window, Layer.Edge.BOTTOM, SHELL_INSET);
     Layer.set_keyboard_mode(window, Layer.KeyboardMode.ON_DEMAND);
     Layer.set_exclusive_zone(window, 0);
     watchPalette();
@@ -462,13 +488,16 @@ app.connect('startup', () => {
     shell.set_size_request(450, -1);
     applyConfig();
     const rail = UI.box(Gtk.Orientation.VERTICAL, 7, ['tab-rail']);
-    rail.set_size_request(56, -1);
+    rail.set_size_request(48, -1);
     const descriptions = {home: ['首页', 'home'], notes: ['便签', 'note'], tools: ['工具', 'calculator'], hotspot: ['热点', 'wifi'], windows: ['窗口', 'apps']};
     for (const page of pageNames) {
         const [text, glyph] = descriptions[page];
+        // Icon-only rail: the page header already names the current page, so a
+        // permanent text label under every icon is duplicated information.
         const button = UI.classes(new Gtk.Button({tooltip_text: text}), ['nav-button', 'nav-' + page]);
-        const child = UI.box(Gtk.Orientation.VERTICAL, 4);
-        child.set_halign(Gtk.Align.CENTER); child.append(UI.icon(glyph, 24)); child.append(UI.label(text, ['nav-label']));
+        const child = UI.box(Gtk.Orientation.VERTICAL, 0);
+        child.set_halign(Gtk.Align.CENTER); child.set_valign(Gtk.Align.CENTER);
+        child.append(UI.icon(glyph, 20));
         button.set_child(child); button.connect('clicked', () => selectPage(page));
         navigation[page] = button; rail.append(button);
     }

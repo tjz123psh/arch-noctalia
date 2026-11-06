@@ -22,6 +22,15 @@ PACKAGES="$ROOT_DIR/manifests/packages.tsv"
 fail=0
 bad() { echo "[FAIL] $*"; fail=1; }
 
+# --- 0) 玻璃材质依赖 niri 图层规则与 Inter 字体 ---
+LAYER_RULES="$ROOT_DIR/payload/home/.config/niri/conf.d/layer-rules.kdl"
+if ! grep -q 'noctalia-tide-sidebar' "$LAYER_RULES" 2>/dev/null; then
+  bad "layer-rules.kdl 缺少 noctalia-tide-sidebar 规则（玻璃会退回不透明）"
+elif ! awk '/match namespace="\^noctalia-tide-sidebar\$"/,/^}/' "$LAYER_RULES" | grep -q 'blur true'; then
+  bad "noctalia-tide-sidebar 规则没有 blur true"
+fi
+grep -q '^inter-font' "$PACKAGES" || bad "packages.tsv 缺少 inter-font（排印会回落到 Adwaita Sans）"
+
 # --- 1) 09 的预检列表 ⊆ payload ⊆ files.tsv ---
 # 从步骤脚本里抽出 plugin_files=( ... ) 数组（唯一事实来源就是它，不在测试里另抄一份）。
 mapfile -t preflight < <(

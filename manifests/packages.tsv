@@ -67,6 +67,7 @@ gvfs-smb	extra
 hardinfo2	extra		硬件信息/诊断一体化 GUI（设备树、CPU/内存/磁盘、传感器、跑分，可导出报告）；替代 KDE 信息中心（kinfocenter），自带 iperf3/sysbench/dmidecode/usbutils 后端
 hyprpicker	extra		Noctalia 社区插件 oldirtty/color_picker 依赖；niri 下 Alt+Shift+C 取色
 imagemagick	extra		
+inter-font	extra		侧栏界面字体：Inter（cv01/ss03/tnum），中文回落 Noto Sans CJK
 inotify-tools	extra		
 iw	extra		Wi-Fi 排障：iw reg get / iw phy info（热点频段与管制域检查）
 jdk25-openjdk	extra		

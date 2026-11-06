@@ -51,6 +51,21 @@ layer-rule {
     }
 }
 
+// tide-sidebar（插件侧栏）：壁纸玻璃。
+// xray 让模糊只取壁纸，面板滑动时不会把背后的窗口一起搅动；noise 压住
+// 大面积渐变在 8bit 下的 banding。透明度由插件的 palette.js 决定（0.72），
+// 这里只负责“真的有东西在模糊”。
+layer-rule {
+    match namespace="^noctalia-tide-sidebar$"
+
+    background-effect {
+        xray true
+        blur true
+        noise 0.015
+        saturation 1.08
+    }
+}
+
 // dock：⚠ 不加任何 background-effect。
 // dock 自动隐藏时表面仍映射，niri 的 blur（xray 开/关都一样）会在隐藏后残留
 // 一块"模糊圆角矩形"鬼影（用户两次反馈）；dock 自身 0.75 不透明度 + 阴影已够用。
