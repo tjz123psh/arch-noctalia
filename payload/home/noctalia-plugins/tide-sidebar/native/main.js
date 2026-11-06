@@ -144,10 +144,24 @@ function updatePage(force = false, changed = []) {
     const view = views[currentPage];
     if (visible && view && (force || changed.some(name => needed[currentPage].includes(name)))) view.update(state);
 }
+function playPageIn(widget) {
+    if (!widget) return;
+    widget.remove_css_class('page-in');
+    // One frame later, so GTK sees a real style change and restarts the
+    // animation on every switch and every reopen.
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 16, () => {
+        if (visible && widget === views[currentPage]?.widget) widget.add_css_class('page-in');
+        return GLib.SOURCE_REMOVE;
+    });
+}
 function selectPage(name, save = true) {
     name = normalizePage(name);
     if (name === currentPage && stack?.get_visible_child_name() === name) { updatePage(true); return; }
     if (visible) views[currentPage]?.onHide?.();
+    // Drop the entrance class while this page is leaving: a class that is only
+    // removed and re-added within one frame never restarts the CSS animation,
+    // which is why the second visit looked static.
+    views[currentPage]?.widget?.remove_css_class('page-in');
     ensureView(name);
     currentPage = name;
     // Hidden page switches must not queue a 220ms slide for the next open.
@@ -161,14 +175,7 @@ function selectPage(name, save = true) {
         views[name]?.onShow?.();
         // A quiet page-level fade keeps the switch from feeling like a hard cut
         // on pages that do not have their own entrance animation.
-        const pageWidget = views[name]?.widget;
-        if (pageWidget) {
-            pageWidget.remove_css_class('page-in');
-            GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-                if (visible && currentPage === name) pageWidget.add_css_class('page-in');
-                return GLib.SOURCE_REMOVE;
-            });
-        }
+        playPageIn(views[name]?.widget);
         send('visibility', {open: true, tab: name}); reportGeometrySoon();
     }
     if (save) send('preferences', {tab: name, reducedMotion: state.preferences?.reducedMotion === true});
@@ -285,6 +292,7 @@ function setVisible(wanted, page = null) {
         if (!window.get_mapped()) window.present();
         updatePage(true);
         views[currentPage]?.onShow?.();
+        playPageIn(views[currentPage]?.widget);
         const from = Math.min(Layer.get_margin(window, Layer.Edge.LEFT), DRAWER_OPEN_MARGIN);
         animateDrawer(from, DRAWER_OPEN_MARGIN, reducedMotion() ? 0 : DRAWER_OPEN_MS, easeDrawer);
         send('visibility', {open: true, tab: currentPage});
