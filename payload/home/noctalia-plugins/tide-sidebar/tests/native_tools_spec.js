@@ -10,7 +10,7 @@ import * as ui from '../native/ui.js';
 import {paletteFor} from '../native/palette.js';
 import {createTools} from '../native/views/tools.js';
 
-const EXPECTED_ASSERTIONS = 113;
+const EXPECTED_ASSERTIONS = 114;
 const TIMEOUT_MS = 10000;
 const originalDateNow = Date.now;
 const loop = new GLib.MainLoop(null, false);
@@ -90,6 +90,8 @@ async function runSuite() {
     const timerCard = findClass('timer-card');
     const timerContentPane = findClass('timer-content-pane');
     assert(timerCard.get_orientation() === Gtk.Orientation.HORIZONTAL && findClass('timer-label-pane').get_parent() === timerCard && timerContentPane.get_parent() === timerCard && timerDisplay.get_parent() === timerContentPane && findClass('timer-presets').get_parent() === findClass('tools-page'), 'Timer must use two horizontal panes with presets outside the card');
+    assert(!walk(timerCard).some(w => w.get_vexpand()),
+        'Timer card must not contain a vexpand child: GtkBox propagates the flag and the card swallows every spare pixel of the page');
     const wave = findClass('calc-wave');
     assert(wave instanceof Gtk.DrawingArea && wave.get_content_height() === 10 && wave.get_prev_sibling() === findClass('calc-display-pane') && wave.get_next_sibling() === findClass('calc-keypad-pane'), 'A single thin wave rule must separate display and keypad');
     assert(widgets.filter(w => w.has_css_class('history-row')).length === 8, 'History row pool must be bounded at 8');

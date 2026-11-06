@@ -223,7 +223,23 @@ function animateDrawer(from, to, duration, easing, done) {
 }
 function setVisible(wanted, page = null) {
     if (page) selectPage(page, false);
-    if (wanted === visible) return;
+    if (wanted === visible) {
+        // Duplicate control with the same intent: re-assert the drawer instead of
+        // returning. A palette reload (or an interrupted animation) can leave the
+        // surface parked off-screen while `visible` is already true, which used to
+        // make every later "show" a silent no-op until the process restarted.
+        cancelDrawer();
+        setDrawer(wanted ? DRAWER_OPEN_MARGIN : drawerClosedOffset());
+        if (wanted) {
+            window.set_can_target(true);
+            Layer.set_keyboard_mode(window, Layer.KeyboardMode.ON_DEMAND);
+            if (!window.get_mapped()) window.present();
+            views[currentPage]?.onShow?.();
+        } else {
+            window.set_can_target(false);
+        }
+        return;
+    }
     visible = wanted;
     if (visible) {
         window.remove_css_class('sidebar-hidden');
@@ -371,6 +387,9 @@ app.connect('startup', () => {
         if (window) {
             if (palette.dark) { window.add_css_class('palette-dark'); window.remove_css_class('palette-light'); }
             else { window.add_css_class('palette-light'); window.remove_css_class('palette-dark'); }
+            // Re-assert the drawer position: a style swap must not strand the
+            // surface at the old margin.
+            if (!drawerAnim) setDrawer(visible ? DRAWER_OPEN_MARGIN : drawerClosedOffset());
         }
     };
     applyStylesheet();
@@ -469,9 +488,18 @@ app.connect('startup', () => {
     toastRevealer.add_css_class('toast');
     toastRevealer.set_visible(false);
     toastRevealer.connect('notify::child-revealed', () => { if (!toastRevealer.get_reveal_child() && !toastRevealer.get_child_revealed()) toastRevealer.set_visible(false); });
-    toastLabel = new Gtk.Label({wrap: true, xalign: 0}); toastRevealer.set_child(toastLabel); right.append(toastRevealer);
+    toastLabel = new Gtk.Label({wrap: true, xalign: 0}); toastRevealer.set_child(toastLabel);
     shell.append(rail); shell.append(right);
-    window.set_child(shell);
+    // Floating toast: an overlay keeps the page height constant (a stacked
+    // revealer used to shrink the whole panel for 3.6s on every save).
+    const overlay = new Gtk.Overlay();
+    overlay.set_child(shell);
+    const toastHost = UI.box(Gtk.Orientation.VERTICAL, 0);
+    toastHost.set_valign(Gtk.Align.END); toastHost.set_can_target(false);
+    toastHost.set_margin_start(14); toastHost.set_margin_end(14); toastHost.set_margin_bottom(76);
+    toastHost.append(toastRevealer);
+    overlay.add_overlay(toastHost);
+    window.set_child(overlay);
     const keyboard = new Gtk.EventControllerKey();
     keyboard.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
     keyboard.connect('key-pressed', (_controller, key, _code, mods) => {
@@ -505,7 +533,12 @@ app.connect('startup', () => {
     }
   } catch (error) {
     startupFailed = true;
-    printerr(checkOnly ? 'native-check: ' + error.message : 'sidebar: native initialization failed');
+    printerr(checkOnly ? 'native-check: ' + error.message : 'sidebar: native initialization failed: ' + error.message);
+    // stderr is dropped by the service's runStream, so a crash here would look
+    // exactly like "pressing the shortcut does nothing". Report on stdout too.
+    if (!checkOnly) {
+        try { send('frontend-error', {message: String(error?.message || error).slice(0, 240)}); } catch (_) {}
+    }
     app.quit();
   }
 });

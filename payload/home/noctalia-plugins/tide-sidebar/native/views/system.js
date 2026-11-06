@@ -37,7 +37,7 @@ function pageHeader(ui, title, onRefresh) {
 }
 function scrolled(child) {
     const scroll = new Gtk.ScrolledWindow({hexpand: true, vexpand: true,
-        hscrollbar_policy: Gtk.PolicyType.NEVER, vscrollbar_policy: Gtk.PolicyType.AUTOMATIC});
+        hscrollbar_policy: Gtk.PolicyType.NEVER, propagate_natural_width: false, vscrollbar_policy: Gtk.PolicyType.AUTOMATIC});
     scroll.set_child(child);
     return scroll;
 }
@@ -110,7 +110,10 @@ export function createHotspot(ctx) {
     const formActions = ui.box('horizontal', 8);
     const apply = ui.button('应用设置', 'check', () => openConfirmation('apply'), ['primary']);
     apply.set_hexpand(true);
-    const reset = ui.iconButton('rotate-clockwise', resetFields, '使用当前设置');
+    // Labelled, not icon-only: with the hotspot off the apply button is hidden
+    // and a lone glyph at the bottom of the card read as a random refresh icon.
+    const reset = ui.button('恢复已保存', 'rotate-clockwise', resetFields, ['soft-button']);
+    reset.set_tooltip_text('使用当前设置');
     formActions.append(apply); formActions.append(reset); form.append(formActions);
     body.append(form);
 
@@ -358,9 +361,13 @@ export function createHotspot(ctx) {
         sensitive(revealButton.button, shown && !inFlight && !intent);
         sensitive(copy, shown && secretVisible && !inFlight && !intent);
         ui.setLabel(revealButton.label, secretVisible ? '隐藏密码' : revealing ? '取消读取' : '查看密码');
-        ui.setLabel(pending, hasChanges() || h.pending === true
+        const pendingText = hasChanges() || h.pending === true
             ? (h.on === true ? '有修改尚未应用；应用时会重启热点。' : '这些设置将在开启热点时使用。')
-            : '');
+            : '';
+        ui.setLabel(pending, pendingText);
+        // An empty wrapped label still reserves 18px, which left a hole above
+        // the actions row whenever nothing needed saying.
+        show(pending, pendingText !== '');
     }
     function update(state) {
         current = state?.system || {hotspot: {}, windows: [], loading: true};
@@ -427,8 +434,12 @@ export function createWindows(ctx) {
     const count = ui.label('0', ['status']);
     header.row.insert_child_after(count, header.row.get_first_child());
     widget.append(header.row);
-    const search = ui.classes(new Gtk.SearchEntry({hexpand: true, placeholder_text: '搜索应用或窗口'}), ['field-muted', 'scroll-gutter']);
-    widget.append(search);
+    // Everything below the header scrolls as one page. Anything left outside
+    // (the confirm card's wrapped title was one) pushes its natural width into
+    // the layer-shell surface and the panel silently grows past 450px.
+    const page = ui.box('vertical', 10, ['scroll-gutter']);
+    const search = ui.classes(new Gtk.SearchEntry({hexpand: true, placeholder_text: '搜索应用或窗口'}), ['field-muted']);
+    page.append(search);
 
     // Niri 桌面中控卡片
     const niriCard = ui.card(['card', 'niri-control-card', 'card-stagger-1']);
@@ -471,10 +482,10 @@ export function createWindows(ctx) {
     actionRow.append(btnCenter);
     niriCard.append(actionRow);
 
-    widget.append(niriCard);
-    const errorLabel = paragraph(ui, '', ['warning', 'scroll-gutter']); show(errorLabel, false); widget.append(errorLabel);
+    page.append(niriCard);
+    const errorLabel = paragraph(ui, '', ['warning']); show(errorLabel, false); page.append(errorLabel);
 
-    const confirmation = ui.classes(new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: ui.DURATION.reveal}), ['scroll-gutter']);
+    const confirmation = new Gtk.Revealer({transition_type: Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration: ui.DURATION.reveal});
     const confirmCard = ui.card(['window-card']);
     confirmCard.append(ui.label('关闭这个窗口？', ['section-title']));
     const confirmName = paragraph(ui, '', []); confirmCard.append(confirmName);
@@ -490,9 +501,9 @@ export function createWindows(ctx) {
     }, ['danger']);
     close.set_hexpand(true); close.set_tooltip_text('确认关闭所选窗口');
     confirmButtons.append(cancel); confirmButtons.append(close); confirmCard.append(confirmButtons);
-    confirmation.set_child(confirmCard); widget.append(confirmation);
+    confirmation.set_child(confirmCard); page.append(confirmation);
 
-    const content = ui.box('vertical', 8, ['scroll-gutter']);
+    const content = ui.box('vertical', 8);
     function staggerRows() {
         if (reducedMotion) return;
         if (rowStaggerSource) { GLib.source_remove(rowStaggerSource); rowStaggerSource = 0; }
@@ -519,7 +530,7 @@ export function createWindows(ctx) {
     empty.append(ui.icon('apps', 32));
     const emptyTitle = ui.label('正在获取窗口', ['section-title']); empty.append(emptyTitle);
     const emptyText = paragraph(ui, '窗口列表会在状态更新后显示。'); empty.append(emptyText);
-    content.append(empty); widget.append(scrolled(content));
+    content.append(empty); page.append(content); widget.append(scrolled(page));
     function cancelClose() { pendingId = null; confirmation.set_reveal_child(false); sensitive(close, false); }
     function openClose(id) {
         if (!shown || !rows.has(id) || current.windowsError) return;

@@ -142,6 +142,10 @@ function primaryFixture() {
             windows.update(windowState);
         }
         assert(walk(windows.widget).find(widget => widget.has_css_class('window-row')) === row, 'Title changes preserve row identity');
+        const shellChildren = [];
+        for (let child = windows.widget.get_first_child(); child; child = child.get_next_sibling()) shellChildren.push(child);
+        assert(shellChildren.length === 2 && shellChildren[1] instanceof Gtk.ScrolledWindow,
+            'Window content must live inside one scroller: anything outside pushes its natural width into the layer-shell surface and widens the panel past 450px');
         assert(factoryCount === before, 'Title-only updates allocate no new widget factories');
         row.get_first_child().emit('clicked');
         assert(windowContext.sends.at(-1).action === 'window-focus'

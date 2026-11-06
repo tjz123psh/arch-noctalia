@@ -6,6 +6,7 @@ local Stopwatch = require("./lib/stopwatch.luau")
 local Calculator = require("./lib/calculator.luau")
 local Frontend = require("./lib/frontend.luau")
 local frontend, command
+local errNotify
 local helper = noctalia.pluginDir() .. "/helpers/system.py"
 local dataRoot = noctalia.pluginDataDir()
 local base = type(dataRoot)=="string" and dataRoot~="" and (dataRoot .. "/private") or nil
@@ -356,6 +357,20 @@ command=function(c)
       local value=tonumber(c[key]);if value and value==value and value>=0 and value<=20000 then values[key]=value end
     end
     frontend:publish("geometry",values)
+  elseif action=="frontend-error" then
+    -- The native side crashed during startup (bad CSS, missing module...). Its
+    -- stderr never reaches us, so surface the reason instead of staying silent.
+    frontend.lastSeen=now()
+    frontend.failed=true
+    local text=type(c.message)=="string" and c.message:sub(1,200) or ""
+    feedback(false,"界面启动失败"..(text~="" and ("："..text) or ""),"frontend")
+    -- The in-panel toast cannot appear when the panel itself failed to start,
+    -- so raise a desktop notification as well (throttled per message).
+    local stamp=errNotify
+    if text~="" and (not stamp or stamp.text~=text or now()-stamp.at>600000) then
+      errNotify={text=text,at=now()}
+      noctalia.notify("侧栏界面无法启动","界面启动失败："..text)
+    end
   elseif action=="visibility" then
     local current=not c.controlSerial or c.controlSerial>=frontend.serial
     -- A report older than the latest control is stale (the native side will

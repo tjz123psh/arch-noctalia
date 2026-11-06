@@ -127,6 +127,10 @@
 .tide-window .primary-button:hover { background-color: @t_accent; border-color: @t_accent; box-shadow: 0 2px 8px @t_accent_soft; }
 .tide-window .primary label,
 .tide-window .primary-button label { color: @t_accent_fg; }
+.tide-window .primary:disabled, .tide-window .primary-button:disabled {
+  background-color: @t_surf2; border-color: @t_border; color: @t_fg_faint; box-shadow: none;
+}
+.tide-window .primary:disabled label { color: @t_fg_faint; }
 .tide-window .danger { color: @t_danger; border-color: @t_danger_soft; }
 .tide-window .danger:hover { background-color: @t_danger_soft; }
 
@@ -231,10 +235,8 @@
 .tide-window .note-selector-title { font-size: 13px; font-weight: 500; color: @t_fg; }
 .tide-window .note-add-button { color: @t_fg_dim; }
 .tide-window .note-add-button:hover { color: @t_accent; background-color: @t_accent_ghost; }
-.tide-window .notes-selector-row { padding: 12px 12px 0; }
+.tide-window .notes-selector-row { padding: 12px 12px 6px; }
 .tide-window .notes-selector-row .note-selector { min-height: 34px; }
-.tide-window .notes-toolbar { padding: 10px 12px 4px 16px; }
-.tide-window .note-title { font-size: 16px; font-weight: 600; color: @t_fg; }
 .tide-window .note-tool-button {
   min-width: 32px; min-height: 32px; padding: 6px; border-radius: 9px;
   background-color: transparent; border-color: transparent; color: @t_fg_dim;
@@ -410,6 +412,9 @@
 .tide-window .hotspot-card .status-summary image { color: @t_accent; }
 .tide-window .hotspot-card.hotspot-active .status-summary image { color: @t_success; }
 .tide-window .hotspot-card button { color: @t_fg; }
+/* The card-wide colour rule above outranks `.danger`, so restate it here. */
+.tide-window .hotspot-card button.danger { color: @t_danger; border-color: @t_danger_soft; }
+.tide-window .hotspot-card button.danger:hover { background-color: @t_danger_soft; }
 .tide-window .status-row { min-height: 34px; }
 .tide-window .status-row label { font-size: 12px; }
 .tide-window .segmented { background-color: @t_surf0; border: 1px solid @t_border; border-radius: 10px; padding: 2px; }
@@ -530,7 +535,9 @@
 }
 .tide-window .dev-pill:hover { background-color: @t_surf2; color: @t_fg; border-color: @t_border_strong; }
 .tide-window .dev-pill.selected { background-color: @t_accent_ghost; border-color: @t_accent_soft; color: @t_accent; font-weight: 600; }
-.tide-window .ws-pill { min-width: 40px; }
+/* Six equal pills must fit the 330px content column: min-width adds to the
+   10px horizontal padding, so 40px per pill pushed the whole panel to 520px. */
+.tide-window .ws-pill { min-width: 30px; padding: 4px 6px; }
 
 /* ---------- motion ---------- */
 @keyframes tide-card-rise {

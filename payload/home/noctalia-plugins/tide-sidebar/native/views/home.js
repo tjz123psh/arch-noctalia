@@ -371,7 +371,7 @@ export function createHome(ctx) {
     const page = ui.box(Gtk.Orientation.VERTICAL, 10, ['home-page', 'scroll-gutter']);
     page.set_hexpand(true); page.set_vexpand(true);
     const widget = new Gtk.ScrolledWindow({
-        hscrollbar_policy: Gtk.PolicyType.NEVER,
+        hscrollbar_policy: Gtk.PolicyType.NEVER, propagate_natural_width: false,
         vscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
         hexpand: true, vexpand: true,
     });
@@ -425,6 +425,9 @@ export function createHome(ctx) {
         stroke(0.42, 3.4, 1.8, 0.9);
         stroke(0.70, 2.4, 1.2, 0.42);
     });
+    // The strokes are full-bleed, so they must be clipped by the card's
+    // rounded outline instead of leaking past the corner arcs.
+    clockCard.set_overflow(Gtk.Overflow.HIDDEN);
     clockCard.append(tideArea);
     page.append(clockCard);
 

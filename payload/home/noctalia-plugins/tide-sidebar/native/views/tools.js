@@ -55,7 +55,7 @@ export function createTools(ctx) {
     page.set_hexpand(true);
     page.set_vexpand(true);
     const widget = new Gtk.ScrolledWindow({
-        hscrollbar_policy: Gtk.PolicyType.NEVER,
+        hscrollbar_policy: Gtk.PolicyType.NEVER, propagate_natural_width: false,
         vscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
         hexpand: true, vexpand: true,
     });
@@ -96,7 +96,7 @@ export function createTools(ctx) {
     calcMessage.set_ellipsize(Pango.EllipsizeMode.NONE);
     calcMessage.set_visible(false);
     calcDisplayPane.append(calcMessage);
-    const calcAccent = ctx.palette?.()?.t_accent || '#e8a08c';
+    const calcAccent = () => ctx.palette?.()?.t_accent || '#e8a08c';
     const calcWave = ui.waveRule(calcAccent, 10);
     calcWave.add_css_class('calc-wave');
     calculator.append(calcWave);
@@ -305,7 +305,7 @@ export function createTools(ctx) {
     history.add_css_class('tools-history');
     history.add_css_class('calc-history-pane');
     const historyScroll = new Gtk.ScrolledWindow({
-        hscrollbar_policy: Gtk.PolicyType.NEVER,
+        hscrollbar_policy: Gtk.PolicyType.NEVER, propagate_natural_width: false,
         vscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
         propagate_natural_height: true, max_content_height: 158,
     });
@@ -416,7 +416,8 @@ export function createTools(ctx) {
     timerTitle.set_ellipsize(Pango.EllipsizeMode.NONE);
     const timerStatus = ui.label('加载中', ['caption', 'timer-status']);
     timerLabelPane.append(timerTitle);
-    timerLabelPane.append(new Gtk.Box({vexpand: true}));
+    // No vexpand spacer here: GtkBox propagates a child's expand flag, so the
+    // spacer made the whole timer card swallow every spare pixel of the page.
     timerLabelPane.append(timerStatus);
     timerCard.append(timerLabelPane);
     timerCard.append(timerContentPane);
@@ -557,7 +558,6 @@ export function createTools(ctx) {
         button.set_hexpand(true);
         timerActions.append(button);
     }
-    timerContentPane.append(new Gtk.Box({vexpand: true}));
     timerContentPane.append(timerActions);
     let pendingDuration = null;
     function timerIdentity() {
@@ -782,7 +782,7 @@ export function createTools(ctx) {
     const stopwatchHistoryHeading = ui.label('计次', ['caption']);
     stopwatchHistory.set_label_widget(stopwatchHistoryHeading);
     const stopwatchLapScroll = new Gtk.ScrolledWindow({
-        hscrollbar_policy: Gtk.PolicyType.NEVER, vscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
+        hscrollbar_policy: Gtk.PolicyType.NEVER, propagate_natural_width: false, vscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
         propagate_natural_height: true, max_content_height: 132,
     });
     stopwatchLapScroll.add_css_class('list-scroll');

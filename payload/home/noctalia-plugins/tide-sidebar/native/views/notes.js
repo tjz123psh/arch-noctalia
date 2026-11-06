@@ -278,22 +278,21 @@ export function createNotes(ctx) {
     noticeBox.append(noticeText); noticeRevealer.set_child(noticeBox); page.append(noticeRevealer);
 
     const card = U.card(['notes-card', 'card-stagger-1']); card.set_spacing(0); card.set_vexpand(true); page.append(card);
-    // The note switcher is part of the card (one surface, one header), not a
-    // floating pill above it: that pill never lined up with the card edge.
+    // One header per card: the switcher already shows the active note's title,
+    // so a second title row below it was pure duplication (and ate 30px).
+    // High-frequency actions sit next to the switcher; destructive ones stay
+    // behind the footer menu.
     const cardSelectorRow = U.box(Gtk.Orientation.HORIZONTAL, 6, ['notes-selector-row']);
-    cardSelectorRow.append(listButton);
-    card.append(cardSelectorRow);
-    const toolbar = U.box(Gtk.Orientation.HORIZONTAL, 6, ['notes-toolbar']);
-    const title = U.label('', ['note-title']); title.set_hexpand(true); title.set_max_width_chars(21);
-    // High-frequency actions live in the title row (one click, >=32px targets).
-    // Destructive actions stay behind the footer menu so they cannot be hit by
-    // accident.
     const pinAction = U.iconButton('non-starred-symbolic', () => togglePin(), '置顶 / 取消置顶', ['note-tool-button']);
     const pinIcon = pinAction.get_child().get_first_child();
     const renameAction = U.iconButton('pencil', () => beginRename(), '重命名', ['note-tool-button']);
     const copyAction = U.iconButton('copy', () => copyBody(), '复制正文', ['note-tool-button']);
-    toolbar.append(title); toolbar.append(pinAction); toolbar.append(renameAction); toolbar.append(copyAction);
-    card.append(toolbar);
+    listButton.set_hexpand(true);
+    cardSelectorRow.append(listButton);
+    cardSelectorRow.append(pinAction);
+    cardSelectorRow.append(renameAction);
+    cardSelectorRow.append(copyAction);
+    card.append(cardSelectorRow);
     const editPopover = new Gtk.Popover({has_arrow: false, autohide: true});
     const actions = U.box(Gtk.Orientation.VERTICAL, 3, ['note-actions']);
     const deleteButton = U.button('移到回收站', 'trash', () => { editPopover.popdown(); deleteNote(); }, ['note-menu-action', 'danger-button']);
@@ -326,7 +325,7 @@ export function createNotes(ctx) {
     // Rule above the footer, not behind it: the 8px wave used to sit under the
     // footer row (54px overlay slot) and was simply invisible after the redesign.
     const footerLayer = U.box(Gtk.Orientation.VERTICAL, 4, ['note-footer-layer']);
-    const accent = ctx.palette?.()?.t_accent || '#e8a08c';
+    const accent = () => ctx.palette?.()?.t_accent || '#e8a08c';
     const footerWave = U.waveRule(accent, 8); footerWave.add_css_class('note-footer-wave');
     footerLayer.append(footerWave);
     const footer = U.box(Gtk.Orientation.HORIZONTAL, 10, ['note-footer']);
@@ -334,7 +333,9 @@ export function createNotes(ctx) {
     const count = U.label('0 字', ['caption']);
     const status = U.label('正在连接…', ['status-label']); status.set_hexpand(true); status.set_xalign(1);
     const actionsButton = new Gtk.MenuButton({tooltip_text: '便签操作'});
-    actionsButton.add_css_class('note-actions-button'); actionsButton.set_icon_name('document-edit-symbolic');
+    // A pencil here read as "edit" (the header already has one); the menu only
+    // holds destructive actions, so use the overflow glyph.
+    actionsButton.add_css_class('note-actions-button'); actionsButton.set_icon_name('view-more-symbolic');
     actionsButton.set_always_show_arrow(false); actionsButton.set_popover(editPopover);
     footer.append(count); footer.append(status); footer.append(actionsButton);
     footerLayer.append(footer); card.append(footerLayer);
@@ -437,10 +438,8 @@ export function createNotes(ctx) {
         const note = current(), buffer = note && ensureBuffer(id);
         if (buffer && editor.get_buffer() !== buffer) editor.set_buffer(buffer);
         bodyStack.set_visible_child_name(buffer ? 'editor' : 'empty');
-        setLabel(title, note?.title || (ready ? '便签' : '正在加载…'));
         setLabel(selectorTitle, note?.title || (ready ? '选择便签' : '正在加载…'));
         selectorTitle.set_tooltip_text(note?.title || '');
-        title.set_tooltip_text(note?.title || '');
         listButton.set_tooltip_text(note?.title || '切换便签与查看回收站');
         if (changedNote) footerWave.pulse();
         refreshStatus();

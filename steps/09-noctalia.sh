@@ -38,6 +38,7 @@ plugin_files=(
   "${PLUGINS_DIR}/tide-sidebar/lib/stopwatch.luau"
   "${PLUGINS_DIR}/tide-sidebar/native/main.js"
   "${PLUGINS_DIR}/tide-sidebar/native/ui.js"
+  "${PLUGINS_DIR}/tide-sidebar/native/palette.js"
   "${PLUGINS_DIR}/tide-sidebar/native/transport.mjs"
   "${PLUGINS_DIR}/tide-sidebar/native/style.css"
   "${PLUGINS_DIR}/tide-sidebar/native/views/home.js"

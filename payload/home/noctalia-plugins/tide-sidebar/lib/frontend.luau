@@ -85,9 +85,9 @@ function M.new(api,base,onCommand,onError)
       self.restartPending=false
       self.instance=tostring(math.floor(api.nowMs())).."-"..tostring(math.random(100000,999999))
     end
-    local assets={"main.js","ui.js","style.css","views/notes.js","views/tools.js","views/system.js"}
+    local assets={"main.js","ui.js","palette.js","style.css","views/notes.js","views/tools.js","views/system.js"}
     for _,name in ipairs(assets) do
-      if type(api.fileExists)=="function" and not api.fileExists(api.pluginDir().."/native/"..name) then self.failed=true;return false end
+      if type(api.fileExists)=="function" and not api.fileExists(api.pluginDir().."/native/"..name) then self.failed=true;errorMessage("插件文件不完整：native/"..name);return false end
     end
     if not api.mkdirAll(self.dir) then errorMessage("无法创建界面私有通信目录");return false end
     self.started=true;self.startedAt=api.nowMs();self.failed=false

@@ -73,114 +73,22 @@ export function setLabel(widget, value) {
     if (widget.get_label() !== value) widget.set_label(value);
 }
 
-// Flat liquid-color boundaries. Only this small drawing area repaints during a short pulse.
-function makeWave(color, height, cornerRadius) {
-    const area = new Gtk.DrawingArea({content_height: height, hexpand: true, can_target: false});
-    const red = parseInt(color.slice(1, 3), 16) / 255;
-    const green = parseInt(color.slice(3, 5), 16) / 255;
-    const blue = parseInt(color.slice(5, 7), 16) / 255;
-    let phase = 0, from = 0, start = 0, tick = 0;
-    let pendingPulse = false, pendingDuration = 480, pendingIntensity = 0.85;
-    area.set_draw_func((_widget, cr, width, h) => {
-        if (width < 2 || h < 2) return;
-        const y = h * 0.35;
-        const a = Math.min(7, h * 0.28);
-
-        // 1. 水体主体填充
-        cr.moveTo(0, y);
-        cr.curveTo(width * .13, y - a * Math.cos(phase), width * .23, y + a * Math.sin(phase * 0.8 + 0.3), width * .36, y + a * .3);
-        cr.curveTo(width * .49, y - a, width * .57, y - a * Math.cos(phase + .6), width * .70, y + a * 0.2);
-        cr.curveTo(width * .84, y + a * Math.sin(phase + 1.2), width * .90, y - a * .6, width, y - a * .15);
-        const radius = Math.min(cornerRadius, h * .5, width * .5);
-        if (radius > 0) {
-            cr.lineTo(width, h - radius);
-            cr.curveTo(width, h - radius * .45, width - radius * .45, h, width - radius, h);
-            cr.lineTo(radius, h);
-            cr.curveTo(radius * .45, h, 0, h - radius * .45, 0, h - radius);
-        } else { cr.lineTo(width, h); cr.lineTo(0, h); }
-        cr.closePath();
-        cr.setSourceRGBA(red, green, blue, 0.95);
-        cr.fill();
-
-        // 2. 波峰反光水线 (Crest Highlight - 鲜明展现流转与起伏动势)
-        cr.moveTo(0, y);
-        cr.curveTo(width * .13, y - a * Math.cos(phase), width * .23, y + a * Math.sin(phase * 0.8 + 0.3), width * .36, y + a * .3);
-        cr.curveTo(width * .49, y - a, width * .57, y - a * Math.cos(phase + .6), width * .70, y + a * 0.2);
-        cr.curveTo(width * .84, y + a * Math.sin(phase + 1.2), width * .90, y - a * .6, width, y - a * .15);
-        cr.setLineWidth(1.8);
-        cr.setLineCap(1);
-        cr.setLineJoin(1);
-        cr.setSourceRGBA(1.0, 0.96, 0.80, 0.85);
-        cr.stroke();
-    });
-    area.pulse = (durationMs = 480, intensity = 0.85) => {
-        if (!Gtk.Settings.get_default().gtk_enable_animations) return;
-        if (!area.get_mapped()) {
-            pendingPulse = true;
-            pendingDuration = durationMs;
-            pendingIntensity = intensity;
-            return;
-        }
-        pendingPulse = false;
-        from = phase; start = GLib.get_monotonic_time();
-        if (tick) return;
-        const durationUs = Math.max(1, durationMs) * 1000;
-        tick = area.add_tick_callback((_widget, clock) => {
-            const t = Math.min(1, (clock.get_frame_time() - start) / durationUs);
-            const ease = 1 - (1 - t) ** 2;
-            const ripple = Math.sin(Math.PI * 2 * t) * Math.exp(-2.2 * t) * intensity;
-            phase = from * (1 - ease) + ripple;
-            area.queue_draw();
-            if (t >= 1) { tick = 0; phase = 0; return GLib.SOURCE_REMOVE; }
-            return GLib.SOURCE_CONTINUE;
-        });
-    };
-    let slowPhase = 0;
-    let breatheTick = 0;
-    area.startBreathe = () => {
-        if (breatheTick || !Gtk.Settings.get_default().gtk_enable_animations) return;
-        breatheTick = area.add_tick_callback(() => {
-            if (!area.get_mapped()) {
-                breatheTick = 0;
-                return GLib.SOURCE_REMOVE;
-            }
-            slowPhase = (slowPhase + 0.016) % (Math.PI * 2);
-            if (!tick) {
-                phase = slowPhase;
-                area.queue_draw();
-            }
-            return GLib.SOURCE_CONTINUE;
-        });
-    };
-    area.stopBreathe = () => {
-        if (breatheTick) {
-            area.remove_tick_callback(breatheTick);
-            breatheTick = 0;
-        }
-    };
-    area.connect('map', () => {
-        if (pendingPulse) {
-            pendingPulse = false;
-            area.pulse(pendingDuration, pendingIntensity);
-        }
-    });
-    area.connect('unmap', () => {
-        if (tick) area.remove_tick_callback(tick);
-        tick = 0; phase = 0; pendingPulse = false;
-        area.stopBreathe();
-    });
-    return area;
-}
 // A rule-style wave: one stroked line, no filled body. This is the shape the
 // 2026-11 redesign uses as a separator (notes footer, calculator mid-rule);
 // a filled block at low contrast is what made the old design read as "cheap".
+// `color` may be a hex string or a getter: the accent comes from the live
+// wallpaper palette, so a captured string would keep the old hue after the
+// wallpaper changes (the stylesheet hot-reloads, the captured value does not).
 export function waveRule(color = '#F1D68B', height = 8) {
     const area = new Gtk.DrawingArea({content_height: height, hexpand: true, can_target: false});
-    const hex = String(color).replace('#', '');
-    const rgb = {
-        r: parseInt(hex.slice(0, 2), 16) / 255,
-        g: parseInt(hex.slice(2, 4), 16) / 255,
-        b: parseInt(hex.slice(4, 6), 16) / 255,
+    const currentRgb = () => {
+        const value = typeof color === 'function' ? color() : color;
+        const hex = String(value || '#888888').replace('#', '');
+        return {
+            r: parseInt(hex.slice(0, 2), 16) / 255,
+            g: parseInt(hex.slice(2, 4), 16) / 255,
+            b: parseInt(hex.slice(4, 6), 16) / 255,
+        };
     };
     let phase = 0;
     let tick = 0;
@@ -195,6 +103,7 @@ export function waveRule(color = '#F1D68B', height = 8) {
         cr.curveTo(width * .70, y - amp, width * .86, y + amp * .6, width, y - amp * .2);
         cr.setLineWidth(1.3);
         cr.setLineCap(1);
+        const rgb = currentRgb();
         cr.setSourceRGBA(rgb.r, rgb.g, rgb.b, 0.42);
         cr.stroke();
     });
@@ -233,6 +142,4 @@ export function waveRule(color = '#F1D68B', height = 8) {
     return area;
 }
 
-export function waveBand(color = '#F1D68B', height = 22) { return makeWave(color, height, 0); }
-export function waveFooter(color = '#ECD081', height = 54, radius = 22) { return makeWave(color, height, radius); }
 
