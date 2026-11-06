@@ -99,6 +99,25 @@ def check_native_lifecycle():
         raise SystemExit("performance-observation.json still records old drawer durations")
     print("PASS: drawer lifecycle, focus handoff, destroy cleanup and duration contract")
 
+
+def check_palette_tokens():
+    """style.css must be token-only: a stray hex silently ignores the wallpaper
+    palette, and a misspelt @t_* token silently drops the whole declaration."""
+    style = (PLUGIN / "native/style.css").read_text(encoding="utf-8")
+    palette = (PLUGIN / "native/palette.js").read_text(encoding="utf-8")
+    hexes = sorted(set(re.findall(r"#[0-9a-fA-F]{3,8}\b", style)))
+    if hexes:
+        raise SystemExit("style.css hardcodes colours: " + ", ".join(hexes))
+    used = set(re.findall(r"@(t_[a-z0-9_]+)", style))
+    defined = set(re.findall(r"\b(t_[a-z0-9_]+):", palette))
+    missing = sorted(used - defined)
+    if missing:
+        raise SystemExit("style.css references undefined palette tokens: " + ", ".join(missing))
+    unused = sorted(defined - used)
+    if unused:
+        raise SystemExit("palette.js defines unused tokens: " + ", ".join(unused))
+    print("PASS: " + str(len(used)) + " palette tokens resolve, no hardcoded colours in style.css")
+
 def check_documentation_links():
     """Relative links (and their anchors) in the repository docs must resolve."""
     broken, checked = [], 0
@@ -178,6 +197,7 @@ check_channel_parity()
 check_motion_enums()
 check_native_lifecycle()
 check_documentation_links()
+check_palette_tokens()
 run(["bash", "-n", str(PLUGIN / "open.sh")])
 run(["luac", "-p", *[str(PLUGIN / name) for name in sources]])
 report = run(["noctalia", "plugins", "lint", str(PLUGIN)])

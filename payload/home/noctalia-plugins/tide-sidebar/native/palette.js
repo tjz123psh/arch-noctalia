@@ -128,6 +128,7 @@ export function buildTokens(defines = {}) {
     const lineStrong = mix(bg, away, dark ? 0.26 : 0.18);
     const accent = boost(accentRaw, 1.18, 0);
     const success = dark ? {r: 0x6f, g: 0xd0, b: 0x9b} : {r: 0x2c, g: 0x7d, b: 0x52};
+    const warning = dark ? {r: 0xe3, g: 0xb3, b: 0x41} : {r: 0x9a, g: 0x6a, b: 0x00};
     const highlight = dark ? rgba({r: 255, g: 255, b: 255}, 0.055) : rgba({r: 255, g: 255, b: 255}, 0.65);
 
     const tokens = {
@@ -149,6 +150,7 @@ export function buildTokens(defines = {}) {
         t_danger: hex(danger),
         t_danger_soft: rgba(danger, 0.16),
         t_success: hex(success),
+        t_warning: hex(warning),
         t_highlight: highlight,
         // The closed drawer keeps a 1px sliver on screen so the compositor
         // keeps the buffer warm; that sliver must be invisible.

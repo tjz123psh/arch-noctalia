@@ -2,6 +2,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import GLibUnix from 'gi://GLibUnix';
 import Layer from 'gi://Gtk4LayerShell?version=1.0';
 import * as UI from './ui.js';
 import {encodePackets} from './transport.mjs';
@@ -488,7 +489,10 @@ app.connect('startup', () => {
     toastRevealer.add_css_class('toast');
     toastRevealer.set_visible(false);
     toastRevealer.connect('notify::child-revealed', () => { if (!toastRevealer.get_reveal_child() && !toastRevealer.get_child_revealed()) toastRevealer.set_visible(false); });
-    toastLabel = new Gtk.Label({wrap: true, xalign: 0}); toastRevealer.set_child(toastLabel);
+    // max_width_chars caps the *natural* width: a wrapping label still asks for
+    // the full text width, and Gtk.Overlay propagates that into the window, so a
+    // long error used to widen the whole panel.
+    toastLabel = new Gtk.Label({wrap: true, xalign: 0, max_width_chars: 42}); toastRevealer.set_child(toastLabel);
     shell.append(rail); shell.append(right);
     // Floating toast: an overlay keeps the page height constant (a stacked
     // revealer used to shrink the whole panel for 3.6s on every save).
@@ -528,8 +532,8 @@ app.connect('startup', () => {
             if (visible) send('visibility', {open: true, tab: currentPage});
             return GLib.SOURCE_CONTINUE;
         });
-        GLib.unix_signal_add(GLib.PRIORITY_HIGH, 15, () => { shutdown(); return GLib.SOURCE_REMOVE; });
-        GLib.unix_signal_add(GLib.PRIORITY_HIGH, 2, () => { shutdown(); return GLib.SOURCE_REMOVE; });
+        GLibUnix.signal_add(GLib.PRIORITY_HIGH, 15, () => { shutdown(); return GLib.SOURCE_REMOVE; });
+        GLibUnix.signal_add(GLib.PRIORITY_HIGH, 2, () => { shutdown(); return GLib.SOURCE_REMOVE; });
     }
   } catch (error) {
     startupFailed = true;

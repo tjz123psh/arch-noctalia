@@ -480,7 +480,7 @@
 .tide-window .home-hw-value { font-size: 14px; font-weight: 600; color: @t_fg; font-feature-settings: "tnum"; }
 .tide-window .home-hw-sub { font-size: 11px; color: @t_fg_faint; }
 .tide-window .home-temp-dot { color: @t_success; }
-.tide-window .home-temp-dot.warm { color: #E3B341; }
+.tide-window .home-temp-dot.warm { color: @t_warning; }
 .tide-window .home-temp-dot.hot { color: @t_danger; }
 .tide-window .home-temp-label { font-size: 11px; color: @t_fg_dim; font-feature-settings: "tnum"; }
 .tide-window .home-sparkline,

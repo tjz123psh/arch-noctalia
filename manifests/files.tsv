@@ -354,9 +354,9 @@ payload/home/noctalia-plugins/tide-sidebar/lib/countdown.luau	/home/pang/noctali
 payload/home/noctalia-plugins/tide-sidebar/lib/frontend.luau	/home/pang/noctalia-plugins/tide-sidebar/lib/frontend.luau	600	c1b0123bc69eda59b100f9dcf07e5bd0
 payload/home/noctalia-plugins/tide-sidebar/lib/notes.luau	/home/pang/noctalia-plugins/tide-sidebar/lib/notes.luau	600	49fffa99dc08ab64789ff7d6b84f6ef5
 payload/home/noctalia-plugins/tide-sidebar/lib/stopwatch.luau	/home/pang/noctalia-plugins/tide-sidebar/lib/stopwatch.luau	600	c64ad8a9f0643422e04cfd2a7f131afb
-payload/home/noctalia-plugins/tide-sidebar/native/main.js	/home/pang/noctalia-plugins/tide-sidebar/native/main.js	600	881f0eb8486c0b8b5923f58ec0d94876
-payload/home/noctalia-plugins/tide-sidebar/native/palette.js	/home/pang/noctalia-plugins/tide-sidebar/native/palette.js	600	05b27963b428eb974c1afce8bf26176b
-payload/home/noctalia-plugins/tide-sidebar/native/style.css	/home/pang/noctalia-plugins/tide-sidebar/native/style.css	600	cc0088c2757579925e165388db3b174b
+payload/home/noctalia-plugins/tide-sidebar/native/main.js	/home/pang/noctalia-plugins/tide-sidebar/native/main.js	600	d325e86c15fefd489f5e25665a174b3a
+payload/home/noctalia-plugins/tide-sidebar/native/palette.js	/home/pang/noctalia-plugins/tide-sidebar/native/palette.js	600	43e2c91363ce2e9377d33db2c94db83e
+payload/home/noctalia-plugins/tide-sidebar/native/style.css	/home/pang/noctalia-plugins/tide-sidebar/native/style.css	600	32e77602817ebd0ead1d00bb322cf386
 payload/home/noctalia-plugins/tide-sidebar/native/transport.mjs	/home/pang/noctalia-plugins/tide-sidebar/native/transport.mjs	600	ec47ceb3bc238adac1f81c82bd94d406
 payload/home/noctalia-plugins/tide-sidebar/native/ui.js	/home/pang/noctalia-plugins/tide-sidebar/native/ui.js	600	76829e0554491a6bcb7abf1790ab6052
 payload/home/noctalia-plugins/tide-sidebar/native/views/home.js	/home/pang/noctalia-plugins/tide-sidebar/native/views/home.js	600	1dffa4342546f9a41edcf580018161e7
@@ -372,7 +372,7 @@ payload/home/noctalia-plugins/tide-sidebar/previews/plugin-settings.png	/home/pa
 payload/home/noctalia-plugins/tide-sidebar/previews/tools.png	/home/pang/noctalia-plugins/tide-sidebar/previews/tools.png	644	cf9f0abc54c2d41757dd265b3b4c1400
 payload/home/noctalia-plugins/tide-sidebar/previews/windows.png	/home/pang/noctalia-plugins/tide-sidebar/previews/windows.png	644	cfc633dea944b765ac1fd98b4d35ea4b
 payload/home/noctalia-plugins/tide-sidebar/plugin.toml	/home/pang/noctalia-plugins/tide-sidebar/plugin.toml	644	e1ec85873598ab67e7c5c9f42f53a2de
-payload/home/noctalia-plugins/tide-sidebar/service.luau	/home/pang/noctalia-plugins/tide-sidebar/service.luau	644	f787f8b286a8d89ca660feccd6d5bcb1
+payload/home/noctalia-plugins/tide-sidebar/service.luau	/home/pang/noctalia-plugins/tide-sidebar/service.luau	644	2b07c2572accf46d4e66a374b9679b03
 payload/home/noctalia-plugins/tide-sidebar/shortcut.luau	/home/pang/noctalia-plugins/tide-sidebar/shortcut.luau	644	257f05261f34c793aed050ae7bc83f0d
 payload/home/noctalia-plugins/tide-sidebar/tests/frontend_spec.lua	/home/pang/noctalia-plugins/tide-sidebar/tests/frontend_spec.lua	600	65bd77bebea12a0e48072db411082d4b
 payload/home/noctalia-plugins/tide-sidebar/tests/native_keyboard_spec.js	/home/pang/noctalia-plugins/tide-sidebar/tests/native_keyboard_spec.js	600	660fa2a42e3c081900058a3411610bda
@@ -385,7 +385,7 @@ payload/home/noctalia-plugins/tide-sidebar/tests/native_transport_spec.mjs	/home
 payload/home/noctalia-plugins/tide-sidebar/tests/native_windows.py	/home/pang/noctalia-plugins/tide-sidebar/tests/native_windows.py	600	2d31f817b8d19408441ba2b52b7d9c89
 payload/home/noctalia-plugins/tide-sidebar/tests/notes_spec.lua	/home/pang/noctalia-plugins/tide-sidebar/tests/notes_spec.lua	600	2f06345f927d11b823c776d0ed27e90b
 payload/home/noctalia-plugins/tide-sidebar/tests/panel_spec.lua	/home/pang/noctalia-plugins/tide-sidebar/tests/panel_spec.lua	600	2f089494708e029124861d29b9ca41b3
-payload/home/noctalia-plugins/tide-sidebar/tests/run_all.py	/home/pang/noctalia-plugins/tide-sidebar/tests/run_all.py	600	fd55df18302a8523c927ccf1472947e9
+payload/home/noctalia-plugins/tide-sidebar/tests/run_all.py	/home/pang/noctalia-plugins/tide-sidebar/tests/run_all.py	600	c51778139b865cbd37ecef69761f15ac
 payload/home/noctalia-plugins/tide-sidebar/tests/service_spec.lua	/home/pang/noctalia-plugins/tide-sidebar/tests/service_spec.lua	644	38636070c9a281cc069e1ee643ad0ad3
 payload/home/noctalia-plugins/tide-sidebar/tests/stopwatch_spec.lua	/home/pang/noctalia-plugins/tide-sidebar/tests/stopwatch_spec.lua	600	3efb44822326e0e7621e114f1a7f8198
 payload/home/noctalia-plugins/tide-sidebar/tests/system_spec.py	/home/pang/noctalia-plugins/tide-sidebar/tests/system_spec.py	600	e444f4872b1adf437aeca47386f6cff5

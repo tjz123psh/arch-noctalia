@@ -361,6 +361,9 @@ command=function(c)
     -- The native side crashed during startup (bad CSS, missing module...). Its
     -- stderr never reaches us, so surface the reason instead of staying silent.
     frontend.lastSeen=now()
+    -- The child is gone: clear `started` so the next show spawns a fresh one
+    -- immediately instead of waiting for the 24s heartbeat timeout.
+    frontend.started=false
     frontend.failed=true
     local text=type(c.message)=="string" and c.message:sub(1,200) or ""
     feedback(false,"界面启动失败"..(text~="" and ("："..text) or ""),"frontend")
