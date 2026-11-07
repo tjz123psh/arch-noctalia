@@ -191,5 +191,20 @@
       "hidden_idle_cpu_percent": 0.17
     },
     "page_transition_note": "Baseline Gtk.Stack SLIDE_LEFT_RIGHT under the default GL renderer: 31 frames / ~215 ms at 144 fps."
+  },
+  "macos_glass": {
+    "date": "2026-11-07",
+    "renderer": "session default (GL)",
+    "open_cpu_percent": "0-2",
+    "hidden_cpu_percent": 0,
+    "frontend_rss_mib": 214,
+    "frontend_pss_mib": 93,
+    "frontend_private_dirty_mib": 52,
+    "baseline_bare_gtk_window_rss_mib": 182,
+    "notes": [
+      "RSS is dominated by shared GTK/GL pages: Pss is the meaningful figure.",
+      "A bare GJS + GTK4 window already costs ~182 MiB RSS, so the sidebar UI adds ~30 MiB RSS / ~50 MiB private.",
+      "Switching to the cairo renderer would drop shared pages but cap page transitions at 48-72fps; rejected."
+    ]
   }
 }
