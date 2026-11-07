@@ -188,6 +188,10 @@ export function buildTokens(defines = {}) {
         // Static data ink: neutral on purpose, so the accent stays a state and
         // not a decoration. Peaks switch to @t_accent explicitly.
         t_data: data,
+        // Input keycaps: in light mode the plate is nearly white, so keys need a
+        // white face plus a stronger hairline to still read as raised keys.
+        t_key: dark ? hex(surf2) : hex(mix(card, {r: 255, g: 255, b: 255}, 0.62)),
+        t_key_border: dark ? rgba(line, 0.9) : rgba({r: 0, g: 0, b: 0}, 0.14),
         t_shadow: dark ? rgba({r: 0, g: 0, b: 0}, 0.45) : rgba({r: 60, g: 40, b: 30}, 0.12),
         t_shadow_lift: dark ? rgba({r: 0, g: 0, b: 0}, 0.55) : rgba({r: 60, g: 40, b: 30}, 0.20),
         t_shadow_soft: dark ? rgba({r: 0, g: 0, b: 0}, 0.28) : rgba({r: 60, g: 40, b: 30}, 0.07),

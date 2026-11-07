@@ -316,10 +316,15 @@ export function createNotes(ctx) {
         im_module: 'wayland'});
     editor.add_css_class('notes-paper'); editor.set_editable(false);
     editorScroll.set_child(editor); paper.append(editorScroll); bodyStack.add_named(paper, 'editor');
-    const empty = U.box(Gtk.Orientation.VERTICAL, 12, ['empty-state']); empty.set_valign(Gtk.Align.CENTER);
+    const empty = U.box(Gtk.Orientation.VERTICAL, 8, ['empty-state']); empty.set_valign(Gtk.Align.CENTER);
+    const emptyIcon = U.icon('accessories-text-editor-symbolic', 30);
+    emptyIcon.set_halign(Gtk.Align.CENTER);
     const emptyTitle = U.label('还没有便签', ['empty-title']); emptyTitle.set_xalign(0.5);
-    const emptyAdd = U.button('新建便签', 'plus', addNote, ['primary-button']); emptyAdd.set_halign(Gtk.Align.CENTER);
-    empty.append(emptyTitle); empty.append(emptyAdd); bodyStack.add_named(empty, 'empty');
+    const emptyHint = U.label('写点什么，停手即自动保存', ['caption']); emptyHint.set_xalign(0.5);
+    const emptyAdd = U.button('新建便签', 'plus', addNote, ['primary-button']);
+    emptyAdd.set_halign(Gtk.Align.CENTER);
+    empty.append(emptyIcon); empty.append(emptyTitle); empty.append(emptyHint); empty.append(emptyAdd);
+    bodyStack.add_named(empty, 'empty');
     bodyStack.set_visible_child_name('empty'); card.append(bodyStack);
 
     // Rule above the footer, not behind it: the 8px wave used to sit under the

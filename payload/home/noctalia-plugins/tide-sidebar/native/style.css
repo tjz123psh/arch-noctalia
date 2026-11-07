@@ -426,7 +426,7 @@
 .tide-window .key-button {
   font-size: 19px; font-weight: 500; color: @t_fg;
   min-height: 34px; border-radius: 10px;
-  background-color: @t_surf2; border: 1px solid @t_border;
+  background-color: @t_key; border: 1px solid @t_key_border;
   transition: background-color 80ms ease-out, border-color 80ms ease-out, box-shadow 80ms ease-out;
 }
 .tide-window .key-button:hover { background-color: @t_accent_ghost; border-color: @t_accent_soft; }
