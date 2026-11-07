@@ -2,7 +2,7 @@
   "settings": {
     "reduced_motion": {
       "label": "减少装饰动效",
-      "description": "停止波浪与内容过渡，保留即时操作反馈。"
+      "description": "停止入场动画与内容过渡，保留即时操作反馈。"
     },
     "panel_width": {
       "label": "侧栏宽度",

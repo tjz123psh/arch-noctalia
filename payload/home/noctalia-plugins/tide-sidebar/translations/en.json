@@ -2,7 +2,7 @@
   "settings": {
     "reduced_motion": {
       "label": "Reduce decorative motion",
-      "description": "Stop decorative waves and page transitions while keeping controls responsive."
+      "description": "Stop entrance animations and page transitions while keeping controls responsive."
     },
     "panel_width": {
       "label": "Sidebar width",
