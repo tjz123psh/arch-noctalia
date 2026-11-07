@@ -90,16 +90,24 @@ export function createHotspot(ctx) {
 
     const form = ui.card(['hotspot-card', 'rise', 'rise-1']);
     form.append(ui.label('热点设置', ['section-title']));
-    form.append(ui.label('热点名称', ['field-label']));
+    // macOS settings grammar: label on the left, control on the right, one
+    // hairline between rows. The stacked form read like a phone dialog.
+    const formRow = (text, control, first = false) => {
+        const row = ui.box(Gtk.Orientation.HORIZONTAL, 10, ['form-row']);
+        if (!first) row.add_css_class('mac-sep');
+        const label = ui.label(text, ['form-row-label']);
+        label.set_size_request(64, -1);
+        control.set_hexpand(true);
+        row.append(label); row.append(control);
+        return row;
+    };
     const ssid = ui.classes(new Gtk.Entry({hexpand: true, placeholder_text: '热点名称'}), ['field-muted']);
     ssid.set_tooltip_text('热点名称，最多 32 个 UTF-8 字节');
-    form.append(ssid);
-    form.append(ui.label('新密码', ['field-label']));
+    form.append(formRow('名称', ssid, true));
     const password = ui.classes(new Gtk.PasswordEntry({hexpand: true, show_peek_icon: true,
         placeholder_text: '留空沿用已保存密码'}), ['field-muted']);
     password.set_tooltip_text('新密码只留在本页，离开后清除');
-    form.append(password);
-    form.append(ui.label('期望频段', ['field-label']));
+    form.append(formRow('新密码', password));
     const bands = ui.box('horizontal', 8, ['segmented']);
     const band24 = ui.classes(new Gtk.ToggleButton({label: '2.4 GHz', hexpand: true}), ['glass-button']);
     const band5 = ui.classes(new Gtk.ToggleButton({label: '5 GHz', hexpand: true}), ['glass-button']);
@@ -107,7 +115,8 @@ export function createHotspot(ctx) {
     band24.set_active(true);
     band24.set_tooltip_text('2.4 GHz · 兼容性更好');
     band5.set_tooltip_text('5 GHz · 启动失败时脚本可能回落到 2.4 GHz');
-    bands.append(band24); bands.append(band5); form.append(bands);
+    bands.append(band24); bands.append(band5);
+    form.append(formRow('频段', bands));
     const pending = paragraph(ui, '修改后需应用到正在运行的热点。', ['muted']);
     form.append(pending);
     const formActions = ui.box('horizontal', 8);
@@ -535,10 +544,17 @@ export function createWindows(ctx) {
         return targets.length;
     }
     const list = ui.box('vertical', 8); content.append(list);
-    const empty = ui.card(['window-card']);
-    empty.append(ui.icon('apps', 32));
-    const emptyTitle = ui.label('正在获取窗口', ['section-title']); empty.append(emptyTitle);
-    const emptyText = paragraph(ui, '窗口列表会在状态更新后显示。'); empty.append(emptyText);
+    // Empty state sits inside the list plate (no card-inside-a-card).
+    const empty = ui.box('vertical', 6, ['empty-state']);
+    const emptyIcon = ui.icon('view-grid-symbolic', 28);
+    emptyIcon.set_halign(Gtk.Align.CENTER);
+    empty.append(emptyIcon);
+    const emptyTitle = ui.label('正在获取窗口', ['section-title']);
+    emptyTitle.set_xalign(0.5);
+    empty.append(emptyTitle);
+    const emptyText = paragraph(ui, '窗口列表会在状态更新后显示。');
+    emptyText.set_xalign(0.5);
+    empty.append(emptyText);
     content.append(empty); page.append(content); widget.append(scrolled(page));
     function cancelClose() { pendingId = null; confirmation.set_reveal_child(false); sensitive(close, false); }
     function openClose(id) {

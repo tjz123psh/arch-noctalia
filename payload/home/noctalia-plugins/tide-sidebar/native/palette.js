@@ -135,7 +135,7 @@ export function buildTokens(defines = {}) {
     // other compositor we fall back to nearly opaque panels instead of showing
     // a washed-out wallpaper through a "glass" that is not frosted.
     const blurred = Boolean(GLib.getenv('NIRI_SOCKET'));
-    const body = dark ? 0 : 0.08;           // light palettes need more substance
+    const body = dark ? 0 : 0.12;           // light palettes need more substance
     // The frame is smoked glass: a darker base than the cards so the panels
     // read as frosted sheets laid on top, while 18% of the blurred wallpaper
     // still tints it.
@@ -153,8 +153,8 @@ export function buildTokens(defines = {}) {
         t_surf2: hex(surf2),
         t_popover: hex(popover),
         t_fg: hex(fg),
-        t_fg_dim: hex(mix(fg, bg, dark ? 0.34 : 0.30)),
-        t_fg_faint: hex(mix(fg, bg, dark ? 0.52 : 0.46)),
+        t_fg_dim: hex(mix(fg, bg, dark ? 0.34 : 0.40)),
+        t_fg_faint: hex(mix(fg, bg, dark ? 0.52 : 0.56)),
         t_border: rgba(line, 0.9),
         t_border_strong: rgba(lineStrong, 0.95),
         t_accent: hex(accent),
@@ -181,10 +181,10 @@ export function buildTokens(defines = {}) {
         t_mod_tools: dark ? '#4C86E8' : '#2F6FD0',
         t_mod_windows: dark ? '#8C6BE8' : '#6D4DD0',
         // Group plates sit one step above the glass; rows only get hairlines.
-        t_group: dark ? rgba({r: 255, g: 255, b: 255}, 0.085) : rgba({r: 255, g: 255, b: 255}, 0.72),
+        t_group: dark ? rgba({r: 255, g: 255, b: 255}, 0.085) : rgba({r: 255, g: 255, b: 255}, 0.88),
         t_row_hover: dark ? rgba({r: 255, g: 255, b: 255}, 0.04) : rgba({r: 0, g: 0, b: 0}, 0.035),
         t_row_active: dark ? rgba({r: 255, g: 255, b: 255}, 0.085) : rgba({r: 0, g: 0, b: 0}, 0.07),
-        t_separator: dark ? rgba({r: 255, g: 255, b: 255}, 0.075) : rgba({r: 0, g: 0, b: 0}, 0.08),
+        t_separator: dark ? rgba({r: 255, g: 255, b: 255}, 0.075) : rgba({r: 0, g: 0, b: 0}, 0.14),
         // Static data ink: neutral on purpose, so the accent stays a state and
         // not a decoration. Peaks switch to @t_accent explicitly.
         t_data: data,

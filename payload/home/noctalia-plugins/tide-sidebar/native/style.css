@@ -512,6 +512,9 @@
 /* The card-wide colour rule above outranks `.danger`, so restate it here. */
 .tide-window .hotspot-card button.danger { color: @t_danger; border-color: @t_danger_soft; }
 .tide-window .hotspot-card button.danger:hover { background-color: @t_danger_soft; }
+.tide-window .form-row { padding: 6px 0; min-height: 40px; }
+.tide-window .form-row.mac-sep { border-top: 1px solid @t_separator; }
+.tide-window .form-row-label { font-size: 12px; color: @t_fg_dim; }
 .tide-window .status-row { min-height: 38px; transition: background-color 120ms ease-out; }
 .tide-window .status-row:hover { background-color: @t_row_hover; }
 .tide-window .status-row:active { background-color: @t_row_active; }
@@ -549,7 +552,8 @@
 .tide-window .window-card .muted { color: @t_fg_dim; }
 .tide-window .list-empty { padding: 12px 6px; }
 .tide-window .list-empty image { color: @t_fg_faint; }
-.tide-window .empty-state { padding: 20px 12px; }
+.tide-window .empty-state { padding: 26px 14px; }
+.tide-window .empty-state label { color: @t_fg_dim; }
 .tide-window .empty-state image { color: @t_fg_faint; }
 .tide-window .empty-title { font-size: 14px; font-weight: 600; color: @t_fg; }
 .tide-window .empty-state .caption { color: @t_fg_dim; }
